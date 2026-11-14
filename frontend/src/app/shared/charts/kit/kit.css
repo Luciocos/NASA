@@ -1,0 +1,162 @@
+/* reglas comunes a todas las gráficas del kit. la paleta (--ck-*) la define chart-frame */
+:host {
+  display: block;
+}
+
+/* el svg ocupa el ancho medido: con viewBox en píxeles reales el texto no se escala */
+.plot {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+text {
+  font: 12px var(--font-sans);
+  fill: var(--ck-ink-2);
+}
+
+.t-ink {
+  fill: var(--ck-ink);
+}
+
+.t-strong {
+  fill: var(--ck-ink);
+  font-weight: 600;
+}
+
+.t-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.grid {
+  stroke: var(--ck-grid);
+}
+
+.axis {
+  stroke: var(--ck-axis);
+}
+
+/* el tono fija --tone: cada marca decide si lo usa de relleno o de trazo */
+.tone-neutral {
+  --tone: var(--ck-neutral);
+}
+.tone-positive {
+  --tone: var(--ck-positive);
+}
+.tone-negative {
+  --tone: var(--ck-negative);
+}
+.tone-verified {
+  --tone: var(--ck-verified);
+}
+.tone-declared {
+  --tone: var(--ck-declared);
+}
+.tone-estimated {
+  --tone: var(--ck-estimated);
+}
+.tone-accent {
+  --tone: var(--ck-accent);
+}
+.tone-water {
+  --tone: var(--ck-water);
+}
+.tone-soil {
+  --tone: var(--ck-soil);
+}
+
+/* tintas de las tramas: rayado del dato declarado, punteado del estimado, faltante */
+.tx-declared {
+  fill: var(--ck-declared);
+}
+.tx-declared-bg {
+  fill: var(--ck-declared-bg);
+}
+.tx-estimated {
+  fill: var(--ck-estimated);
+}
+.tx-estimated-bg {
+  fill: var(--ck-estimated-bg);
+}
+.tx-nodata {
+  fill: var(--ck-axis);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--ck-ink-2);
+}
+
+.legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend svg {
+  flex: none;
+}
+
+.legend strong {
+  color: var(--ck-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* entrada escalonada con --i. solo se animan opacity y transform */
+@keyframes ck-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes ck-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes ck-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+.fade,
+.grow,
+.pop {
+  animation: ck-fade var(--dur-3) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
+}
+
+.grow {
+  animation-name: ck-grow;
+  transform-box: fill-box;
+  transform-origin: left;
+}
+
+.grow--back {
+  transform-origin: right;
+}
+
+.pop {
+  animation-name: ck-pop;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade,
+  .grow,
+  .pop {
+    animation: none;
+  }
+}

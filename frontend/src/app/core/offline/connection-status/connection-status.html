@@ -1,0 +1,77 @@
+<p class="chip" role="status" aria-live="polite" [attr.data-state]="state()">
+  <svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+    @switch (state()) {
+      @case ('up') {
+        <circle cx="10" cy="10" r="7.5" />
+        <path d="m6.6 10.3 2.3 2.3 4.5-4.9" />
+      }
+      @case ('checking') {
+        <circle cx="10" cy="10" r="7.5" stroke-dasharray="3.5 4.35" />
+      }
+      @case ('offline') {
+        <path d="M2.6 7.6a11 11 0 0 1 14.8 0M5.4 10.7a7 7 0 0 1 9.2 0M10 14.6h.01M3.5 3l13 14" />
+      }
+      @default {
+        <path d="M10 3l7.6 13.4H2.4zM10 8.2v3.6M10 14.2h.01" />
+      }
+    }
+  </svg>
+  <span class="label">
+    {{ connectivity.label() }}
+    @if (savedAt(); as date) {
+      <span class="since">del {{ date }}</span>
+    }
+  </span>
+</p>
+
+@let count = waiting();
+@if (count > 0) {
+  <div class="queue">
+    <svg
+      class="icon"
+      [class.busy]="outbox.syncing()"
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M10 13.4V4.2M6.4 7.6L10 4l3.6 3.6M4 13.2v1.6A1.2 1.2 0 0 0 5.2 16h9.6a1.2 1.2 0 0 0 1.2-1.2v-1.6"
+      />
+    </svg>
+    <span role="status">{{ count }} {{ count === 1 ? 'lote' : 'lotes' }} por sincronizar</span>
+    <button type="button" class="sync" [disabled]="!canSync()" (click)="sync()">
+      {{ outbox.syncing() ? 'Sincronizando…' : 'Sincronizar ahora' }}
+    </button>
+  </div>
+  @if (outbox.unsaved()) {
+    <p class="hint" role="alert">
+      No se pudieron guardar en este dispositivo: no cierres la pestaña hasta que se sincronicen.
+    </p>
+  } @else if (connectivity.backend() !== 'up') {
+    <p class="hint">Se suben solos cuando vuelva la conexión.</p>
+  }
+}
+
+@if (rejected().length > 0) {
+  <ul class="rejected" aria-label="Lotes que no se pudieron subir">
+    @for (item of rejected(); track item.localId) {
+      @let name = item.body.name || 'Lote sin nombre';
+      <li>
+        <svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+          <path d="M10 3l7.6 13.4H2.4zM10 8.2v3.6M10 14.2h.01" />
+        </svg>
+        <p role="alert">
+          <strong>{{ name }}</strong> no se subió: {{ item.error }}
+        </p>
+        <button
+          type="button"
+          class="ghost"
+          [attr.aria-label]="'Descartar ' + name"
+          (click)="discard(item)"
+        >
+          Descartar
+        </button>
+      </li>
+    }
+  </ul>
+}

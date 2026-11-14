@@ -1,0 +1,152 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  min-width: 0;
+  color: var(--night-ink);
+  font-size: var(--text-sm);
+  line-height: 1.3;
+}
+
+p,
+ul {
+  margin: 0;
+}
+
+.chip,
+.queue,
+li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--night-600);
+  border-radius: var(--radius-lg);
+  background: var(--night-800);
+}
+
+.icon {
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--night-ink-2);
+}
+
+.since {
+  color: var(--night-ink-2);
+}
+
+/* cada estado cambia el dibujo del ícono además del color */
+[data-state='up'] .icon {
+  color: var(--field-300);
+}
+
+[data-state='down'],
+[data-state='offline'],
+.queue {
+  border-color: var(--accent-strong);
+}
+
+[data-state='down'] .icon,
+[data-state='offline'] .icon,
+.queue .icon {
+  color: var(--accent);
+}
+
+[data-state='checking'] .icon {
+  animation: turn 1.4s linear infinite;
+}
+
+.busy {
+  animation: pulse 0.7s ease-in-out infinite alternate;
+}
+
+.queue {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding-right: 0.3rem;
+}
+
+.hint {
+  color: var(--night-ink-2);
+  font-size: var(--text-xs);
+  text-align: right;
+}
+
+.rejected {
+  display: grid;
+  gap: var(--space-1);
+  max-width: 34rem;
+  padding: 0;
+  list-style: none;
+}
+
+li {
+  border-color: var(--fire-600);
+  border-radius: var(--radius-md);
+}
+
+li .icon {
+  color: var(--fire-200);
+}
+
+li p {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+button {
+  flex: none;
+  min-height: 1.75rem;
+  padding: 0.15rem 0.75rem;
+  border: 1px solid var(--night-600);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--night-ink);
+  outline-offset: 2px;
+}
+
+.sync {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.sync:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  to {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-state='checking'] .icon,
+  .busy {
+    animation: none;
+  }
+}

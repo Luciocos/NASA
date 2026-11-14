@@ -1,0 +1,47 @@
+/*
+ * paleta del kit: todo sale de los tokens del proyecto. se define en el anfitrión y la
+ * hereda el dibujo que va adentro. --chart-surface es el fondo real sobre el que se apoya
+ * la gráfica (por defecto --surface): separa las marcas que se tocan
+ */
+:host {
+  --ck-ink: var(--ink);
+  --ck-ink-2: var(--ink-3);
+  --ck-grid: var(--line);
+  --ck-axis: var(--line-strong);
+  --ck-surface: var(--chart-surface, var(--surface));
+  --ck-track: var(--paper-2);
+  --ck-focus: var(--focus-ring);
+  --ck-select: var(--accent-strong);
+  --ck-neutral: var(--ink-3);
+  --ck-positive: var(--ok);
+  --ck-negative: var(--danger);
+  --ck-verified: var(--origin-verified);
+  --ck-declared: var(--origin-declared);
+  --ck-declared-bg: var(--origin-declared-bg);
+  --ck-estimated: var(--origin-estimated);
+  --ck-estimated-bg: var(--origin-estimated-bg);
+  --ck-accent: var(--accent-strong);
+  --ck-water: var(--water-600);
+  --ck-soil: var(--soil-500);
+}
+
+/* sobre el cromo oscuro del mapa: los pasos de cada familia que se leen sobre --night-800 */
+:host-context(.charts-night) {
+  --ck-ink: var(--night-ink);
+  --ck-ink-2: var(--night-ink-2);
+  --ck-grid: var(--night-700);
+  --ck-axis: var(--night-600);
+  --ck-surface: var(--chart-surface, var(--night-800));
+  --ck-track: var(--night-700);
+  --ck-focus: var(--accent);
+  --ck-select: var(--night-ink);
+  --ck-neutral: var(--night-ink-2);
+  --ck-positive: var(--field-500);
+  --ck-negative: var(--fire-600);
+  --ck-verified: var(--field-500);
+  --ck-declared: var(--water-600);
+  --ck-declared-bg: var(--night-900);
+  --ck-estimated: var(--accent);
+  --ck-estimated-bg: var(--night-900);
+  --ck-accent: var(--accent);
+}

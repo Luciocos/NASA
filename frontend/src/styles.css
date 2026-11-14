@@ -1,17 +1,18 @@
-/* Estilos globales. Diseño sobrio, legible en notebook y proyector. */
+/*
+ * estilos globales de lotestigo. las primitivas viven en capas, de menor a mayor prioridad:
+ * base, ui, motion y util. leaflet y el css de cada componente quedan sin capa, así que
+ * siempre les ganan
+ */
+@layer base, ui, motion, util;
+
 @import 'leaflet/dist/leaflet.css';
 @import './styles/tokens.css';
+@import './styles/ui.css';
+@import './styles/motion.css';
 
-html,
-body {
-  margin: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  font-size: 16px;
-  color: #1f1f1f;
-  background: #fff;
+@layer base {
+  html {
+    background: var(--paper);
+    text-size-adjust: 100%;
+  }
 }

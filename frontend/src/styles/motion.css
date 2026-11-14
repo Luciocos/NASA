@@ -1,0 +1,299 @@
+/*
+ * movimiento de lotestigo. solo se animan opacity y transform (también en sus formas
+ * individuales translate, scale y rotate, que se suman al transform propio del elemento
+ * en vez de pisarlo). las duraciones salen de los tokens: con prefers-reduced-motion
+ * valen casi cero y acá además se apaga cada animación
+ */
+@layer motion {
+  /*
+   * entradas y salidas para animate.enter y animate.leave de angular. --i escalona una
+   * lista: <li animate.enter="enter-rise" [style.--i]="$index">
+   */
+  .enter-rise,
+  .enter-pop,
+  .enter-fade,
+  .enter-slide {
+    animation: var(--dur-3) var(--ease-out) calc(var(--i, 0) * var(--stagger)) both;
+  }
+
+  .enter-rise {
+    animation-name: enter-rise;
+  }
+
+  .enter-pop {
+    animation-name: enter-pop;
+    animation-duration: var(--dur-4);
+    animation-timing-function: var(--ease-spring);
+  }
+
+  .enter-fade {
+    animation-name: enter-fade;
+  }
+
+  /* --slide-x cambia el lado: negativo entra desde la izquierda */
+  .enter-slide {
+    animation-name: enter-slide;
+  }
+
+  .leave-fade,
+  .leave-sink {
+    animation: var(--dur-2) var(--ease-in) both;
+  }
+
+  .leave-fade {
+    animation-name: leave-fade;
+  }
+
+  .leave-sink {
+    animation-name: leave-sink;
+  }
+
+  @keyframes enter-rise {
+    from {
+      opacity: 0;
+      translate: 0 0.75rem;
+    }
+  }
+
+  @keyframes enter-pop {
+    from {
+      opacity: 0;
+      scale: 0.88;
+    }
+  }
+
+  @keyframes enter-fade {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes enter-slide {
+    from {
+      opacity: 0;
+      translate: var(--slide-x, -1.25rem) 0;
+    }
+  }
+
+  @keyframes leave-fade {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes leave-sink {
+    to {
+      opacity: 0;
+      translate: 0 0.5rem;
+      scale: 0.97;
+    }
+  }
+
+  /* appReveal: oculto hasta que entra en pantalla */
+  .reveal {
+    opacity: 0;
+    translate: 0 1rem;
+    transition:
+      opacity var(--dur-4) var(--ease-out),
+      translate var(--dur-4) var(--ease-out);
+    transition-delay: calc(var(--i, 0) * var(--stagger));
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    translate: none;
+  }
+
+  /* anillo de selección: late dos veces y queda fijo. --pulse-color cambia el color */
+  .pulse-ring {
+    position: relative;
+  }
+
+  .pulse-ring::after {
+    content: '';
+    position: absolute;
+    inset: -0.3125rem;
+    border: 2px solid var(--pulse-color, var(--accent));
+    border-radius: inherit;
+    box-shadow:
+      0 0 0 1px var(--accent-ink),
+      inset 0 0 0 1px var(--accent-ink);
+    pointer-events: none;
+    animation: pulse-ring 0.9s var(--ease-in-out) 2;
+  }
+
+  @keyframes pulse-ring {
+    50% {
+      opacity: 0.3;
+      scale: 1.07;
+    }
+  }
+
+  /* brillo de carga: la única animación sin fin */
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 55%), transparent 80%);
+    translate: -100% 0;
+    animation: skeleton-shine 1.5s var(--ease-in-out) infinite;
+  }
+
+  @keyframes skeleton-shine {
+    to {
+      translate: 100% 0;
+    }
+  }
+
+  /*
+   * transiciones de vista del router (withViewTransitions): fundido corto con un
+   * desplazamiento leve de la página entera
+   */
+  ::view-transition-old(root) {
+    animation: vt-out var(--dur-1) var(--ease-in) both;
+  }
+
+  ::view-transition-new(root) {
+    animation: vt-in var(--dur-3) var(--ease-out) both;
+  }
+
+  @keyframes vt-out {
+    to {
+      opacity: 0;
+      translate: 0 -0.5rem;
+    }
+  }
+
+  @keyframes vt-in {
+    from {
+      opacity: 0;
+      translate: 0 0.75rem;
+    }
+  }
+
+  /*
+   * lot-hero: la tarjeta de un lote se transforma en el encabezado de su ficha. el
+   * navegador empareja los dos elementos que tengan el mismo view-transition-name antes y
+   * después de navegar, y el nombre tiene que ser único en pantalla. en la lista va solo
+   * en la tarjeta elegida: [style.view-transition-name]="lot.id === opened() ? 'lot-hero' : null"
+   * (opened se setea en el click, antes de navegar). en la ficha, el encabezado lleva la
+   * clase .vt-lot-hero
+   */
+  .vt-lot-hero {
+    view-transition-name: lot-hero;
+  }
+
+  ::view-transition-group(lot-hero) {
+    animation-duration: var(--dur-3);
+    animation-timing-function: var(--ease-out);
+  }
+
+  /*
+   * inclinación 3d: appTilt escribe --tilt-x y --tilt-y en el host y el padre directo
+   * lleva .tilt-stage. los hijos directos se despegan del plano con .depth-1 a .depth-3
+   */
+  .tilt-stage {
+    perspective: 60rem;
+  }
+
+  .tilt {
+    transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+    transform-style: preserve-3d;
+    transition: transform var(--dur-3) var(--ease-out);
+  }
+
+  /* mientras sigue al puntero responde rápido; al salir vuelve despacio */
+  .tilt:hover {
+    transition-duration: var(--dur-1);
+    will-change: transform;
+  }
+
+  .depth-1 {
+    translate: 0 0 0.5rem;
+  }
+
+  .depth-2 {
+    translate: 0 0 1rem;
+  }
+
+  .depth-3 {
+    translate: 0 0 1.75rem;
+  }
+
+  /*
+   * bloque isométrico decorativo hecho solo con css: el fondo es la cara superior y los
+   * pseudo-elementos son los dos laterales. se ajusta con --tile-size, --tile-depth,
+   * --tile-top, --tile-left y --tile-right
+   */
+  .iso-tile {
+    --tile-size: 5rem;
+    --tile-depth: 1rem;
+    --tile-top: var(--field-300);
+    --tile-left: var(--field-500);
+    --tile-right: var(--field-700);
+    --tile-q: calc(var(--tile-size) / 4);
+    --tile-side: calc(var(--tile-q) + var(--tile-depth));
+    position: relative;
+    flex: none;
+    width: var(--tile-size);
+    height: calc(var(--tile-q) + var(--tile-side));
+    background: var(--tile-top);
+    clip-path: polygon(
+      50% 0,
+      100% var(--tile-q),
+      100% var(--tile-side),
+      50% 100%,
+      0 var(--tile-side),
+      0 var(--tile-q)
+    );
+  }
+
+  .iso-tile::before,
+  .iso-tile::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--tile-left);
+    clip-path: polygon(0 var(--tile-q), 50% calc(var(--tile-q) * 2), 50% 100%, 0 var(--tile-side));
+  }
+
+  .iso-tile::after {
+    background: var(--tile-right);
+    clip-path: polygon(
+      50% calc(var(--tile-q) * 2),
+      100% var(--tile-q),
+      100% var(--tile-side),
+      50% 100%
+    );
+  }
+
+  /* sin movimiento: cada cosa queda directo en su estado final */
+  @media (prefers-reduced-motion: reduce) {
+    .enter-rise,
+    .enter-pop,
+    .enter-fade,
+    .enter-slide,
+    .leave-fade,
+    .leave-sink,
+    .pulse-ring::after,
+    .skeleton::after {
+      animation: none;
+    }
+
+    .reveal {
+      opacity: 1;
+      translate: none;
+      transition: none;
+    }
+
+    .tilt {
+      transform: none;
+    }
+
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation: none !important;
+    }
+  }
+}
