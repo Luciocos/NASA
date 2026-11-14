@@ -1,0 +1,26 @@
+// lotestigo en cloudflare workers: worker/index.js publica el build de angular y reenvía /api y /media al backend
+{
+  "name": "lotestigo",
+  "main": "worker/index.js",
+  // la más nueva que soporta wrangler 4.155.0: con una posterior, wrangler dev no arranca
+  "compatibility_date": "2026-10-30",
+  // la app queda pública en https://lotestigo.<subdominio>.workers.dev, sin login y sin links extra por versión
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    // lo genera ng build (npm run build desde la raíz)
+    "directory": "./frontend/dist/frontend/browser",
+    "binding": "ASSETS",
+    // el worker atiende todo: decide qué va al backend y responde index.html en las rutas de angular
+    "run_worker_first": true
+  },
+  // el backend: django en la notebook que tenga corriendo el tunnel lotestigo-backend, en su 127.0.0.1:8000
+  "vpc_services": [
+    { "binding": "BACKEND", "service_id": "01a1db3e-cae7-7d41-9ec8-0ae34cd2a385", "remote": true }
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.1 }
+  }
+}

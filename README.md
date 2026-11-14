@@ -79,6 +79,39 @@ Para comprobar que todo está conectado: `http://localhost:8000/api/health/` res
 
 Las credenciales (Earthdata, base de datos) van solo en un archivo `.env`, que no se sube al repositorio. Hay un `.env.example` de referencia.
 
+## Despliegue
+
+La demo está publicada en **https://lotestigo.1mj0t4h.workers.dev**. No pide login: la ve cualquiera que tenga el enlace, y no aparece en buscadores.
+
+Corre en Cloudflare Workers (`wrangler.jsonc` y `worker/index.js`):
+
+- El Worker publica el build de Angular. Las rutas de la app (`/mapa`, `/lotes/1`, `/pasaporte/<token>`) devuelven `index.html` y las resuelve el router de Angular.
+- `/api/` y `/media/` van al backend de Django, igual que el proxy de `ng serve`. Los archivos de `/media/` que genera el build, como los íconos de Leaflet, los sirve el propio Worker.
+- Django corre en una notebook del equipo. El Worker le llega al puerto 8000 de esa notebook por el tunnel `lotestigo-backend` de Cloudflare (Workers VPC), sin exponerla a internet. Si ninguna notebook tiene el tunnel corriendo, `/api/` responde 502 y el encabezado muestra "Backend sin conexión".
+
+Para que la demo tenga datos, en la notebook que hace de backend:
+
+```bash
+# Django en el puerto 8000, como en "Cómo correrlo"
+cd backend
+python manage.py runserver
+
+# En otra terminal: conecta la notebook al tunnel (el token no se sube al repositorio)
+npx --yes wrangler@4.155.0 tunnel run --token <token>
+```
+
+El token lo pasa quien administra la cuenta de Cloudflare de la demo. No hace falta instalar `cloudflared`: Wrangler lo descarga. Conviene que haya una sola notebook conectada a la vez: con dos, cada pedido puede ir a cualquiera y cada una tiene su propia base.
+
+Para publicar a mano, con Node 24 (ver `frontend/.nvmrc`) y una sesión de Wrangler en la cuenta de Cloudflare de la demo:
+
+```bash
+npm run deploy
+```
+
+Compila el frontend (`npm ci` y `ng build`) y lo sube con Wrangler.
+
+Cada push a `main` corre `.github/workflows/deploy.yml`, que compila el frontend. Si el repositorio tiene los secrets `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`, además lo publica; sin ellos solo compila.
+
 ## Estructura
 
 Monorepo separado por funcionalidad:
