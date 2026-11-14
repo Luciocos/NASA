@@ -1,0 +1,15 @@
+@if (notice(); as kind) {
+  <div class="toast" animate.enter="toast-in" animate.leave="toast-out">
+    <svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+      <path d="M16.2 10a6.2 6.2 0 1 1-1.9-4.5M16.4 3.2v3.1h-3.1" />
+    </svg>
+    @if (kind === 'update') {
+      <p>Hay una versión nueva de LoTestigo</p>
+      <button type="button" class="primary" (click)="reload()">Actualizar</button>
+      <button type="button" (click)="dismiss()">Más tarde</button>
+    } @else {
+      <p>LoTestigo necesita recargarse para seguir funcionando</p>
+      <button type="button" class="primary" (click)="reload()">Recargar</button>
+    }
+  </div>
+}

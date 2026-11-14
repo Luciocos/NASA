@@ -1,0 +1,12 @@
+{
+  "/api": {
+    "target": "https://backend-production-4b7a9dfd.up.railway.app",
+    "changeOrigin": true,
+    "secure": true
+  },
+  "/media": {
+    "target": "https://backend-production-4b7a9dfd.up.railway.app",
+    "changeOrigin": true,
+    "secure": true
+  }
+}

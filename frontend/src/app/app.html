@@ -1,10 +1,38 @@
+<a class="skip" href="#contenido" (click)="skipToContent($event, content)">Saltar al contenido</a>
+
 <header class="topbar">
-  <a routerLink="/mapa" class="brand">LoTestigo</a>
-  <span class="status">{{ backendStatus() }}</span>
+  <a routerLink="/mapa" class="brand">
+    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+      <path class="logo-top" d="M16 7l13 7-13 7-13-7z" />
+      <path class="logo-left" d="M3 14l13 7v8L3 22z" />
+      <path class="logo-right" d="M29 14l-13 7v8l13-7z" />
+      <path class="logo-rows" d="M11.7 9.3l13 7M7.3 11.7l13 7" />
+      <path class="logo-pole" d="M16 14V2.6" />
+      <path class="logo-flag" d="M16 2.6l7 2.5-7 2.5z" />
+    </svg>
+    LoTestigo
+  </a>
+
+  <nav class="nav" aria-label="Principal">
+    <a
+      routerLink="/mapa"
+      routerLinkActive="is-active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      ariaCurrentWhenActive="page"
+      >Mi campo</a
+    >
+    <a routerLink="/mapa/nuevo" routerLinkActive="is-active" ariaCurrentWhenActive="page"
+      >Marcar lote</a
+    >
+  </nav>
+
+  <app-connection-status />
 </header>
 
-<main class="content">
+<main #content id="contenido" class="content" tabindex="-1">
   <router-outlet />
 </main>
 
 <footer class="footer">Prueba de concepto. Usa datos abiertos de la NASA.</footer>
+
+<app-update-toast />
