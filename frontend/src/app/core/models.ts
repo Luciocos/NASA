@@ -137,3 +137,175 @@ export interface EventReview {
   date_uncertainty_days?: number | null;
   notes?: string;
 }
+
+// Respuestas de huella, puntaje, simulador y pasaporte (Dev C). Ver CLAUDE.md, secciones 9 y 10.
+// Extienden los tipos de arriba sin cambiarlos.
+
+/** Estado de un componente de la huella: "sin_dato" trae siempre el motivo en reason. */
+export type FootprintStatus = 'calculado' | 'sin_dato';
+
+/** Nivel de confianza global. SIN DATOS: no hay ningún dato del lote para evaluar. */
+export type ConfidenceLevel = 'ALTO' | 'BAJO' | 'SIN DATOS';
+
+export interface ConfidenceSummary {
+  level: ConfidenceLevel;
+  counts: Record<Origin, number>;
+  total: number;
+  rule: string;
+}
+
+export interface FootprintActivity {
+  quantity: number | null;
+  unit: string | null;
+  /** Origen menos respaldado de los registros (el más respaldado, para cambio de uso). */
+  origin: Origin | null;
+  origins: Origin[];
+  records: number;
+  /** Solo en cambio de uso: true detectado, false no detectado, null no se sabe. */
+  detected?: boolean | null;
+}
+
+export interface EmissionFactor {
+  key: string;
+  value?: number | null;
+  unit?: string | null;
+  source?: string | null;
+  validated?: boolean;
+}
+
+export interface FootprintComponent {
+  key: string;
+  label: string;
+  status: FootprintStatus;
+  reason: string | null;
+  note: string | null;
+  activity: FootprintActivity;
+  factor: EmissionFactor;
+  kg_co2e_per_ha: number | null;
+  kg_co2e_per_t: number | null;
+  is_simulated: boolean;
+  hypothetical: boolean;
+}
+
+export interface FootprintYield {
+  value: number | null;
+  unit: string;
+  origin: Origin | null;
+  status: FootprintStatus;
+  reason: string | null;
+}
+
+export interface CampaignRef {
+  id: number | null;
+  label: string;
+}
+
+/** GET /api/lots/{id}/footprint/?campaign=. El total es null mientras falte algún dato. */
+export interface Footprint {
+  lot: number;
+  campaign: (CampaignRef & { crop: Crop; crop_origin: Origin }) | null;
+  available_campaigns: CampaignRef[];
+  provisional: boolean;
+  disclaimer: string;
+  unit: string;
+  complete: boolean;
+  total_kg_co2e_per_t: number | null;
+  message: string | null;
+  missing_components: string[];
+  yield: FootprintYield;
+  components: FootprintComponent[];
+  confidence: ConfidenceSummary;
+  uses_simulated_data: boolean;
+}
+
+export type CriterionStatus = 'cumple' | 'no_cumple' | 'sin_dato';
+
+export interface CriterionEvidence {
+  type: EventType;
+  date: string;
+  origin: Origin;
+  is_simulated: boolean;
+  hypothetical: boolean;
+}
+
+export interface ScoreCriterion {
+  key: string;
+  label: string;
+  status: CriterionStatus;
+  status_label: string;
+  origin: Origin | null;
+  reason: string;
+  evidence: CriterionEvidence[];
+  is_simulated: boolean;
+  hypothetical: boolean;
+  weight: number | null;
+}
+
+/** GET /api/lots/{id}/score/. score es null mientras los pesos no estén definidos. */
+export interface SustainabilityScore {
+  lot: number;
+  provisional: boolean;
+  disclaimer: string;
+  score: number | null;
+  max_score: number;
+  weights_defined: boolean;
+  message: string | null;
+  criteria: ScoreCriterion[];
+  missing_criteria: string[];
+  confidence: ConfidenceSummary;
+  uses_simulated_data: boolean;
+}
+
+/** Cuerpo de POST /api/lots/{id}/simulate/. */
+export interface SimulationRequest {
+  cover_crop?: boolean;
+  campaign?: number | string;
+}
+
+export interface SimulationSnapshot {
+  footprint: Footprint;
+  score: SustainabilityScore;
+}
+
+export interface CriterionChange {
+  key: string;
+  label: string;
+  before: CriterionStatus;
+  after: CriterionStatus;
+}
+
+/** POST /api/lots/{id}/simulate/. persisted es siempre false: no se guarda nada. */
+export interface SimulationResult {
+  lot: number;
+  changes: SimulationRequest;
+  persisted: false;
+  message: string;
+  notes: string[];
+  changed_criteria: CriterionChange[];
+  before: SimulationSnapshot;
+  after: SimulationSnapshot;
+}
+
+/** POST /api/lots/{id}/passport/. url es la ruta del frontend: /pasaporte/<token>. */
+export interface PassportLink {
+  token: string;
+  lot: number;
+  url: string;
+  created_at: string;
+  expires_at: string | null;
+}
+
+/** GET /api/passports/{token}/. Un pasaporte vencido responde 410. */
+export interface PublicPassport {
+  token: string;
+  generated_at: string;
+  created_at: string;
+  expires_at: string | null;
+  lot: LotDetail;
+  events: EventLogItem[];
+  footprint: Footprint;
+  score: SustainabilityScore;
+  uses_simulated_data: boolean;
+  disclaimer: string;
+  data_notice: string;
+}

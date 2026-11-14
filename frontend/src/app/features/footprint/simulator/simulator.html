@@ -1,3 +1,80 @@
-<!-- Pantalla en construcción (Dev C). Ver CLAUDE.md, sección 11. -->
-<h2>Simulador</h2>
-<p>Cultivo de cobertura: huella y puntaje antes y después.</p>
+<p class="notice" role="note">Simulación: no modifica los datos del lote.</p>
+
+<div class="controls">
+  <label class="toggle">
+    <input
+      type="checkbox"
+      [checked]="coverCrop()"
+      (change)="coverCrop.set($any($event.target).checked)"
+    />
+    Sumar cultivo de cobertura
+  </label>
+  <button type="button" class="button" [disabled]="loading()" (click)="run()">
+    {{ loading() ? 'Simulando…' : 'Simular' }}
+  </button>
+</div>
+
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+@if (result(); as r) {
+  <table class="compare">
+    <caption class="visually-hidden">
+      Resultado antes y después de la simulación
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col"></th>
+        <th scope="col">Antes</th>
+        <th scope="col">Después (hipotético)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row">Huella por tonelada</th>
+        <td>
+          {{
+            r.before.footprint.total_kg_co2e_per_t === null
+              ? 'No se puede calcular todavía'
+              : formatKgPerTonne(r.before.footprint.total_kg_co2e_per_t)
+          }}
+        </td>
+        <td>
+          {{
+            r.after.footprint.total_kg_co2e_per_t === null
+              ? 'No se puede calcular todavía'
+              : formatKgPerTonne(r.after.footprint.total_kg_co2e_per_t)
+          }}
+        </td>
+      </tr>
+      <tr>
+        <th scope="row">Puntaje provisional</th>
+        <td>{{ scoreLabel(r.before.score.score) }}</td>
+        <td>{{ scoreLabel(r.after.score.score) }}</td>
+      </tr>
+      @for (c of r.after.score.criteria; track c.key; let i = $index) {
+        @let before = r.before.score.criteria[i];
+        <tr [class.changed]="before.status !== c.status">
+          <th scope="row">{{ c.label }}</th>
+          <td>{{ status[before.status].icon }} {{ status[before.status].label }}</td>
+          <td>
+            {{ status[c.status].icon }} {{ status[c.status].label }}
+            @if (before.status !== c.status) {
+              <strong>(cambia)</strong>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  @if (r.after.score.message) {
+    <p class="muted">{{ r.after.score.message }}</p>
+  }
+  <ul class="notes">
+    @for (note of r.notes; track note) {
+      <li>{{ note }}</li>
+    }
+  </ul>
+}

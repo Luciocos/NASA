@@ -1,3 +1,49 @@
-<!-- Pantalla en construcción (Dev C). Ver CLAUDE.md, sección 11. -->
-<h2>Huella de carbono estimada</h2>
-<p>Valor por tonelada, desglose por componente y origen de cada dato.</p>
+<p class="back">
+  <a [routerLink]="['/lotes', lotId()]">← Volver a la ficha del lote</a>
+</p>
+
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+} @else {
+  <h1>
+    Huella de carbono estimada
+    @if (lot(); as lot) {
+      <span class="lot-name">· {{ lot.name }}</span>
+    }
+  </h1>
+  <p class="notice" role="note">{{ notice }} Los valores son provisionales.</p>
+
+  @if (footprint(); as fp) {
+    @if (fp.available_campaigns.length > 0) {
+      <label class="campaign">
+        Campaña
+        <select (change)="onCampaign($any($event.target).value)">
+          @for (c of fp.available_campaigns; track c.id) {
+            <option [value]="c.id" [selected]="c.id === fp.campaign?.id">{{ c.label }}</option>
+          }
+        </select>
+      </label>
+    }
+    <section aria-labelledby="footprint-title">
+      <h2 id="footprint-title" class="visually-hidden">Huella</h2>
+      <app-footprint-breakdown [footprint]="fp" />
+      <p class="muted small">{{ fp.disclaimer }}</p>
+    </section>
+  } @else {
+    <p>Cargando huella…</p>
+  }
+
+  <section aria-labelledby="score-title">
+    <h2 id="score-title">Puntaje de sustentabilidad (provisional)</h2>
+    @if (score(); as score) {
+      <app-score-panel [score]="score" />
+    } @else {
+      <p>Cargando puntaje…</p>
+    }
+  </section>
+
+  <section aria-labelledby="simulator-title">
+    <h2 id="simulator-title">Simulador</h2>
+    <app-simulator [lotId]="lotId()" [campaign]="footprint()?.campaign?.id ?? null" />
+  </section>
+}

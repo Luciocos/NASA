@@ -1,0 +1,37 @@
+@let s = score();
+
+<p class="value">
+  Puntaje provisional:
+  @if (s.score !== null) {
+    <strong>{{ formatNumber(s.score) }} / {{ s.max_score }}</strong>
+  } @else {
+    <strong>sin número</strong>
+  }
+</p>
+@if (s.message) {
+  <p class="message">{{ s.message }}</p>
+}
+
+<ul class="criteria">
+  @for (c of s.criteria; track c.key) {
+    <li class="criterion" [class]="'criterion criterion--' + c.status">
+      <span class="criterion__status">
+        <span aria-hidden="true">{{ status[c.status].icon }}</span>
+        {{ status[c.status].label }}
+      </span>
+      <span class="criterion__body">
+        <strong>{{ c.label }}</strong>
+        @if (c.origin) {
+          <app-origin-badge [origin]="c.origin" />
+        }
+        @if (c.hypothetical) {
+          <span class="tag">Hipotético</span>
+        }
+        @if (c.is_simulated) {
+          <app-simulated-notice />
+        }
+        <span class="reason">{{ c.reason }}</span>
+      </span>
+    </li>
+  }
+</ul>

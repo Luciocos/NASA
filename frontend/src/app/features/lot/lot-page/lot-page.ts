@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { Api } from '../../../core/api';
@@ -116,6 +116,23 @@ export class LotPage {
     queueMicrotask(() =>
       document.getElementById('compare')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
     );
+  }
+
+  // Pasaporte público (Dev C): lo genera y navega a su vista.
+  private readonly router = inject(Router);
+  protected readonly creatingPassport = signal(false);
+  protected readonly passportError = signal<string | null>(null);
+
+  protected generatePassport(lotId: number): void {
+    this.creatingPassport.set(true);
+    this.passportError.set(null);
+    this.api.createPassport(lotId).subscribe({
+      next: (link) => void this.router.navigateByUrl(link.url),
+      error: () => {
+        this.creatingPassport.set(false);
+        this.passportError.set('No se pudo generar el pasaporte.');
+      },
+    });
   }
 
   protected onReviewed(updated: EventLogItem): void {

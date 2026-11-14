@@ -7,10 +7,16 @@ import {
   EventLog,
   EventLogItem,
   EventReview,
+  Footprint,
   Health,
   LotCreate,
   LotDetail,
   LotSummary,
+  PassportLink,
+  PublicPassport,
+  SimulationRequest,
+  SimulationResult,
+  SustainabilityScore,
 } from './models';
 
 /** Cliente HTTP del backend. Las rutas /api/ pasan por el proxy de ng serve. */
@@ -48,5 +54,33 @@ export class Api {
 
   reviewEvent(eventId: number, body: EventReview): Observable<EventLogItem> {
     return this.http.patch<EventLogItem>(`/api/events/${eventId}/`, body);
+  }
+
+  // Huella, puntaje, simulador y pasaporte (Dev C).
+
+  /** campaign es el id o la etiqueta de la campaña; null usa la última del lote. */
+  footprint(lotId: number, campaign: number | string | null = null): Observable<Footprint> {
+    let params = new HttpParams();
+    if (campaign !== null && campaign !== '') {
+      params = params.set('campaign', String(campaign));
+    }
+    return this.http.get<Footprint>(`/api/lots/${lotId}/footprint/`, { params });
+  }
+
+  score(lotId: number): Observable<SustainabilityScore> {
+    return this.http.get<SustainabilityScore>(`/api/lots/${lotId}/score/`);
+  }
+
+  /** Simulación: el backend no guarda nada. */
+  simulate(lotId: number, body: SimulationRequest): Observable<SimulationResult> {
+    return this.http.post<SimulationResult>(`/api/lots/${lotId}/simulate/`, body);
+  }
+
+  createPassport(lotId: number): Observable<PassportLink> {
+    return this.http.post<PassportLink>(`/api/lots/${lotId}/passport/`, {});
+  }
+
+  passport(token: string): Observable<PublicPassport> {
+    return this.http.get<PublicPassport>(`/api/passports/${token}/`);
   }
 }
