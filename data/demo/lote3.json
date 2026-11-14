@@ -1,0 +1,75 @@
+{
+  "lot": {
+    "name": "Lote 3",
+    "renspa": null,
+    "locality": "Casilda",
+    "province": "Santa Fe",
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            -61.19583,
+            -33.081878
+          ],
+          [
+            -61.188656,
+            -33.077957
+          ],
+          [
+            -61.182322,
+            -33.086169
+          ],
+          [
+            -61.189497,
+            -33.09009
+          ],
+          [
+            -61.19583,
+            -33.081878
+          ]
+        ]
+      ]
+    }
+  },
+  "campaigns": [
+    {
+      "label": "2026/27",
+      "crop": "CORN",
+      "crop_origin": "ESTIMATED"
+    }
+  ],
+  "events": [
+    {
+      "type": "SOWING",
+      "date": "2026-09-07",
+      "date_uncertainty_days": 6,
+      "sensor": "NISAR",
+      "origin": "VERIFIED",
+      "confidence": null,
+      "campaign": "2026/27",
+      "evidence_image": "evidence/lote3_2026-09-13_nisar.png",
+      "evidence_optical_image": "evidence/lote3_2026-09-13_hls.png",
+      "metrics": {
+        "nisar_product": "GCOV",
+        "nisar_track": "path 111 frame 105 descendente",
+        "dates_compared": [
+          "2026-09-01",
+          "2026-09-13"
+        ],
+        "hh_anomaly_change_db": -1.78,
+        "hv_anomaly_change_db": 0.81,
+        "threshold_db": 1.03,
+        "threshold_rule": "3.0 x desvío de lotes de referencia",
+        "threshold_validated": false,
+        "ndvi_before": 0.23,
+        "ndvi_before_date": "2026-08-28",
+        "ndvi_last": 0.34,
+        "ndvi_last_date": "2026-10-31",
+        "optical_sensor": "HLS"
+      },
+      "is_simulated": false,
+      "notes": "Cambio de superficie detectado por radar (baja de HH frente al paisaje) seguido de suba de HV y, semanas después, de NDVI: compatible con siembra. No se puede descartar una labranza previa. Prueba de concepto, sin validar en campo."
+    }
+  ]
+}

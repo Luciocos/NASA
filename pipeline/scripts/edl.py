@@ -40,8 +40,6 @@ def get_token() -> str:
 
 def open_remote_h5(url: str, token: str) -> h5py.File:
     """Abre un HDF5 remoto leyendo solo los bloques necesarios (HTTP range requests)."""
-    fs = fsspec.filesystem(
-        'https', client_kwargs={'headers': {'Authorization': f'Bearer {token}'}}
-    )
+    fs = fsspec.filesystem('https', client_kwargs={'headers': {'Authorization': f'Bearer {token}'}})
     f = fs.open(url, 'rb', block_size=8 * 1024 * 1024, cache_type='blockcache')
     return h5py.File(f, 'r')

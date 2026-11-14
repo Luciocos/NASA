@@ -42,7 +42,7 @@ def main() -> None:
             p['startTime'][:10],
             p['collectionName'].replace('NISAR_L2_GCOV_', ''),
             p['flightDirection'][:4],
-            f"path {p['pathNumber']} frame {p['frameNumber']}",
+            f'path {p["pathNumber"]} frame {p["frameNumber"]}',
             '/'.join(p.get('mainBandPolarization') or []),
             ','.join(p.get('rangeBandwidth') or []),
             p.get('frameCoverage'),

@@ -10,16 +10,16 @@ Esto ya está en `main`, así que nadie depende de que otro lo termine:
 
 - **Modelos y migraciones** de todas las apps: `Lot`, `Campaign`, `Event`, `InputRecord` y `Passport` (CLAUDE.md, sección 7).
 - **Comando `import_events`**, con validación del contrato y pruebas.
-- **Un lote simulado** en `data/demo/lote_simulado.json`, para desarrollar pantallas y endpoints sin esperar datos reales. Todos sus eventos tienen `is_simulated: true` y sensor `MANUAL`.
+- **Cuatro lotes reales** en `data/demo/lote1.json` a `lote4.json`, generados por el pipeline con NISAR y HLS (el lote simulado de desarrollo ya se borró). Detalle del método y resultados en `pipeline/README.md`.
 - **Tipos de TypeScript** de esos modelos en `frontend/src/app/core/models.ts`.
 - **Componentes compartidos** `origin-badge` y `simulated-notice`.
 
-Para tener el lote simulado en la base:
+Para tener los lotes en la base:
 
 ```bash
 cd backend
 python manage.py migrate
-python manage.py import_events ../data/demo/*.json
+python manage.py import_events ../data/demo/*.json --replace
 ```
 
 ## Tres líneas en paralelo
@@ -34,11 +34,11 @@ Trabaja contra el contrato JSON (CLAUDE.md, sección 8), que ya está fijo. No n
 | `data/demo/` | Un JSON por lote real. Se valida con `import_events`. |
 | `data/evidence/` | PNG livianos de evidencia (radar y óptico). |
 
-Cuando haya lotes reales, se borra `lote_simulado.json`.
+Los lotes reales ya están en `data/demo/`. Para regenerarlos, ver `pipeline/README.md`.
 
 ### Dev B: lotes y bitácora
 
-Trabaja contra los modelos y el lote simulado. No necesita los datos reales de Dev A.
+Trabaja contra los modelos y los lotes de `data/demo/`.
 
 | Carpeta | Tarea |
 |---|---|
@@ -64,7 +64,7 @@ Lee los modelos directamente desde su propio código. No consume la API de Dev B
 - **Carpetas separadas:** cada dev edita solo sus apps de Django y sus features de Angular.
 - **Rutas separadas:** cada app tiene su `urls.py` y cada feature su `*.routes.ts`. Los archivos raíz ya incluyen a todos.
 - **Sin dependencias cruzadas de API:** cada dev escribe el endpoint y la pantalla que lo consume.
-- **Datos de prueba propios:** el lote simulado alcanza para todas las pantallas. Las pruebas de carbono arman sus datos en el propio test.
+- **Datos de prueba propios:** los lotes de `data/demo/` alcanzan para todas las pantallas. Las pruebas de carbono arman sus datos en el propio test.
 
 ## Únicos puntos de coordinación
 

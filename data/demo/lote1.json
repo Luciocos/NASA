@@ -1,0 +1,43 @@
+{
+  "lot": {
+    "name": "Lote 1",
+    "renspa": null,
+    "locality": "Casilda",
+    "province": "Santa Fe",
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            -61.216504,
+            -33.043694
+          ],
+          [
+            -61.212117,
+            -33.04019
+          ],
+          [
+            -61.209065,
+            -33.0429
+          ],
+          [
+            -61.213452,
+            -33.046404
+          ],
+          [
+            -61.216504,
+            -33.043694
+          ]
+        ]
+      ]
+    }
+  },
+  "campaigns": [
+    {
+      "label": "2026/27",
+      "crop": "OTHER",
+      "crop_origin": "VERIFIED"
+    }
+  ],
+  "events": []
+}
