@@ -57,6 +57,7 @@ Restricciones: no copiar marca, textos, capturas, diseño de interfaz ni código
 | Frontend | Angular 22, TypeScript, componentes standalone, signals |
 | Mapa | Leaflet (uso directo, sin wrappers de terceros) |
 | Entorno | Docker Compose para la base de datos |
+| Despliegue | Cloudflare Workers: publica el build de Angular y reenvía `/api` y `/media` al backend (README, sección Despliegue) |
 
 Reglas sobre versiones:
 
@@ -86,6 +87,9 @@ lotestigo/
   README.md
   docker-compose.yml
   .env.example
+  wrangler.jsonc       # Worker de Cloudflare que publica la demo
+  package.json         # scripts de build y deploy del Worker
+  worker/              # sirve frontend/dist/frontend/browser y reenvía /api y /media al backend
   docs/
     EQUIPO.md          # dueño de cada carpeta (3 devs, por funcionalidad)
   backend/
@@ -291,6 +295,9 @@ pytest
 cd frontend
 npm install
 npx ng serve
+
+# Despliegue en Cloudflare Workers (desde la raíz, con Node 24)
+npm run deploy
 ```
 
 ## 16. Orden de trabajo
