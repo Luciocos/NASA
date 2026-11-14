@@ -86,12 +86,15 @@ lotestigo/
   README.md
   docker-compose.yml
   .env.example
+  docs/
+    EQUIPO.md          # dueño de cada carpeta (3 devs, por funcionalidad)
   backend/
     manage.py
     config/            # settings, urls
+    core/              # enum Origin, health (compartido)
     lots/              # Lot, Campaign
     events/            # Event, importador
-    carbon/            # factores, cálculo, simulador, puntaje
+    carbon/            # InputRecord, factores, cálculo, simulador, puntaje
     passports/         # enlace público
     requirements.txt
   frontend/

@@ -49,9 +49,12 @@ Los polígonos se guardan como GeoJSON en un campo JSON, sin PostGIS.
 
 ## Cómo correrlo
 
-> El código todavía se está armando. Estos comandos valen cuando el esqueleto del proyecto esté en el repositorio.
+Requisitos: Python 3.13, Node 24 LTS (ver `frontend/.nvmrc`) y Docker.
 
 ```bash
+# Variables de entorno (completar POSTGRES_PASSWORD)
+cp .env.example .env
+
 # Base de datos
 docker compose up -d db
 
@@ -66,24 +69,29 @@ python manage.py runserver
 # Pruebas
 pytest
 
-# Frontend
+# Frontend (en http://localhost:4200, con proxy de /api al backend)
 cd frontend
 npm install
 npx ng serve
 ```
 
+Para comprobar que todo está conectado: `http://localhost:8000/api/health/` responde `{"status": "ok"}` y el encabezado del frontend dice "Backend conectado".
+
 Las credenciales (Earthdata, base de datos) van solo en un archivo `.env`, que no se sube al repositorio. Hay un `.env.example` de referencia.
 
 ## Estructura
 
+Monorepo separado por funcionalidad:
+
 ```
-backend/     Django: lots, events, carbon, passports
-frontend/    Angular: mapa, ficha del lote, huella, pasaporte
+backend/     Django: core, lots, events, carbon, passports
+frontend/    Angular: features map, lot, footprint, passport
 pipeline/    Notebooks y scripts de teledetección (offline)
 data/        Lotes de demostración e imágenes de evidencia
+docs/        Reparto del trabajo en el equipo
 ```
 
-Las reglas de trabajo, el modelo de datos, la API y el contrato de importación están en [CLAUDE.md](CLAUDE.md).
+Quién es dueño de cada parte está en [docs/EQUIPO.md](docs/EQUIPO.md). Las reglas de trabajo, el modelo de datos, la API y el contrato de importación están en [CLAUDE.md](CLAUDE.md).
 
 ## Fuentes de datos
 
