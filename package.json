@@ -1,0 +1,9 @@
+{
+  "name": "lotestigo",
+  "private": true,
+  "description": "Despliegue de LoTestigo en Cloudflare Workers",
+  "scripts": {
+    "build": "npm --prefix frontend ci && npm --prefix frontend run build",
+    "deploy": "npm run build && npx --yes wrangler@4.155.0 deploy"
+  }
+}
