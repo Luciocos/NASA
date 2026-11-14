@@ -218,3 +218,24 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- Proyecto NISAR / SAR ---
+# Credenciales de Earthdata Login (earthaccess, asf_search)
+.netrc
+_netrc
+.edl_token
+*.token
+
+# Datos crudos y productos SAR pesados
+data/
+raw/
+downloads/
+*.h5
+*.hdf5
+*.he5
+*.tif
+*.tiff
+*.nc
+*.zip
+*.SAFE/
+*.vrt
