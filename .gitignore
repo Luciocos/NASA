@@ -227,7 +227,10 @@ _netrc
 *.token
 
 # Datos crudos y productos SAR pesados
-data/
+# (data/demo/ y data/evidence/ SI se suben: JSON de demo y PNG livianos)
+data/raw/
+pipeline/raw/
+pipeline/output/
 raw/
 downloads/
 *.h5
@@ -239,3 +242,10 @@ downloads/
 *.zip
 *.SAFE/
 *.vrt
+
+# --- Frontend (Angular / Node) ---
+node_modules/
+.angular/
+frontend/dist/
+npm-debug.log*
+.DS_Store
