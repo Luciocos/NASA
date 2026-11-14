@@ -5,6 +5,11 @@ POST /api/lots/        alta de lote a partir de un polígono
 GET  /api/lots/{id}/   ficha del lote con campañas
 """
 
-from django.urls import path  # noqa: F401
+from django.urls import path
 
-urlpatterns: list = []
+from lots.views import LotDetail, LotListCreate
+
+urlpatterns = [
+    path('lots/', LotListCreate.as_view(), name='lot-list'),
+    path('lots/<int:pk>/', LotDetail.as_view(), name='lot-detail'),
+]

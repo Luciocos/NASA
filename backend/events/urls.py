@@ -4,6 +4,11 @@ GET   /api/lots/{id}/events/   bitácora, filtros: type, campaign, sensor
 PATCH /api/events/{id}/        el usuario confirma o corrige un evento
 """
 
-from django.urls import path  # noqa: F401
+from django.urls import path
 
-urlpatterns: list = []
+from events.views import EventReview, LotEventList
+
+urlpatterns = [
+    path('lots/<int:lot_id>/events/', LotEventList.as_view(), name='lot-events'),
+    path('events/<int:pk>/', EventReview.as_view(), name='event-review'),
+]
