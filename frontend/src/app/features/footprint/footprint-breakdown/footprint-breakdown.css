@@ -34,12 +34,19 @@
   color: #555;
 }
 
+app-origin-badge,
+app-simulated-notice {
+  margin-left: 0.35rem;
+}
+
 .small {
   display: block;
   font-size: 0.8rem;
 }
 
 .breakdown {
+  display: block;
+  overflow-x: auto;
   width: 100%;
   border-collapse: collapse;
 }

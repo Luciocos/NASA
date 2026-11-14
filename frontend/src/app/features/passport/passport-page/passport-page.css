@@ -45,6 +45,11 @@ h2 {
   font-weight: 600;
 }
 
+app-origin-badge,
+app-simulated-notice {
+  margin-left: 0.35rem;
+}
+
 .map {
   height: 16rem;
   border: 1px solid #ccc;
