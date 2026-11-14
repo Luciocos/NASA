@@ -1,0 +1,64 @@
+<form class="declaration" (submit)="$event.preventDefault(); save()">
+  <p class="intro">
+    Cargá los datos de tu campaña. Lo que declares reemplaza al valor de referencia y queda marcado
+    como <strong>Declarado</strong>. Si dejás un campo vacío, se usa la referencia regional cuando
+    existe; si no hay referencia, ese componente queda sin dato.
+  </p>
+
+  <div class="row">
+    <label>
+      Campaña
+      <input
+        [value]="campaign()"
+        (input)="campaign.set($any($event.target).value)"
+        placeholder="2026/27"
+        required
+      />
+    </label>
+    <label>
+      Cultivo
+      <select (change)="crop.set($any($event.target).value)">
+        @for (c of crops; track c.value) {
+          <option [value]="c.value" [selected]="c.value === crop()">{{ c.label }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Rendimiento <span class="unit">t/ha</span>
+      <input
+        inputmode="decimal"
+        [value]="yieldValue()"
+        (input)="yieldValue.set($any($event.target).value)"
+        placeholder="Referencia"
+      />
+    </label>
+  </div>
+
+  <div class="grid">
+    @for (field of fields; track field.key) {
+      <label>
+        {{ field.label }} <span class="unit">{{ field.unit }}</span>
+        <input
+          inputmode="decimal"
+          [value]="values()[field.key]"
+          (input)="setValue(field.key, $any($event.target).value)"
+          placeholder="Sin declarar"
+        />
+        @if (field.hint) {
+          <span class="hint">{{ field.hint }}</span>
+        }
+      </label>
+    }
+  </div>
+
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+  @if (saved()) {
+    <p class="ok" role="status">✓ Datos guardados. La huella se recalculó.</p>
+  }
+
+  <button type="submit" class="primary" [disabled]="saving()">
+    {{ saving() ? 'Guardando…' : 'Guardar datos declarados' }}
+  </button>
+</form>

@@ -163,6 +163,8 @@ export interface FootprintActivity {
   records: number;
   /** Solo en cambio de uso: true detectado, false no detectado, null no se sabe. */
   detected?: boolean | null;
+  /** Fuente si el dato es un valor de referencia: no es del lote ni del satélite. */
+  reference?: string | null;
 }
 
 export interface EmissionFactor {
@@ -193,6 +195,19 @@ export interface FootprintYield {
   origin: Origin | null;
   status: FootprintStatus;
   reason: string | null;
+  /** Fuente si el rendimiento es un valor de referencia regional, no un dato del lote. */
+  reference?: string | null;
+}
+
+/** Categorías que el productor puede declarar, con su unidad fija por hectárea. */
+export type DeclarableInput = 'FERTILIZER_N' | 'FERTILIZER_P' | 'DIESEL' | 'PESTICIDE' | 'SEED';
+
+/** POST /api/lots/{id}/declaration/. null borra lo declarado y vuelve a la referencia. */
+export interface DeclarationRequest {
+  campaign: string;
+  crop?: Crop;
+  yield_t_ha?: number | null;
+  inputs?: Partial<Record<DeclarableInput, number | null>>;
 }
 
 export interface CampaignRef {

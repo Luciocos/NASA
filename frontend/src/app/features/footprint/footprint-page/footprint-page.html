@@ -33,6 +33,15 @@
     <p>Cargando huella…</p>
   }
 
+  <section aria-labelledby="declaration-title">
+    <h2 id="declaration-title">Datos del productor</h2>
+    <app-declaration-form
+      [lotId]="lotId()"
+      [footprint]="footprint()"
+      (declared)="onDeclared($event)"
+    />
+  </section>
+
   <section aria-labelledby="score-title">
     <h2 id="score-title">Puntaje de sustentabilidad (provisional)</h2>
     @if (score(); as score) {

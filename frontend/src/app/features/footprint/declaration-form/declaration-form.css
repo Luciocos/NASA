@@ -1,0 +1,79 @@
+.declaration {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.intro {
+  margin: 0;
+  color: #444;
+  font-size: 0.9rem;
+}
+
+.row,
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.75rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+input,
+select {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  font: inherit;
+  font-weight: 400;
+}
+
+.unit {
+  font-weight: 400;
+  color: #666;
+}
+
+.hint {
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.error {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d9a39d;
+  border-radius: 4px;
+  background: #fbeceb;
+  color: #a1261a;
+  font-size: 0.85rem;
+}
+
+.ok {
+  margin: 0;
+  color: #1b6e3a;
+  font-weight: 600;
+}
+
+.primary {
+  align-self: flex-start;
+  padding: 0.45rem 1rem;
+  border: 1px solid #1b6e3a;
+  border-radius: 4px;
+  background: #1b6e3a;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -3,6 +3,7 @@ import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import {
+  DeclarationRequest,
   EventFilters,
   EventLog,
   EventLogItem,
@@ -69,6 +70,11 @@ export class Api {
 
   score(lotId: number): Observable<SustainabilityScore> {
     return this.http.get<SustainabilityScore>(`/api/lots/${lotId}/score/`);
+  }
+
+  /** El productor declara rendimiento e insumos. Responde la huella recalculada. */
+  declare(lotId: number, body: DeclarationRequest): Observable<Footprint> {
+    return this.http.post<Footprint>(`/api/lots/${lotId}/declaration/`, body);
   }
 
   /** Simulación: el backend no guarda nada. */

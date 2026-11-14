@@ -29,12 +29,31 @@
   }
 </div>
 
+<details class="legend" [open]="!compact()">
+  <summary>¿De dónde sale cada dato?</summary>
+  <ul>
+    <li><strong>Verificado:</strong> observado por satélite (NISAR, HLS).</li>
+    <li><strong>Declarado:</strong> cargado por el productor.</li>
+    <li>
+      <strong>Estimado:</strong> valor de referencia cargado por el equipo con su fuente. No es un
+      dato del lote ni una observación satelital.
+    </li>
+    <li>Los factores de emisión son constantes publicadas, con su fuente en cada fila.</li>
+  </ul>
+</details>
+
 <p class="yield">
   Rendimiento:
   @if (fp.yield.value !== null) {
     <strong>{{ formatNumber(fp.yield.value) }} t/ha</strong>
     @if (fp.yield.origin) {
       <app-origin-badge [origin]="fp.yield.origin" />
+    }
+    @if (fp.yield.reference) {
+      <span class="reference">
+        Valor de referencia regional, no observado por satélite. Fuente:
+        {{ fp.yield.reference }}
+      </span>
     }
   } @else {
     <strong>Sin dato</strong>
@@ -71,6 +90,11 @@
           }
           @if (c.activity.origin) {
             <app-origin-badge [origin]="c.activity.origin" />
+          }
+          @if (c.activity.reference) {
+            <span class="reference">
+              Valor de referencia, no observado por satélite. Fuente: {{ c.activity.reference }}
+            </span>
           }
           @if (c.is_simulated) {
             <app-simulated-notice />

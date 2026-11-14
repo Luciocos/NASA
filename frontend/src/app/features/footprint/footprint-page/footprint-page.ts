@@ -5,6 +5,7 @@ import { map } from 'rxjs';
 
 import { Api } from '../../../core/api';
 import { Footprint, LotDetail, SustainabilityScore } from '../../../core/models';
+import { DeclarationForm } from '../declaration-form/declaration-form';
 import { FootprintBreakdown } from '../footprint-breakdown/footprint-breakdown';
 import { ESTIMATE_NOTICE } from '../format';
 import { ScorePanel } from '../score-panel/score-panel';
@@ -12,7 +13,7 @@ import { Simulator } from '../simulator/simulator';
 
 /** Huella estimada, puntaje provisional y simulador (CLAUDE.md, sección 11, pantallas 4 y 5). */
 @Component({
-  imports: [RouterLink, FootprintBreakdown, ScorePanel, Simulator],
+  imports: [RouterLink, DeclarationForm, FootprintBreakdown, ScorePanel, Simulator],
   selector: 'app-footprint-page',
   styleUrl: './footprint-page.css',
   templateUrl: './footprint-page.html',
@@ -70,6 +71,13 @@ export class FootprintPage {
       });
       onCleanup(() => subscription.unsubscribe());
     });
+  }
+
+  /** Tras declarar: muestra la huella recalculada y vuelve a pedir el puntaje. */
+  protected onDeclared(footprint: Footprint): void {
+    this.footprint.set(footprint);
+    if (footprint.campaign?.id) this.campaign.set(footprint.campaign.id);
+    this.api.score(this.lotId()).subscribe({ next: (score) => this.score.set(score) });
   }
 
   protected onCampaign(value: string): void {
