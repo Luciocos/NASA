@@ -1,0 +1,47 @@
+# Factores de emisión. Ver CLAUDE.md, sección 9.
+#
+# NO INVENTAR VALORES. Cada entrada necesita una fuente verificada
+# (documento y tabla, por ejemplo IPCC 2019 o PACN). Sin fuente:
+# value: null y validated: false. El cálculo informa el componente como "sin dato".
+
+fertilizer_n_production:
+  value: null
+  unit: null
+  source: null
+  validated: false
+
+fertilizer_p_production:
+  value: null
+  unit: null
+  source: null
+  validated: false
+
+soil_n2o:
+  value: null
+  unit: null
+  source: null
+  validated: false
+
+diesel:
+  value: null
+  unit: null
+  source: null
+  validated: false
+
+pesticides:
+  value: null
+  unit: null
+  source: null
+  validated: false
+
+seed:
+  value: null
+  unit: null
+  source: null
+  validated: false
+
+land_use_change:
+  value: null
+  unit: null
+  source: null
+  validated: false

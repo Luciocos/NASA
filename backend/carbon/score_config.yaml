@@ -1,0 +1,10 @@
+# Pesos del puntaje de sustentabilidad (0 a 100). Ver CLAUDE.md, sección 9.
+# El puntaje es provisional. Los pesos los define el equipo: no cargar
+# números sin acordarlos (CLAUDE.md, sección 18).
+
+weights:
+  no_land_use_change_since_2020: null
+  no_till: null
+  winter_cover: null
+  rotation: null
+  no_burn: null
