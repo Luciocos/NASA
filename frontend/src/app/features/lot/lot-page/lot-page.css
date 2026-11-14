@@ -128,3 +128,14 @@ h2 {
 .error {
   color: #9b1c1c;
 }
+
+.lot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.lot-actions a.button {
+  text-decoration: none;
+}

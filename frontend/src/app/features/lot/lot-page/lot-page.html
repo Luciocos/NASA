@@ -21,6 +21,21 @@
         </div>
       }
     </dl>
+    <!-- Enlaces a huella y pasaporte (Dev C). -->
+    <p class="lot-actions">
+      <a class="button" [routerLink]="['/huella', lot.id]">Ver huella estimada</a>
+      <button
+        type="button"
+        class="button"
+        [disabled]="creatingPassport()"
+        (click)="generatePassport(lot.id)"
+      >
+        {{ creatingPassport() ? 'Generando…' : 'Generar pasaporte' }}
+      </button>
+      @if (passportError(); as message) {
+        <span class="error" role="alert">{{ message }}</span>
+      }
+    </p>
   </header>
 
   <section aria-labelledby="campaigns-title">
