@@ -1,45 +1,111 @@
 # Factores de emisión. Ver CLAUDE.md, sección 9.
 #
-# NO INVENTAR VALORES. Cada entrada necesita una fuente verificada
-# (documento y tabla, por ejemplo IPCC 2019 o PACN). Sin fuente:
-# value: null y validated: false. El cálculo informa el componente como "sin dato".
+# Cada valor está verificado contra el documento original (tabla y página citadas).
+# Ninguno es un dato satelital: son constantes publicadas que cargó el equipo.
+#
+# Conversión a CO2e: potenciales de calentamiento a 100 años de IPCC AR5, tal como los
+# publica US EPA, "GHG Emission Factors Hub" (15/01/2025), página 1: CH4 = 28, N2O = 265.
+# Field to Market publica cada gas por separado; acá se suman con esos mismos potenciales.
+#
+# Unidades: el factor es "kg CO2e/<u>" y el insumo se carga en "<u>/ha".
+# Sin valor verificado: value null y validated false. El cálculo lo informa como "sin dato".
 
 fertilizer_n_production:
-  value: null
-  unit: null
-  source: null
-  validated: false
+  # 0,76 kg CO2 + 0,0111846 kg CH4 x 28 + 0,0026369 kg N2O x 265, por kg de N
+  value: 1.772
+  unit: kg CO2e/kg
+  activity: kg de N por hectárea (nutriente, no producto)
+  source: >-
+    Field to Market, Metric Methods 5.0, "Impact Factors of Fertilizers", Table 5
+    (US average nitrogen fertilizer, per kg N; cradle to processing gate),
+    https://methods.fieldtomarket.org/impact-factors/fertilizers.html
+  validated: true
 
 fertilizer_p_production:
-  value: null
-  unit: null
-  source: null
-  validated: false
+  # 1,80 kg CO2 + 0,0057498 kg CH4 x 28 + 0,0000540 kg N2O x 265, por kg de P2O5
+  value: 1.975
+  unit: kg CO2e/kg
+  activity: kg de P2O5 por hectárea (nutriente, no producto)
+  source: >-
+    Field to Market, Metric Methods 5.0, "Impact Factors of Fertilizers", Table 5
+    (US average phosphate fertilizer, per kg P2O5),
+    https://methods.fieldtomarket.org/impact-factors/fertilizers.html
+  validated: true
 
 soil_n2o:
-  value: null
-  unit: null
-  source: null
-  validated: false
+  # EF1 0,010 kg N2O-N/kg N x 44/28 x 265. Solo emisiones directas (sin indirectas).
+  value: 4.164
+  unit: kg CO2e/kg
+  activity: kg de N aplicado por hectárea
+  source: >-
+    IPCC 2019 Refinement to the 2006 Guidelines, Vol. 4, Cap. 11, Table 11.1 (Updated),
+    p. 11.13: EF1 por defecto agregado 0,010 kg N2O-N (kg N)-1 (rango 0,002-0,018);
+    conversión N2O-N a N2O x 44/28 (p. 11.7, a continuación de la Ecuación 11.1)
+  validated: true
 
 diesel:
-  value: null
-  unit: null
-  source: null
-  validated: false
+  # (10,21 kg CO2 + 1,26 g CH4 x 28 + 1,07 g N2O x 265) por galón / 3,785411784 l
+  value: 2.781
+  unit: kg CO2e/l
+  activity: litros de gasoil por hectárea
+  source: >-
+    US EPA, GHG Emission Factors Hub (15/01/2025), Table 2 (Diesel Fuel, 10.21 kg CO2 por
+    galón) y Table 5 (Agricultural Equipment, Diesel Equipment: 1.26 g CH4 y 1.07 g N2O
+    por galón). Solo combustión, sin producción del combustible.
+  validated: true
 
 pesticides:
-  value: null
-  unit: null
-  source: null
-  validated: false
+  # 19,57 kg CO2 + 0,0373498 kg CH4 x 28 + 0,0003573 kg N2O x 265, por kg de principio activo
+  value: 20.71
+  unit: kg CO2e/kg
+  activity: kg de principio activo por hectárea
+  source: >-
+    Field to Market, Metric Methods 5.0, "Impact Factors of Crop Protectants and
+    Inoculants", Table 2 (Herbicides, per kg active ingredient). Se aplica también a
+    insecticidas (Table 2 da 18.23 kg CO2: diferencia menor al 7 %).
+    https://methods.fieldtomarket.org/impact-factors/crop-protectants.html
+  validated: true
 
+# Semilla: el factor depende del cultivo. El cálculo usa seed_<cultivo> y, si no existe,
+# este genérico. Para OTHER no hay factor con fuente.
 seed:
   value: null
   unit: null
   source: null
   validated: false
 
+seed_corn:
+  # 0,18 kg CO2 + 0,0000937 kg CH4 x 28 + 0,0007057 kg N2O x 265, por kg de semilla
+  value: 0.370
+  unit: kg CO2e/kg
+  activity: kg de semilla por hectárea
+  source: >-
+    Field to Market, Metric Methods 5.0, "Impact Factors of Seed Production", Table 3
+    (Corn grain, per kg seed), https://methods.fieldtomarket.org/impact-factors/seeds.html
+  validated: true
+
+seed_soy:
+  # 0,34 kg CO2 + 0,0001977 kg CH4 x 28 + 0,0004425 kg N2O x 265, por kg de semilla
+  value: 0.463
+  unit: kg CO2e/kg
+  activity: kg de semilla por hectárea
+  source: >-
+    Field to Market, Metric Methods 5.0, "Impact Factors of Seed Production", Table 3
+    (Soybeans, per kg seed), https://methods.fieldtomarket.org/impact-factors/seeds.html
+  validated: true
+
+seed_wheat:
+  # 0,56 kg CO2 + 0,0003599 kg CH4 x 28 + 0,0014283 kg N2O x 265, por kg de semilla
+  value: 0.949
+  unit: kg CO2e/kg
+  activity: kg de semilla por hectárea
+  source: >-
+    Field to Market, Metric Methods 5.0, "Impact Factors of Seed Production", Table 3
+    (Wheat, per kg seed), https://methods.fieldtomarket.org/impact-factors/seeds.html
+  validated: true
+
+# Sin fuente verificada todavía. Solo afecta a lotes con cambio de uso detectado:
+# si la bitácora no tiene ese evento, el aporte es 0 y no hace falta el factor.
 land_use_change:
   value: null
   unit: null
