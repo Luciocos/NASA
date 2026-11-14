@@ -1,0 +1,153 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "lote1",
+    "name": "Lote 1",
+    "locality": "Casilda",
+    "province": "Santa Fe",
+    "selection": "Dibujado sobre Sentinel-2 L2A del 2026-11-08 (S2A_20HPJ_20261108_0_L2A), 30 m hacia adentro del borde del campo. Sin titular ni RENSPA."
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -61.216504,
+       -33.043694
+      ],
+      [
+       -61.212117,
+       -33.04019
+      ],
+      [
+       -61.209065,
+       -33.0429
+      ],
+      [
+       -61.213452,
+       -33.046404
+      ],
+      [
+       -61.216504,
+       -33.043694
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "lote2",
+    "name": "Lote 2",
+    "locality": "Casilda",
+    "province": "Santa Fe",
+    "selection": "Dibujado sobre Sentinel-2 L2A del 2026-11-08 (S2A_20HPJ_20261108_0_L2A), 30 m hacia adentro del borde del campo. Sin titular ni RENSPA."
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -61.217701,
+       -33.033698
+      ],
+      [
+       -61.212291,
+       -33.039945
+      ],
+      [
+       -61.216032,
+       -33.042243
+      ],
+      [
+       -61.221442,
+       -33.035997
+      ],
+      [
+       -61.217701,
+       -33.033698
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "lote3",
+    "name": "Lote 3",
+    "locality": "Casilda",
+    "province": "Santa Fe",
+    "selection": "Dibujado sobre Sentinel-2 L2A del 2026-11-08 (S2A_20HPJ_20261108_0_L2A), 30 m hacia adentro del borde del campo. Sin titular ni RENSPA."
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -61.19583,
+       -33.081878
+      ],
+      [
+       -61.188656,
+       -33.077957
+      ],
+      [
+       -61.182322,
+       -33.086169
+      ],
+      [
+       -61.189497,
+       -33.09009
+      ],
+      [
+       -61.19583,
+       -33.081878
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "lote4",
+    "name": "Lote 4",
+    "locality": "Casilda",
+    "province": "Santa Fe",
+    "selection": "Dibujado sobre Sentinel-2 L2A del 2026-11-08 (S2A_20HPJ_20261108_0_L2A), 30 m hacia adentro del borde del campo. Sin titular ni RENSPA."
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -61.220634,
+       -33.084993
+      ],
+      [
+       -61.225261,
+       -33.079032
+      ],
+      [
+       -61.220882,
+       -33.076623
+      ],
+      [
+       -61.216254,
+       -33.082583
+      ],
+      [
+       -61.220634,
+       -33.084993
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}
