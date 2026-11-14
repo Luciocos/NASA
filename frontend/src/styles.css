@@ -1,5 +1,6 @@
 /* Estilos globales. Diseño sobrio, legible en notebook y proyector. */
 @import 'leaflet/dist/leaflet.css';
+@import './styles/tokens.css';
 
 html,
 body {

@@ -1,0 +1,166 @@
+/*
+ * tokens de diseño de lotestigo: color, tipografía, espacios, profundidad y movimiento
+ * todo componente toma sus valores de acá. no hay fuentes ni recursos externos: la
+ * interfaz se ve igual sin conexión
+ */
+:root {
+  color-scheme: light;
+
+  /* tinta y superficies */
+  --ink: #16241b;
+  --ink-2: #3a4a3f;
+  --ink-3: #56645a; /* texto secundario: contraste AA sobre --paper y --surface */
+  --paper: #f5f2e9;
+  --paper-2: #ece7d8;
+  --surface: #ffffff;
+  --line: #d8d2c0;
+  --line-strong: #b0a88f;
+
+  /* campo */
+  --field-900: #12401f;
+  --field-700: #1b6e3a; /* acción principal */
+  --field-500: #3d9a4f;
+  --field-300: #8fcf7c;
+  --field-100: #e3f3dc;
+  --soil-700: #6b4429;
+  --soil-500: #96633f;
+  --soil-300: #c9a27c;
+  --straw-500: #dcb651;
+  --straw-200: #f3e3ae;
+  --water-600: #2a6fb0;
+  --water-300: #8dc3ea;
+  --fire-600: #c8432a;
+  --fire-200: #f6c7b9;
+
+  /* espacio: cromo oscuro del mapa isométrico y de sus controles */
+  --night-900: #0b1622;
+  --night-800: #12202f;
+  --night-700: #1b2f44;
+  --night-600: #2a4563;
+  --night-ink: #e8eef5;
+  --night-ink-2: #a9b8c8;
+  --accent: #f2a43a; /* selección y foco dentro del mapa */
+  --accent-strong: #d98512;
+  --accent-ink: #4a2c00;
+
+  /* origen del dato: mismos colores que origin-badge. nunca es la única señal */
+  --origin-verified: #1b6e3a;
+  --origin-verified-bg: #e6f4ea;
+  --origin-declared: #1a4f8b;
+  --origin-declared-bg: #e7effa;
+  --origin-estimated: #8a5a00;
+  --origin-estimated-bg: #fdf3e1;
+
+  /* estados */
+  --ok: #1b6e3a;
+  --ok-bg: #e6f4ea;
+  --warn: #8a5a00;
+  --warn-bg: #fdf3e1;
+  --danger: #a1261a;
+  --danger-bg: #fbeceb;
+  --info: #1a4f8b;
+  --info-bg: #e7effa;
+  --focus-ring: #1a4f8b;
+
+  /* tipografía: fuentes del sistema, sin descargas */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --leading-tight: 1.15;
+  --leading-normal: 1.5;
+
+  /* espacios */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* radios */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* profundidad: sombras en capas, de menor a mayor altura */
+  --shadow-1: 0 1px 2px rgb(22 36 27 / 8%), 0 1px 1px rgb(22 36 27 / 6%);
+  --shadow-2: 0 2px 4px rgb(22 36 27 / 8%), 0 6px 14px rgb(22 36 27 / 10%);
+  --shadow-3: 0 4px 8px rgb(22 36 27 / 10%), 0 18px 36px rgb(22 36 27 / 16%);
+  --shadow-hud: 0 8px 24px rgb(3 10 18 / 45%), 0 0 0 1px rgb(255 255 255 / 6%) inset;
+
+  /* movimiento: solo se animan transform y opacity */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-1: 120ms;
+  --dur-2: 220ms;
+  --dur-3: 360ms;
+  --dur-4: 600ms;
+  --stagger: 45ms;
+
+  /* capas. leaflet usa hasta 1000 dentro de su contenedor */
+  --z-hud: 20;
+  --z-topbar: 1100;
+  --z-overlay: 1200;
+  --z-toast: 1300;
+
+  /* agregados por las primitivas de ui.css y motion.css */
+  --line-control: #8a8370; /* borde de campos y botones: contraste 3:1 sobre --surface y --paper */
+  --link: var(--field-700);
+  --night-glass: rgb(11 22 34 / 88%); /* cromo translúcido de .hud sobre el mapa */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1); /* salidas */
+}
+
+/* rebote con linear() donde el navegador lo soporta */
+@supports (animation-timing-function: linear(0, 1)) {
+  :root {
+    --ease-spring: linear(
+      0,
+      0.009,
+      0.035 2.1%,
+      0.141,
+      0.281 6.7%,
+      0.723 12.9%,
+      0.938 16.7%,
+      1.017,
+      1.077,
+      1.121,
+      1.149 24.3%,
+      1.159,
+      1.163,
+      1.161,
+      1.154 29.9%,
+      1.129 32.8%,
+      1.051 39.6%,
+      1.017 43.1%,
+      0.991,
+      0.977 51%,
+      0.974 53.8%,
+      0.975 57.1%,
+      0.997 69.8%,
+      1.003 76.9%,
+      1.004 83.8%,
+      1
+    );
+  }
+}
+
+/* quien pide menos movimiento ve los cambios al instante */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 0.01ms;
+    --dur-2: 0.01ms;
+    --dur-3: 0.01ms;
+    --dur-4: 0.01ms;
+    --stagger: 0ms;
+  }
+}

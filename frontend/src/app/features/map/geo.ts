@@ -36,6 +36,28 @@ export function areaHa(points: readonly LatLng[]): number {
   return Math.abs(twiceArea) / 2 / 10_000;
 }
 
+/**
+ * superficie aproximada de un polígono geojson en hectáreas, descontando los huecos
+ *
+ * usa la misma proyección de áreas iguales que areaHa, anillo por anillo: el primero es el
+ * exterior y los demás son huecos. no depende del sentido de giro de los anillos. el valor que
+ * queda guardado lo calcula el backend
+ */
+export function geometryAreaHa(geometry: PolygonGeometry): number {
+  const [exterior, ...holes] = geometry.coordinates.map(ringToLatLngs);
+  if (!exterior) return 0;
+  const holesHa = holes.reduce((sum, hole) => sum + areaHa(hole), 0);
+  return Math.max(0, areaHa(exterior) - holesHa);
+}
+
+// anillo geojson [lng, lat] a puntos [lat, lng], sin el punto de cierre repetido: areaHa centra
+// la proyección en el promedio de los puntos y el cierre lo correría
+function ringToLatLngs(ring: number[][]): LatLng[] {
+  const last = ring.length - 1;
+  const closed = last > 0 && ring[0][0] === ring[last][0] && ring[0][1] === ring[last][1];
+  return (closed ? ring.slice(0, last) : ring).map(([lng, lat]): LatLng => [lat, lng]);
+}
+
 /** GeoJSON Polygon para la API: pares [longitud, latitud] y anillo cerrado. */
 export function toPolygonGeometry(points: readonly LatLng[]): PolygonGeometry {
   const ring = points.map(([lat, lng]) => [round(lng), round(lat)]);
