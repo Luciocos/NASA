@@ -1,0 +1,155 @@
+.compare {
+  padding: 1rem 1.25rem;
+  border: 2px solid #1a4f8b;
+  border-radius: 8px;
+  background: #fafbfd;
+}
+
+.compare__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.compare__header h2 {
+  margin: 0 0 0.25rem;
+}
+
+.compare__meta {
+  margin: 0;
+  color: #444;
+}
+
+.button {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #1a4f8b;
+  border-radius: 4px;
+  background: #fff;
+  color: #1a4f8b;
+  font: inherit;
+  cursor: pointer;
+}
+
+.side-by-side {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+figure {
+  margin: 0;
+}
+
+figure img,
+.overlay img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #ccc;
+  background: #eee;
+}
+
+.single img {
+  max-width: 40rem;
+}
+
+figcaption {
+  margin-top: 0.3rem;
+  font-weight: 600;
+}
+
+.hint {
+  margin-top: 0;
+  color: #555;
+}
+
+.overlay {
+  position: relative;
+  max-width: 48rem;
+  user-select: none;
+}
+
+.overlay__top {
+  position: absolute;
+  inset: 0;
+}
+
+.overlay__handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  margin-left: -1px;
+  background: #fff;
+  box-shadow: 0 0 0 1px #1f1f1f;
+  pointer-events: none;
+}
+
+.overlay__tag {
+  position: absolute;
+  top: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  background: rgb(0 0 0 / 70%);
+  color: #fff;
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.overlay__tag--left {
+  left: 0.5rem;
+}
+
+.overlay__tag--right {
+  right: 0.5rem;
+}
+
+.overlay__range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: ew-resize;
+}
+
+.overlay:focus-within .overlay__handle {
+  width: 5px;
+  background: #ffd23f;
+}
+
+.missing {
+  padding: 0.75rem;
+  border: 1px dashed #999;
+  border-radius: 4px;
+  color: #444;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+}
+
+.metrics dt {
+  font-family: ui-monospace, monospace;
+}
+
+.metrics dd {
+  margin: 0;
+}
+
+.disclaimer {
+  margin-bottom: 0;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+@media (max-width: 700px) {
+  .side-by-side {
+    grid-template-columns: 1fr;
+  }
+}

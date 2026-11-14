@@ -1,3 +1,85 @@
-<!-- Pantalla en construcción (Dev B). Ver CLAUDE.md, sección 11. -->
-<h2>Radar contra óptico</h2>
-<p>Imagen NISAR y óptica del mismo evento, lado a lado o con deslizador.</p>
+<section class="compare" aria-labelledby="compare-title">
+  <header class="compare__header">
+    <div>
+      <h2 id="compare-title">Radar contra óptico: {{ event().type_label }}</h2>
+      <p class="compare__meta">
+        {{ dateLabel() }} · <app-origin-badge [origin]="event().origin" />
+        @if (confidence(); as value) {
+          · Confianza de la detección: {{ value }}
+        }
+        @if (event().is_simulated) {
+          · <app-simulated-notice />
+        }
+      </p>
+    </div>
+    <button type="button" class="button" (click)="closed.emit()">Cerrar comparación</button>
+  </header>
+
+  @if (radarUrl(); as radar) {
+    @if (opticalUrl(); as optical) {
+      <div class="side-by-side">
+        <figure>
+          <img [src]="radar" [alt]="radarLabel()" (error)="onImageError('radar')" />
+          <figcaption>{{ radarLabel() }}</figcaption>
+        </figure>
+        <figure>
+          <img [src]="optical" [alt]="opticalLabel()" (error)="onImageError('optical')" />
+          <figcaption>{{ opticalLabel() }}</figcaption>
+        </figure>
+      </div>
+
+      <h3>Superpuestas</h3>
+      <p class="hint">Arrastrá el deslizador para pasar de una imagen a la otra.</p>
+      <div class="overlay">
+        <img class="overlay__base" [src]="optical" alt="" />
+        <img
+          class="overlay__top"
+          [src]="radar"
+          alt=""
+          [style.clip-path]="'inset(0 ' + (100 - split()) + '% 0 0)'"
+        />
+        <div class="overlay__handle" [style.left.%]="split()" aria-hidden="true"></div>
+        <span class="overlay__tag overlay__tag--left">{{ radarLabel() }}</span>
+        <span class="overlay__tag overlay__tag--right">{{ opticalLabel() }}</span>
+        <input
+          class="overlay__range"
+          type="range"
+          min="0"
+          max="100"
+          [value]="split()"
+          (input)="onSplitInput($any($event.target).value)"
+          [attr.aria-label]="'Porcentaje visible de la imagen ' + radarLabel()"
+        />
+      </div>
+    } @else {
+      <figure class="single">
+        <img [src]="radar" [alt]="radarLabel()" (error)="onImageError('radar')" />
+        <figcaption>{{ radarLabel() }}</figcaption>
+      </figure>
+      <p class="missing">Este evento no tiene imagen óptica para comparar.</p>
+    }
+  } @else if (opticalUrl(); as optical) {
+    <figure class="single">
+      <img [src]="optical" [alt]="opticalLabel()" (error)="onImageError('optical')" />
+      <figcaption>{{ opticalLabel() }}</figcaption>
+    </figure>
+    <p class="missing">Este evento no tiene imagen de radar para comparar.</p>
+  } @else {
+    <p class="missing">
+      Este evento todavía no tiene imágenes de evidencia. Se muestran cuando el procesamiento
+      satelital las entrega.
+    </p>
+  }
+
+  @if (metrics().length > 0) {
+    <h3>Métricas de la detección</h3>
+    <dl class="metrics">
+      @for (metric of metrics(); track metric.key) {
+        <dt>{{ metric.key }}</dt>
+        <dd>{{ metric.value }}</dd>
+      }
+    </dl>
+  }
+
+  <p class="disclaimer">Prueba de concepto: la detección no está validada en campo.</p>
+</section>

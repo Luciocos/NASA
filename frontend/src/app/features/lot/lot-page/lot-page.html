@@ -1,3 +1,136 @@
-<!-- Pantalla en construcción (Dev B). Ver CLAUDE.md, sección 11. -->
-<h2>Ficha del lote</h2>
-<p>Datos básicos y bitácora como línea de tiempo.</p>
+<p class="back"><a routerLink="/mapa">← Volver al mapa</a></p>
+
+@if (lotError(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+} @else if (lot(); as lot) {
+  <header class="lot">
+    <h1>{{ lot.name }}</h1>
+    <dl class="facts">
+      <div>
+        <dt>Ubicación</dt>
+        <dd>{{ lot.locality || 'Sin localidad' }}{{ lot.province ? ', ' + lot.province : '' }}</dd>
+      </div>
+      <div>
+        <dt>Superficie</dt>
+        <dd>{{ areaLabel() }} <span class="small">(calculada del polígono)</span></dd>
+      </div>
+      @if (lot.renspa) {
+        <div>
+          <dt>RENSPA</dt>
+          <dd>{{ lot.renspa }}</dd>
+        </div>
+      }
+    </dl>
+  </header>
+
+  <section aria-labelledby="campaigns-title">
+    <h2 id="campaigns-title">Campañas</h2>
+    @if (lot.campaigns.length === 0) {
+      <p>Este lote todavía no tiene campañas registradas.</p>
+    } @else {
+      <table class="campaigns">
+        <thead>
+          <tr>
+            <th scope="col">Campaña</th>
+            <th scope="col">Cultivo</th>
+            <th scope="col">Origen del cultivo</th>
+            <th scope="col">Rendimiento</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (campaign of lot.campaigns; track campaign.id) {
+            <tr>
+              <td>{{ campaign.label }}</td>
+              <td>{{ campaign.crop_label }}</td>
+              <td><app-origin-badge [origin]="campaign.crop_origin" /></td>
+              <td>
+                @if (campaign.yield_t_ha !== null) {
+                  {{ campaign.yield_t_ha }} t/ha
+                  @if (campaign.yield_origin) {
+                    <app-origin-badge [origin]="campaign.yield_origin" />
+                  }
+                } @else {
+                  Sin dato
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+
+  @if (selectedEvent(); as event) {
+    <div id="compare" class="compare-slot">
+      <app-radar-optical-compare [event]="event" (closed)="selectedEventId.set(null)" />
+    </div>
+  }
+
+  <section aria-labelledby="log-title">
+    <h2 id="log-title">Bitácora de eventos</h2>
+
+    <div class="filters" role="group" aria-label="Filtros de la bitácora">
+      <label>
+        Tipo
+        <select [value]="typeFilter()" (change)="onTypeFilter($any($event.target).value)">
+          <option value="">Todos</option>
+          @for (type of eventTypes; track type) {
+            <option [value]="type" [selected]="type === typeFilter()">
+              {{ eventTypeLabels[type] }}
+            </option>
+          }
+        </select>
+      </label>
+      <label>
+        Sensor
+        <select [value]="sensorFilter()" (change)="onSensorFilter($any($event.target).value)">
+          <option value="">Todos</option>
+          @for (sensor of sensors; track sensor) {
+            <option [value]="sensor" [selected]="sensor === sensorFilter()">
+              {{ sensorLabels[sensor] }}
+            </option>
+          }
+        </select>
+      </label>
+      <label>
+        Campaña
+        <select [value]="campaignFilter()" (change)="onCampaignFilter($any($event.target).value)">
+          <option value="">Todas</option>
+          @for (campaign of lot.campaigns; track campaign.id) {
+            <option [value]="campaign.id" [selected]="campaign.id === campaignFilter()">
+              {{ campaign.label }}
+            </option>
+          }
+        </select>
+      </label>
+      @if (typeFilter() || sensorFilter() || campaignFilter()) {
+        <button type="button" class="button" (click)="clearFilters()">Quitar filtros</button>
+      }
+    </div>
+
+    @if (logError(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    } @else if (log(); as log) {
+      @if (log.message) {
+        <p class="empty">{{ log.message }}</p>
+      }
+      <ol class="timeline">
+        @for (event of log.events; track event.id) {
+          <li class="timeline__entry">
+            <span class="timeline__dot" aria-hidden="true"></span>
+            <app-event-log-item
+              [event]="event"
+              [selected]="event.id === selectedEventId()"
+              (compare)="openCompare($event)"
+              (reviewed)="onReviewed($event)"
+            />
+          </li>
+        }
+      </ol>
+    } @else {
+      <p>Cargando bitácora…</p>
+    }
+  </section>
+} @else {
+  <p>Cargando lote…</p>
+}
