@@ -78,3 +78,62 @@ export interface Health {
   status: string;
   database: string;
 }
+
+// Respuestas de la API de lotes y bitácora (Dev B). Ver CLAUDE.md, sección 10.
+// Extienden los tipos de arriba sin cambiarlos.
+
+/** Elemento de GET /api/lots/. */
+export interface LotSummary extends Lot {
+  event_count: number;
+}
+
+export interface CampaignDetail extends Campaign {
+  crop_label: string;
+}
+
+/** GET /api/lots/{id}/. */
+export interface LotDetail extends LotSummary {
+  campaigns: CampaignDetail[];
+}
+
+/** Cuerpo de POST /api/lots/. El área la calcula el backend. */
+export interface LotCreate {
+  name: string;
+  renspa?: string | null;
+  locality?: string;
+  province?: string;
+  geometry: PolygonGeometry;
+}
+
+/** Evento tal como lo devuelve la bitácora. Las URL de evidencia son null si no hay imagen. */
+export interface EventLogItem extends LotEvent {
+  campaign_label: string | null;
+  type_label: string;
+  sensor_label: string;
+  evidence_image_url: string | null;
+  evidence_optical_image_url: string | null;
+}
+
+/** GET /api/lots/{id}/events/. message explica por qué la lista está vacía (null si no lo está). */
+export interface EventLog {
+  lot: number;
+  count: number;
+  message: string | null;
+  events: EventLogItem[];
+}
+
+/** Filtros de la bitácora. campaign es el id de la campaña o su etiqueta ("2025/26"). */
+export interface EventFilters {
+  type?: EventType | '';
+  sensor?: Sensor | '';
+  campaign?: number | string | '';
+}
+
+/** Cuerpo de PATCH /api/events/{id}/: confirmar o corregir un evento. */
+export interface EventReview {
+  confirm?: boolean;
+  type?: EventType;
+  date?: string;
+  date_uncertainty_days?: number | null;
+  notes?: string;
+}
