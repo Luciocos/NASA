@@ -298,6 +298,9 @@ npx ng serve
 
 # Despliegue en Cloudflare Workers (desde la raíz, con Node 24)
 npm run deploy
+
+# Backend de la demo pública: con Django en el puerto 8000, conecta la notebook al tunnel
+npx --yes wrangler@4.155.0 tunnel run --token <token>
 ```
 
 ## 16. Orden de trabajo

@@ -1,10 +1,9 @@
 // publica el build de angular y reenvía /api y /media al backend de django, igual que proxy.conf.json con ng serve
 // no tiene login: la app la ve cualquiera que tenga el link
 
-// API_ORIGIN es la dirección https del backend (por ejemplo https://backend.ejemplo.com) y se carga con
-// npx --yes wrangler@4.155.0 secret put API_ORIGIN
-// es un secret y no un var de wrangler.jsonc para que no se pierda en cada deploy y para no dejar en el repo la dirección directa del backend
-// sin API_ORIGIN, /api responde 503 y el encabezado de la app muestra "Backend sin conexión"
+// django corre en una notebook del equipo y el worker le llega por el tunnel lotestigo-backend con workers vpc (binding BACKEND de wrangler.jsonc)
+// la notebook no queda expuesta a internet: solo este worker llega a su puerto 8000
+// sin una notebook conectada al tunnel, /api responde 502 y el encabezado de la app muestra "Backend sin conexión"
 
 const HEADERS = {
   "X-Content-Type-Options": "nosniff",
@@ -22,33 +21,24 @@ function failure(status, error) {
   return withHeaders(Response.json({ error }, { status }));
 }
 
-function backendOrigin(env) {
-  try {
-    const url = new URL(env.API_ORIGIN);
-    return url.protocol === "https:" ? url.origin : null;
-  } catch {
-    return null;
-  }
-}
-
 async function toBackend(request, env) {
-  const origin = backendOrigin(env);
-  if (!origin) return failure(503, "backend no configurado");
   const url = new URL(request.url);
   const headers = new Headers(request.headers);
-  // el host lo pone fetch según la dirección del backend; django puede armar links absolutos con estos dos si se activa USE_X_FORWARDED_HOST
+  // el Host sale de la url (localhost, que django ya acepta); django puede armar links absolutos con estos dos si se activa USE_X_FORWARDED_HOST
   headers.delete("Host");
   headers.set("X-Forwarded-Host", url.host);
   headers.set("X-Forwarded-Proto", "https");
   try {
-    const response = await fetch(new URL(url.pathname + url.search, origin), {
+    // el puerto no sale de la url: lo fija el servicio vpc (127.0.0.1:8000 en la notebook)
+    const response = await env.BACKEND.fetch(new Request(new URL(url.pathname + url.search, "http://localhost"), {
       method: request.method,
       headers,
       body: request.body,
       redirect: "manual"
-    });
+    }));
     return withHeaders(response);
   } catch (error) {
+    // workers vpc no llega a la notebook (apagada o sin el tunnel corriendo) y fetch falla
     console.error(JSON.stringify({ message: "backend unreachable", path: url.pathname, error: String(error) }));
     return failure(502, "backend sin conexión");
   }

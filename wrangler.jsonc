@@ -14,6 +14,10 @@
     // el worker atiende todo: decide qué va al backend y responde index.html en las rutas de angular
     "run_worker_first": true
   },
+  // el backend: django en la notebook que tenga corriendo el tunnel lotestigo-backend, en su 127.0.0.1:8000
+  "vpc_services": [
+    { "binding": "BACKEND", "service_id": "01a1db3e-cae7-7d41-9ec8-0ae34cd2a385", "remote": true }
+  ],
   "observability": {
     "enabled": true,
     "logs": { "enabled": true, "head_sampling_rate": 1 },
