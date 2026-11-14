@@ -1,0 +1,275 @@
+.lead {
+  margin-top: -0.5rem;
+  color: #444;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ddd;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  background: #fafafa;
+}
+
+.count {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.selected-pill {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid #b7791f;
+  border-radius: 999px;
+  background: #fdf3e1;
+  color: #7a4a00;
+  font-size: 0.85rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+button,
+.button {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #999;
+  border-radius: 4px;
+  background: #fff;
+  color: #1f1f1f;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button.danger,
+.link.danger {
+  color: #a1261a;
+  border-color: #d9a39d;
+}
+
+button.link {
+  padding: 0;
+  border: none;
+  background: none;
+  text-decoration: underline;
+}
+
+.primary {
+  border-color: #1b6e3a;
+  background: #1b6e3a;
+  color: #fff;
+  font-weight: 600;
+}
+
+.map-wrap {
+  position: relative;
+}
+
+.map {
+  height: 65vh;
+  min-height: 420px;
+  border: 1px solid #ddd;
+  border-radius: 0 0 6px 6px;
+  cursor: crosshair;
+}
+
+.hint {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  z-index: 500;
+  transform: translateX(-50%);
+  max-width: 90%;
+  margin: 0;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(20, 20, 20, 0.82);
+  color: #fff;
+  font-size: 0.85rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+label input {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  font: inherit;
+  font-weight: 400;
+}
+
+.optional {
+  font-weight: 400;
+  color: #666;
+}
+
+.status {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #666;
+}
+
+.stats strong {
+  font-size: 1.3rem;
+}
+
+.muted {
+  margin: 0.5rem 0 0;
+  color: #555;
+  font-size: 0.85rem;
+}
+
+.ok {
+  margin: 0.5rem 0 0;
+  color: #1b6e3a;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.vertex-list summary {
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.vertex-list ol {
+  max-height: 14rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.vertex-list li {
+  display: grid;
+  grid-template-columns: 2rem 1fr 1fr auto;
+  gap: 0.35rem;
+  align-items: end;
+  padding: 0.3rem;
+  border-radius: 4px;
+}
+
+.vertex-list li.is-selected {
+  background: #fdf3e1;
+}
+
+.vertex-number {
+  padding: 0.3rem 0;
+  font-weight: 700;
+}
+
+.coord {
+  font-weight: 400;
+  font-size: 0.75rem;
+}
+
+.coord input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.25rem;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.error {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d9a39d;
+  border-radius: 4px;
+  background: #fbeceb;
+  color: #a1261a;
+  font-size: 0.85rem;
+}
+
+.note {
+  margin: 0;
+  color: #555;
+  font-size: 0.8rem;
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Vértices numerados: el estilo vive afuera del componente porque Leaflet los crea en el DOM */
+:host ::ng-deep .vertex {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #1b6e3a;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font:
+    700 12px system-ui,
+    sans-serif;
+  cursor: grab;
+}
+
+:host ::ng-deep .vertex--selected {
+  background: #b7791f;
+  box-shadow:
+    0 0 0 4px rgba(247, 182, 70, 0.8),
+    0 1px 4px rgba(0, 0, 0, 0.5);
+  transform-origin: center;
+}

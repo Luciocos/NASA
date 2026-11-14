@@ -56,3 +56,13 @@ h1 {
     grid-template-columns: 1fr;
   }
 }
+
+.new-lot {
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
+  border-radius: 4px;
+  background: #1b6e3a;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}

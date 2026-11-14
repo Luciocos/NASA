@@ -1,0 +1,153 @@
+<p><a routerLink="/mapa">← Volver al mapa</a></p>
+<h1>Marcar un lote</h1>
+<p class="lead">
+  Dibujá el perímetro de tu lote sobre la imagen satelital. Con el polígono alcanza: no hace falta
+  cargar planillas.
+</p>
+
+<div class="layout">
+  <section class="map-area" aria-label="Dibujo del perímetro">
+    <div class="toolbar">
+      <span class="count" aria-live="polite">
+        {{ points().length }} {{ points().length === 1 ? 'vértice' : 'vértices' }}
+        @if (selected() !== null) {
+          <span class="selected-pill">
+            Vértice {{ selected()! + 1 }} seleccionado
+            <button type="button" class="link" (click)="deselect()">Deseleccionar</button>
+          </span>
+        }
+      </span>
+      <span class="actions">
+        <button type="button" (click)="undo()" [disabled]="!canUndo()" title="Ctrl+Z">
+          Deshacer
+        </button>
+        <button type="button" (click)="redo()" [disabled]="!canRedo()" title="Ctrl+Y">
+          Rehacer
+        </button>
+        <button type="button" class="danger" (click)="clear()" [disabled]="points().length === 0">
+          Limpiar
+        </button>
+      </span>
+    </div>
+
+    <div class="map-wrap">
+      <div #map class="map"></div>
+      <p class="hint" aria-live="polite">
+        @if (points().length === 0) {
+          Hacé clic en el mapa para marcar las esquinas del lote.
+        } @else if (selected() !== null) {
+          El próximo clic inserta un vértice al lado del {{ selected()! + 1 }}.
+        } @else {
+          Clic: agrega al final · Clic en un vértice: insertar a su lado · Arrastrar: mover · Clic
+          derecho: borrar
+        }
+      </p>
+    </div>
+  </section>
+
+  <form class="panel" (submit)="$event.preventDefault(); save()">
+    <label>
+      Nombre del lote
+      <input
+        required
+        [value]="name()"
+        (input)="name.set($any($event.target).value)"
+        placeholder="Por ejemplo, Lote 5 La Esperanza"
+      />
+    </label>
+    <label>
+      Localidad
+      <input [value]="locality()" (input)="locality.set($any($event.target).value)" />
+    </label>
+    <label>
+      Provincia
+      <input [value]="province()" (input)="province.set($any($event.target).value)" />
+    </label>
+    <label>
+      RENSPA <span class="optional">(opcional)</span>
+      <input [value]="renspa()" (input)="renspa.set($any($event.target).value)" />
+    </label>
+
+    <div class="status">
+      <div class="stats">
+        <div>
+          <span class="stat-label">Vértices</span>
+          <strong>{{ points().length }}</strong>
+        </div>
+        <div>
+          <span class="stat-label">Superficie aprox.</span>
+          <strong>{{ missing() === 0 ? formatArea(area()) : '—' }}</strong>
+        </div>
+      </div>
+      @if (missing() > 0) {
+        <p class="muted">
+          Marcá {{ missing() }} {{ missing() === 1 ? 'vértice más' : 'vértices más' }} para cerrar
+          el área (mínimo {{ minVertices }}).
+        </p>
+      } @else {
+        <p class="ok">✓ Perímetro listo para guardar.</p>
+      }
+    </div>
+
+    @if (points().length > 0) {
+      <details class="vertex-list" open>
+        <summary>Ajuste fino de coordenadas</summary>
+        <ol>
+          @for (point of points(); track $index; let i = $index) {
+            <li [class.is-selected]="i === selected()">
+              <button
+                type="button"
+                class="vertex-number"
+                (click)="selectVertex(i)"
+                [attr.aria-pressed]="i === selected()"
+                [attr.aria-label]="'Seleccionar vértice ' + (i + 1)"
+              >
+                {{ i + 1 }}
+              </button>
+              <label class="coord">
+                <span>Lat</span>
+                <input
+                  inputmode="decimal"
+                  [value]="formatCoord(point[0])"
+                  (change)="editCoordinate(i, 0, $any($event.target).value)"
+                />
+              </label>
+              <label class="coord">
+                <span>Lon</span>
+                <input
+                  inputmode="decimal"
+                  [value]="formatCoord(point[1])"
+                  (change)="editCoordinate(i, 1, $any($event.target).value)"
+                />
+              </label>
+              <button
+                type="button"
+                class="link danger"
+                (click)="removeVertex(i)"
+                [attr.aria-label]="'Borrar vértice ' + (i + 1)"
+              >
+                Borrar
+              </button>
+            </li>
+          }
+        </ol>
+      </details>
+    }
+
+    @if (error(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+
+    <p class="note">
+      Al guardar, el lote queda sin eventos. La detección satelital se corre aparte con el pipeline
+      de NISAR y HLS; nunca se generan eventos automáticos.
+    </p>
+
+    <div class="buttons">
+      <a routerLink="/mapa" class="button secondary">Cancelar</a>
+      <button type="submit" class="primary" [disabled]="!canSave()">
+        {{ saving() ? 'Guardando…' : 'Guardar lote' }}
+      </button>
+    </div>
+  </form>
+</div>
