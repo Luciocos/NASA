@@ -1,9 +1,8 @@
 // publica el build de angular y reenvía /api y /media al backend de django, igual que proxy.conf.json con ng serve
 // no tiene login: la app la ve cualquiera que tenga el link
 
-// django corre en una notebook del equipo y el worker le llega por el tunnel lotestigo-backend con workers vpc (binding BACKEND de wrangler.jsonc)
-// la notebook no queda expuesta a internet: solo este worker llega a su puerto 8000
-// sin una notebook conectada al tunnel, /api responde 502 y el encabezado de la app muestra "Backend sin conexión"
+// django y postgres corren en railway: API_ORIGIN (vars de wrangler.jsonc) es la dirección https del backend
+// si el backend no responde, /api devuelve 502 y el encabezado de la app muestra "Backend sin conexión"
 
 const HEADERS = {
   "X-Content-Type-Options": "nosniff",
@@ -21,24 +20,35 @@ function failure(status, error) {
   return withHeaders(Response.json({ error }, { status }));
 }
 
+function backendOrigin(env) {
+  try {
+    const url = new URL(env.API_ORIGIN);
+    return url.protocol === "https:" ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
 async function toBackend(request, env) {
+  const origin = backendOrigin(env);
+  if (!origin) return failure(503, "backend no configurado");
   const url = new URL(request.url);
   const headers = new Headers(request.headers);
-  // el Host sale de la url (localhost, que django ya acepta); django puede armar links absolutos con estos dos si se activa USE_X_FORWARDED_HOST
+  // el Host lo pone fetch con el dominio de railway, que es el que acepta django (DJANGO_ALLOWED_HOSTS);
+  // django puede armar links absolutos con estos dos si se activa USE_X_FORWARDED_HOST
   headers.delete("Host");
   headers.set("X-Forwarded-Host", url.host);
   headers.set("X-Forwarded-Proto", "https");
   try {
-    // el puerto no sale de la url: lo fija el servicio vpc (127.0.0.1:8000 en la notebook)
-    const response = await env.BACKEND.fetch(new Request(new URL(url.pathname + url.search, "http://localhost"), {
+    const response = await fetch(new URL(url.pathname + url.search, origin), {
       method: request.method,
       headers,
       body: request.body,
       redirect: "manual"
-    }));
+    });
     return withHeaders(response);
   } catch (error) {
-    // workers vpc no llega a la notebook (apagada o sin el tunnel corriendo) y fetch falla
+    // railway no responde (caído o en pleno deploy) y fetch falla
     console.error(JSON.stringify({ message: "backend unreachable", path: url.pathname, error: String(error) }));
     return failure(502, "backend sin conexión");
   }
@@ -56,7 +66,7 @@ export default {
     if (url.pathname === "/api" || url.pathname.startsWith("/api/")) return toBackend(request, env);
     const asset = await env.ASSETS.fetch(request);
     if (asset.status !== 404) return withHeaders(asset);
-    // en /media primero van los archivos del build (los íconos de leaflet) y lo que no esté es evidencia que sirve django
+    // en /media primero van los archivos del build (los íconos de leaflet y la evidencia de data/evidence) y lo que no esté se le pide a django
     if (url.pathname.startsWith("/media/")) return toBackend(request, env);
     if (isNavigation(request)) return withHeaders(await env.ASSETS.fetch(new Request(new URL("/", url), request)));
     return withHeaders(asset);
