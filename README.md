@@ -86,23 +86,24 @@ La demo está publicada en **https://lotestigo.1mj0t4h.workers.dev**. No pide lo
 Corre en Cloudflare Workers (`wrangler.jsonc` y `worker/index.js`):
 
 - El Worker publica el build de Angular. Las rutas de la app (`/mapa`, `/lotes/1`, `/pasaporte/<token>`) devuelven `index.html` y las resuelve el router de Angular.
-- `/api/` y `/media/` van al backend de Django, igual que el proxy de `ng serve`. Los archivos de `/media/` que genera el build, como los íconos de Leaflet, los sirve el propio Worker.
-- Django corre en una notebook del equipo. El Worker le llega al puerto 8000 de esa notebook por el tunnel `lotestigo-backend` de Cloudflare (Workers VPC), sin exponerla a internet. Si ninguna notebook tiene el tunnel corriendo, `/api/` responde 502 y el encabezado muestra "Backend sin conexión".
+- `/api/` y `/media/` van al backend de Django, igual que el proxy de `ng serve`. Los archivos de `/media/` que genera el build los sirve el propio Worker: los íconos de Leaflet y las imágenes de `data/evidence/`, que el build copia a `/media/evidence/`.
+- Django y PostgreSQL corren en Railway (proyecto `lotestigo`, servicios `backend` y `Postgres`). El Worker le pasa los pedidos a la dirección pública del backend, `API_ORIGIN` en `wrangler.jsonc`. Si el backend no responde, `/api/` devuelve 502 y el encabezado muestra "Backend sin conexión".
 
-Para que la demo tenga datos, en la notebook que hace de backend:
+El backend se construye con `backend/Dockerfile` (la variable `RAILWAY_DOCKERFILE_PATH` del servicio apunta a ese archivo). Cada vez que arranca aplica las migraciones e importa los lotes nuevos de `data/demo/`; los que ya están cargados se saltean, así no se pierden las correcciones ni los pasaportes. Para publicar cambios del backend, con acceso al proyecto de Railway:
 
 ```bash
-# Django en el puerto 8000, como en "Cómo correrlo"
-cd backend
-python manage.py runserver
-
-# En otra terminal: conecta la notebook al tunnel (el token no se sube al repositorio)
-npx --yes wrangler@4.155.0 tunnel run --token <token>
+npm run deploy:backend
 ```
 
-El token lo pasa quien administra la cuenta de Cloudflare de la demo. No hace falta instalar `cloudflared`: Wrangler lo descarga. Conviene que haya una sola notebook conectada a la vez: con dos, cada pedido puede ir a cualquiera y cada una tiene su propia base.
+Si cambia el JSON de un lote que ya está cargado, hay que reimportarlo a mano. `--replace` borra también sus correcciones y pasaportes:
 
-Para publicar a mano, con Node 24 (ver `frontend/.nvmrc`) y una sesión de Wrangler en la cuenta de Cloudflare de la demo:
+```bash
+npx --yes @railway/cli@5.71.0 ssh --service backend python manage.py import_events ../data/demo/<archivo>.json --replace
+```
+
+Variables del servicio `backend` en Railway: `POSTGRES_*` (tomadas del servicio `Postgres`), `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=0`, `DJANGO_ALLOWED_HOSTS` con el dominio de Railway, `PORT=8000` y `RAILWAY_DOCKERFILE_PATH=backend/Dockerfile`.
+
+Para publicar el frontend a mano, con Node 24 (ver `frontend/.nvmrc`) y una sesión de Wrangler en la cuenta de Cloudflare de la demo:
 
 ```bash
 npm run deploy

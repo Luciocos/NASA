@@ -1,0 +1,11 @@
+# la imagen del backend (backend/Dockerfile) solo usa backend/ y data/; nada de credenciales ni del frontend
+.env
+.git
+.github
+.wrangler
+**/node_modules
+**/__pycache__
+**/.venv
+frontend
+pipeline
+worker

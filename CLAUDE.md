@@ -57,7 +57,7 @@ Restricciones: no copiar marca, textos, capturas, diseño de interfaz ni código
 | Frontend | Angular 22, TypeScript, componentes standalone, signals |
 | Mapa | Leaflet (uso directo, sin wrappers de terceros) |
 | Entorno | Docker Compose para la base de datos |
-| Despliegue | Cloudflare Workers: publica el build de Angular y reenvía `/api` y `/media` al backend (README, sección Despliegue) |
+| Despliegue | Cloudflare Workers publica el build de Angular y reenvía `/api` y `/media` al backend, que corre en Railway con PostgreSQL (README, sección Despliegue) |
 
 Reglas sobre versiones:
 
@@ -88,7 +88,7 @@ lotestigo/
   docker-compose.yml
   .env.example
   wrangler.jsonc       # Worker de Cloudflare que publica la demo
-  package.json         # scripts de build y deploy del Worker
+  package.json         # scripts de build y deploy del Worker y del backend (Railway)
   worker/              # sirve frontend/dist/frontend/browser y reenvía /api y /media al backend
   docs/
     EQUIPO.md          # dueño de cada carpeta (3 devs, por funcionalidad)
@@ -101,6 +101,7 @@ lotestigo/
     carbon/            # InputRecord, factores, cálculo, simulador, puntaje
     passports/         # enlace público
     requirements.txt
+    Dockerfile         # imagen del backend para Railway (se construye desde la raíz)
   frontend/
     src/app/
       core/            # servicios HTTP, modelos, interceptores
@@ -299,8 +300,8 @@ npx ng serve
 # Despliegue en Cloudflare Workers (desde la raíz, con Node 24)
 npm run deploy
 
-# Backend de la demo pública: con Django en el puerto 8000, conecta la notebook al tunnel
-npx --yes wrangler@4.155.0 tunnel run --token <token>
+# Despliegue del backend en Railway (con acceso al proyecto lotestigo)
+npm run deploy:backend
 ```
 
 ## 16. Orden de trabajo
