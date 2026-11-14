@@ -123,7 +123,14 @@ def _sentence(text: str) -> str:
 
 
 def _empty_activity() -> dict[str, Any]:
-    return {'quantity': None, 'unit': None, 'origin': None, 'origins': [], 'records': 0}
+    return {
+        'quantity': None,
+        'unit': None,
+        'origin': None,
+        'origins': [],
+        'records': 0,
+        'reference': None,
+    }
 
 
 def _factor_problem(factor: Factor | None) -> str | None:
@@ -163,6 +170,17 @@ def _component_result(
     }
 
 
+def factor_for(
+    component: Component, campaign: CampaignData | None, factors: dict[str, Factor]
+) -> Factor | None:
+    """Factor del componente. La semilla depende del cultivo: seed_<cultivo> o seed."""
+    if component.key == 'seed' and campaign is not None:
+        by_crop = factors.get(f'seed_{campaign.crop.lower()}')
+        if by_crop is not None:
+            return by_crop
+    return factors.get(component.factor_key)
+
+
 def _input_component(
     component: Component, campaign: CampaignData | None, factor: Factor | None
 ) -> dict[str, Any]:
@@ -176,10 +194,13 @@ def _input_component(
 
     records = [r for r in campaign.inputs if r.category in (component.categories or ())]
     origins = [r.origin for r in records]
+    references = sorted({r.reference for r in records if r.reference})
     activity = _empty_activity() | {
         'origin': weakest_origin(origins),
         'origins': origins,
         'records': len(records),
+        # Fuente si el dato es un valor de referencia (no es del lote ni del satélite)
+        'reference': '; '.join(references) or None,
     }
     if not records:
         problems.append(
@@ -219,6 +240,7 @@ def _land_use_component(
             'origins': origins,
             'records': len(events),
             'detected': True,
+            'reference': None,
         }
         factor_problem = _factor_problem(factor)
         problems = [factor_problem] if factor_problem else []
@@ -243,6 +265,7 @@ def _land_use_component(
             'origins': [Origin.ESTIMATED],
             'records': 0,
             'detected': False,
+            'reference': None,
         }
         return _component_result(
             component,
@@ -266,7 +289,13 @@ def _land_use_component(
 
 
 def _yield_info(campaign: CampaignData | None) -> dict[str, Any]:
-    info: dict[str, Any] = {'value': None, 'unit': 't/ha', 'origin': None, 'reason': None}
+    info: dict[str, Any] = {
+        'value': None,
+        'unit': 't/ha',
+        'origin': None,
+        'reason': None,
+        'reference': None,
+    }
     if campaign is None:
         return info | {'status': STATUS_MISSING, 'reason': 'El lote no tiene campañas.'}
     if campaign.yield_t_ha is None:
@@ -284,7 +313,12 @@ def _yield_info(campaign: CampaignData | None) -> dict[str, Any]:
             'origin': origin,
             'reason': 'El rendimiento cargado no es mayor que cero.',
         }
-    return info | {'status': STATUS_CALCULATED, 'value': campaign.yield_t_ha, 'origin': origin}
+    return info | {
+        'status': STATUS_CALCULATED,
+        'value': campaign.yield_t_ha,
+        'origin': origin,
+        'reference': campaign.yield_reference,
+    }
 
 
 def _campaign_info(campaign: CampaignData | None) -> dict[str, Any] | None:
@@ -305,7 +339,7 @@ def compute_footprint(
     components = [
         _land_use_component(c, lot, factors.get(c.factor_key))
         if c.categories is None
-        else _input_component(c, campaign, factors.get(c.factor_key))
+        else _input_component(c, campaign, factor_for(c, campaign, factors))
         for c in COMPONENTS
     ]
     yield_info = _yield_info(campaign)

@@ -11,8 +11,11 @@ from django.test import Client
 
 from carbon import views
 from carbon.models import InputRecord
+from carbon.score import CRITERIA
 from events.models import Event
 from lots.models import Campaign, Lot
+
+WEIGHT_KEYS = [key for key, _label in CRITERIA]
 
 SQUARE = {
     'type': 'Polygon',
@@ -99,7 +102,8 @@ def test_huella_con_factores_inyectados(
 
 
 @pytest.mark.django_db
-def test_puntaje_con_pesos_nulos(client: Client, lot: Lot) -> None:
+def test_puntaje_con_pesos_nulos(client: Client, lot: Lot, monkeypatch) -> None:
+    monkeypatch.setattr(views, 'load_weights', lambda: dict.fromkeys(WEIGHT_KEYS))
     data = client.get(f'/api/lots/{lot.pk}/score/').json()
     assert data['score'] is None
     assert 'pesos pendientes de definir por el equipo' in data['message']

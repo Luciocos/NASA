@@ -46,6 +46,8 @@ class InputData:
     unit: str
     origin: str
     is_simulated: bool = False
+    # Fuente del valor de referencia (reference_values.yaml). None si es un dato del lote.
+    reference: str | None = None
 
 
 @dataclass(frozen=True)
@@ -57,6 +59,8 @@ class CampaignData:
     yield_t_ha: float | None = None
     yield_origin: str = ''
     inputs: tuple[InputData, ...] = ()
+    # Fuente del rendimiento de referencia. None si el rendimiento es un dato del lote.
+    yield_reference: str | None = None
 
 
 @dataclass(frozen=True)

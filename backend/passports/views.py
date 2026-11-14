@@ -23,6 +23,7 @@ from rest_framework.views import APIView
 from carbon.config import load_factors, load_weights
 from carbon.data import load_lot_data
 from carbon.footprint import DISCLAIMER, compute_footprint
+from carbon.reference import with_references
 from carbon.score import compute_score
 from events.serializers import EventSerializer
 from lots.models import Lot
@@ -74,7 +75,7 @@ class PassportPublic(APIView):
             .get(pk=passport.lot_id)
         )
         events = lot.events.select_related('campaign').order_by('date', 'id')
-        data = load_lot_data(lot)
+        data = with_references(load_lot_data(lot))
         footprint = compute_footprint(data, data.find_campaign(None), load_factors())
         score = compute_score(data, load_weights())
         return Response(

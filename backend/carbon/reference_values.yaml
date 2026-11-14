@@ -1,0 +1,38 @@
+# Valores de referencia por cultivo. NO son datos del lote ni observaciones satelitales.
+#
+# Se usan solo cuando el productor no declaró el dato. Entran al cálculo con origen
+# ESTIMATED y la interfaz los rotula como "valor de referencia, no observado por satélite",
+# con su fuente. En cuanto el productor declara el dato, lo reemplaza (origen DECLARED).
+#
+# Sin referencia con fuente (queda para que lo declare el productor): nitrógeno, fósforo
+# y gasoil.
+
+yield_t_ha:
+  source: >-
+    MAGyP, Informe de Márgenes y Resultados (septiembre 2026), región Zona Núcleo Norte
+    (incluye el departamento Caseros, Santa Fe), fila "Rendimiento Tn/ha"
+  values:
+    WHEAT: 3.32
+    CORN: 7.85
+    SOY: 3.46 # Soja de primera
+
+inputs:
+  PESTICIDE:
+    unit: kg/ha
+    source: >-
+      Field to Market, Metric Methods 5.0, "Impact Factors of Crop Protectants and
+      Inoculants", Table 3 (dosis de referencia de EE.UU., herbicidas + insecticidas,
+      kg de principio activo por ha)
+    values:
+      CORN: 0.39 # 0,33 herbicidas + 0,06 insecticidas
+      SOY: 0.48 # 0,43 + 0,05
+      WHEAT: 0.13 # 0,10 + 0,03 (trigo de invierno)
+  SEED:
+    unit: kg/ha
+    source: >-
+      Field to Market, Metric Methods 5.0, "Impact Factors of Seed Production", Table 1
+      (densidad de siembra de referencia de EE.UU.)
+    values:
+      CORN: 34
+      SOY: 187
+      WHEAT: 176
