@@ -1,0 +1,103 @@
+@let fp = footprint();
+
+<div class="headline" [class.headline--missing]="fp.total_kg_co2e_per_t === null">
+  <p class="headline__label">
+    Huella estimada
+    @if (fp.campaign) {
+      · campaña {{ fp.campaign.label }}
+    }
+  </p>
+  @if (fp.total_kg_co2e_per_t !== null) {
+    <p class="headline__value">{{ formatKgPerTonne(fp.total_kg_co2e_per_t) }}</p>
+  } @else {
+    <p class="headline__value">No se puede calcular todavía</p>
+    <p class="headline__why">{{ fp.message }}</p>
+  }
+  <p class="headline__confidence">
+    Nivel de confianza: <strong>{{ confidenceLabels[fp.confidence.level] }}</strong>
+    <span class="muted">
+      ({{ fp.confidence.counts.VERIFIED }} verificados,
+      {{ fp.confidence.counts.DECLARED }} declarados,
+      {{ fp.confidence.counts.ESTIMATED }} estimados)
+    </span>
+  </p>
+  @if (!compact()) {
+    <p class="muted small">{{ fp.confidence.rule }}</p>
+  }
+  @if (fp.uses_simulated_data) {
+    <app-simulated-notice />
+  }
+</div>
+
+<p class="yield">
+  Rendimiento:
+  @if (fp.yield.value !== null) {
+    <strong>{{ formatNumber(fp.yield.value) }} t/ha</strong>
+    @if (fp.yield.origin) {
+      <app-origin-badge [origin]="fp.yield.origin" />
+    }
+  } @else {
+    <strong>Sin dato</strong> <span class="muted">{{ fp.yield.reason }}</span>
+  }
+</p>
+
+<table class="breakdown">
+  <caption class="visually-hidden">
+    Desglose de la huella por componente
+  </caption>
+  <thead>
+    <tr>
+      <th scope="col">Componente</th>
+      <th scope="col">Dato de actividad</th>
+      @if (!compact()) {
+        <th scope="col">Factor de emisión</th>
+      }
+      <th scope="col">kg CO2e/t</th>
+      <th scope="col">Estado</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (c of fp.components; track c.key) {
+      <tr [class.missing]="c.status === 'sin_dato'">
+        <th scope="row">{{ c.label }}</th>
+        <td>
+          @if (c.activity.quantity !== null) {
+            {{ formatNumber(c.activity.quantity, 2) }} {{ c.activity.unit }}
+          } @else if (c.activity.records > 0) {
+            {{ c.activity.records }} registro/s
+          } @else {
+            Sin dato
+          }
+          @if (c.activity.origin) {
+            <app-origin-badge [origin]="c.activity.origin" />
+          }
+          @if (c.is_simulated) {
+            <app-simulated-notice />
+          }
+        </td>
+        @if (!compact()) {
+          <td>
+            @if (c.factor.value !== null && c.factor.value !== undefined) {
+              {{ c.factor.value }} {{ c.factor.unit }}
+              <span class="muted small">Fuente: {{ c.factor.source }}</span>
+            } @else {
+              Sin factor con fuente
+            }
+          </td>
+        }
+        <td>{{ c.status === 'calculado' ? formatNumber(c.kg_co2e_per_t) : '—' }}</td>
+        <td>
+          <span class="status">
+            {{ c.status === 'calculado' ? '✓ Calculado' : '? Sin dato' }}
+          </span>
+          @if (c.reason) {
+            <span class="reason">{{ c.reason }}</span>
+          }
+          @if (c.note) {
+            <span class="reason">{{ c.note }}</span>
+          }
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>

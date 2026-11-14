@@ -1,0 +1,81 @@
+:host {
+  display: block;
+}
+
+.headline {
+  padding: 0.75rem 1rem;
+  border: 2px solid #1a4f8b;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.headline--missing {
+  border-style: dashed;
+  border-color: #8a5a00;
+}
+
+.headline p {
+  margin: 0.2rem 0;
+}
+
+.headline__label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #555;
+}
+
+.headline__value {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.muted {
+  color: #555;
+}
+
+.small {
+  display: block;
+  font-size: 0.8rem;
+}
+
+.breakdown {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.breakdown th,
+.breakdown td {
+  padding: 0.45rem 0.75rem 0.45rem 0;
+  border-bottom: 1px solid #e5e5e5;
+  text-align: left;
+  vertical-align: top;
+}
+
+.breakdown thead th {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.missing {
+  background: #fafafa;
+}
+
+.status {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.reason {
+  display: block;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

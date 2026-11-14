@@ -1,0 +1,84 @@
+:host {
+  display: block;
+}
+
+.notice {
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid #8a5a00;
+  background: #fdf3e1;
+  font-weight: 600;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1.05rem;
+}
+
+.toggle input {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.button {
+  padding: 0.4rem 1rem;
+  border: 1px solid #1a4f8b;
+  border-radius: 4px;
+  background: #1a4f8b;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.compare {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.compare th,
+.compare td {
+  padding: 0.45rem 0.75rem 0.45rem 0;
+  border-bottom: 1px solid #e5e5e5;
+  text-align: left;
+}
+
+.compare thead th {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.changed {
+  background: #e7effa;
+}
+
+.muted,
+.notes {
+  color: #444;
+  font-size: 0.9rem;
+}
+
+.error {
+  color: #9b1c1c;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

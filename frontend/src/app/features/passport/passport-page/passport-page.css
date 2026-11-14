@@ -1,0 +1,112 @@
+:host {
+  display: block;
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #555;
+}
+
+h1 {
+  margin: 0.2rem 0;
+}
+
+h2 {
+  font-size: 1.2rem;
+  margin-top: 1.5rem;
+}
+
+.facts,
+.generated {
+  margin: 0.2rem 0;
+}
+
+.generated,
+.muted {
+  color: #555;
+}
+
+.notice {
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid #1a4f8b;
+  background: #e7effa;
+  font-weight: 600;
+}
+
+.map {
+  height: 16rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.4rem 0.75rem 0.4rem 0;
+  border-bottom: 1px solid #e5e5e5;
+  text-align: left;
+}
+
+.table th {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.button {
+  padding: 0.4rem 1rem;
+  border: 1px solid #1a4f8b;
+  border-radius: 4px;
+  background: #fff;
+  color: #1a4f8b;
+  font: inherit;
+  cursor: pointer;
+}
+
+.foot {
+  margin-top: 2rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #ddd;
+  font-size: 0.9rem;
+}
+
+.error {
+  color: #9b1c1c;
+}
+
+@media print {
+  /* Oculta la barra superior y el pie de la aplicación: el pasaporte trae los suyos. */
+  :host {
+    max-width: none;
+  }
+
+  ::ng-deep .topbar,
+  ::ng-deep .footer,
+  .no-print {
+    display: none !important;
+  }
+
+  section,
+  tr {
+    break-inside: avoid;
+  }
+
+  .notice {
+    border: 1px solid #1a4f8b;
+  }
+}

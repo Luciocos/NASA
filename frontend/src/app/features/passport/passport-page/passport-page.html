@@ -1,3 +1,119 @@
-<!-- Pantalla en construcción (Dev C). Ver CLAUDE.md, sección 11. -->
-<h2>Pasaporte del lote</h2>
-<p>Vista pública de solo lectura, imprimible.</p>
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+} @else if (passport(); as p) {
+  <article class="passport">
+    <header class="head">
+      <div>
+        <p class="kicker">Pasaporte del lote · LoTestigo</p>
+        <h1>{{ p.lot.name }}</h1>
+        <p class="facts">
+          {{ p.lot.locality || 'Sin localidad' }}{{ p.lot.province ? ', ' + p.lot.province : '' }} ·
+          {{ p.lot.area_ha.toLocaleString('es-AR', { maximumFractionDigits: 1 }) }} ha (calculada
+          del polígono)
+          @if (p.lot.renspa) {
+            · RENSPA {{ p.lot.renspa }}
+          }
+        </p>
+        <p class="generated">Generado el {{ formatDateTime(p.generated_at) }}</p>
+      </div>
+      <button type="button" class="button no-print" (click)="print()">Imprimir</button>
+    </header>
+
+    <p class="notice" role="note">{{ notice }} Vista pública de solo lectura.</p>
+    @if (p.uses_simulated_data) {
+      <p><app-simulated-notice /> Este lote incluye datos simulados.</p>
+    }
+
+    <div #map class="map" role="img" aria-label="Ubicación del lote sobre el mapa"></div>
+
+    <section>
+      <h2>Campañas</h2>
+      @if (p.lot.campaigns.length === 0) {
+        <p>Este lote todavía no tiene campañas registradas.</p>
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Campaña</th>
+              <th scope="col">Cultivo</th>
+              <th scope="col">Rendimiento</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of p.lot.campaigns; track c.id) {
+              <tr>
+                <td>{{ c.label }}</td>
+                <td>{{ c.crop_label }} <app-origin-badge [origin]="c.crop_origin" /></td>
+                <td>
+                  @if (c.yield_t_ha !== null) {
+                    {{ c.yield_t_ha }} t/ha
+                    @if (c.yield_origin) {
+                      <app-origin-badge [origin]="c.yield_origin" />
+                    }
+                  } @else {
+                    Sin dato
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+
+    <section>
+      <h2>Bitácora de eventos ({{ p.events.length }})</h2>
+      @if (p.events.length === 0) {
+        <p>Este lote todavía no tiene eventos registrados.</p>
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Fecha</th>
+              <th scope="col">Evento</th>
+              <th scope="col">Sensor</th>
+              <th scope="col">Origen</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (e of p.events; track e.id) {
+              <tr>
+                <td>{{ formatEventDate(e) }}</td>
+                <td>
+                  {{ e.type_label }}
+                  @if (e.campaign_label) {
+                    <span class="muted">({{ e.campaign_label }})</span>
+                  }
+                </td>
+                <td>{{ e.sensor_label }}</td>
+                <td>
+                  <app-origin-badge [origin]="e.origin" />
+                  @if (e.is_simulated) {
+                    <app-simulated-notice />
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+
+    <section>
+      <h2>Huella de carbono estimada</h2>
+      <app-footprint-breakdown [footprint]="p.footprint" [compact]="true" />
+    </section>
+
+    <section>
+      <h2>Puntaje de sustentabilidad (provisional)</h2>
+      <app-score-panel [score]="p.score" />
+    </section>
+
+    <footer class="foot">
+      <p>{{ p.disclaimer }}</p>
+      <p>{{ p.data_notice }}</p>
+    </footer>
+  </article>
+} @else {
+  <p>Cargando pasaporte…</p>
+}

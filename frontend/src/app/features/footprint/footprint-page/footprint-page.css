@@ -1,0 +1,66 @@
+:host {
+  display: block;
+  max-width: 64rem;
+}
+
+.back {
+  margin: 0 0 0.5rem;
+}
+
+.back a {
+  color: #1a4f8b;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+}
+
+.lot-name {
+  font-weight: 400;
+}
+
+h2 {
+  font-size: 1.3rem;
+  margin-top: 2rem;
+}
+
+.notice {
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid #1a4f8b;
+  background: #e7effa;
+  font-weight: 600;
+}
+
+.campaign {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.campaign select {
+  font: inherit;
+  font-size: 1rem;
+  padding: 0.2rem;
+}
+
+.muted {
+  color: #555;
+}
+
+.small {
+  font-size: 0.85rem;
+}
+
+.error {
+  color: #9b1c1c;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
