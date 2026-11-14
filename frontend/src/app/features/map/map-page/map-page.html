@@ -1,3 +1,31 @@
-<!-- Pantalla en construcción (Dev B). Ver CLAUDE.md, sección 11. -->
-<h2>Mapa de lotes</h2>
-<p>Lotes de demostración sobre un mapa base (Leaflet). Clic en un lote abre su ficha.</p>
+<h1>Mapa de lotes</h1>
+<p class="lead">Hacé clic en un lote para abrir su ficha y su bitácora de eventos.</p>
+
+<div class="layout">
+  <div #map class="map" role="region" aria-label="Mapa de lotes"></div>
+
+  <aside class="list" aria-labelledby="lots-title">
+    <h2 id="lots-title">Lotes</h2>
+    @if (error(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    } @else if (lots(); as lots) {
+      @if (lots.length === 0) {
+        <p>Todavía no hay lotes cargados.</p>
+      } @else {
+        <ul>
+          @for (lot of lots; track lot.id) {
+            <li>
+              <a [routerLink]="['/lotes', lot.id]">{{ lot.name }}</a>
+              <span class="meta">
+                {{ lot.locality || 'Sin localidad' }} · {{ formatArea(lot.area_ha) }} ·
+                {{ lot.event_count }} {{ lot.event_count === 1 ? 'evento' : 'eventos' }}
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    } @else {
+      <p>Cargando lotes…</p>
+    }
+  </aside>
+</div>
