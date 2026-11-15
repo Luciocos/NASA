@@ -54,15 +54,15 @@ function shortcut(tab: LotTabKey, label: string, action: string): LotShortcut {
 
 /** los más usados, a la vista en la barra de la maqueta */
 export const HUD_SHORTCUTS: readonly LotShortcut[] = [
-  shortcut('satellite', 'Datos', 'Abrir los datos'),
-  shortcut('footprint', 'Huella', 'Abrir la huella'),
-  shortcut('fertilization', 'Fertilización', 'Abrir la fertilización'),
-  shortcut('profit', 'Rentabilidad', 'Abrir la rentabilidad'),
+  shortcut('satellite', 'Data', 'Open data'),
+  shortcut('footprint', 'Footprint', 'Open footprint'),
+  shortcut('fertilization', 'Fertilization', 'Open fertilization'),
+  shortcut('profit', 'Profitability', 'Open profitability'),
 ];
 /** el resto, en "Más" */
 export const MORE_SHORTCUTS: readonly LotShortcut[] = [
-  shortcut('log', 'Bitácora', 'Abrir la bitácora'),
-  shortcut('practices', 'Prácticas', 'Abrir las prácticas'),
+  shortcut('log', 'Field log', 'Open field log'),
+  shortcut('practices', 'Practices', 'Open practices'),
 ];
 
 /**
@@ -173,7 +173,7 @@ export class MapPage {
         // rayado solo si llegó el compuesto y no tiene píxeles válidos: un lote que todavía
         // carga o cuyo pedido falló no se muestra como nublado
         hatched: obs !== null && value === null,
-        sublabel: value === null ? lot.sublabel : `NDVI ${value.toLocaleString('es-AR')}`,
+        sublabel: value === null ? lot.sublabel : `NDVI ${value.toLocaleString('en-US')}`,
       };
     });
   });
@@ -243,7 +243,7 @@ export class MapPage {
         this.error.set(null);
       },
       error: () =>
-        this.error.set('No se pudieron cargar tus lotes. Revisá la conexión y probá de nuevo.'),
+        this.error.set("Couldn't load your fields. Check your connection and try again."),
     });
   }
 
@@ -259,7 +259,7 @@ export class MapPage {
       });
     } catch (err) {
       this.locationError.set(
-        err instanceof LocationError ? err.message : 'No pudimos saber dónde estás.',
+        err instanceof LocationError ? err.message : "We couldn't get your location.",
       );
     } finally {
       this.locating.set(false);

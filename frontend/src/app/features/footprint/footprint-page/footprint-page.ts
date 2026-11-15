@@ -39,10 +39,10 @@ import { Simulator } from '../simulator/simulator';
 export type FootprintView = 'resumen' | 'desglose' | 'simulador' | 'datos';
 
 const VIEWS: readonly { id: FootprintView; label: string }[] = [
-  { id: 'resumen', label: 'Resumen' },
-  { id: 'desglose', label: 'Desglose' },
-  { id: 'simulador', label: 'Simulador' },
-  { id: 'datos', label: 'Tus datos' },
+  { id: 'resumen', label: 'Summary' },
+  { id: 'desglose', label: 'Breakdown' },
+  { id: 'simulador', label: 'Simulator' },
+  { id: 'datos', label: 'Your data' },
 ];
 
 function parseView(value: string | null): FootprintView | null {
@@ -164,7 +164,9 @@ export class FootprintPage {
       if (untracked(this.lot)?.id !== id) this.lot.set(null);
       this.notFound.set(false);
       if (!Number.isInteger(id) || id <= 0) {
-        this.error.set('Este enlace no lleva a ningún lote. Volvé a Mi campo y elegilo de nuevo.');
+        this.error.set(
+          'This link does not lead to any field. Go back to My fields and pick it again.',
+        );
         return;
       }
       this.error.set(null);
@@ -176,7 +178,7 @@ export class FootprintPage {
         next: (lot) => this.lot.set(lot),
         error: (error: HttpErrorResponse) => {
           if (error.status === 404) this.notFound.set(true);
-          else this.error.set(plainError(error.status, 'este lote'));
+          else this.error.set(plainError(error.status, 'this field'));
         },
       });
       onCleanup(() => subscription.unsubscribe());
@@ -195,7 +197,7 @@ export class FootprintPage {
         next: (footprint) => this.footprint.set(footprint),
         error: (error: HttpErrorResponse) => {
           this.footprint.set(null);
-          this.footprintError.set(plainError(error.status, 'la huella'));
+          this.footprintError.set(plainError(error.status, 'the footprint'));
         },
       });
       onCleanup(() => subscription.unsubscribe());

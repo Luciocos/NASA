@@ -15,9 +15,9 @@ interface StatusMeta {
 
 /** texto, símbolo y tono de cada estado: el significado nunca queda solo en el color */
 export const STATUS_META: Record<CriterionStatus, StatusMeta> = {
-  cumple: { text: 'Cumple', symbol: '✓', tone: 'positive' },
-  no_cumple: { text: 'No cumple', symbol: '✗', tone: 'negative' },
-  sin_dato: { text: 'Sin dato', symbol: '?', tone: 'neutral' },
+  cumple: { text: 'Met', symbol: '✓', tone: 'positive' },
+  no_cumple: { text: 'Not met', symbol: '✗', tone: 'negative' },
+  sin_dato: { text: 'No data', symbol: '?', tone: 'neutral' },
 };
 
 const THICKNESS = 20;
@@ -49,7 +49,7 @@ export class StatusRing {
   readonly centerLabel = input<string>();
   readonly title = input<string>();
   readonly description = input<string>();
-  readonly emptyText = input('Sin criterios para mostrar');
+  readonly emptyText = input('No criteria to show');
 
   protected readonly uid = nextChartId('ring');
   private readonly width = injectHostWidth();
@@ -98,8 +98,8 @@ export class StatusRing {
       c,
       segments,
       showSymbols,
-      center: custom || `${met} de ${items.length}`,
-      caption: custom ? null : 'cumplen',
+      center: custom || `${met} of ${items.length}`,
+      caption: custom ? null : 'met',
     };
   });
 
@@ -123,15 +123,15 @@ export class StatusRing {
       )
       .join('; ');
     const summary =
-      `Anillo de ${countLabel(items.length, 'criterio', 'criterios')}: ` +
-      `${countLabel(count('cumple'), 'cumple', 'cumplen')}, ` +
-      `${countLabel(count('no_cumple'), 'no cumple', 'no cumplen')} y ${count('sin_dato')} sin dato. ${detail}.`;
+      `Ring of ${countLabel(items.length, 'criterion', 'criteria')}: ` +
+      `${count('cumple')} met, ` +
+      `${count('no_cumple')} not met and ${count('sin_dato')} with no data. ${detail}.`;
     return chartLabel(this.description(), summary);
   });
 
   protected readonly table = computed((): ChartTable => ({
-    caption: this.title() ?? 'Criterios',
-    columns: ['Criterio', 'Estado'],
+    caption: this.title() ?? 'Criteria',
+    columns: ['Criterion', 'Status'],
     rows: this.items().map((item) => [
       item.label,
       (STATUS_META[item.status] ?? STATUS_META.sin_dato).text,

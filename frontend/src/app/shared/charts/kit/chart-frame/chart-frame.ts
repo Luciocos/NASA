@@ -22,7 +22,7 @@ export interface ChartTable {
 export class ChartFrame {
   readonly title = input<string>();
   readonly empty = input(false);
-  readonly emptyText = input('Sin datos para mostrar');
+  readonly emptyText = input('No data to show');
   readonly table = input<ChartTable | null>(null);
 
   protected readonly titleId = nextChartId('chart-title');

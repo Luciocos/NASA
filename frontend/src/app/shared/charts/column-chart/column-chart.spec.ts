@@ -34,7 +34,7 @@ describe('ColumnChart', () => {
     const missing = el().querySelectorAll('rect.missing');
     expect(missing.length).toBe(1);
     expect((missing[0] as SVGRectElement).style.fill).toMatch(/nodata/);
-    expect(el().querySelector('svg.plot')?.textContent).toContain('Sin dato');
+    expect(el().querySelector('svg.plot')?.textContent).toContain('No data');
     const values = [...el().querySelectorAll('svg.plot text.t-strong')].map((t) =>
       t.textContent?.trim(),
     );
@@ -61,7 +61,7 @@ describe('ColumnChart', () => {
     const cols = [...el().querySelectorAll('path.col')];
     expect(cols.filter((col) => col.classList.contains('dim')).length).toBe(2);
     expect(el().querySelector('svg.plot')?.getAttribute('aria-label')).toContain(
-      'Destacado: oct, 118 mm',
+      'Highlighted: oct, 118 mm',
     );
   });
 
@@ -69,15 +69,13 @@ describe('ColumnChart', () => {
     await render({ items: RAIN, unit: 'mm', description: 'Lluvia mensual del lote' });
 
     const label = el().querySelector('svg.plot')?.getAttribute('aria-label') ?? '';
-    expect(label.startsWith('Lluvia mensual del lote. Gráfico de columnas con 4 valores')).toBe(
-      true,
-    );
-    expect(label).toContain('sep: Sin dato');
-    expect(label).toContain('1 columna sin dato');
+    expect(label.startsWith('Lluvia mensual del lote. Column chart with 4 values')).toBe(true);
+    expect(label).toContain('sep: No data');
+    expect(label).toContain('1 column with no data');
     const rows = [...el().querySelectorAll('details tbody tr')].map((row) =>
       [...row.children].map((cell) => cell.textContent),
     );
-    expect(rows[2]).toEqual(['sep', 'Sin dato', 'sin registro de NASA POWER']);
+    expect(rows[2]).toEqual(['sep', 'No data', 'sin registro de NASA POWER']);
   });
 
   it('con muchas columnas no escribe cada valor', async () => {
@@ -89,6 +87,6 @@ describe('ColumnChart', () => {
   it('muestra el estado vacío', async () => {
     await render({ items: [] });
     expect(el().querySelector('svg.plot')).toBeNull();
-    expect(el().textContent).toContain('Sin datos para mostrar');
+    expect(el().textContent).toContain('No data to show');
   });
 });

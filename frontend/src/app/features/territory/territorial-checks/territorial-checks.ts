@@ -30,9 +30,9 @@ import {
 
 /** nombre corto de cada chequeo para la fila; el título completo va adentro */
 const SHORT_TITLES: Record<CheckKey, string> = {
-  periurban: 'Distancia a zonas urbanas',
-  otbn: 'Bosque nativo (OTBN)',
-  bpa: 'Buenas Prácticas (BPA)',
+  periurban: 'Distance to urban areas',
+  otbn: 'Native forest (OTBN)',
+  bpa: 'Good practices (BPA)',
 };
 
 /** cómo se ve un estado: chip con ícono y texto, el significado nunca solo por color */
@@ -153,7 +153,7 @@ export class TerritorialChecks {
 
   protected statusLook(check: TerritorialCheck): StatusLook {
     if (this.strongAlert(check)) {
-      return { label: 'Posible desmonte', icon: 'alert', chip: 'chip--danger' };
+      return { label: 'Possible clearing', icon: 'alert', chip: 'chip--danger' };
     }
     switch (check.status) {
       case 'CLEAR':
@@ -162,7 +162,7 @@ export class TerritorialChecks {
         return { label: this.statusLabels.POSSIBLE_CONFLICT, icon: 'alert', chip: 'chip--warn' };
       default:
         return {
-          label: check.key === 'bpa' ? 'Sin declarar' : this.statusLabels.NO_DATA,
+          label: check.key === 'bpa' ? 'Not declared' : this.statusLabels.NO_DATA,
           icon: 'minus',
           chip: '',
         };

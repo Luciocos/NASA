@@ -239,6 +239,6 @@ export function scaleBar(zoom: number, maxPx = 110): IsoScaleBar {
   for (const step of SCALE_STEPS) {
     if (step * pxPerMeter <= maxPx) meters = step;
   }
-  const label = meters >= 1000 ? `${(meters / 1000).toLocaleString('es-AR')} km` : `${meters} m`;
+  const label = meters >= 1000 ? `${(meters / 1000).toLocaleString('en-US')} km` : `${meters} m`;
   return { meters, px: meters * pxPerMeter, label };
 }

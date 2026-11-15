@@ -4,9 +4,9 @@
 export type Origin = 'VERIFIED' | 'DECLARED' | 'ESTIMATED';
 
 export const ORIGIN_LABELS: Record<Origin, string> = {
-  VERIFIED: 'Verificado',
-  DECLARED: 'Declarado',
-  ESTIMATED: 'Estimado',
+  VERIFIED: 'Verified',
+  DECLARED: 'Declared',
+  ESTIMATED: 'Estimated',
 };
 
 export type Crop = 'SOY' | 'CORN' | 'WHEAT' | 'OTHER';

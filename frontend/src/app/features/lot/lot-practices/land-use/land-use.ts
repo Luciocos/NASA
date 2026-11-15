@@ -50,25 +50,25 @@ export const GROUP_ICONS: Record<LandUseGroup, IconName> = {
 
 /** el grupo en una o dos palabras, para que entre en la franja de cada año */
 const GROUP_SHORT: Record<LandUseGroup, string> = {
-  agricultural: 'Agrícola',
+  agricultural: 'Cropland',
   natural: 'Natural',
-  urban: 'Urbano',
-  other: 'Sin vegetación',
+  urban: 'Urban',
+  other: 'No vegetation',
 };
 
 const GROUP_NOUNS: Record<LandUseGroup, string> = {
-  agricultural: 'uso agrícola',
-  natural: 'vegetación natural',
-  urban: 'área urbana',
-  other: 'agua, nieve o suelo desnudo',
+  agricultural: 'agricultural use',
+  natural: 'natural vegetation',
+  urban: 'urban area',
+  other: 'water, snow or bare soil',
 };
 
-/** "a", "a y b", "a, b y c" */
+/** "a", "a and b", "a, b and c" */
 export function joinList(items: readonly (string | number)[]): string {
   const texts = items.map(String);
   return texts.length < 2
     ? (texts[0] ?? '')
-    : `${texts.slice(0, -1).join(', ')} y ${texts[texts.length - 1]}`;
+    : `${texts.slice(0, -1).join(', ')} and ${texts[texts.length - 1]}`;
 }
 
 /** el estado de la consulta a MODIS, reducido a lo que importa para comparar */
@@ -141,17 +141,17 @@ export function partialChange(evidence: LandUseEvidence): boolean {
   );
 }
 
-/** "en 2022 y 2023", "en parte del lote" o '' (un empate en el año base): dónde vio otro uso */
+/** "in 2022 and 2023", "in part of the field" o '' (un empate en el año base): dónde vio otro uso */
 function changeWhere(evidence: LandUseEvidence): string {
   const years = differentYears(evidence);
-  if (years.length) return `en ${joinList(years)}`;
-  return partialChange(evidence) ? 'en parte del lote' : '';
+  if (years.length) return `in ${joinList(years)}`;
+  return partialChange(evidence) ? 'in part of the field' : '';
 }
 
-/** el grupo de un año en una o dos palabras: "Agrícola", "Mixto" (empate), "Sin dato" */
+/** el grupo de un año en una o dos palabras: "Cropland", "Mixed" (empate), "No data" */
 export function yearLabel(year: LandUseYear): string {
-  if (!year.pixels) return 'Sin dato';
-  return year.group === null ? 'Mixto' : GROUP_SHORT[year.group];
+  if (!year.pixels) return 'No data';
+  return year.group === null ? 'Mixed' : GROUP_SHORT[year.group];
 }
 
 export function yearIcon(year: LandUseYear): IconName {
@@ -164,16 +164,16 @@ export function yearIcon(year: LandUseYear): IconName {
  * agrícola. con un empate no se nombra una clase, porque ninguna domina
  */
 function yearText(year: LandUseYear): string {
-  if (!year.pixels) return 'sin dato.';
-  const pixels = `${year.pixels} ${year.pixels === 1 ? 'píxel' : 'píxeles'} con dato`;
+  if (!year.pixels) return 'no data.';
+  const pixels = `${year.pixels} ${year.pixels === 1 ? 'pixel' : 'pixels'} with data`;
   const share =
     year.agriculturalShare === null
       ? ''
-      : `, ${Math.round(year.agriculturalShare * 100)} % con uso agrícola`;
-  if (year.group === null) return `sin un uso dominante (empate entre usos); ${pixels}${share}.`;
+      : `, ${Math.round(year.agriculturalShare * 100)} % agricultural use`;
+  if (year.group === null) return `no dominant use (tie between uses); ${pixels}${share}.`;
   const igbp =
     year.classId !== null && year.classLabel
-      ? `, clase IGBP ${year.classId} (${year.classLabel})`
+      ? `, IGBP class ${year.classId} (${year.classLabel})`
       : '';
   return `${LAND_USE_GROUP_LABELS[year.group]}${igbp}; ${pixels}${share}.`;
 }
@@ -188,7 +188,7 @@ export function yearDetails(years: readonly LandUseYear[]): string[] {
     else runs.push({ from: year.year, to: year.year, text });
   }
   return runs.map(
-    (run) => `${run.from === run.to ? run.from : `${run.from} a ${run.to}`}: ${run.text}`,
+    (run) => `${run.from === run.to ? run.from : `${run.from} to ${run.to}`}: ${run.text}`,
   );
 }
 
@@ -196,28 +196,33 @@ export function yearDetails(years: readonly LandUseYear[]): string[] {
 export function pixelText(evidence: LandUseEvidence, mine: boolean): string {
   if (!evidence.pixelCount) return '';
   const size = pixelSize(evidence);
-  const lot = mine ? 'tu lote' : 'este lote';
+  const lot = mine ? 'your field' : 'this field';
   const count = evidence.pixelCount;
   return evidence.centroidFallback
-    ? `Ningún píxel de unos ${size} m tiene su centro dentro de ${lot}: se usó el que contiene su centro.`
-    : `${count} ${count === 1 ? 'píxel' : 'píxeles'} de unos ${size} m ${count === 1 ? 'cubre' : 'cubren'} ${lot}.`;
+    ? `No pixel of about ${size} m has its center inside ${lot}: the one that contains its center was used.`
+    : `${count} ${count === 1 ? 'pixel' : 'pixels'} of about ${size} m ${count === 1 ? 'covers' : 'cover'} ${lot}.`;
 }
 
 /**
- * los textos de core/nasa hablan de "tu lote": en un lote ajeno (un ejemplo) se dice "este lote"
+ * los textos de core/nasa hablan de "tu lote" ("your field"): en un lote ajeno (un ejemplo) se
+ * dice "este lote" ("this field")
  */
 export function forLot(text: string, mine: boolean): string {
   return mine
     ? text
-    : text.replace(/\btu lote\b/g, 'este lote').replace(/\bTu lote\b/g, 'Este lote');
+    : text
+        .replace(/\btu lote\b/g, 'este lote')
+        .replace(/\bTu lote\b/g, 'Este lote')
+        .replace(/\byour field\b/g, 'this field')
+        .replace(/\bYour field\b/g, 'This field');
 }
 
 /** el motivo de "Sin dato" en pocas palabras; el completo (evidence.reason) va en la ayuda */
 export function noDataShort(evidence: LandUseEvidence): string {
-  if (!evidence.pixelCount) return 'No hay píxeles sobre el lote';
-  if (!evidence.years.some((y) => y.pixels > 0)) return 'Sin una clasificación válida';
-  if (!baseYear(evidence)) return `Falta la clasificación de ${evidence.baselineYear}`;
-  return `Falta un año después de ${evidence.baselineYear}`;
+  if (!evidence.pixelCount) return 'No pixels over the field';
+  if (!evidence.years.some((y) => y.pixels > 0)) return 'No valid classification';
+  if (!baseYear(evidence)) return `Missing the ${evidence.baselineYear} classification`;
+  return `Missing a year after ${evidence.baselineYear}`;
 }
 
 /** la primera oración de un motivo largo, sin el punto: lo demás va en la ayuda */
@@ -234,17 +239,17 @@ export function firstSentence(text: string | null | undefined): string {
 export function modisChangeLine(evidence: LandUseEvidence, mine: boolean): Line | null {
   if (evidence.verdict !== 'possible_change') return null;
   const years = differentYears(evidence);
-  const detail = `${forLot(evidence.reason, mine)} Cada píxel de unos ${pixelSize(evidence)} m mezcla el lote con lo que lo rodea.`;
+  const detail = `${forLot(evidence.reason, mine)} Each pixel of about ${pixelSize(evidence)} m mixes the field with its surroundings.`;
   if (years.length) {
-    return { tone: 'warn', icon: 'alert', title: `Uso distinto en ${joinList(years)}`, detail };
+    return { tone: 'warn', icon: 'alert', title: `Different use in ${joinList(years)}`, detail };
   }
   if (partialChange(evidence)) {
-    return { tone: 'warn', icon: 'alert', title: 'Un uso distinto en parte del lote', detail };
+    return { tone: 'warn', icon: 'alert', title: 'A different use in part of the field', detail };
   }
   return {
     tone: 'neutral',
     icon: 'layers',
-    title: `Sin un uso dominante en ${evidence.baselineYear}`,
+    title: `No dominant use in ${evidence.baselineYear}`,
     detail,
   };
 }
@@ -258,23 +263,23 @@ export function matchLine(
   evidence: LandUseEvidence | null,
   modisError: string | null,
 ): Line {
-  const pixel = `cada píxel de unos ${pixelSize(evidence)} m`;
+  const pixel = `each pixel of about ${pixelSize(evidence)} m`;
   switch (match) {
     case 'pending':
       return {
         tone: 'neutral',
         icon: 'sync',
-        title: 'Comparando con lo que vio MODIS…',
+        title: 'Comparing with what MODIS saw…',
         detail: '',
       };
     case 'match': {
       const base = evidence ? baseYear(evidence) : undefined;
-      const noun = base?.group ? GROUP_NOUNS[base.group] : 'el mismo uso';
+      const noun = base?.group ? GROUP_NOUNS[base.group] : 'the same use';
       return {
         tone: 'ok',
         icon: 'check',
-        title: 'Respaldado por lo que vio MODIS',
-        detail: `Declaraste que no cambió y MODIS vio ${noun} en cada año con dato, de ${evidence?.baselineYear} a ${evidence?.lastYear}. Es orientativo: ${pixel} mezcla tu lote con lo que lo rodea, así que un cambio chico puede no verse.`,
+        title: 'Supported by what MODIS saw',
+        detail: `You declared no change, and MODIS saw ${noun} in every year with data, from ${evidence?.baselineYear} to ${evidence?.lastYear}. It is indicative: ${pixel} mixes your field with its surroundings, so a small change may not show.`,
       };
     }
     case 'mismatch': {
@@ -282,44 +287,44 @@ export function matchLine(
       // en parte del lote, el motivo de core/nasa dice en qué año y en cuántos píxeles
       const why = evidence && partialChange(evidence) ? ` ${evidence.reason}` : '';
       const seen = where
-        ? `MODIS vio un uso distinto ${where}.${why}`
-        : `MODIS no vio un uso dominante en ${evidence?.baselineYear}.`;
+        ? `MODIS saw a different use ${where}.${why}`
+        : `MODIS did not see a dominant use in ${evidence?.baselineYear}.`;
       return {
         tone: 'warn',
         icon: 'alert',
-        title: 'No coincide con MODIS: revisalo',
-        detail: `${seen} Puede ser un error de clasificación del satélite: ${pixel} mezcla tu lote con lo que lo rodea. Si tu declaración es correcta, dejala como está.`,
+        title: 'Does not match MODIS: review it',
+        detail: `${seen} It may be a satellite classification error: ${pixel} mixes your field with its surroundings. If your declaration is correct, leave it as it is.`,
       };
     }
     case 'unconfirmed':
       return {
         tone: 'neutral',
         icon: 'layers',
-        title: 'MODIS no alcanza para confirmarlo',
-        detail: `${firstSentence(evidence?.reason)}. No contradice tu declaración, pero tampoco la respalda: ${pixel} mezcla tu lote con lo que lo rodea.`,
+        title: 'MODIS is not enough to confirm it',
+        detail: `${firstSentence(evidence?.reason)}. It does not contradict your declaration, but it does not support it either: ${pixel} mixes your field with its surroundings.`,
       };
     case 'declared_change': {
       let seen = '';
       if (evidence?.verdict === 'possible_change') {
         const where = changeWhere(evidence);
         seen = where
-          ? ` MODIS también vio un uso distinto ${where}.`
-          : ' MODIS tampoco puede confirmar que el uso siguió igual.';
+          ? ` MODIS also saw a different use ${where}.`
+          : ' MODIS cannot confirm that the use stayed the same either.';
       } else if (evidence?.verdict === 'unchanged') {
-        seen = ` MODIS no lo vio: con ${pixel}, un cambio chico puede no verse.`;
+        seen = ` MODIS did not see it: with ${pixel}, a small change may not show.`;
       }
       return {
         tone: 'info',
         icon: 'info',
-        title: 'Con un cambio, la práctica no se cumple',
-        detail: `Con un cambio de uso desde 2020, el lote no cumple la práctica «Sin cambio de uso del suelo desde 2020».${seen}`,
+        title: 'With a change, the practice is not met',
+        detail: `With a land-use change since 2020, the field does not meet the “No land-use change since 2020” practice.${seen}`,
       };
     }
     case 'no_modis':
       return {
         tone: 'neutral',
         icon: 'minus',
-        title: 'Sin dato de MODIS para comparar',
+        title: 'No MODIS data to compare',
         detail: evidence?.reason ?? modisError ?? '',
       };
   }

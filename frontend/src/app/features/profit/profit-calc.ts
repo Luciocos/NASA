@@ -22,13 +22,13 @@ export interface ProfitInputs {
 }
 
 export const COST_LABELS: Record<CostKey, string> = {
-  seed: 'Semilla',
-  fertilizer: 'Fertilizantes',
-  pesticide: 'Fitosanitarios',
-  labor: 'Labores (siembra y pulverizaciones)',
-  harvest: 'Cosecha',
-  rent: 'Arrendamiento',
-  other: 'Otros costos',
+  seed: 'Seed',
+  fertilizer: 'Fertilizers',
+  pesticide: 'Crop protection',
+  labor: 'Field operations (sowing and spraying)',
+  harvest: 'Harvest',
+  rent: 'Land rent',
+  other: 'Other costs',
 };
 
 export const COST_KEYS = Object.keys(COST_LABELS) as CostKey[];
@@ -125,8 +125,8 @@ export function sensitivity(
   }));
 }
 
-/** "1.234" con el formato de Argentina y sin decimales; "Sin dato" si falta */
+/** "1.234" con el formato de Argentina y sin decimales; "No data" si falta */
 export function formatUsd(value: number | null, digits = 0): string {
-  if (value === null) return 'Sin dato';
+  if (value === null) return 'No data';
   return `US$ ${value.toLocaleString('es-AR', { maximumFractionDigits: digits, minimumFractionDigits: digits })}`;
 }

@@ -28,7 +28,7 @@ describe('DeclarationForm', () => {
   it('manda lo declarado y null en los campos vacíos', async () => {
     const declared: Footprint[] = [];
     fixture.componentInstance.declared.subscribe((fp) => declared.push(fp));
-    const nitrogen = input('Sin declarar', 0);
+    const nitrogen = input('Not declared', 0);
     nitrogen.value = '90,5';
     nitrogen.dispatchEvent(new Event('input'));
     await fixture.whenStable();
@@ -44,22 +44,22 @@ describe('DeclarationForm', () => {
   });
 
   it('cada campo tiene un rótulo corto y su aclaración, en la ayuda (i), unida al control', () => {
-    const nitrogen = input('Sin declarar', 0);
+    const nitrogen = input('Not declared', 0);
     const label = el().querySelector(`label[for="${nitrogen.id}"]`)?.textContent ?? '';
-    expect(label).toContain('Nitrógeno');
+    expect(label).toContain('Nitrogen');
     expect(label).toContain('kg N/ha');
     const hint = el().querySelector(`#${nitrogen.getAttribute('aria-describedby')}`);
-    expect(hint?.textContent).toContain('100 kg de urea son 46 kg de N');
+    expect(hint?.textContent).toContain('100 kg of urea is 46 kg of N');
     expect(hint?.closest('app-info-tip')).not.toBeNull();
     // a la vista no quedan párrafos: la explicación también va en la ayuda
     expect(el().querySelector('form p')).toBeNull();
     expect(el().querySelector('app-info-tip')?.textContent).toContain(
-      'Lo que cargues queda como Declarado',
+      'What you enter is saved as Declared',
     );
   });
 
   it('no manda nada si un campo no es un número y lo marca', async () => {
-    const diesel = input('Sin declarar', 2);
+    const diesel = input('Not declared', 2);
     diesel.value = 'veinte';
     diesel.dispatchEvent(new Event('input'));
     await fixture.whenStable();
@@ -69,7 +69,7 @@ describe('DeclarationForm', () => {
     http.expectNone('/api/lots/5/declaration/');
     expect(diesel.getAttribute('aria-invalid')).toBe('true');
     expect(el().querySelector('[role="alert"]')?.textContent).toContain(
-      'Revisá los campos marcados',
+      'Check the highlighted fields',
     );
   });
 
@@ -83,7 +83,7 @@ describe('DeclarationForm', () => {
       );
     await fixture.whenStable();
     const alert = el().querySelector('[role="alert"]')?.textContent ?? '';
-    expect(alert).toContain('Rinde: Asegúrese de que este valor sea mayor o igual a 0.');
+    expect(alert).toContain('Yield: Asegúrese de que este valor sea mayor o igual a 0.');
     expect(alert).not.toContain('yield_t_ha');
   });
 
@@ -92,6 +92,6 @@ describe('DeclarationForm', () => {
     fixture.componentRef.setInput('footprint', fp);
     await fixture.whenStable();
     const declaredYield = fp.yield.origin === 'DECLARED' ? String(fp.yield.value) : '';
-    expect(input('Referencia').value).toBe(declaredYield);
+    expect(input('Reference').value).toBe(declaredYield);
   });
 });

@@ -26,8 +26,8 @@ export type LotLoadError = 'not-found' | 'failed';
       }
       @case ('failed') {
         <div class="alert alert--error failure" role="alert">
-          <p>No se pudo cargar el lote. Revisá la conexión y probá de nuevo.</p>
-          <button type="button" class="btn btn--sm" (click)="retry.emit()">Reintentar</button>
+          <p>Couldn't load the field. Check your connection and try again.</p>
+          <button type="button" class="btn btn--sm" (click)="retry.emit()">Try again</button>
         </div>
       }
       @default {
@@ -38,7 +38,7 @@ export type LotLoadError = 'not-found' | 'failed';
           <span class="skeleton loading__title"></span>
           <span class="skeleton loading__tabs"></span>
           <span class="skeleton loading__card"></span>
-          <p class="visually-hidden" role="status">Cargando lote…</p>
+          <p class="visually-hidden" role="status">Loading field…</p>
         </div>
       }
     }

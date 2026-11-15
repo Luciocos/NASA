@@ -6,7 +6,13 @@ import { SimulationResult } from '../../../core/models';
 import { Disclosure } from '../../../shared/ui/disclosure/disclosure';
 import { Icon } from '../../../shared/ui/icon/icon';
 import { SectionCard } from '../../../shared/ui/section-card/section-card';
-import { CRITERION_STATUS, formatKgPerTonne, formatNumber, plainError } from '../format';
+import {
+  CRITERION_STATUS,
+  criterionLabel,
+  formatKgPerTonne,
+  formatNumber,
+  plainError,
+} from '../format';
 
 /**
  * Simulador (CLAUDE.md, sección 11, pantalla 5): un control, cultivo de cobertura, y el
@@ -36,6 +42,7 @@ export class Simulator {
   protected readonly status = CRITERION_STATUS;
   protected readonly formatKgPerTonne = formatKgPerTonne;
   protected readonly formatNumber = formatNumber;
+  protected readonly criterionLabel = criterionLabel;
 
   protected run(): void {
     const campaign = this.campaign();
@@ -52,17 +59,17 @@ export class Simulator {
           this.loading.set(false);
         },
         error: (err: HttpErrorResponse) => {
-          this.error.set(plainError(err.status, 'la simulación'));
+          this.error.set(plainError(err.status, 'the simulation'));
           this.loading.set(false);
         },
       });
   }
 
   protected footprintText(value: number | null): string {
-    return value === null ? 'Todavía no se puede calcular' : formatKgPerTonne(value);
+    return value === null ? 'Cannot be calculated yet' : formatKgPerTonne(value);
   }
 
   protected scoreLabel(score: number | null): string {
-    return score === null ? 'Sin número' : `${formatNumber(score)} / 100`;
+    return score === null ? 'No number' : `${formatNumber(score)} / 100`;
   }
 }

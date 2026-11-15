@@ -24,7 +24,7 @@ describe('DataBar', () => {
     expect(el().querySelector('path.fill')).not.toBeNull();
     expect(el().querySelector('svg.plot')?.textContent).toContain('NDVI medio');
     expect(el().querySelector('svg.plot')?.getAttribute('aria-label')).toBe(
-      'NDVI medio: 0,62 de un máximo de 1,00 (62 %).',
+      'NDVI medio: 0,62 out of a maximum of 1,00 (62 %).',
     );
     const cells = [...el().querySelectorAll('details tbody td')].map((td) => td.textContent);
     expect(cells).toEqual(['0,62', '1,00', '62 %']);
@@ -35,7 +35,7 @@ describe('DataBar', () => {
 
     expect(el().querySelector('path.fill')).toBeNull();
     expect(el().querySelector('rect.track--missing')).not.toBeNull();
-    expect(el().querySelector('svg.plot')?.textContent).toContain('Sin dato · sin pasada de SMAP');
+    expect(el().querySelector('svg.plot')?.textContent).toContain('No data · sin pasada de SMAP');
   });
 
   it('la tabla se puede apagar en listas densas', async () => {

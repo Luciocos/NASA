@@ -76,8 +76,10 @@ describe('LoginPage', () => {
   it('muestra una tarjeta simple con la nota de privacidad y el enlace a crear la cuenta', async () => {
     await open();
 
-    expect(el().querySelector('h1')?.textContent).toContain('Ingresá a tu cuenta');
-    expect(el().textContent).toContain('Tus lotes y tus datos son privados: solo vos los ves.');
+    expect(el().querySelector('h1')?.textContent).toContain('Log in to your account');
+    expect(el().textContent).toContain(
+      'Your fields and your data are private: only you can see them.',
+    );
     const register = el().querySelector<HTMLAnchorElement>('a[href^="/registrarse"]');
     expect(register?.getAttribute('href')).toBe('/registrarse?volver=%2Flotes%2F3');
     expect(el().querySelector('a[href="/ejemplos"]')).not.toBeNull();
@@ -89,9 +91,9 @@ describe('LoginPage', () => {
 
     await submit();
 
-    expect(el().querySelector('#login-email-error')?.textContent).toContain('Escribí tu mail.');
+    expect(el().querySelector('#login-email-error')?.textContent).toContain('Enter your email.');
     expect(el().querySelector('#login-password-error')?.textContent).toContain(
-      'Escribí tu contraseña.',
+      'Enter your password.',
     );
     expect(input('login-email').getAttribute('aria-invalid')).toBe('true');
     expect(input('login-email').getAttribute('aria-describedby')).toBe('login-email-error');
@@ -111,7 +113,7 @@ describe('LoginPage', () => {
     await submit();
 
     expect(el().querySelector('#login-email-error')?.textContent).toContain(
-      'tiene que ser como nombre@ejemplo.com',
+      'it should look like name@example.com',
     );
     http.expectNone('/api/auth/login/');
   });
@@ -120,7 +122,7 @@ describe('LoginPage', () => {
     await open();
     await fillAndSubmit();
 
-    expect(submitButton().textContent).toContain('Ingresando…');
+    expect(submitButton().textContent).toContain('Logging in…');
     expect(submitButton().getAttribute('aria-disabled')).toBe('true');
     const request = http.expectOne({ method: 'POST', url: '/api/auth/login/' });
     expect(request.request.body).toEqual({
@@ -155,7 +157,7 @@ describe('LoginPage', () => {
 
     const alert = el().querySelector('[role="alert"]');
     expect(alert?.textContent).toContain('Mail o contraseña incorrectos.');
-    expect(submitButton().textContent).toContain('Ingresar');
+    expect(submitButton().textContent).toContain('Log in');
     expect(submitButton().hasAttribute('aria-disabled')).toBe(false);
     expect(TestBed.inject(AuthService).loggedIn()).toBe(false);
   });
@@ -167,7 +169,7 @@ describe('LoginPage', () => {
     http.expectOne('/api/auth/login/').flush(null, { status: 429, statusText: 'Too Many' });
     await harness.fixture.whenStable();
 
-    expect(el().querySelector('[role="alert"]')?.textContent).toContain('Esperá un minuto');
+    expect(el().querySelector('[role="alert"]')?.textContent).toContain('Wait a minute');
   });
 
   it('si no llega al servidor lo dice en lenguaje llano', async () => {
@@ -178,7 +180,7 @@ describe('LoginPage', () => {
     await harness.fixture.whenStable();
 
     expect(el().querySelector('[role="alert"]')?.textContent).toContain(
-      'No pudimos conectar con el servidor.',
+      "We couldn't reach the server.",
     );
   });
 
@@ -186,7 +188,7 @@ describe('LoginPage', () => {
     await open('/ingresar', { online: false, backend: 'down' });
 
     expect(el().querySelector('.alert--warn')?.textContent).toContain(
-      'Para ingresar hace falta internet.',
+      'You need internet to log in.',
     );
   });
 
@@ -194,12 +196,12 @@ describe('LoginPage', () => {
     await open();
     const toggle = el().querySelector<HTMLButtonElement>('.password__toggle')!;
     expect(input('login-password').type).toBe('password');
-    expect(toggle.textContent).toContain('Mostrar contraseña');
+    expect(toggle.textContent).toContain('Show password');
 
     toggle.click();
     await harness.fixture.whenStable();
 
     expect(input('login-password').type).toBe('text');
-    expect(toggle.textContent).toContain('Ocultar contraseña');
+    expect(toggle.textContent).toContain('Hide password');
   });
 });

@@ -49,14 +49,16 @@ describe('AccountChip', () => {
     beforeEach(() => setup());
 
     it('muestra quién ingresó y, en el menú, su mail y que sus datos son privados', async () => {
-      expect(chip().textContent).toContain('Cuenta de');
+      expect(chip().textContent).toContain('Account:');
       expect(chip().textContent).toContain(TEST_USER.name);
       expect(chip().querySelector('.avatar')?.textContent?.trim()).toBe('A');
 
       const opened = await openMenu();
 
       expect(opened.textContent).toContain(TEST_USER.email);
-      expect(opened.textContent).toContain('Tus lotes y tus datos son privados: solo vos los ves.');
+      expect(opened.textContent).toContain(
+        'Your fields and your data are private: only you can see them.',
+      );
       expect(opened.querySelector('a[href="/ejemplos"]')).not.toBeNull();
       expect(opened.querySelector('.alert')).toBeNull();
     });
@@ -112,7 +114,7 @@ describe('AccountChip', () => {
       storage.setItem('lotestigo:u7:profit:v1', '{}');
       const opened = await openMenu();
       const exit = [...opened.querySelectorAll('button')].find(
-        (button) => button.textContent?.trim() === 'Salir',
+        (button) => button.textContent?.trim() === 'Log out',
       )!;
 
       exit.click();
@@ -125,7 +127,7 @@ describe('AccountChip', () => {
       expect(storage.getItem(AUTH_STORAGE_KEY)).toBeNull();
       expect(storage.getItem('lotestigo:u7:profit:v1')).toBeNull();
       expect(TestBed.inject(Router).url).toBe('/');
-      expect(el().querySelector('a.chip-btn')?.textContent).toContain('Ingresar');
+      expect(el().querySelector('a.chip-btn')?.textContent).toContain('Log in');
     });
 
     it('avisa antes de salir si hay lotes sin subir en el dispositivo', async () => {
@@ -159,7 +161,7 @@ describe('AccountChip', () => {
       const opened = await openMenu();
 
       expect(opened.querySelector('.alert--warn')?.textContent).toContain(
-        'Tenés 1 lote sin subir en este dispositivo: si salís, se borra.',
+        'You have 1 field not uploaded yet on this device: if you log out, it will be deleted.',
       );
     });
   });
@@ -169,7 +171,7 @@ describe('AccountChip', () => {
       await setup(false, '/lotes/5');
 
       const link = el().querySelector<HTMLAnchorElement>('a.chip-btn')!;
-      expect(link.textContent).toContain('Ingresar');
+      expect(link.textContent).toContain('Log in');
       expect(link.getAttribute('href')).toBe('/ingresar?volver=%2Flotes%2F5');
       expect(link.hasAttribute('aria-current')).toBe(false);
       expect(el().querySelector('button.chip-btn')).toBeNull();

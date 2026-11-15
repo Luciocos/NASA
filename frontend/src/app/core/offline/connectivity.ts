@@ -62,14 +62,14 @@ export class Connectivity {
   /** texto de estado para el encabezado */
   readonly label = computed(() => {
     const backend = this.backendState();
-    if (backend === 'checking') return 'Conectando…';
+    if (backend === 'checking') return 'Connecting…';
     const state =
       backend === 'up'
-        ? 'Conectado'
+        ? 'Online'
         : this.onlineState()
-          ? 'Sin conexión con el servidor'
-          : 'Sin conexión a internet';
-    return this.cacheServedAtState() ? `${state} · mostrando datos guardados` : state;
+          ? 'Offline: server unreachable'
+          : 'Offline: no internet';
+    return this.cacheServedAtState() ? `${state} · showing saved data` : state;
   });
 
   private started = false;

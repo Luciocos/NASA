@@ -59,13 +59,13 @@ describe('LotPassport', () => {
 
   it('una sola acción: Compartir pasaporte, con lo que muestra el enlace', async () => {
     await setup();
-    expect(el().querySelector('h2')?.textContent?.trim()).toBe('Pasaporte del lote');
-    expect(share()?.textContent?.trim()).toBe('Compartir pasaporte');
+    expect(el().querySelector('h2')?.textContent?.trim()).toBe('Field passport');
+    expect(share()?.textContent?.trim()).toBe('Share passport');
     expect(share()?.classList).toContain('btn--primary');
     expect([...el().querySelectorAll('.includes li')].map((li) => li.textContent?.trim())).toEqual([
-      'Campañas',
-      'Bitácora',
-      'Huella y puntaje',
+      'Seasons',
+      'Field log',
+      'Footprint and score',
     ]);
     http.expectNone('/api/lots/7/passport/');
   });
@@ -77,7 +77,7 @@ describe('LotPassport', () => {
 
     share()?.click();
     fixture.detectChanges();
-    expect(share()?.textContent).toContain('Generando el enlace…');
+    expect(share()?.textContent).toContain('Creating the link…');
     expect(share()?.getAttribute('aria-disabled')).toBe('true');
     const request = http.expectOne('/api/lots/7/passport/');
     expect(request.request.method).toBe('POST');
@@ -85,9 +85,9 @@ describe('LotPassport', () => {
     await fixture.whenStable();
 
     expect(writeText).toHaveBeenCalledWith(new URL('/pasaporte/abc', document.baseURI).href);
-    expect(el().textContent).toContain('Enlace copiado');
+    expect(el().textContent).toContain('Link copied');
     const open = [...el().querySelectorAll('a')].find((a) =>
-      a.textContent?.includes('Abrir el pasaporte'),
+      a.textContent?.includes('Open the passport'),
     );
     expect(open?.getAttribute('href')).toBe('/pasaporte/abc');
 
@@ -105,7 +105,7 @@ describe('LotPassport', () => {
     share()?.click();
     http.expectOne('/api/lots/7/passport/').flush(LINK);
     await fixture.whenStable();
-    expect(el().textContent).toContain('Enlace copiado');
+    expect(el().textContent).toContain('Link copied');
   });
 
   it('si el navegador no deja copiar, muestra el enlace para copiarlo a mano', async () => {
@@ -116,7 +116,7 @@ describe('LotPassport', () => {
     http.expectOne('/api/lots/7/passport/').flush(LINK);
     await fixture.whenStable();
 
-    expect(el().textContent).toContain('Copiá el enlace');
+    expect(el().textContent).toContain('Copy the link');
     const field = el().querySelector<HTMLInputElement>('input.url');
     expect(field?.value).toBe(new URL('/pasaporte/abc', document.baseURI).href);
     expect(field?.readOnly).toBe(true);
@@ -130,7 +130,7 @@ describe('LotPassport', () => {
     await fixture.whenStable();
 
     const alert = el().querySelector('[role="alert"]');
-    expect(alert?.textContent).toContain('No se pudo generar el pasaporte');
+    expect(alert?.textContent).toContain("Couldn't create the passport");
     share()?.click();
     http.expectOne('/api/lots/7/passport/');
   });
@@ -141,11 +141,11 @@ describe('LotPassport', () => {
     share()?.click();
     http.expectOne('/api/lots/7/passport/').flush(LINK);
     await fixture.whenStable();
-    expect(el().textContent).toContain('Enlace copiado');
+    expect(el().textContent).toContain('Link copied');
 
     fixture.componentRef.setInput('lot', { ...LOT, id: 8 });
     await fixture.whenStable();
-    expect(el().textContent).not.toContain('Enlace copiado');
+    expect(el().textContent).not.toContain('Link copied');
     share()?.click();
     http.expectOne('/api/lots/8/passport/');
   });

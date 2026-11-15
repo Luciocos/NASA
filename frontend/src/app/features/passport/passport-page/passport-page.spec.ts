@@ -4,6 +4,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 
 import { PublicPassport } from '../../../core/models';
+import { formatNumber } from '../../footprint/format';
 import { makeFootprint, makeScore } from '../../footprint/testing';
 import { makeEvent } from '../../lot/testing';
 import { PassportPage } from './passport-page';
@@ -84,25 +85,26 @@ describe('PassportPage', () => {
     const text = el().textContent ?? '';
     expect(text).toContain('Lote de prueba');
     expect(text).toContain('Soja');
-    expect(text).toContain('Remoción de suelo');
-    expect(text).toContain('Dato simulado para la demostración');
-    expect(text).toContain('No se puede calcular todavía');
-    expect(text).toContain('pesos pendientes de definir por el equipo');
-    expect(text).toContain('Generado el');
+    expect(text).toContain(PASSPORT.events[0].type_label);
+    expect(text).toContain('This field includes simulated data.');
+    // la huella, el puntaje y el aviso de dato simulado son de sus componentes (con sus textos)
+    expect(el().querySelector('.simulated app-simulated-notice')).not.toBeNull();
+    expect(el().querySelector('.footprint app-footprint-breakdown')).not.toBeNull();
+    expect(el().querySelector('.score app-score-panel')).not.toBeNull();
+    expect(text).toContain('Generated on');
     expect(text).toContain('Usa datos abiertos de la NASA.');
-    expect(text).toContain('Imprimir');
-    expect(text.toLowerCase()).not.toContain('certific');
+    expect(text).toContain('Print');
+    expect(text.toLowerCase()).not.toContain('certif');
   });
 
-  it('muestra el rinde con coma decimal', async () => {
+  it('muestra el rinde con el formato de número de la app', async () => {
     const campaign = { ...PASSPORT.lot.campaigns[0], yield_t_ha: 3.2, yield_origin: 'DECLARED' };
     http
       .expectOne(`/api/passports/${TOKEN}/`)
       .flush({ ...PASSPORT, lot: { ...PASSPORT.lot, campaigns: [campaign] } });
     await fixture.whenStable();
     const text = el().textContent ?? '';
-    expect(text).toContain('3,2 t/ha');
-    expect(text).not.toContain('3.2');
+    expect(text).toContain(`${formatNumber(3.2, 2)} t/ha`);
   });
 
   it('en pantalla muestra los primeros eventos y pide el resto; al imprimir van todos', async () => {
@@ -114,14 +116,14 @@ describe('PassportPage', () => {
     // las filas de más quedan en el DOM (la hoja impresa las muestra) y se ocultan en pantalla
     expect(hidden().length).toBe(2);
     const more = [...el().querySelectorAll('button')].find((b) =>
-      b.textContent?.includes('Ver los 8 eventos'),
+      b.textContent?.includes('Show all 8 events'),
     )!;
     expect(more.classList).toContain('no-print');
     expect(more.getAttribute('aria-expanded')).toBe('false');
     more.click();
     await fixture.whenStable();
     expect(hidden().length).toBe(0);
-    expect(more.textContent).toContain('Ver menos');
+    expect(more.textContent).toContain('Show less');
   });
 
   it('las fuentes largas de las referencias se piden en pantalla y salen al imprimir', async () => {
@@ -137,26 +139,23 @@ describe('PassportPage', () => {
     });
     http.expectOne(`/api/passports/${TOKEN}/`).flush({ ...PASSPORT, footprint });
     await fixture.whenStable();
+    // los textos de la huella son de su componente: acá alcanza con dónde va cada fuente
     const full = el().querySelector('.yield .reference.print-only')?.textContent ?? '';
-    expect(full).toContain('Fuente: Informe regional de prueba, fila Rendimiento');
+    expect(full).toContain('Informe regional de prueba, fila Rendimiento');
     const short = el().querySelector('.yield .reference.screen-only')?.textContent ?? '';
-    expect(short).not.toContain('Fuente');
+    expect(short).not.toContain('Informe regional de prueba');
     const sources = el().querySelector('details.sources.screen-only')!;
-    expect(sources.textContent).toContain('Rendimiento: Informe regional de prueba');
-    // "No se puede calcular todavía" no se repite en el motivo
-    expect(el().querySelector('.headline__why')?.textContent).toBe(
-      'Faltan 1 de 1 componentes y falta el rendimiento.',
-    );
+    expect(sources.textContent).toContain('Informe regional de prueba');
   });
 
   it('el desglose y los criterios se piden en pantalla y salen abiertos al imprimir', async () => {
     http.expectOne(`/api/passports/${TOKEN}/`).flush(PASSPORT);
     await fixture.whenStable();
     const folds = () => [...el().querySelectorAll<HTMLDetailsElement>('details[data-print-open]')];
-    expect(folds().map((d) => d.querySelector('summary')?.textContent?.trim())).toEqual([
-      'Ver el desglose por componente (1)',
-      'Ver el criterio',
-    ]);
+    // el desglose de la huella y el criterio del puntaje, en ese orden
+    expect(folds()).toHaveLength(2);
+    expect(folds()[0].closest('app-footprint-breakdown')).not.toBeNull();
+    expect(folds()[1].closest('app-score-panel')).not.toBeNull();
     expect(folds().every((d) => !d.open)).toBe(true);
     // la persona abre uno: queda abierto después de imprimir
     folds()[1].open = true;
@@ -172,19 +171,20 @@ describe('PassportPage', () => {
       .flush('', { status: 500, statusText: 'Server Error' });
     await fixture.whenStable();
     const text = el().textContent ?? '';
-    expect(text).toContain('No pudimos mostrar este pasaporte en este momento.');
+    expect(text).toContain('this passport');
+    expect(text).not.toContain('este pasaporte');
     expect(text.toLowerCase()).not.toContain('backend');
   });
 
   it('avisa si el pasaporte venció', async () => {
     http.expectOne(`/api/passports/${TOKEN}/`).flush('', { status: 410, statusText: 'Gone' });
     await fixture.whenStable();
-    expect(el().textContent).toContain('Este pasaporte venció');
+    expect(el().textContent).toContain('This passport has expired');
   });
 
   it('avisa si el enlace no existe', async () => {
     http.expectOne(`/api/passports/${TOKEN}/`).flush('', { status: 404, statusText: 'Not Found' });
     await fixture.whenStable();
-    expect(el().textContent).toContain('No existe un pasaporte con este enlace');
+    expect(el().textContent).toContain('There is no passport at this link');
   });
 });

@@ -18,12 +18,12 @@ describe('RadarOpticalCompare', () => {
   it('sin imágenes lo dice en una línea, con el motivo', async () => {
     fixture.componentRef.setInput('event', makeEvent());
     await fixture.whenStable();
-    expect(missing()).toBe('Sin imágenes: lo informó una persona');
+    expect(missing()).toBe('No images: a person reported it');
     expect(el().querySelector('img')).toBeNull();
 
     fixture.componentRef.setInput('event', makeEvent({ sensor: 'NISAR' }));
     await fixture.whenStable();
-    expect(missing()).toBe('Sin imágenes de evidencia: el procesamiento todavía no las entregó');
+    expect(missing()).toBe("No evidence images: processing hasn't delivered them yet");
   });
 
   it('superpone las dos imágenes con un deslizador y las pone lado a lado a pedido', async () => {
@@ -38,21 +38,19 @@ describe('RadarOpticalCompare', () => {
     await fixture.whenStable();
     const range = el().querySelector('input[type="range"]');
     expect(range).not.toBeNull();
-    expect(range?.getAttribute('aria-label')).toBe(
-      'Porcentaje visible de la imagen NISAR (radar, banda L)',
-    );
-    expect(range?.getAttribute('aria-valuetext')).toBe('50 % de la imagen de radar');
+    expect(range?.getAttribute('aria-label')).toBe('Visible percentage of NISAR (radar, L-band)');
+    expect(range?.getAttribute('aria-valuetext')).toBe('50% of the radar image');
     // sobre la imagen, el rótulo corto
     const tags = [...el().querySelectorAll('.overlay__tag')].map((t) => t.textContent?.trim());
-    expect(tags).toEqual(['Radar NISAR', 'Óptico HLS']);
-    expect(button('Superpuestas')?.getAttribute('aria-pressed')).toBe('true');
+    expect(tags).toEqual(['NISAR radar', 'HLS optical']);
+    expect(button('Overlaid')?.getAttribute('aria-pressed')).toBe('true');
     expect(missing()).toBeUndefined();
 
-    button('Lado a lado')?.click();
+    button('Side by side')?.click();
     await fixture.whenStable();
-    expect(button('Lado a lado')?.getAttribute('aria-pressed')).toBe('true');
+    expect(button('Side by side')?.getAttribute('aria-pressed')).toBe('true');
     const captions = [...el().querySelectorAll('figcaption')].map((c) => c.textContent?.trim());
-    expect(captions).toEqual(['NISAR (radar, banda L)', 'Óptico (HLS)']);
+    expect(captions).toEqual(['NISAR (radar, L-band)', 'Optical (HLS)']);
     expect(el().querySelector('input[type="range"]')).toBeNull();
   });
 
@@ -70,7 +68,7 @@ describe('RadarOpticalCompare', () => {
     const text = el().textContent ?? '';
     expect(text).not.toContain('NISAR');
     const tags = [...el().querySelectorAll('.overlay__tag')].map((t) => t.textContent?.trim());
-    expect(tags).toEqual(['Sentinel-1 (ESA, no es dato NASA)', 'Óptico Landsat']);
+    expect(tags).toEqual(['Sentinel-1 (ESA, not NASA data)', 'Landsat optical']);
   });
 
   it('con una sola imagen la muestra y dice que falta la otra', async () => {
@@ -80,7 +78,7 @@ describe('RadarOpticalCompare', () => {
     );
     await fixture.whenStable();
     expect(el().querySelectorAll('img').length).toBe(1);
-    expect(missing()).toBe('Sin imagen óptica para comparar');
+    expect(missing()).toBe('No optical image to compare');
     expect(el().querySelector('input[type="range"]')).toBeNull();
   });
 
@@ -97,6 +95,6 @@ describe('RadarOpticalCompare', () => {
     el().querySelector('.overlay__base')?.dispatchEvent(new Event('error'));
     await fixture.whenStable();
     expect(el().querySelectorAll('img').length).toBe(1);
-    expect(missing()).toBe('No cargó la imagen óptica');
+    expect(missing()).toBe("The optical image didn't load");
   });
 });

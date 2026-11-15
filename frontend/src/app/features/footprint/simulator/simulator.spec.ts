@@ -41,7 +41,7 @@ describe('Simulator', () => {
   });
 
   it('avisa que no modifica los datos del lote', () => {
-    expect(el().textContent).toContain('Simulación: no modifica los datos del lote.');
+    expect(el().textContent).toContain('Simulation: it does not change the field’s data.');
   });
 
   it('envía el cambio y muestra antes y después', async () => {
@@ -55,22 +55,22 @@ describe('Simulator', () => {
     const text = el().textContent ?? '';
     // antes y después en dos tarjetas: huella y puntaje
     const tiles = [...el().querySelectorAll('.tile')].map((t) => t.textContent ?? '');
-    expect(tiles[0]).toContain('Huella por tonelada');
-    expect(tiles[0]).toContain('Después (hipotético)');
-    expect(tiles[0]).toContain('Todavía no se puede calcular');
-    expect(tiles[1]).toContain('Puntaje provisional');
-    expect(tiles[1]).toContain('Sin número');
+    expect(tiles[0]).toContain('Footprint per tonne');
+    expect(tiles[0]).toContain('After (hypothetical)');
+    expect(tiles[0]).toContain('Cannot be calculated yet');
+    expect(tiles[1]).toContain('Provisional score');
+    expect(tiles[1]).toContain('No number');
     // solo el criterio que cambia queda a la vista
     const changes = el().querySelector('.changes')?.textContent?.replace(/\s+/g, ' ') ?? '';
-    expect(changes).toContain('Cobertura');
-    expect(changes).toContain('✗ No cumple');
-    expect(changes).toContain('✓ Cumple');
+    expect(changes).toContain('Winter cover');
+    expect(changes).toContain('✗ Not met');
+    expect(changes).toContain('✓ Met');
     // la tabla de todos los criterios y las notas, plegadas
     const folded = el().querySelector('app-disclosure')?.textContent ?? '';
-    expect(folded).toContain('Ver todos los criterios y notas');
-    expect(folded).toContain('(cambia)');
+    expect(folded).toContain('See all criteria and notes');
+    expect(folded).toContain('(changes)');
     expect(folded).toContain('Se agregó un cultivo de cobertura hipotético (no se guarda).');
-    expect(text).toContain('Simulación lista.');
+    expect(text).toContain('Simulation ready.');
   });
 
   it('si falla lo dice en lenguaje llano', async () => {
@@ -78,7 +78,7 @@ describe('Simulator', () => {
     http.expectOne('/api/lots/1/simulate/').flush('', { status: 500, statusText: 'Server Error' });
     await fixture.whenStable();
     expect(el().querySelector('[role="alert"]')?.textContent).toContain(
-      'No pudimos mostrar la simulación en este momento.',
+      'We could not show the simulation right now.',
     );
   });
 });

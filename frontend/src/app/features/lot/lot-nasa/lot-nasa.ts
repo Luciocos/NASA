@@ -40,7 +40,7 @@ import { Icon } from '../../../shared/ui/icon/icon';
 import { KpiCard, KpiTrend } from '../../../shared/ui/kpi-card/kpi-card';
 import { SectionCard } from '../../../shared/ui/section-card/section-card';
 import { IconName } from '../../../shared/ui/icon/icons';
-import { formatDate } from '../labels';
+import { EVENT_TYPE_LABELS, formatDate } from '../labels';
 import {
   firstSentence,
   forLot,
@@ -50,7 +50,7 @@ import {
 import { InfoTip } from '../../../shared/ui/info-tip/info-tip';
 import { SlideTrack } from './slide-track';
 
-const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 /** el celular: el mismo corte en el que el popup ocupa la pantalla entera */
 const NARROW_QUERY = '(max-width: 40rem)';
 /**
@@ -58,21 +58,21 @@ const NARROW_QUERY = '(max-width: 40rem)';
  * completo, el producto y la resolución van en su ayuda (i)
  */
 const SOURCE_ROWS: readonly { id: NasaSourceId; short: string }[] = [
-  { id: 'modisNdvi', short: 'MODIS · verdor' },
-  { id: 'power', short: 'NASA POWER · clima' },
+  { id: 'modisNdvi', short: 'MODIS · greenness' },
+  { id: 'power', short: 'NASA POWER · weather' },
   { id: 'nisar', short: 'NISAR · radar' },
-  { id: 'hls', short: 'HLS · imágenes' },
-  { id: 'modisLandUse', short: 'MODIS · uso del suelo' },
+  { id: 'hls', short: 'HLS · imagery' },
+  { id: 'modisLandUse', short: 'MODIS · land use' },
 ];
 
 /** las tarjetas deslizables del detalle, en orden: su título es también su nombre accesible */
 export const SATELLITE_SLIDES = [
-  'Lluvia por mes',
-  'Uso del suelo desde 2020',
-  'Pasadas de NISAR',
-  'Imágenes HLS',
-  'Verdor y humedad',
-  'Fuentes y opciones',
+  'Monthly rainfall',
+  'Land use since 2020',
+  'NISAR passes',
+  'HLS imagery',
+  'Greenness and moisture',
+  'Sources and options',
 ] as const;
 
 interface LandUseChip {
@@ -88,17 +88,16 @@ interface LandUseChip {
  */
 function landUseChip(evidence: LandUseEvidence, state: LoadState<LandUseEvidence>): LandUseChip {
   const status = modisStatus(state);
-  if (status === 'unchanged')
-    return { text: 'Sin cambios grandes', tone: 'chip--ok', icon: 'check' };
+  if (status === 'unchanged') return { text: 'No major changes', tone: 'chip--ok', icon: 'check' };
   if (status === 'unclear') {
-    return { text: `Sin un uso dominante en ${evidence.baselineYear}`, tone: '', icon: 'layers' };
+    return { text: `No dominant use in ${evidence.baselineYear}`, tone: '', icon: 'layers' };
   }
   if (status === 'possible_change') {
     return partialChange(evidence)
-      ? { text: 'Posible cambio en parte del lote', tone: 'chip--warn', icon: 'alert' }
-      : { text: 'Posible cambio: conviene revisarlo', tone: 'chip--warn', icon: 'alert' };
+      ? { text: 'Possible change in part of the field', tone: 'chip--warn', icon: 'alert' }
+      : { text: 'Possible change: worth checking', tone: 'chip--warn', icon: 'alert' };
   }
-  return { text: 'Sin dato para comparar', tone: '', icon: 'minus' };
+  return { text: 'No data to compare', tone: '', icon: 'minus' };
 }
 
 /**
@@ -108,7 +107,7 @@ function landUseChip(evidence: LandUseEvidence, state: LoadState<LandUseEvidence
 export function serviceText(error: string | null | undefined): string {
   return (error ?? '')
     .split(/(?<=\.)\s+/)
-    .filter((sentence) => !/\btandas?\b/i.test(sentence))
+    .filter((sentence) => !/\b(tandas?|batch(es)?)\b/i.test(sentence))
     .join(' ')
     .trim();
 }
@@ -163,9 +162,9 @@ export class LotNasa {
 
   /** sin red, lo que todavía no llegó (y no tiene copia guardada) espera a que vuelva */
   protected readonly offline = computed(() => !this.connectivity.online());
-  protected readonly offlineText = 'Sin conexión: se consulta cuando vuelva la red';
+  protected readonly offlineText = 'Offline: it will be queried when the connection returns';
   /** lo medido: MODIS responde en 40 a 70 s y avisa la demora a los 150 s */
-  protected readonly modisWait = 'puede tardar un par de minutos';
+  protected readonly modisWait = 'it may take a couple of minutes';
   protected readonly dataSources = DATA_SOURCES;
   /** pantalla de celular: "Más datos" va plegado (y se abre con un toque) */
   protected readonly narrow = signal(false);
@@ -209,13 +208,12 @@ export class LotNasa {
     if (data.length === 0) return [];
     return [
       {
-        name: 'NDVI del lote (MODIS)',
+        name: 'Field NDVI (MODIS)',
         tone: 'positive',
         points: data.map((obs) => ({
           date: obs.date,
           value: obs.mean,
-          label:
-            obs.mean === null ? (obs.quality === 'cloudy' ? 'nublado' : 'sin dato') : undefined,
+          label: obs.mean === null ? (obs.quality === 'cloudy' ? 'cloudy' : 'no data') : undefined,
         })),
       },
     ];
@@ -224,7 +222,10 @@ export class LotNasa {
   protected readonly markers = computed<SeriesMarker[]>(() =>
     this.events()
       .filter((event) => event.date >= this.ndviSince())
-      .map((event) => ({ date: event.date, label: event.type_label })),
+      .map((event) => ({
+        date: event.date,
+        label: EVENT_TYPE_LABELS[event.type] ?? event.type_label,
+      })),
   );
   protected readonly rainLast30 = computed(() => {
     const days = this.climate().data;
@@ -240,17 +241,17 @@ export class LotNasa {
     const { latest, changeVsLastYear, changeVsPrevious } = this.summary();
     if (!latest || latest.mean === null) return null;
     const change = changeVsLastYear ?? changeVsPrevious;
-    const versus = changeVsLastYear !== null ? 'hace un año' : 'la imagen anterior';
+    const versus = changeVsLastYear !== null ? 'a year ago' : 'the previous image';
     return {
       value: decimal(latest.mean),
-      caption: `Imagen del ${formatDate(latest.date)}`,
+      caption: `Image from ${formatDate(latest.date)}`,
       trend: change === null ? null : change > 0 ? 'up' : change < 0 ? 'down' : 'flat',
       trendText:
         change === null
           ? null
           : change === 0
-            ? `Igual que ${versus}`
-            : `${signedDecimal(change)} frente a ${versus}`,
+            ? `Same as ${versus}`
+            : `${signedDecimal(change)} vs. ${versus}`,
     };
   });
   protected readonly rainKpi = computed<KpiView | null>(() => {
@@ -259,7 +260,7 @@ export class LotNasa {
     const missing = rain.missingDays > 0 ? ` · ${missingText(rain.missingDays)}` : '';
     return {
       value: Math.round(rain.rainMm),
-      caption: `Hasta el ${formatDate(rain.to).slice(0, 5)}${missing}`,
+      caption: `Up to ${formatDate(rain.to).slice(0, 5)}${missing}`,
     };
   });
   protected readonly soilKpi = computed<KpiView | null>(() => {
@@ -270,7 +271,7 @@ export class LotNasa {
     if (value === null) return null;
     return {
       value: Math.round(value * 100),
-      caption: `${root ? 'Raíces' : 'Superficie'} · 100 es saturado`,
+      caption: `${root ? 'Root zone' : 'Surface'} · 100 is saturated`,
     };
   });
 
@@ -290,16 +291,16 @@ export class LotNasa {
     if (!lastRain) {
       return {
         month,
-        note: 'mes en curso: todavía sin dato',
-        aside: `* ${label}: todavía sin dato`,
+        note: 'current month: no data yet',
+        aside: `* ${label}: no data yet`,
       };
     }
     const until = `${lastRain.slice(8, 10)}/${lastRain.slice(5, 7)}`;
     const gaps = inMonth.filter((day) => day.rainMm === null && day.date < lastRain).length;
     return {
       month,
-      note: `mes en curso: hasta el ${until}${gaps ? `, ${missingText(gaps)}` : ''}`,
-      aside: `* ${label}: suma hasta el ${until}`,
+      note: `current month: up to ${until}${gaps ? `, ${missingText(gaps)}` : ''}`,
+      aside: `* ${label}: total up to ${until}`,
     };
   });
   protected readonly rainColumns = computed<ColumnItem[]>(() => {
@@ -327,9 +328,7 @@ export class LotNasa {
     const { status, error } = this.scenes();
     if (status !== 'partial' && status !== 'error') return null;
     const failed =
-      status === 'partial'
-        ? 'La consulta al catálogo falló en parte.'
-        : 'La consulta al catálogo falló.';
+      status === 'partial' ? 'The catalog query partly failed.' : 'The catalog query failed.';
     return error ? `${failed} ${error}` : failed;
   });
   protected readonly nisar = computed(() =>
@@ -378,19 +377,17 @@ export class LotNasa {
   /** por qué un indicador quedó sin dato, en pocas palabras: la primera oración del motivo */
   protected reason(state: LoadState<unknown>): string {
     if (this.pending(state)) return this.offlineText;
-    return (
-      firstSentence(serviceText(state.error)) || 'El servicio no devolvió datos para este lote'
-    );
+    return firstSentence(serviceText(state.error)) || 'The service returned no data for this field';
   }
 
   protected number(value: number | null | undefined, digits = 2): string {
     return value == null
-      ? 'Sin dato'
-      : value.toLocaleString('es-AR', { maximumFractionDigits: digits, minimumFractionDigits: 0 });
+      ? 'No data'
+      : value.toLocaleString('en-US', { maximumFractionDigits: digits, minimumFractionDigits: 0 });
   }
 
   protected signed(value: number | null): string {
-    return value === null ? 'Sin dato' : signedDecimal(value);
+    return value === null ? 'No data' : signedDecimal(value);
   }
 
   protected day(iso: string): string {
@@ -398,7 +395,7 @@ export class LotNasa {
   }
 
   protected percent(value: number | null): string {
-    return value === null ? 'Sin dato' : `${Math.round(value * 100)} %`;
+    return value === null ? 'No data' : `${Math.round(value * 100)}%`;
   }
 
   /** sigue si la pantalla es de celular (sin matchMedia, como en las pruebas, es la de compu) */
@@ -413,13 +410,13 @@ export class LotNasa {
 
   /** "2 de 6: Pasadas de NISAR", el nombre de cada tarjeta deslizable */
   protected slideLabel(index: number): string {
-    return `${index + 1} de ${this.slides.length}: ${this.slides[index]}`;
+    return `${index + 1} of ${this.slides.length}: ${this.slides[index]}`;
   }
 
   /** lo que vio MODIS un año: "Agrícola", "Natural (pastizal)", "Agua", "Uso mixto" o "Sin dato" */
   protected landUseYear(year: LandUseYear): string {
-    if (!year.pixels) return 'Sin dato';
-    if (!year.group) return 'Uso mixto';
+    if (!year.pixels) return 'No data';
+    if (!year.group) return 'Mixed use';
     const label = LAND_USE_GROUP_LABELS[year.group];
     if (year.group === 'agricultural' || year.group === 'urban' || !year.classLabel) return label;
     return year.group === 'other' ? year.classLabel : `${label} (${year.classLabel.toLowerCase()})`;
@@ -446,16 +443,16 @@ function monthLabel(month: string): string {
 }
 
 function missingText(days: number): string {
-  return days === 1 ? '1 día sin dato' : `${days} días sin dato`;
+  return days === 1 ? '1 day without data' : `${days} days without data`;
 }
 
 /** 0.6234 -> '0,62' */
 function decimal(value: number): string {
-  return value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 /** 0.12 -> '+0,12'; -0.05 -> '−0,05' */
 function signedDecimal(value: number): string {
-  const text = Math.abs(value).toLocaleString('es-AR', { maximumFractionDigits: 2 });
+  const text = Math.abs(value).toLocaleString('en-US', { maximumFractionDigits: 2 });
   return `${value > 0 ? '+' : value < 0 ? '−' : ''}${text}`;
 }

@@ -298,7 +298,7 @@ describe('LotOutbox', () => {
         makePending('a', {
           attempts: 2,
           rejected: true,
-          error: 'Nombre: Este campo no puede estar en blanco.',
+          error: 'Name: Este campo no puede estar en blanco.',
         }),
       ]);
       expect(storedQueue()).toEqual(outbox.pending());
@@ -326,7 +326,7 @@ describe('LotOutbox', () => {
 
       expect(outbox.pending()[0]).toMatchObject({
         rejected: true,
-        error: 'El backend respondió con un error (500).',
+        error: 'The server responded with an error (500).',
       });
     });
 

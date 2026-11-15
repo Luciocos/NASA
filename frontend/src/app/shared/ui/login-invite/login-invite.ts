@@ -32,16 +32,16 @@ import { Icon } from '../icon/icon';
         <app-icon [name]="loggedIn() ? 'map' : 'user'" />
       </span>
       @if (loggedIn()) {
-        <h1 id="login-invite-title">No encontramos este lote</h1>
-        <p>No existe o es de otra cuenta. Tus lotes están en Mi campo.</p>
-        <a class="btn btn--primary btn--lg btn--block" routerLink="/mapa">Ir a mi campo</a>
+        <h1 id="login-invite-title">We couldn't find this field</h1>
+        <p>It doesn't exist or belongs to another account. Your fields are in My fields.</p>
+        <a class="btn btn--primary btn--lg btn--block" routerLink="/mapa">Go to My fields</a>
       } @else {
-        <h1 id="login-invite-title">Ingresá para ver este lote</h1>
-        <p>Los lotes son privados: solo los ve la cuenta que los marcó.</p>
-        <a class="btn btn--primary btn--lg btn--block" [routerLink]="login()">Ingresar</a>
+        <h1 id="login-invite-title">Log in to see this field</h1>
+        <p>Fields are private: only the account that added them can see them.</p>
+        <a class="btn btn--primary btn--lg btn--block" [routerLink]="login()">Log in</a>
       }
       <a class="link-arrow" routerLink="/ejemplos">
-        Ver los lotes de ejemplo <app-icon name="arrow-right" />
+        See the sample fields <app-icon name="arrow-right" />
       </a>
     </section>
   `,

@@ -350,6 +350,6 @@ function rejectionMessage(error: unknown): string {
   const detail = describeBackendError(error);
   if (detail) return detail;
   return error instanceof HttpErrorResponse
-    ? `El backend respondió con un error (${error.status}).`
-    : 'El backend no aceptó el lote.';
+    ? `The server responded with an error (${error.status}).`
+    : "The server didn't accept the field.";
 }

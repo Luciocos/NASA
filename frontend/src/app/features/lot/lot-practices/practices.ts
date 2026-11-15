@@ -3,14 +3,17 @@ import { Params } from '@angular/router';
 import { CriterionStatus, LandUseDeclaration, Origin, ScoreCriterion } from '../../../core/models';
 import { IconName } from '../../../shared/ui/icon/icons';
 import { LotTabKey } from '../../../shared/ui/lot-tabs/lot-tabs';
+import { criterionLabel } from '../../footprint/format';
 import { LAND_USE_KEY, LandUseMatch, ModisStatus, formatDay } from './land-use/land-use';
+
+export { criterionLabel };
 
 /** cómo se pinta un estado: chip verde, ámbar o gris, siempre con ícono y texto */
 export type StatusTone = 'ok' | 'warn' | 'neutral';
 
 /** el enlace corto de una recomendación a la pestaña donde se sigue */
 export interface RecommendationLink {
-  /** pocas palabras: "Simular en Huella" */
+  /** pocas palabras: "Simulate in Footprint" */
   label: string;
   tab: LotTabKey;
   /** la consulta que abre la vista justa de la pestaña (por ejemplo, el simulador de la huella) */
@@ -46,34 +49,34 @@ interface Advice {
  */
 const ADVICE: Record<string, Advice> = {
   winter_cover: {
-    action: 'Sumá un cultivo de cobertura en invierno.',
-    why: 'Cubre el suelo entre la cosecha y la siembra: lo protege de la erosión, suma materia orgánica y compite con las malezas.',
-    where: 'En la pestaña Huella podés simular el efecto de sumarlo.',
-    link: { label: 'Simular en Huella', tab: 'footprint', params: { vista: 'simulador' } },
+    action: 'Add a winter cover crop.',
+    why: 'It covers the soil between harvest and sowing: it protects it from erosion, adds organic matter and competes with weeds.',
+    where: 'In the Footprint tab you can simulate the effect of adding one.',
+    link: { label: 'Simulate in Footprint', tab: 'footprint', params: { vista: 'simulador' } },
   },
   no_till: {
-    action: 'Sembrá sin remover el suelo.',
-    why: 'La siembra directa conserva la humedad y la materia orgánica, y deja el suelo menos expuesto a la erosión.',
+    action: 'Sow without disturbing the soil.',
+    why: 'No-till keeps moisture and organic matter in the soil, and leaves it less exposed to erosion.',
   },
   rotation: {
-    action: 'Alterná cultivos entre campañas.',
-    why: 'Por ejemplo, maíz o trigo después de soja: corta el ciclo de plagas, enfermedades y malezas, y mejora la estructura del suelo.',
-    where: 'En la pestaña Fertilización podés planificar el próximo cultivo.',
-    link: { label: 'Ir a Fertilización', tab: 'fertilization' },
+    action: 'Rotate crops between seasons.',
+    why: 'For example, corn or wheat after soybean: it breaks the cycle of pests, diseases and weeds, and improves soil structure.',
+    where: 'In the Fertilization tab you can plan the next crop.',
+    link: { label: 'Go to Fertilization', tab: 'fertilization' },
   },
   no_burn: {
-    action: 'Dejá el rastrojo como cobertura, sin quemarlo.',
-    why: 'La quema deja el suelo desnudo y se pierden la materia orgánica y los nutrientes del rastrojo.',
+    action: 'Leave the crop residue as cover, without burning it.',
+    why: 'Burning leaves the soil bare, and the organic matter and nutrients in the residue are lost.',
   },
   [LAND_USE_KEY]: {
-    action: 'Conservá montes, pastizales y humedales.',
-    why: 'Convertirlos en cultivo libera el carbono que guardaban la vegetación y el suelo, y suma a la huella del lote.',
+    action: 'Keep native woodland, grasslands and wetlands.',
+    why: 'Turning them into cropland releases the carbon stored in the vegetation and the soil, and adds to the field’s footprint.',
   },
 };
 
 /** lo que no cumple por un evento detectado se puede revisar (y corregir) en la bitácora */
-const DETECTED = 'Lo detectó el satélite: podés revisarlo en la pestaña Bitácora.';
-const DETECTED_LINK: RecommendationLink = { label: 'Revisar en Bitácora', tab: 'log' };
+const DETECTED = 'Detected by satellite: you can review it in the Field log tab.';
+const DETECTED_LINK: RecommendationLink = { label: 'Review in Field log', tab: 'log' };
 
 /**
  * orden dentro de cada grupo: primero lo que más suele estar al alcance de un productor de la
@@ -94,17 +97,17 @@ export const STATUS_TONES: Record<CriterionStatus, StatusTone> = {
 };
 
 const STATUS_LABELS: Record<CriterionStatus, string> = {
-  cumple: 'Cumple',
-  no_cumple: 'No cumple',
-  sin_dato: 'Sin dato',
+  cumple: 'Met',
+  no_cumple: 'Not met',
+  sin_dato: 'No data',
 };
 
-/** texto del estado: el del backend, o el propio si no vino */
+/** texto del estado: el propio por clave (en inglés), o el del backend si la clave es nueva */
 export function statusLabel(criterion: Pick<ScoreCriterion, 'status' | 'status_label'>): string {
-  return criterion.status_label || STATUS_LABELS[criterion.status];
+  return STATUS_LABELS[criterion.status] || criterion.status_label;
 }
 
-/** el nombre sin la aclaración final entre paréntesis: la completa está en "Cómo se calcula" */
+/** el nombre sin la aclaración final entre paréntesis: la completa está en "How it is calculated" */
 export function shortLabel(label: string): string {
   return label.replace(/\s*\([^()]*\)\s*$/, '') || label;
 }
@@ -135,9 +138,9 @@ export function pickRecommendations(
       return {
         key: criterion.key,
         status: criterion.status as Recommendation['status'],
-        action: advice?.action ?? shortLabel(criterion.label),
+        action: advice?.action ?? shortLabel(criterionLabel(criterion)),
         why: advice?.why ?? criterion.reason,
-        now: `Hoy figura como «${statusLabel(criterion)}»: ${criterion.reason}`,
+        now: `It currently shows as “${statusLabel(criterion)}”: ${criterion.reason}`,
         where: detected ? DETECTED : (advice?.where ?? null),
         link: detected ? DETECTED_LINK : (advice?.link ?? null),
       };
@@ -151,7 +154,7 @@ export interface PracticeRow {
   label: string;
   /** el estado que muestra la fila: el del puntaje, o el declarado */
   status: CriterionStatus;
-  /** texto del chip: el estado, o "Revisar" si lo declarado no coincide con MODIS */
+  /** texto del chip: el estado, o "Review" si lo declarado no coincide con MODIS */
   chip: string;
   icon: IconName;
   tone: StatusTone;
@@ -167,7 +170,7 @@ export interface PracticeRow {
 
 /** sin declaración, el puntaje da por cumplido el uso del suelo y MODIS vio otro uso */
 const UNDECLARED_REVIEW =
-  'El puntaje lo da por cumplido porque la bitácora no tiene un cambio de uso, pero MODIS vio un uso distinto: miralo en «Uso del suelo desde 2020».';
+  'The score counts it as met because the field log has no land-use change, but MODIS saw a different use: check “Land use since 2020”.';
 
 /**
  * las filas de la lista. el puntaje y la huella usan la declaración de uso del suelo, salvo que
@@ -189,7 +192,7 @@ export function practiceRows(
   return criteria.map((criterion) => {
     const row: PracticeRow = {
       key: criterion.key,
-      label: shortLabel(criterion.label),
+      label: shortLabel(criterionLabel(criterion)),
       status: criterion.status,
       chip: statusLabel(criterion),
       icon: STATUS_ICONS[criterion.status],
@@ -198,18 +201,18 @@ export function practiceRows(
       hypothetical: criterion.hypothetical,
       declared: false,
       note: null,
-      noteLabel: 'Tu declaración y el puntaje',
+      noteLabel: 'Your declaration and the score',
     };
     if (criterion.key !== LAND_USE_KEY) return row;
     if (!declaration) {
       if (criterion.status !== 'cumple' || modis !== 'possible_change') return row;
       return {
         ...row,
-        chip: 'Revisar',
+        chip: 'Review',
         icon: 'alert',
         tone: 'warn',
         note: UNDECLARED_REVIEW,
-        noteLabel: 'MODIS y el puntaje',
+        noteLabel: 'MODIS and the score',
       };
     }
 
@@ -219,14 +222,14 @@ export function practiceRows(
       return declaration.unchanged
         ? {
             ...row,
-            chip: 'Revisar',
+            chip: 'Review',
             icon: 'alert',
             tone: 'warn',
-            note: `Declaraste el ${day} que no cambió, pero la bitácora registra un cambio de uso del suelo: el puntaje y la huella usan ese evento. Revisalo en la pestaña Bitácora.`,
+            note: `On ${day} you declared no change, but the field log records a land-use change: the score and the footprint use that event. Review it in the Field log tab.`,
           }
         : {
             ...row,
-            note: `Declaraste el ${day} que hubo un cambio de uso del suelo y la bitácora también lo registra: el puntaje y la huella usan ese evento.`,
+            note: `On ${day} you declared a land-use change, and the field log records it too: the score and the footprint use that event.`,
           };
     }
 
@@ -238,13 +241,15 @@ export function practiceRows(
     return {
       ...row,
       status,
-      chip: review ? 'Revisar' : STATUS_LABELS[status],
+      chip: review ? 'Review' : STATUS_LABELS[status],
       icon: review ? 'alert' : STATUS_ICONS[status],
       tone: review ? 'warn' : STATUS_TONES[status],
       origin: declaration.origin,
       hypothetical: false,
       declared: true,
-      note: counted ? `${said} El puntaje provisional y la huella usan tu declaración.` : said,
+      note: counted
+        ? `${said} The provisional score and the footprint use your declaration.`
+        : said,
     };
   });
 }
@@ -252,11 +257,12 @@ export function practiceRows(
 /** qué se declaró y cómo quedó frente a MODIS, en una oración para la ayuda de la fila */
 function declaredNote(declaration: LandUseDeclaration, match: LandUseMatch | null): string {
   const day = formatDay(declaration.declared_at);
-  if (!declaration.unchanged) return `Declaraste el ${day} que hubo un cambio de uso del suelo.`;
-  if (match === 'match') return `Lo declaraste el ${day} y lo respalda lo que vio MODIS.`;
+  if (!declaration.unchanged) return `On ${day} you declared a land-use change.`;
+  if (match === 'match') return `You declared it on ${day}, and what MODIS saw supports it.`;
   if (match === 'mismatch') {
-    return `Declaraste el ${day} que no cambió, pero no coincide con lo que vio MODIS: revisalo en «Uso del suelo desde 2020».`;
+    return `On ${day} you declared no change, but it does not match what MODIS saw: check it in “Land use since 2020”.`;
   }
-  if (match === 'unconfirmed') return `Lo declaraste el ${day}; MODIS no alcanza para confirmarlo.`;
-  return `Lo declaraste el ${day}.`;
+  if (match === 'unconfirmed')
+    return `You declared it on ${day}; MODIS is not enough to confirm it.`;
+  return `You declared it on ${day}.`;
 }

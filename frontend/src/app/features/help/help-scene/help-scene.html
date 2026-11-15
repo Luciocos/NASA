@@ -88,7 +88,7 @@
       <rect class="soft" x="46" y="10" width="24" height="4" rx="2" />
       <rect class="pill-active" x="78" y="4" width="80" height="16" rx="8" />
       <path class="ico c-green" [attr.d]="icons.plus" transform="translate(84 6) scale(0.5)" />
-      <text class="t-green" x="98" y="15.1" font-size="8.5">Marcar lote</text>
+      <text class="t-green" x="98" y="15.1" font-size="8.5">Add field</text>
       <circle class="green" cx="246" cy="12" r="6" />
 
       <!-- la imagen satelital: potreros, caminos y montes -->
@@ -164,7 +164,7 @@
       <g class="s1-save">
         <rect class="green" x="170" y="140" width="78" height="18" rx="5" />
         <path class="ico c-white" [attr.d]="icons.save" transform="translate(175 143) scale(0.5)" />
-        <text class="t-white" x="189" y="151.8" font-size="8">Guardar lote</text>
+        <text class="t-white" x="189" y="151.8" font-size="8">Save field</text>
       </g>
 
       <g class="s1-ring1">
@@ -216,7 +216,7 @@
 
       <!-- Tus lotes, con la lupa de cada uno -->
       <rect class="card" x="162" y="8" width="90" height="160" rx="10" />
-      <text class="t-ink" x="170" y="24" font-size="9.5">Tus lotes</text>
+      <text class="t-ink" x="170" y="24" font-size="9.5">Your fields</text>
       <rect class="soft" x="170" y="29" width="32" height="3.5" rx="1.75" />
       @for (row of lotRows; track row; let first = $first) {
         <rect
@@ -318,7 +318,7 @@
       <rect class="chip-warn" x="72" y="75" width="30" height="7" rx="3.5" />
       <rect class="green" x="18" y="89" width="140" height="19" rx="5" />
       <path class="ico c-white" [attr.d]="icons.plus" transform="translate(23 92.5) scale(0.5)" />
-      <text class="t-white" x="37" y="101.6" font-size="9">Cargar rinde e insumos</text>
+      <text class="t-white" x="37" y="101.6" font-size="9">Enter yield and inputs</text>
       <rect class="link" x="176" y="97" width="58" height="3.5" rx="1.75" />
       <path
         class="ico c-link"
@@ -361,15 +361,15 @@
 
       <!-- Uso del suelo: las dos respuestas; la mano señala las dos, sin elegir por vos -->
       <rect class="card" x="102" y="46" width="150" height="124" rx="9" />
-      <text class="t-ink" x="110" y="60" font-size="9.5">Uso del suelo</text>
+      <text class="t-ink" x="110" y="60" font-size="9.5">Land use</text>
       <rect class="ink-2" x="110" y="67" width="112" height="4" rx="2" />
       <rect class="ink-2" x="110" y="74" width="66" height="4" rx="2" />
       <rect class="input" x="110" y="84" width="134" height="20" rx="5" />
       <path class="ico c-ink" [attr.d]="icons.check" transform="translate(115 88) scale(0.5)" />
-      <text class="t-ink" x="129" y="97.2" font-size="8.5">No cambié el uso</text>
+      <text class="t-ink" x="129" y="97.2" font-size="8.5">No change in use</text>
       <rect class="input" x="110" y="108" width="134" height="20" rx="5" />
       <path class="ico c-ink" [attr.d]="icons.sync" transform="translate(115 112) scale(0.5)" />
-      <text class="t-ink" x="129" y="121.2" font-size="8.5">Sí, hubo un cambio</text>
+      <text class="t-ink" x="129" y="121.2" font-size="8.5">Yes, it changed</text>
       <line class="rule" x1="110" y1="136.5" x2="244" y2="136.5" />
       @for (tile of coverTiles; track $index) {
         <rect
@@ -416,14 +416,14 @@
       <!-- Tus números: precio, rinde y costos -->
       <rect class="card" x="124" y="46" width="128" height="124" rx="9" />
       <rect class="ink" x="132" y="54" width="52" height="5" rx="2.5" />
-      <text class="t-ink-2" x="132" y="70" font-size="8.5">Precio del grano</text>
+      <text class="t-ink-2" x="132" y="70" font-size="8.5">Grain price</text>
       <rect class="input" x="132" y="76" width="112" height="16" rx="4" />
       <rect class="caret ink" x="137" y="79.5" width="1" height="9" rx="0.5" />
       <rect class="soft" x="132" y="97.5" width="62" height="3" rx="1.5" />
-      <text class="t-ink-2" x="132" y="113" font-size="8.5">Rinde</text>
+      <text class="t-ink-2" x="132" y="113" font-size="8.5">Yield</text>
       <rect class="input" x="132" y="117" width="112" height="16" rx="4" />
       <line class="rule" x1="124" y1="141.5" x2="252" y2="141.5" />
-      <text class="t-ink" x="132" y="157.5" font-size="8.5">Costos y gastos</text>
+      <text class="t-ink" x="132" y="157.5" font-size="8.5">Costs and expenses</text>
       <path
         class="ico c-muted"
         [attr.d]="icons['chevron-down']"
@@ -473,7 +473,7 @@
       <rect class="soft" x="174" y="63.5" width="66" height="3" rx="1.5" />
       <rect class="green" x="171" y="74" width="76" height="19" rx="5" />
       <path class="ico c-white" [attr.d]="icons.leaf" transform="translate(174 77.5) scale(0.5)" />
-      <text class="t-white" x="187.5" y="86.4" font-size="8.5">Armar dosis</text>
+      <text class="t-white" x="187.5" y="86.4" font-size="8.5">Plan rates</text>
       <line class="rule" x1="166" y1="104.5" x2="252" y2="104.5" />
       <rect class="ink-2" x="174" y="112" width="44" height="3.5" rx="1.75" />
       <rect class="soft" x="174" y="119.5" width="56" height="3" rx="1.5" />
@@ -539,9 +539,9 @@
 
       <rect class="green" x="18" y="147" width="76" height="19" rx="5" />
       <path class="ico c-white" [attr.d]="icons.check" transform="translate(23 150.5) scale(0.5)" />
-      <text class="t-white" x="37" y="159.6" font-size="9">Confirmar</text>
+      <text class="t-white" x="37" y="159.6" font-size="9">Confirm</text>
       <rect class="input" x="100" y="147" width="60" height="19" rx="5" />
-      <text class="t-ink" x="110" y="159.6" font-size="9">Corregir</text>
+      <text class="t-ink" x="110" y="159.6" font-size="9">Correct</text>
 
       <!-- la pestaña, el evento (se abre su detalle) y Confirmar -->
       <g class="seq3-ring2">
@@ -590,7 +590,7 @@
         [attr.d]="icons.passport"
         transform="translate(23 111.5) scale(0.5)"
       />
-      <text class="t-white" x="37" y="120.6" font-size="9">Compartir pasaporte</text>
+      <text class="t-white" x="37" y="120.6" font-size="9">Share passport</text>
 
       <g class="seq-ring2">
         <rect class="ring-halo" x="15" y="105" width="130" height="25" rx="8" />

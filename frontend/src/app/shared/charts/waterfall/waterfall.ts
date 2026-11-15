@@ -81,7 +81,7 @@ export class WaterfallChart {
   readonly decimals = input(0);
   readonly title = input<string>();
   readonly description = input<string>();
-  readonly emptyText = input('Sin datos para mostrar');
+  readonly emptyText = input('No data to show');
 
   private readonly width = injectHostWidth();
 
@@ -188,7 +188,7 @@ export class WaterfallChart {
     const unit = this.unit();
     const decimals = this.decimals();
     const parts = steps.map((step) => `${step.label}: ${stepText(step, unit, decimals)}`);
-    const summary = `Cascada de ${countLabel(steps.length, 'paso', 'pasos')}. ${parts.join('; ')}.`;
+    const summary = `Waterfall with ${countLabel(steps.length, 'step', 'steps')}. ${parts.join('; ')}.`;
     return chartLabel(this.description(), summary);
   });
 
@@ -199,11 +199,11 @@ export class WaterfallChart {
     const unit = this.unit();
     const suffix = unit ? ` (${unit})` : '';
     return {
-      caption: this.title() ?? 'Datos de la cascada',
-      columns: ['Concepto', 'Tipo', `Valor${suffix}`, `Acumulado${suffix}`],
+      caption: this.title() ?? 'Waterfall data',
+      columns: ['Item', 'Type', `Value${suffix}`, `Running total${suffix}`],
       rows: steps.map((step, index) => [
         step.label,
-        step.kind === 'total' ? 'Total' : 'Variación',
+        step.kind === 'total' ? 'Total' : 'Change',
         step.kind === 'total'
           ? formatNumber(step.value, decimals)
           : formatSigned(step.value, decimals),

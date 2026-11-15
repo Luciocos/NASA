@@ -109,8 +109,8 @@ describe('BarChart', () => {
 
     expect(el().querySelectorAll('path.bar').length).toBe(1);
     expect(el().querySelectorAll('rect.missing').length).toBe(1);
-    expect(el().querySelector('svg.plot')?.textContent).toContain('Sin dato');
-    expect(el().querySelector('svg.plot')?.getAttribute('aria-label')).toContain('HH: Sin dato');
+    expect(el().querySelector('svg.plot')?.textContent).toContain('No data');
+    expect(el().querySelector('svg.plot')?.getAttribute('aria-label')).toContain('HH: No data');
   });
 
   it('con todos los valores faltantes no inventa un eje', async () => {
@@ -161,23 +161,23 @@ describe('BarChart', () => {
   it('ofrece la tabla de datos equivalente dentro de "Ver datos"', async () => {
     await render({ items: ITEMS, unit: 'dB', decimals: 2, thresholds: THRESHOLDS });
 
-    expect(el().querySelector('details summary')?.textContent?.trim()).toBe('Ver datos');
+    expect(el().querySelector('details summary')?.textContent?.trim()).toBe('Show data');
     const headers = [...el().querySelectorAll('details thead th')].map((th) => th.textContent);
-    expect(headers).toEqual(['Categoría', 'Valor (dB)', 'Nota']);
+    expect(headers).toEqual(['Category', 'Value (dB)', 'Note']);
     const rows = [...el().querySelectorAll('details tbody tr')].map((row) =>
       [...row.children].map((cell) => cell.textContent),
     );
     expect(rows).toEqual([
       ['HH', '-1,78', 'Polarización horizontal'],
       ['HV', '0,81', ''],
-      ['Umbral (línea de referencia)', '±1,03', ''],
+      ['Umbral (reference line)', '±1,03', ''],
     ]);
     expect(el().querySelector('details tbody th')?.getAttribute('scope')).toBe('row');
   });
 
   it('muestra el estado vacío, con el texto por defecto o el pedido', async () => {
     await render({ items: [] });
-    expect(text()).toContain('Sin datos para mostrar');
+    expect(text()).toContain('No data to show');
     expect(el().querySelector('svg')).toBeNull();
     expect(el().querySelector('details')).toBeNull();
 

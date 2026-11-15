@@ -18,10 +18,10 @@ export function isConnectivityError(error: unknown): boolean {
 }
 
 const FIELD_LABELS: Record<string, string> = {
-  name: 'Nombre',
+  name: 'Name',
   renspa: 'RENSPA',
-  locality: 'Localidad',
-  province: 'Provincia',
+  locality: 'Locality',
+  province: 'Province',
 };
 
 // claves cuyo mensaje ya se entiende solo, sin anteponer el campo

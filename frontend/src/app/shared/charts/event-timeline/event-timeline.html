@@ -56,7 +56,7 @@
               [attr.y2]="v.axisY"
             />
             <text class="t-strong" y="12" [attr.x]="today.x" [attr.text-anchor]="today.anchor">
-              Hoy
+              Today
             </text>
           }
           @for (mark of v.marks; track mark.key; let i = $index) {
@@ -81,7 +81,7 @@
         </g>
         <g
           role="group"
-          aria-label="Eventos: las flechas los recorren y Enter o Espacio selecciona uno"
+          aria-label="Events: use the arrow keys to move through them and Enter or Space to select one"
         >
           @for (mark of v.marks; track mark.key; let i = $index) {
             <g

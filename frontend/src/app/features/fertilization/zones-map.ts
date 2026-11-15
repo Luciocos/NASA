@@ -28,7 +28,7 @@ export const ZONE_STYLE = {
 @Component({
   selector: 'app-zones-map',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<div #map class="map" role="region" aria-label="Mapa de ambientes por NDVI"></div>`,
+  template: `<div #map class="map" role="region" aria-label="Map of zones by NDVI"></div>`,
   styles: `
     :host {
       position: relative;
@@ -72,7 +72,7 @@ export class ZonesMap {
       });
       L.tileLayer(
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 19, attribution: 'Imágenes &copy; Esri, Maxar, Earthstar Geographics' },
+        { maxZoom: 19, attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics' },
       ).addTo(map);
       this.layer = L.layerGroup().addTo(map);
       this.map = map;
@@ -138,15 +138,13 @@ const formatter = (digits: number) =>
 /** ayuda de un píxel: NDVI, hectáreas en el lote y, si es mixto, qué parte del cuadro es del lote */
 export function pixelTooltip(label: string, pixel: NdviPixel, mixed: boolean): string {
   const parts = [`${label}: NDVI ${formatter(2).format(pixel.value ?? 0)}`];
-  if (pixel.insideHa) parts.push(`${formatter(1).format(pixel.insideHa)} ha en el lote`);
+  if (pixel.insideHa) parts.push(`${formatter(1).format(pixel.insideHa)} ha in the field`);
   const share = pixel.insideShare;
   // un cuadro casi entero ("100 %" redondeado) no necesita la aclaración
   if (share !== undefined && Math.round(share * 100) < 100) {
-    const percent = `${formatter(0).format(share * 100)} % del cuadro está en tu lote`;
+    const percent = `${formatter(0).format(share * 100)} % of the cell is in your field`;
     parts.push(
-      mixed
-        ? `Píxel mixto: solo el ${percent}; el valor refleja sobre todo lo que hay alrededor`
-        : `el ${percent}`,
+      mixed ? `Mixed pixel: only ${percent}; the value mostly reflects the surroundings` : percent,
     );
   }
   return parts.join(' · ');

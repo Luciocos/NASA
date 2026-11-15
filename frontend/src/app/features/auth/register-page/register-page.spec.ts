@@ -56,13 +56,15 @@ describe('RegisterPage', () => {
   it('pide nombre opcional, mail y contraseña, con la ayuda de la contraseña a la vista', async () => {
     await open('/registrarse?volver=%2Fejemplos');
 
-    expect(el().querySelector('h1')?.textContent).toContain('Creá tu cuenta gratis');
-    expect(el().querySelector('label[for="register-name"]')?.textContent).toContain('(opcional)');
+    expect(el().querySelector('h1')?.textContent).toContain('Create your free account');
+    expect(el().querySelector('label[for="register-name"]')?.textContent).toContain('(optional)');
     expect(input('register-password').autocomplete).toBe('new-password');
     expect(input('register-password').getAttribute('aria-describedby')).toBe(
       'register-password-hint',
     );
-    expect(el().textContent).toContain('Tus lotes y tus datos son privados: solo vos los ves.');
+    expect(el().textContent).toContain(
+      'Your fields and your data are private: only you can see them.',
+    );
     expect(el().querySelector('a[href^="/ingresar"]')?.getAttribute('href')).toBe(
       '/ingresar?volver=%2Fejemplos',
     );
@@ -123,7 +125,7 @@ describe('RegisterPage', () => {
     await submit();
 
     expect(el().querySelector('#register-password-error')?.textContent).toContain(
-      'Elegí una contraseña.',
+      'Choose a password.',
     );
     expect(document.activeElement).toBe(input('register-password'));
     http.expectNone('/api/auth/register/');
@@ -141,7 +143,7 @@ describe('RegisterPage', () => {
     await harness.fixture.whenStable();
 
     const alert = el().querySelector('[role="alert"]')?.textContent ?? '';
-    expect(alert).toContain('No se pudo crear la cuenta (error 500).');
+    expect(alert).toContain("Couldn't sign up (error 500).");
     expect(alert).not.toContain('<html>');
   });
 });

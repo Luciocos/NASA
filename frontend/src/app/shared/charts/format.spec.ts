@@ -31,7 +31,7 @@ describe('formatNumber', () => {
     expect(formatNumber(undefined)).toBe(NO_DATA);
     expect(formatNumber(NaN)).toBe(NO_DATA);
     expect(formatNumber(Infinity)).toBe(NO_DATA);
-    expect(NO_DATA).toBe('Sin dato');
+    expect(NO_DATA).toBe('No data');
   });
 
   it('tolera una cantidad de decimales inválida', () => {
@@ -93,10 +93,10 @@ describe('formatDate', () => {
 
 describe('formatMonthShort', () => {
   it('escribe el mes corto y el año de dos cifras', () => {
-    expect(formatMonthShort('2026-09-07')).toBe('sep 26');
-    expect(formatMonthShort('2026-01-01')).toBe('ene 26');
-    expect(formatMonthShort('2025-12-31')).toBe('dic 25');
-    expect(formatMonthShort('2009-05-10')).toBe('may 09');
+    expect(formatMonthShort('2026-09-07')).toBe('Sep 26');
+    expect(formatMonthShort('2026-01-01')).toBe('Jan 26');
+    expect(formatMonthShort('2025-12-31')).toBe('Dec 25');
+    expect(formatMonthShort('2009-05-10')).toBe('May 09');
   });
 
   it('no inventa un mes que no existe', () => {
@@ -107,8 +107,8 @@ describe('formatMonthShort', () => {
 
 describe('formatUncertainty', () => {
   it('distingue singular y plural', () => {
-    expect(formatUncertainty(6)).toBe('± 6 días');
-    expect(formatUncertainty(1)).toBe('± 1 día');
+    expect(formatUncertainty(6)).toBe('± 6 days');
+    expect(formatUncertainty(1)).toBe('± 1 day');
   });
 
   it('queda vacío si no hay incertidumbre informada', () => {
@@ -117,7 +117,7 @@ describe('formatUncertainty', () => {
   });
 
   it('se suma a la fecha', () => {
-    expect(formatDateWithUncertainty('2026-09-07', 6)).toBe('07/09/2026 ± 6 días');
+    expect(formatDateWithUncertainty('2026-09-07', 6)).toBe('07/09/2026 ± 6 days');
     expect(formatDateWithUncertainty('2026-09-07', null)).toBe('07/09/2026');
   });
 });

@@ -57,7 +57,7 @@ describe('SeriesChart', () => {
     // cada tramo tiene exactamente sus dos puntos: no hay un tercero inventado en el hueco
     expect(paths.every((d) => (d?.match(/[ML]/g) ?? []).length === 2)).toBe(true);
     expect(el().querySelectorAll('svg.plot rect.gap').length).toBe(1);
-    expect(el().querySelector('ul.legend')?.textContent).toContain('Sin dato');
+    expect(el().querySelector('ul.legend')?.textContent).toContain('No data');
     expect(svg().getAttribute('role')).toBe('img');
   });
 
@@ -85,7 +85,7 @@ describe('SeriesChart', () => {
     await key('ArrowLeft');
     const live = el().querySelector('[aria-live="polite"]')?.textContent ?? '';
     expect(live).toContain('02/02/2026');
-    expect(live).toContain('Sin dato (nubes)');
+    expect(live).toContain('No data (nubes)');
     expect(el().querySelectorAll('.cursor circle').length).toBe(0);
 
     await key('Home');
@@ -123,9 +123,9 @@ describe('SeriesChart', () => {
     expect(el().querySelector('svg.plot')?.textContent).toContain('Siembra');
     expect(el().querySelector('rect.band')).not.toBeNull();
     const label = svg().getAttribute('aria-label') ?? '';
-    expect(label).toContain('Franja de referencia Cultivo sano');
-    expect(label).toContain('Siembra el 10/02/2026');
-    expect(label).toContain('1 fecha sin dato');
+    expect(label).toContain('Reference band Cultivo sano');
+    expect(label).toContain('Siembra on 10/02/2026');
+    expect(label).toContain('1 date with no data');
   });
 
   it('con un solo punto dibuja el punto', async () => {
@@ -158,11 +158,11 @@ describe('SeriesChart', () => {
     await render({ series: SHORT, markers: [{ date: '2026-02-10', label: 'Siembra' }] });
 
     const headers = [...el().querySelectorAll('details thead th')].map((th) => th.textContent);
-    expect(headers).toEqual(['Fecha', 'NDVI', 'Marca']);
+    expect(headers).toEqual(['Date', 'NDVI', 'Marker']);
     const rows = [...el().querySelectorAll('details tbody tr')].map((row) =>
       [...row.children].map((cell) => cell.textContent),
     );
-    expect(rows[2]).toEqual(['02/02/2026', 'Sin dato (nubes)', '']);
+    expect(rows[2]).toEqual(['02/02/2026', 'No data (nubes)', '']);
     expect(rows[3]).toEqual(['10/02/2026', '—', 'Siembra']);
   });
 

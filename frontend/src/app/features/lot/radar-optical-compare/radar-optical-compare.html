@@ -1,15 +1,15 @@
 @if (radarUrl(); as radar) {
   @if (opticalUrl(); as optical) {
-    <div class="seg" role="group" aria-label="Cómo ver las dos imágenes">
+    <div class="seg" role="group" aria-label="How to view both images">
       <button
         type="button"
         [attr.aria-pressed]="mode() === 'overlay'"
         (click)="mode.set('overlay')"
       >
-        Superpuestas
+        Overlaid
       </button>
       <button type="button" [attr.aria-pressed]="mode() === 'side'" (click)="mode.set('side')">
-        Lado a lado
+        Side by side
       </button>
     </div>
 
@@ -18,10 +18,7 @@
         class="overlay"
         role="group"
         [attr.aria-label]="
-          'Imágenes superpuestas: a la izquierda ' +
-          radarLabel() +
-          ', a la derecha ' +
-          opticalLabel()
+          'Overlaid images: on the left ' + radarLabel() + ', on the right ' + opticalLabel()
         "
       >
         <img class="overlay__base" [src]="optical" alt="" (error)="onImageError('optical')" />
@@ -46,8 +43,8 @@
           max="100"
           [value]="split()"
           (input)="onSplitInput($any($event.target).value)"
-          [attr.aria-label]="'Porcentaje visible de la imagen ' + radarLabel()"
-          [attr.aria-valuetext]="split() + ' % de la imagen de radar'"
+          [attr.aria-label]="'Visible percentage of ' + radarLabel()"
+          [attr.aria-valuetext]="split() + '% of the radar image'"
         />
       </div>
     } @else {

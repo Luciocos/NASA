@@ -1,15 +1,15 @@
 <section
   class="guide"
-  aria-roledescription="guía de pasos"
+  aria-roledescription="step-by-step guide"
   [attr.aria-labelledby]="label()"
-  [attr.aria-label]="label() ? null : 'Cómo cargar tus datos'"
+  [attr.aria-label]="label() ? null : 'How to enter your data'"
 >
   @if (heading(); as title) {
     <header class="head">
       <h2 class="title" [id]="headingId()">{{ title }}</h2>
       @if (closable()) {
         <button type="button" class="btn btn--ghost btn--icon close" (click)="closed.emit()">
-          <app-icon name="close" /><span class="visually-hidden">Cerrar la ayuda</span>
+          <app-icon name="close" /><span class="visually-hidden">Close help</span>
         </button>
       }
     </header>
@@ -38,7 +38,7 @@
   </div>
 
   <p class="visually-hidden" aria-live="polite" aria-atomic="true">
-    Paso {{ index() + 1 }} de {{ steps.length }}: {{ step().caption }}
+    Step {{ index() + 1 }} of {{ steps.length }}: {{ step().caption }}
   </p>
 
   <div class="nav">
@@ -48,7 +48,7 @@
       [attr.aria-disabled]="isFirst() || null"
       (click)="prev()"
     >
-      <app-icon name="arrow-left" /><span class="prev__text">Anterior</span>
+      <app-icon name="arrow-left" /><span class="prev__text">Back</span>
     </button>
     <ol class="dots" aria-hidden="true">
       @for (item of steps; track item.key; let i = $index) {
@@ -57,9 +57,9 @@
     </ol>
     <button #nextButton type="button" class="btn btn--primary next" (click)="advance()">
       @if (isLast()) {
-        <app-icon name="check" /> Listo
+        <app-icon name="check" /> Done
       } @else {
-        Siguiente <app-icon name="arrow-right" />
+        Next <app-icon name="arrow-right" />
       }
     </button>
   </div>

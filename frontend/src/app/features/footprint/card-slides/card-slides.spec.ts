@@ -31,16 +31,16 @@ describe('CardSlides', () => {
   it('es una región con nombre y cada tarjeta dice su lugar', () => {
     const region = el().querySelector('app-card-slides')!;
     expect(region.getAttribute('role')).toBe('region');
-    expect(region.getAttribute('aria-roledescription')).toBe('carrusel');
+    expect(region.getAttribute('aria-roledescription')).toBe('carousel');
     expect(region.getAttribute('aria-label')).toBe('Resumen de prueba');
     const slides = [...track().children];
-    expect(slides.map((s) => s.getAttribute('aria-label'))).toEqual(['1 de 3', '2 de 3', '3 de 3']);
+    expect(slides.map((s) => s.getAttribute('aria-label'))).toEqual(['1 of 3', '2 of 3', '3 of 3']);
     expect(slides.map((s) => s.getAttribute('role'))).toEqual(['group', 'group', 'group']);
   });
 
   it('si entran todas no muestra botones', () => {
-    expect(button('Anterior')).toBeNull();
-    expect(button('Siguiente')).toBeNull();
+    expect(button('Previous')).toBeNull();
+    expect(button('Next')).toBeNull();
   });
 
   it('si no entran: anterior, siguiente y la posición', async () => {
@@ -51,10 +51,10 @@ describe('CardSlides', () => {
     track().dispatchEvent(new Event('scroll'));
     await fixture.whenStable();
 
-    expect(el().querySelector('.count')?.textContent?.trim()).toBe('1 de 3');
-    expect(button('Anterior')!.disabled).toBe(true);
-    expect(button('Siguiente')!.disabled).toBe(false);
-    button('Siguiente')!.click();
+    expect(el().querySelector('.count')?.textContent?.trim()).toBe('1 of 3');
+    expect(button('Previous')!.disabled).toBe(true);
+    expect(button('Next')!.disabled).toBe(false);
+    button('Next')!.click();
     expect(scrollTo).toHaveBeenCalledTimes(1);
   });
 });

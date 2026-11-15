@@ -57,23 +57,23 @@ export class RadarOpticalCompare {
 
   private readonly isRadar = computed(() => RADAR_SENSORS.includes(this.event().sensor));
 
-  /** "NISAR (radar, banda L)": al pie de la imagen y en su nombre accesible. */
+  /** "NISAR (radar, L-band)": al pie de la imagen y en su nombre accesible. */
   protected readonly radarLabel = computed(() => {
     const name = SENSOR_LABELS[this.event().sensor];
-    return this.isRadar() ? name : `Evidencia: ${name}`;
+    return this.isRadar() ? name : `Evidence: ${name}`;
   });
-  /** "Radar NISAR": sobre la imagen superpuesta, donde el espacio es poco. */
+  /** "NISAR radar": sobre la imagen superpuesta, donde el espacio es poco. */
   protected readonly radarTag = computed(() => {
     const name = SENSOR_SHORT_LABELS[this.event().sensor];
-    return this.isRadar() ? name : `Evidencia: ${name}`;
+    return this.isRadar() ? name : `Evidence: ${name}`;
   });
 
   private readonly opticalSensor = computed(() => {
     const sensor = this.event().metrics['optical_sensor'];
     return typeof sensor === 'string' && sensor ? sensor : DEFAULT_OPTICAL_SENSOR;
   });
-  protected readonly opticalLabel = computed(() => `Óptico (${this.opticalSensor()})`);
-  protected readonly opticalTag = computed(() => `Óptico ${this.opticalSensor()}`);
+  protected readonly opticalLabel = computed(() => `Optical (${this.opticalSensor()})`);
+  protected readonly opticalTag = computed(() => `${this.opticalSensor()} optical`);
 
   /** Qué falta para comparar, en una línea; null si están las dos imágenes. */
   protected readonly missing = computed(() => {
@@ -84,18 +84,16 @@ export class RadarOpticalCompare {
     if (radar && optical) return null;
     if (radar) {
       return failed.has('optical')
-        ? 'No cargó la imagen óptica'
-        : 'Sin imagen óptica para comparar';
+        ? "The optical image didn't load"
+        : 'No optical image to compare';
     }
     if (optical) {
-      return failed.has('radar')
-        ? 'No cargó la imagen de radar'
-        : 'Sin imagen de radar para comparar';
+      return failed.has('radar') ? "The radar image didn't load" : 'No radar image to compare';
     }
-    if (failed.size > 0) return 'No cargaron las imágenes de evidencia';
+    if (failed.size > 0) return "The evidence images didn't load";
     return event.sensor === 'MANUAL'
-      ? 'Sin imágenes: lo informó una persona'
-      : 'Sin imágenes de evidencia: el procesamiento todavía no las entregó';
+      ? 'No images: a person reported it'
+      : "No evidence images: processing hasn't delivered them yet";
   });
 
   protected onSplitInput(value: string): void {

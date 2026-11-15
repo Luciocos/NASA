@@ -225,8 +225,8 @@ export class LotDraw {
     ];
     const taken = new Set(names.map((name) => name.trim().toLocaleLowerCase('es-AR')));
     let n = names.length + 1;
-    while (taken.has(`lote ${n}`)) n++;
-    return `Lote ${n}`;
+    while (taken.has(`field ${n}`)) n++;
+    return `Field ${n}`;
   });
 
   /** lo que falta o lo que está mal para poder guardar, según el modo */
@@ -372,7 +372,7 @@ export class LotDraw {
   protected goToSpot(spot: Spot): void {
     this.showMe(spot);
     this.moveTo([spot.lat, spot.lng], FIELD_ZOOM);
-    this.flashMap('Te ubicamos en el mapa: buscá tu lote cerca del punto azul');
+    this.flashMap('We found you on the map: look for your field near the blue dot');
   }
 
   // --- trazar perímetro
@@ -430,13 +430,13 @@ export class LotDraw {
     const target = this.alignmentTarget();
     const side = target && longestSideDeg(target.ring);
     if (!target || side === null) {
-      this.flashMap('No hay un lote cerca para alinear: acercate a uno o trazá su perímetro');
+      this.flashMap('No field nearby to align with: move closer to one or trace its boundary');
       return;
     }
     const angle = gridAngleFor(side);
     this.paint.setGrid({ rotationDeg: angle });
     this.paintChanged();
-    this.flashMap(`Grilla alineada con ${target.label}: ${formatDegrees(angle)}`);
+    this.flashMap(`Grid aligned with ${target.label}: ${formatDegrees(angle)}`);
   }
 
   protected zoomToPaint(): void {
@@ -508,7 +508,7 @@ export class LotDraw {
     try {
       geometry = this.mode() === 'paint' ? this.paint.geometry() : toPolygonGeometry(this.points());
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'No se pudo armar el polígono.');
+      this.error.set(err instanceof Error ? err.message : "Couldn't build the field shape.");
       return;
     }
     this.saving.set(true);
@@ -526,7 +526,7 @@ export class LotDraw {
           this.finished = true;
           this.removeDraft();
           if (result.kind === 'created') {
-            this.notice.set(`Listo: guardamos «${result.lot.name}». Abrimos su ficha…`);
+            this.notice.set(`Done: we saved “${result.lot.name}”. Opening it…`);
             // Mi campo con el lote nuevo abierto en el popup: al cerrarlo queda en Mi campo, y
             // atrás no vuelve a un trazado vacío
             this.navigateLater(['/mapa'], CREATED_NOTICE_MS, {
@@ -535,7 +535,7 @@ export class LotDraw {
             });
           } else {
             this.notice.set(
-              'Guardamos el lote en este dispositivo: se sube solo cuando vuelva la conexión',
+              'We saved the field on this device: it uploads on its own when you are back online',
             );
             this.navigateLater(['/mapa'], QUEUED_NOTICE_MS);
           }
@@ -553,8 +553,8 @@ export class LotDraw {
 
   protected formatPerimeter(meters: number): string {
     return meters >= 1000
-      ? `${(meters / 1000).toLocaleString('es-AR', { maximumFractionDigits: 2 })} km`
-      : `${Math.round(meters).toLocaleString('es-AR')} m`;
+      ? `${(meters / 1000).toLocaleString('en-US', { maximumFractionDigits: 2 })} km`
+      : `${Math.round(meters).toLocaleString('en-US')} m`;
   }
 
   protected formatCoord(value: number): string {
@@ -571,7 +571,7 @@ export class LotDraw {
         {
           id: 'closed',
           ok: false,
-          text: `Tocá ${missing} ${missing === 1 ? 'esquina más' : 'esquinas más'} para cerrar la forma`,
+          text: `Tap ${missing} more ${missing === 1 ? 'corner' : 'corners'} to close the shape`,
         },
       ];
     }
@@ -579,35 +579,35 @@ export class LotDraw {
     const crosses = this.crosses();
     const size = formatHa(area);
     return [
-      { id: 'closed', ok: true, text: `Forma cerrada: ${count} esquinas` },
+      { id: 'closed', ok: true, text: `Shape closed: ${count} corners` },
       {
         id: 'crossing',
         ok: !crosses,
-        text: crosses ? 'Los lados se cruzan: mové una esquina o deshacé' : 'Sin cruces',
+        text: crosses ? 'The sides cross: move a corner or undo' : 'No crossings',
       },
       area < MIN_LOT_HA
-        ? { id: 'area', ok: false, text: `Muy chico para un lote: ${size} (mínimo ½ ha)` }
+        ? { id: 'area', ok: false, text: `Too small for a field: ${size} (minimum ½ ha)` }
         : area > MAX_LOT_HA
-          ? { id: 'area', ok: false, text: `Demasiado grande para un lote: ${size}` }
-          : { id: 'area', ok: true, text: `Superficie: ${size}` },
+          ? { id: 'area', ok: false, text: `Too large for a field: ${size}` }
+          : { id: 'area', ok: true, text: `Area: ${size}` },
     ];
   }
 
   private paintChecks(): DrawCheck[] {
     const state = this.paintState();
     if (state.cells === 0) {
-      return [{ id: 'cells', ok: false, text: 'Pintá al menos un recuadro' }];
+      return [{ id: 'cells', ok: false, text: 'Paint at least one square' }];
     }
     return [
       state.regions > 1
         ? {
             id: 'regions',
             ok: false,
-            text: `Tus recuadros forman ${state.regions} sectores separados: unilos o borrá uno`,
-            action: 'Quedarme con el sector más grande',
+            text: `Your squares form ${state.regions} separate areas: join them or erase one`,
+            action: 'Keep the largest area',
           }
-        : { id: 'regions', ok: true, text: 'Un solo sector' },
-      { id: 'area', ok: true, text: `Superficie: ${formatHa(state.areaHa)}` },
+        : { id: 'regions', ok: true, text: 'Single area' },
+      { id: 'area', ok: true, text: `Area: ${formatHa(state.areaHa)}` },
     ];
   }
 
@@ -615,46 +615,46 @@ export class LotDraw {
     const count = this.points().length;
     if (count === 0) {
       return this.zoom() < TRACE_MIN_ZOOM
-        ? { text: 'Buscá tu campo arriba o acercate al mapa', tone: 'info' }
-        : { text: 'Tocá las esquinas de tu lote', tone: 'info' };
+        ? { text: 'Search for your farm above or zoom in on the map', tone: 'info' }
+        : { text: 'Tap the corners of your field', tone: 'info' };
     }
     const selected = this.selected();
     if (selected !== null) {
       return {
-        text: `Tocá el mapa para sumar una esquina después de la ${selected + 1}`,
+        text: `Tap the map to add a corner after corner ${selected + 1}`,
         tone: 'info',
       };
     }
     if (count < MIN_VERTICES) {
       const missing = this.missing();
       return {
-        text: `Bien: tocá ${missing} ${missing === 1 ? 'esquina más' : 'esquinas más'}`,
+        text: `Good: tap ${missing} more ${missing === 1 ? 'corner' : 'corners'}`,
         tone: 'info',
       };
     }
     const problem = this.checks().find((check) => !check.ok);
     return problem
       ? { text: problem.text, tone: 'warn' }
-      : { text: 'Listo: ya podés guardar', tone: 'ok' };
+      : { text: 'Done: you can save now', tone: 'ok' };
   }
 
   private paintHint(): MapHint {
     const tool = this.activeTool();
-    if (tool === 'eraser') return { text: 'Arrastrá para borrar recuadros', tone: 'info' };
-    if (tool === 'hand') return { text: 'Arrastrá para mover el mapa', tone: 'info' };
+    if (tool === 'eraser') return { text: 'Drag to erase squares', tone: 'info' };
+    if (tool === 'hand') return { text: 'Drag to move the map', tone: 'info' };
     const state = this.paintState();
     if (state.cells === 0) {
       return {
         text: this.coarse
-          ? 'Pintá con un dedo · dos dedos mueven el mapa'
-          : 'Arrastrá para pintar · Espacio: mover el mapa',
+          ? 'Paint with one finger · two fingers move the map'
+          : 'Drag to paint · Space: move the map',
         tone: 'info',
       };
     }
     const problem = this.checks().find((check) => !check.ok);
     return problem
       ? { text: problem.text, tone: 'warn' }
-      : { text: 'Listo: ya podés guardar', tone: 'ok' };
+      : { text: 'Done: you can save now', tone: 'ok' };
   }
 
   // --- mapa
@@ -667,15 +667,15 @@ export class LotDraw {
     });
     L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { maxZoom: 19, attribution: 'Imágenes &copy; Esri, Maxar, Earthstar Geographics' },
+      { maxZoom: 19, attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics' },
     ).addTo(map);
     // los rótulos ayudan a reconocer pueblos y rutas sobre la imagen
     L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-      { maxZoom: 19, attribution: 'Rótulos &copy; Esri' },
+      { maxZoom: 19, attribution: 'Labels &copy; Esri' },
     ).addTo(map);
     L.control
-      .zoom({ position: 'bottomright', zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' })
+      .zoom({ position: 'bottomright', zoomInTitle: 'Zoom in', zoomOutTitle: 'Zoom out' })
       .addTo(map);
     this.startView(map);
 
@@ -719,7 +719,7 @@ export class LotDraw {
     map.on('click', (e: L.LeafletMouseEvent) => {
       if (this.dragging || this.mode() !== 'trace') return;
       if (map.getZoom() < TRACE_MIN_ZOOM) {
-        this.flashMap('Acercate más a tu campo para marcar sus esquinas');
+        this.flashMap('Zoom in closer to your field to mark its corners');
         return;
       }
       this.editor.add([e.latlng.lat, e.latlng.lng]);
@@ -812,7 +812,7 @@ export class LotDraw {
 
   private startStroke(latlng: L.LatLng): void {
     if (this.zoom() < PAINT_MIN_ZOOM) {
-      this.flashMap('Acercate para pintar hectáreas');
+      this.flashMap('Zoom in to paint hectares');
       return;
     }
     this.paint.beginStroke(this.activeTool() === 'eraser' ? 'erase' : 'paint');
@@ -867,7 +867,7 @@ export class LotDraw {
     const points = this.editor.points;
     if (points.length >= 2) {
       const frame = createLocalFrame(points[0]);
-      return { ring: points.map((p) => frame.toLocal(p)), label: 'tu perímetro' };
+      return { ring: points.map((p) => frame.toLocal(p)), label: 'your boundary' };
     }
     const center = this.map?.getCenter();
     if (!center) return null;
@@ -883,7 +883,7 @@ export class LotDraw {
     }
     if (!best) return null;
     const ring = geometryToLocalRings(frame, best.lot.geometry)[0] ?? [];
-    return { ring, label: `«${best.lot.name}»` };
+    return { ring, label: `“${best.lot.name}”` };
   }
 
   // esquinas de la caja de lo pintado, en [lat, lng]
@@ -1029,7 +1029,7 @@ export class LotDraw {
             this.editor.points.length >= MIN_VERTICES &&
             this.selected() === null
           ) {
-            this.flashMap('La forma ya está cerrada: podés guardar o seguir sumando esquinas');
+            this.flashMap('The shape is already closed: you can save or keep adding corners');
             return;
           }
           this.selectVertex(index);
@@ -1069,18 +1069,16 @@ function vertexIcon(index: number, selected: boolean): L.DivIcon {
 }
 
 function formatHa(hectares: number): string {
-  return `${hectares.toLocaleString('es-AR', { maximumFractionDigits: 1 })} ha`;
+  return `${hectares.toLocaleString('en-US', { maximumFractionDigits: 1 })} ha`;
 }
 
 function describeSaveError(err: unknown): string {
   const message = describeBackendError(err);
-  return message
-    ? `No se pudo guardar el lote: ${message}`
-    : 'No se pudo guardar el lote. Intentá de nuevo.';
+  return message ? `Couldn't save the field: ${message}` : "Couldn't save the field. Try again.";
 }
 
 function formatDegrees(value: number): string {
-  return `${value.toLocaleString('es-AR', { maximumFractionDigits: 1 })}°`;
+  return `${value.toLocaleString('en-US', { maximumFractionDigits: 1 })}°`;
 }
 
 function isTypingTarget(target: HTMLElement | null): boolean {

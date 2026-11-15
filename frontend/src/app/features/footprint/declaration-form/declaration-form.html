@@ -1,13 +1,13 @@
 <app-section-card
-  heading="Tus datos de la campaña"
-  subtitle="Rinde e insumos por hectárea."
+  heading="Your season data"
+  subtitle="Yield and inputs per hectare."
   [level]="level()"
 >
-  <app-info-tip actions label="Cómo cargar tus datos">
-    <p>Lo que cargues queda como <strong>Declarado</strong> y reemplaza al valor de referencia.</p>
+  <app-info-tip actions label="How to enter your data">
+    <p>What you enter is saved as <strong>Declared</strong> and replaces the reference value.</p>
     <p>
-      Si dejás un campo vacío, se usa la referencia regional cuando existe; si no, ese componente
-      queda sin dato.
+      If you leave a field empty, the regional reference is used when there is one; otherwise that
+      component has no data.
     </p>
     <ul>
       @for (field of fields; track field.key) {
@@ -23,7 +23,7 @@
   <form class="declaration" novalidate (submit)="$event.preventDefault(); save()">
     <div class="grid">
       <div class="field">
-        <label [for]="uid + '-campaign'">Campaña</label>
+        <label [for]="uid + '-campaign'">Season</label>
         <input
           [id]="uid + '-campaign'"
           autocomplete="off"
@@ -34,7 +34,7 @@
         />
       </div>
       <div class="field">
-        <label [for]="uid + '-crop'">Cultivo</label>
+        <label [for]="uid + '-crop'">Crop</label>
         <select [id]="uid + '-crop'" (change)="crop.set($any($event.target).value)">
           @for (c of crops; track c.value) {
             <option [value]="c.value" [selected]="c.value === crop()">{{ c.label }}</option>
@@ -42,12 +42,12 @@
         </select>
       </div>
       <div class="field">
-        <label [for]="uid + '-yield'">Rinde <span class="unit">t/ha</span></label>
+        <label [for]="uid + '-yield'">Yield <span class="unit">t/ha</span></label>
         <input
           [id]="uid + '-yield'"
           inputmode="decimal"
           autocomplete="off"
-          placeholder="Referencia"
+          placeholder="Reference"
           [value]="yieldValue()"
           [attr.aria-invalid]="invalid().includes('yield') ? 'true' : null"
           (input)="yieldValue.set($any($event.target).value)"
@@ -62,7 +62,7 @@
             [id]="uid + '-' + field.key"
             inputmode="decimal"
             autocomplete="off"
-            placeholder="Sin declarar"
+            placeholder="Not declared"
             [value]="values()[field.key]"
             [attr.aria-invalid]="invalid().includes(field.key) ? 'true' : null"
             [attr.aria-describedby]="field.hint ? uid + '-' + field.key + '-hint' : null"
@@ -80,11 +80,11 @@
 
     <div class="foot">
       <button type="submit" class="btn btn--primary" [disabled]="saving()">
-        <app-icon name="save" /> {{ saving() ? 'Guardando…' : 'Guardar datos' }}
+        <app-icon name="save" /> {{ saving() ? 'Saving…' : 'Save data' }}
       </button>
       @if (saved()) {
         <p class="saved" role="status">
-          <app-icon name="check" /><span>Datos guardados. La huella se recalculó.</span>
+          <app-icon name="check" /><span>Data saved. The footprint was recalculated.</span>
         </p>
       }
     </div>

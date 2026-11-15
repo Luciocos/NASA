@@ -4,39 +4,39 @@
   <article class="passport">
     <header class="head">
       <div>
-        <p class="kicker">Pasaporte del lote · LoTestigo</p>
+        <p class="kicker">Field passport · LoTestigo</p>
         <h1>{{ p.lot.name }}</h1>
         <p class="facts">
-          {{ p.lot.locality || 'Sin localidad' }}{{ p.lot.province ? ', ' + p.lot.province : '' }} ·
-          {{ p.lot.area_ha.toLocaleString('es-AR', { maximumFractionDigits: 1 }) }} ha (calculada
-          del polígono)
+          {{ p.lot.locality || 'No locality' }}{{ p.lot.province ? ', ' + p.lot.province : '' }} ·
+          {{ p.lot.area_ha.toLocaleString('es-AR', { maximumFractionDigits: 1 }) }} ha (calculated
+          from the polygon)
           @if (p.lot.renspa) {
             · RENSPA {{ p.lot.renspa }}
           }
         </p>
-        <p class="generated">Generado el {{ formatDateTime(p.generated_at) }}</p>
+        <p class="generated">Generated on {{ formatDateTime(p.generated_at) }}</p>
       </div>
-      <button type="button" class="button no-print" (click)="print()">Imprimir</button>
+      <button type="button" class="button no-print" (click)="print()">Print</button>
     </header>
 
-    <p class="notice" role="note">{{ notice }} Vista pública de solo lectura.</p>
+    <p class="notice" role="note">{{ notice }} Public read-only view.</p>
     @if (p.uses_simulated_data) {
-      <p class="simulated"><app-simulated-notice /> Este lote incluye datos simulados.</p>
+      <p class="simulated"><app-simulated-notice /> This field includes simulated data.</p>
     }
 
-    <div #map class="map" role="img" aria-label="Ubicación del lote sobre el mapa"></div>
+    <div #map class="map" role="img" aria-label="Field location on the map"></div>
 
     <section class="campaigns">
-      <h2>Campañas</h2>
+      <h2>Seasons</h2>
       @if (p.lot.campaigns.length === 0) {
-        <p class="muted">Sin campañas todavía.</p>
+        <p class="muted">No seasons yet.</p>
       } @else {
         <table class="table">
           <thead>
             <tr>
-              <th scope="col">Campaña</th>
-              <th scope="col">Cultivo</th>
-              <th scope="col">Rendimiento</th>
+              <th scope="col">Season</th>
+              <th scope="col">Crop</th>
+              <th scope="col">Yield</th>
             </tr>
           </thead>
           <tbody>
@@ -51,7 +51,7 @@
                       <app-origin-badge [origin]="c.yield_origin" />
                     }
                   } @else {
-                    Sin dato
+                    No data
                   }
                 </td>
               </tr>
@@ -62,17 +62,17 @@
     </section>
 
     <section class="events">
-      <h2>Bitácora de eventos ({{ p.events.length }})</h2>
+      <h2>Field log ({{ p.events.length }} events)</h2>
       @if (p.events.length === 0) {
-        <p class="muted">Sin eventos todavía.</p>
+        <p class="muted">No events yet.</p>
       } @else {
         <table class="table">
           <thead>
             <tr>
-              <th scope="col">Fecha</th>
-              <th scope="col">Evento</th>
+              <th scope="col">Date</th>
+              <th scope="col">Event</th>
               <th scope="col">Sensor</th>
-              <th scope="col">Origen</th>
+              <th scope="col">Origin</th>
             </tr>
           </thead>
           <tbody>
@@ -103,19 +103,19 @@
             [attr.aria-expanded]="showAllEvents()"
             (click)="showAllEvents.set(!showAllEvents())"
           >
-            {{ showAllEvents() ? 'Ver menos' : 'Ver los ' + p.events.length + ' eventos' }}
+            {{ showAllEvents() ? 'Show less' : 'Show all ' + p.events.length + ' events' }}
           </button>
         }
       }
     </section>
 
     <section class="footprint">
-      <h2>Huella de carbono estimada</h2>
+      <h2>Estimated carbon footprint</h2>
       <app-footprint-breakdown [footprint]="p.footprint" [compact]="true" />
     </section>
 
     <section class="score">
-      <h2>Puntaje de sustentabilidad</h2>
+      <h2>Sustainability score</h2>
       <app-score-panel [score]="p.score" />
     </section>
 
@@ -125,5 +125,5 @@
     </footer>
   </article>
 } @else {
-  <p>Cargando pasaporte…</p>
+  <p>Loading passport…</p>
 }

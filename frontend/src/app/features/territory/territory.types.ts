@@ -29,13 +29,13 @@ export interface TerritorialChecks {
 }
 
 export const CHECK_STATUS_LABELS: Record<CheckStatus, string> = {
-  CLEAR: 'Sin conflicto detectado',
-  POSSIBLE_CONFLICT: 'Posible conflicto',
-  NO_DATA: 'Sin dato',
+  CLEAR: 'No conflict detected',
+  POSSIBLE_CONFLICT: 'Possible conflict',
+  NO_DATA: 'No data',
 };
 
 export const CHECK_ORIGIN_LABELS: Record<CheckOrigin, string> = {
-  OFFICIAL_LAYER: 'Capa pública',
-  DECLARED: 'Declarado',
-  VERIFIED: 'Verificado',
+  OFFICIAL_LAYER: 'Public layer',
+  DECLARED: 'Declared',
+  VERIFIED: 'Verified',
 };

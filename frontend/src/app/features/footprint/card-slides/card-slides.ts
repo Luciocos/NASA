@@ -33,7 +33,7 @@ import { Icon } from '../../../shared/ui/icon/icon';
   imports: [Icon],
   host: {
     role: 'region',
-    'aria-roledescription': 'carrusel',
+    'aria-roledescription': 'carousel',
     '[attr.aria-label]': 'label()',
   },
   template: `
@@ -45,17 +45,17 @@ import { Icon } from '../../../shared/ui/icon/icon';
         <button
           type="button"
           class="btn btn--icon"
-          aria-label="Anterior"
+          aria-label="Previous"
           [disabled]="index() === 0"
           (click)="go(-1)"
         >
           <app-icon name="chevron-left" />
         </button>
-        <p class="count" aria-live="polite">{{ index() + 1 }} de {{ count() }}</p>
+        <p class="count" aria-live="polite">{{ index() + 1 }} of {{ count() }}</p>
         <button
           type="button"
           class="btn btn--icon"
-          aria-label="Siguiente"
+          aria-label="Next"
           [disabled]="atEnd()"
           (click)="go(1)"
         >
@@ -153,8 +153,8 @@ export class CardSlides {
     if (slides.length !== this.count()) {
       slides.forEach((slide, i) => {
         slide.setAttribute('role', 'group');
-        slide.setAttribute('aria-roledescription', 'diapositiva');
-        slide.setAttribute('aria-label', `${i + 1} de ${slides.length}`);
+        slide.setAttribute('aria-roledescription', 'slide');
+        slide.setAttribute('aria-label', `${i + 1} of ${slides.length}`);
       });
     }
     const max = track.scrollWidth - track.clientWidth;

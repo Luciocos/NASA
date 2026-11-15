@@ -14,7 +14,7 @@ describe('Disclosure', () => {
 
   it('arranca cerrado y con el rótulo "Ver detalle técnico"', () => {
     expect(details().open).toBe(false);
-    expect(details().querySelector('summary')?.textContent).toContain('Ver detalle técnico');
+    expect(details().querySelector('summary')?.textContent).toContain('See technical details');
   });
 
   it('se abre desde afuera y sigue lo que hace la persona', async () => {

@@ -26,10 +26,10 @@ export type LandUseGroup = 'agricultural' | 'natural' | 'urban' | 'other';
 
 /** nombre corto de cada grupo para la interfaz */
 export const LAND_USE_GROUP_LABELS: Record<LandUseGroup, string> = {
-  agricultural: 'Agrícola',
+  agricultural: 'Agricultural',
   natural: 'Natural',
-  urban: 'Urbano',
-  other: 'Agua, nieve o suelo desnudo',
+  urban: 'Urban',
+  other: 'Water, snow or bare soil',
 };
 
 /** lo que vio MODIS en los píxeles del lote en un año */
@@ -230,28 +230,30 @@ function summarizeYear({ year, classes }: LandCoverGridYear): YearStats {
 }
 
 const GROUP_NOUN: Record<LandUseGroup, string> = {
-  agricultural: 'uso agrícola',
-  natural: 'vegetación natural',
-  urban: 'área urbana',
-  other: 'agua, nieve o suelo desnudo',
+  agricultural: 'agricultural use',
+  natural: 'natural vegetation',
+  urban: 'urban area',
+  other: 'water, snow or bare soil',
 };
 
 /** "a", "a y b", "a, b y c" */
 function joinList(items: string[]): string {
-  return items.length < 2 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} y ${items.at(-1)}`;
+  return items.length < 2
+    ? (items[0] ?? '')
+    : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`;
 }
 
 /** lo que vio MODIS un año, para una frase: "vegetación natural (pastizal)", "uso agrícola" */
 function describeYear({ summary, classCounts, groupCounts }: YearStats): string {
   const { group } = summary;
   if (group === null) {
-    return `${joinList(leaders(groupCounts).map((g) => GROUP_NOUN[g]))} en partes iguales`;
+    return `${joinList(leaders(groupCounts).map((g) => GROUP_NOUN[g]))} in equal parts`;
   }
   if (group === 'agricultural' || group === 'urban') return GROUP_NOUN[group];
   const inGroup = new Map([...classCounts].filter(([id]) => landUseGroup(id) === group));
   const top = leaders(inGroup)[0];
   const label = top === undefined ? GROUP_NOUN[group] : IGBP_LABELS[top].toLowerCase();
-  return group === 'natural' ? `vegetación natural (${label})` : label;
+  return group === 'natural' ? `natural vegetation (${label})` : label;
 }
 
 /**
@@ -274,29 +276,29 @@ export function landUseEvidence(input: LandUseInput): LandUseEvidence {
   const later = withData.filter((s) => s.summary.year > input.baselineYear);
   const lastYear = withData.at(-1)?.summary.year ?? null;
   const size = Math.round(input.pixelSizeM / 10) * 10;
-  const fallbackNote = `Ningún píxel tiene su centro dentro de tu lote, así que se usó el de unos ${size} m que contiene el centro del lote: el dato también abarca lo que lo rodea.`;
+  const fallbackNote = `No pixel has its center inside your field, so the pixel of about ${size} m that contains the center of the field was used: the data also covers its surroundings.`;
   const notes: string[] = [];
   if (input.clipped) {
-    notes.push('Tu lote es más grande que la zona consultada: se leyó solo su parte central.');
+    notes.push('Your field is larger than the area queried: only its central part was read.');
   }
 
   let verdict: LandUseEvidence['verdict'];
   let reason: string;
   if (!input.pixelCount) {
     verdict = 'no_data';
-    reason = 'No hay píxeles de MODIS sobre tu lote.';
+    reason = 'There are no MODIS pixels over your field.';
   } else if (!withData.length) {
     verdict = 'no_data';
-    reason = 'MODIS no tiene una clasificación válida para los píxeles de tu lote.';
+    reason = 'MODIS has no valid classification for the pixels of your field.';
   } else if (!base) {
     verdict = 'no_data';
-    reason = `MODIS no tiene la clasificación de ${input.baselineYear} para tu lote: sin el año base no hay con qué comparar.`;
+    reason = `MODIS has no ${input.baselineYear} classification for your field: without the baseline year there is nothing to compare against.`;
   } else if (!later.length) {
     verdict = 'no_data';
-    reason = `MODIS solo tiene la clasificación de ${input.baselineYear}: falta un año posterior para comparar.`;
+    reason = `MODIS only has the ${input.baselineYear} classification: a later year is needed to compare.`;
   } else if (base.summary.group === null) {
     verdict = 'possible_change';
-    reason = `En ${input.baselineYear} MODIS vio ${describeYear(base)}, así que no se puede confirmar que el uso siguió igual. Conviene revisarlo.`;
+    reason = `In ${input.baselineYear} MODIS saw ${describeYear(base)}, so it cannot confirm that the land use stayed the same. It is worth checking.`;
   } else {
     const group = base.summary.group;
     // cada píxel frente a sí mismo en el año base: un cambio en parte del lote no mueve el
@@ -317,17 +319,17 @@ export function landUseEvidence(input: LandUseInput): LandUseEvidence {
     const changed = changes.find((change) => change.groupChanged || enough(change));
     if (changed?.groupChanged) {
       verdict = 'possible_change';
-      reason = `En ${input.baselineYear} MODIS vio ${describeYear(base)} y en ${changed.stats.summary.year}, ${describeYear(changed.stats)}: puede ser un cambio de uso del suelo o un error de clasificación. Conviene revisarlo.`;
+      reason = `In ${input.baselineYear} MODIS saw ${describeYear(base)} and in ${changed.stats.summary.year}, ${describeYear(changed.stats)}: it may be a land use change or a classification error. It is worth checking.`;
     } else if (changed) {
       verdict = 'possible_change';
       const to = mostCommon(changed.to);
       const from = mostCommon(changed.from);
-      const part = `${changed.to.length} de los ${changed.compared} píxeles de tu lote`;
+      const part = `${changed.to.length} of the ${changed.compared} pixels of your field`;
       const seen =
         to && from
-          ? `${GROUP_NOUN[to]} en ${part}, donde en ${input.baselineYear} había visto ${GROUP_NOUN[from]}`
-          : `un uso distinto del de ${input.baselineYear} en ${part}`;
-      reason = `En ${changed.stats.summary.year} MODIS vio ${seen}: puede ser un cambio de uso del suelo en parte del lote o un error de clasificación. Conviene revisarlo.`;
+          ? `${GROUP_NOUN[to]} in ${part}, where in ${input.baselineYear} it had seen ${GROUP_NOUN[from]}`
+          : `a use different from ${input.baselineYear} in ${part}`;
+      reason = `In ${changed.stats.summary.year} MODIS saw ${seen}: it may be a land use change in part of the field or a classification error. It is worth checking.`;
     } else {
       // lo que no alcanzó para marcarlo se dice: un año con otro uso que al siguiente ya no
       // estaba, o algún píxel que cambió en menos de una cuarta parte del lote
@@ -339,14 +341,14 @@ export function landUseEvidence(input: LandUseInput): LandUseEvidence {
           blips.length > 1 || !count
             ? ''
             : input.pixelCount === 1
-              ? ' en el píxel del lote'
-              : ` en ${count} de los ${input.pixelCount} píxeles`;
+              ? ' in the field pixel'
+              : ` in ${count} of the ${input.pixelCount} pixels`;
         notes.unshift(
-          `En ${joinList(blips.map((change) => String(change.stats.summary.year)))} vio otro uso${where} y al año siguiente ya no: puede ser un error de clasificación.`,
+          `In ${joinList(blips.map((change) => String(change.stats.summary.year)))} it saw a different use${where} and the following year it no longer did: it may be a classification error.`,
         );
       } else if (most) {
         notes.unshift(
-          `Algún año vio otro uso en ${most} de los ${input.pixelCount} píxeles, menos de una cuarta parte del lote: puede ser un error de clasificación.`,
+          `In some year it saw a different use in ${most} of the ${input.pixelCount} pixels, less than a quarter of the field: it may be a classification error.`,
         );
       }
       verdict = 'unchanged';
@@ -356,24 +358,26 @@ export function landUseEvidence(input: LandUseInput): LandUseEvidence {
       }
       // un año con otro uso dominante que no siguió no entra en "todos los años"
       const odd = changes.filter((change) => change.otherGroup).map((change) => change.stats);
-      const except = odd.length ? ` salvo ${joinList(odd.map((s) => String(s.summary.year)))}` : '';
+      const except = odd.length
+        ? ` except ${joinList(odd.map((s) => String(s.summary.year)))}`
+        : '';
       const span = missing.length
-        ? `todos los años con dato de ${input.baselineYear} a ${lastYear}${except} (sin dato en ${joinList(missing.map(String))})`
-        : `todos los años de ${input.baselineYear} a ${lastYear}${except}`;
+        ? `every year with data from ${input.baselineYear} to ${lastYear}${except} (no data in ${joinList(missing.map(String))})`
+        : `every year from ${input.baselineYear} to ${lastYear}${except}`;
       // el uso dominante no siempre está en todos los píxeles: se dice en cuántos lo vio
       const counts = [base, ...later.filter((s) => !odd.includes(s))].map(
         (s) => s.groupCounts.get(group) ?? 0,
       );
       const least = Math.min(...counts);
-      const some = counts.every((n) => n === least) ? `${least}` : `al menos ${least}`;
+      const some = counts.every((n) => n === least) ? `${least}` : `at least ${least}`;
       const where = input.centroidFallback
-        ? `el píxel de unos ${size} m que contiene el centro de tu lote. Como ningún píxel tiene su centro adentro, el dato también abarca lo que lo rodea`
+        ? `the pixel of about ${size} m that contains the center of your field. Since no pixel has its center inside, the data also covers its surroundings`
         : input.pixelCount === 1
-          ? `el único píxel de unos ${size} m con su centro dentro de tu lote`
+          ? `the only pixel of about ${size} m with its center inside your field`
           : least === input.pixelCount
-            ? `los ${input.pixelCount} píxeles de unos ${size} m que cubren tu lote`
-            : `${some} de los ${input.pixelCount} píxeles de unos ${size} m que cubren tu lote`;
-      reason = `MODIS vio ${GROUP_NOUN[group]} ${span} en ${where}.`;
+            ? `the ${input.pixelCount} pixels of about ${size} m that cover your field`
+            : `${some} of the ${input.pixelCount} pixels of about ${size} m that cover your field`;
+      reason = `MODIS saw ${GROUP_NOUN[group]} ${span} in ${where}.`;
     }
   }
   if (verdict !== 'unchanged' && input.centroidFallback && input.pixelCount) {

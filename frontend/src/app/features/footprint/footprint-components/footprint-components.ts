@@ -38,7 +38,7 @@ export class FootprintComponents {
     return null;
   }
 
-  /** factor con coma decimal: 1.772 se lee "1,772" y no mil setecientos */
+  /** factor con sus decimales: 1.772 se lee "1.772" (en-US, como el resto de la pantalla) */
   protected factorValue(c: FootprintComponent): string | null {
     const value = c.factor.value;
     if (value === null || value === undefined) return null;
@@ -50,7 +50,9 @@ export class FootprintComponents {
     if (c.activity.quantity !== null) {
       return `${formatNumber(c.activity.quantity, 2)} ${c.activity.unit ?? ''}`.trim();
     }
-    if (c.activity.records > 0) return `${c.activity.records} registro/s`;
-    return 'Sin dato';
+    if (c.activity.records > 0) {
+      return `${c.activity.records} ${c.activity.records === 1 ? 'record' : 'records'}`;
+    }
+    return 'No data';
   }
 }

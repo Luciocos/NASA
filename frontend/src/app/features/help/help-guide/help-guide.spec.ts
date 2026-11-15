@@ -81,7 +81,7 @@ describe('HelpGuide', () => {
     expect(image().getAttribute('aria-label')).toBe(HELP_STEPS[0].description);
     expect(caption()).toBe(HELP_STEPS[0].caption);
     expect(number()).toBe('1');
-    expect(live()).toBe(`Paso 1 de 9: ${HELP_STEPS[0].caption}`);
+    expect(live()).toBe(`Step 1 of 9: ${HELP_STEPS[0].caption}`);
   });
 
   it('cada paso muestra su imagen con role="img" y un nombre que la describe', async () => {
@@ -91,7 +91,7 @@ describe('HelpGuide', () => {
       expect(image().getAttribute('aria-label')).toBe(item.description);
       expect(caption()).toBe(item.caption);
       expect(number()).toBe(String(index + 1));
-      expect(live()).toBe(`Paso ${index + 1} de 9: ${item.caption}`);
+      expect(live()).toBe(`Step ${index + 1} of 9: ${item.caption}`);
       if (index < HELP_STEPS.length - 1) await click(next());
     }
   });
@@ -111,15 +111,15 @@ describe('HelpGuide', () => {
   });
 
   it('Anterior conserva su nombre aunque en el celular quede solo la flecha', () => {
-    expect(prev().textContent!.trim()).toBe('Anterior');
-    expect(next().textContent!.trim()).toBe('Siguiente');
+    expect(prev().textContent!.trim()).toBe('Back');
+    expect(next().textContent!.trim()).toBe('Next');
   });
 
   it('en el último paso, Siguiente pasa a ser Listo y avisa con done', async () => {
     fixture.componentInstance.start.set('pasaporte');
     await render();
     expect(step()).toBe('pasaporte');
-    expect(next().textContent!.trim()).toBe('Listo');
+    expect(next().textContent!.trim()).toBe('Done');
     await click(next());
     expect(fixture.componentInstance.done).toBe(1);
     expect(step()).toBe('pasaporte');
@@ -129,7 +129,7 @@ describe('HelpGuide', () => {
     fixture.componentInstance.start.set('huella');
     await render();
     expect(step()).toBe('huella');
-    expect(live()).toBe('Paso 6 de 9: Cargá rinde e insumos');
+    expect(live()).toBe('Step 6 of 9: Enter yield and inputs');
 
     fixture.componentInstance.start.set('log');
     await render();
@@ -193,18 +193,18 @@ describe('HelpGuide', () => {
   it('con título y cerrar: la guía se nombra por su título y la X avisa con closed', async () => {
     expect(el().querySelector('h2')).toBeNull();
     expect(guide().querySelector('section')!.getAttribute('aria-label')).toBe(
-      'Cómo cargar tus datos',
+      'How to enter your data',
     );
 
-    fixture.componentInstance.heading.set('Cómo cargar tus datos');
+    fixture.componentInstance.heading.set('How to enter your data');
     fixture.componentInstance.closable.set(true);
     await render();
     const title = el().querySelector('h2')!;
-    expect(title.textContent!.trim()).toBe('Cómo cargar tus datos');
+    expect(title.textContent!.trim()).toBe('How to enter your data');
     expect(guide().querySelector('section')!.getAttribute('aria-labelledby')).toBe(title.id);
 
     const close = [...el().querySelectorAll('button')].find(
-      (button) => button.textContent!.trim() === 'Cerrar la ayuda',
+      (button) => button.textContent!.trim() === 'Close help',
     )!;
     await click(close);
     expect(fixture.componentInstance.closed).toBe(1);

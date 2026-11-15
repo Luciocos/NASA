@@ -71,7 +71,7 @@ let nextId = 0;
       @if (open()) {
         <div class="sheet">
           <app-help-guide
-            heading="Cómo cargar tus datos"
+            heading="How to enter your data"
             closable
             [headingId]="titleId"
             [start]="step()"
@@ -209,7 +209,7 @@ export class HelpButton {
   /** el paso en el que abre: su clave ('huella') o la pestaña del popup del lote ('footprint') */
   readonly step = input<string | null | undefined>(null);
   /** nombre accesible del botón. si hay `text`, tiene que contenerlo */
-  readonly label = input('Ayuda: cómo cargar datos');
+  readonly label = input('Help: how to enter your data');
   /** texto a la vista junto al signo, por ejemplo "Ayuda" en una barra con lugar */
   readonly text = input<string | null>(null);
 

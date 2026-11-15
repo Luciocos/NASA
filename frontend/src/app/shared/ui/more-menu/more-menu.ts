@@ -126,7 +126,7 @@ let nextId = 0;
 })
 export class MoreMenu {
   /** nombre accesible del botón y de la lista. si hay `text`, tiene que contenerlo */
-  readonly label = input('Más opciones');
+  readonly label = input('More options');
   /** texto visible junto a los tres puntos, por ejemplo "Más" en una barra con rótulos */
   readonly text = input<string | null>(null);
   /** clases del botón: por defecto un botón fantasma con solo el ícono */

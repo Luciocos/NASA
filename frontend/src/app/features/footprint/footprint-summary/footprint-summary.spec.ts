@@ -18,32 +18,32 @@ describe('FootprintSummary', () => {
     await fixture.whenStable();
     const text = el().textContent ?? '';
     expect(el().classList).toContain('is-missing');
-    expect(el().querySelector('.value')?.textContent?.trim()).toBe('Todavía no se puede calcular');
+    expect(el().querySelector('.value')?.textContent?.trim()).toBe('Cannot be calculated yet');
     const chips = [...el().querySelectorAll('.chip')].map((chip) => chip.textContent?.trim());
     expect(chips).toEqual([
-      'Rinde',
-      'Insumos',
-      'Factor de emisión',
-      'Confianza baja',
-      'Provisional · prueba de concepto',
+      'Yield',
+      'Inputs',
+      'Emission factor',
+      'Low confidence',
+      'Provisional · proof of concept',
     ]);
     // quién completa cada cosa, en la ayuda (i) de los chips
     const [missingHelp, aboutHelp] = [...el().querySelectorAll('app-info-tip')];
     expect(missingHelp.querySelector('button')?.getAttribute('aria-label')).toBe(
-      'Qué falta para calcularla',
+      'What is missing to calculate it',
     );
     expect(missingHelp.textContent).toContain('Faltan 1 de 1 componentes y falta el rendimiento.');
     expect([...missingHelp.querySelectorAll('li')].map((li) => li.textContent?.trim())).toEqual([
-      'Rinde de la campaña 2025/26: lo cargás vos.',
-      'Insumos gasoil: los cargás vos.',
-      'Factor de emisión con fuente gasoil: lo carga el equipo.',
+      'Yield for the 2025/26 season: you enter it.',
+      'Inputs diesel: you enter them.',
+      'Emission factor with a source diesel: the team adds it.',
     ]);
     // el aviso de estimación, la confianza con su regla y el descargo, en la otra ayuda
-    expect(aboutHelp.textContent).toContain('Prueba de concepto. Los valores son provisionales.');
-    expect(aboutHelp.textContent).toContain('Nivel de confianza: Bajo');
-    expect(aboutHelp.textContent).toContain('(0 verificados, 0 declarados, 1 estimados)');
+    expect(aboutHelp.textContent).toContain('Proof of concept. Values are provisional.');
+    expect(aboutHelp.textContent).toContain('Confidence level: Low');
+    expect(aboutHelp.textContent).toContain('(0 verified, 0 declared, 1 estimated)');
     expect(aboutHelp.textContent).toContain('ALTO si la mayoría');
-    expect(text).toContain('Dato simulado para la demostración');
+    expect(text).toContain('Simulated data for the demo');
     expect(text.toLowerCase()).not.toContain('certific');
   });
 
@@ -61,10 +61,10 @@ describe('FootprintSummary', () => {
     );
     await fixture.whenStable();
     expect(el().classList).not.toContain('is-missing');
-    expect(el().querySelector('.value')?.textContent?.trim()).toBe('37,5 kg CO2e/t');
-    expect(el().textContent).not.toContain('Falta');
+    expect(el().querySelector('.value')?.textContent?.trim()).toBe('37.5 kg CO2e/t');
+    expect(el().textContent).not.toContain('Missing');
     expect(el().querySelectorAll('app-info-tip').length).toBe(1);
-    expect(el().textContent).not.toContain('Dato simulado');
+    expect(el().textContent).not.toContain('Simulated data');
   });
 
   it('en un ejemplo, el rinde y los insumos los carga el productor', async () => {
@@ -72,9 +72,9 @@ describe('FootprintSummary', () => {
     fixture.componentRef.setInput('own', false);
     await fixture.whenStable();
     const help = el().querySelector('app-info-tip')?.textContent ?? '';
-    expect(help).toContain('Rinde de la campaña 2025/26: lo carga el productor.');
-    expect(help).toContain('Insumos gasoil: los carga el productor.');
-    expect(help).not.toContain('vos');
+    expect(help).toContain('Yield for the 2025/26 season: the farmer enters it.');
+    expect(help).toContain('Inputs diesel: the farmer enters them.');
+    expect(help).not.toContain('you enter');
   });
 
   it('elige la campaña con el selector', async () => {
@@ -83,7 +83,7 @@ describe('FootprintSummary', () => {
     fixture.componentRef.setInput('footprint', makeFootprint());
     await fixture.whenStable();
     const select = el().querySelector('select')!;
-    expect(select.closest('label')?.textContent).toContain('Campaña');
+    expect(select.closest('label')?.textContent).toContain('Season');
     select.value = '9';
     select.dispatchEvent(new Event('change'));
     expect(chosen).toEqual([9]);
@@ -96,7 +96,7 @@ describe('FootprintSummary', () => {
     );
     await fixture.whenStable();
     expect(el().querySelector('select')).toBeNull();
-    expect(el().textContent).toContain('Campaña 2025/26');
+    expect(el().textContent).toContain('Season 2025/26');
   });
 });
 
@@ -137,17 +137,17 @@ describe('missingItems', () => {
       ],
     });
     expect(missingItems(fp).map((item) => [item.kind, item.chip, item.detail])).toEqual([
-      ['yield', 'Rinde', 'de la campaña 2025/26'],
-      ['inputs', 'Insumos', 'nitrógeno y gasoil'],
-      ['factors', 'Factor de emisión', 'gasoil'],
-      ['landUse', 'Uso del suelo', 'desde 2020'],
+      ['yield', 'Yield', 'for the 2025/26 season'],
+      ['inputs', 'Inputs', 'nitrogen and diesel'],
+      ['factors', 'Emission factor', 'diesel'],
+      ['landUse', 'Land use', 'since 2020'],
     ]);
     // la huella usa la declaración de uso del suelo: en un lote propio se pide declararla
     const landUse = missingItems(fp).find((item) => item.kind === 'landUse');
-    expect(landUse?.who).toContain('declaralo en la pestaña Prácticas');
-    expect(landUse?.who).not.toContain('todavía no usa');
+    expect(landUse?.who).toContain('declare it in the Practices tab');
+    expect(landUse?.who).not.toContain('not used yet');
     expect(missingItems(fp, false).find((item) => item.kind === 'landUse')?.who).toContain(
-      'lo declara el productor',
+      'the farmer declares it',
     );
   });
 
@@ -172,7 +172,7 @@ describe('missingItems', () => {
       ],
     });
     expect(missingItems(fp).map((item) => [item.kind, item.detail])).toEqual([
-      ['factors', 'cambio de uso del suelo'],
+      ['factors', 'land-use change'],
     ]);
   });
 

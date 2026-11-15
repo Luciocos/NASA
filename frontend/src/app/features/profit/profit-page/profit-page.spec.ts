@@ -1,10 +1,12 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 import { LotDetail } from '../../../core/models';
 import { provideOfflineTesting } from '../../../core/offline/testing';
+import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
 import { CostKey } from '../profit-calc';
 import { ProfitPage } from './profit-page';
 
@@ -65,6 +67,11 @@ describe('ProfitPage', () => {
     Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).find(
       (b) => (b.getAttribute('aria-label') ?? b.textContent?.trim()) === name,
     );
+  /** el origen de cada rótulo (de la página o de un bloque), sin depender del texto del rótulo */
+  const origins = (selector = '') =>
+    fixture.debugElement
+      .queryAll(By.css(`${selector} app-origin-badge`.trim()))
+      .map((badge) => (badge.componentInstance as OriginBadge).origin());
   /** los números grandes del margen: por hectárea y del lote */
   const amounts = () =>
     Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.hero .amount')).map((el) =>
@@ -96,18 +103,18 @@ describe('ProfitPage', () => {
     await fixture.whenStable();
   }
 
-  it('sin rinde ni precio no escribe la unidad al lado de "Sin dato"', async () => {
+  it('sin rinde ni precio no escribe la unidad al lado de "No data"', async () => {
     await setup(null);
-    expect(text()).toContain('Sin dato');
-    expect(text()).not.toContain('Sin dato t/ha');
-    expect(text()).toContain('Faltan el precio del grano y el rinde.');
+    expect(text()).toContain('No data');
+    expect(text()).not.toContain('No data t/ha');
+    expect(text()).toContain('Grain price and yield are missing.');
   });
 
   it('carga el precio sugerido de Rofex, lo marca como estimado y avisa si es de prueba', async () => {
     await setup(3);
     const button = Array.from(
       (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('button'),
-    ).find((b) => b.textContent?.includes('Usar precio sugerido de Rofex'));
+    ).find((b) => b.textContent?.includes('Use suggested Rofex price'));
     expect(button).toBeDefined();
     button!.click();
     http
@@ -130,23 +137,23 @@ describe('ProfitPage', () => {
       });
     await fixture.whenStable();
     expect(amounts()).toEqual(['900', '9.000']);
-    expect(text()).toContain('Precio sugerido de mercado: US$ 300/t, ajuste del 13/11/2026');
+    expect(text()).toContain('Suggested market price: US$ 300/t, settlement on 13/11/2026');
     expect(text()).toContain('SOJ.ROS/MAY26');
-    expect(text()).toContain('no es un precio real de mercado');
-    expect(text()).toContain('Estimado');
+    expect(text()).toContain('it is not a real market price');
+    expect(origins()).toContain('ESTIMATED');
     // a la vista, una línea con la fuente y la fecha, y el aviso de prueba en un chip
-    expect(visible('.suggest')).toBe('Sugerido por Matba Rofex · 13/11/2026 Precio de prueba');
+    expect(visible('.suggest')).toBe('Suggested by Matba Rofex · 13/11/2026 Test price');
     // el margen sale de un precio de prueba: también lo dice
-    expect(visible('.hero')).toContain('Con el precio de prueba de Rofex');
-    // si el productor lo cambia, pasa a ser declarado y el sugerido queda a mano con "Usar"
+    expect(visible('.hero')).toContain('With the Rofex test price');
+    // si el productor lo cambia, pasa a ser declarado y el sugerido queda a mano con "Use"
     page().setPrice('310');
     await fixture.whenStable();
-    expect(text()).not.toContain('Estimado');
-    expect(visible('.suggest')).toBe('Rofex: US$ 300/t · 13/11/2026 Usar Precio de prueba');
-    buttonNamed('Usar el precio sugerido de Rofex')!.click();
+    expect(origins()).not.toContain('ESTIMATED');
+    expect(visible('.suggest')).toBe('Rofex: US$ 300/t · 13/11/2026 Use Test price');
+    buttonNamed('Use the suggested Rofex price')!.click();
     await fixture.whenStable();
     expect(amounts()).toEqual(['900', '9.000']);
-    expect(text()).toContain('Estimado');
+    expect(origins()).toContain('ESTIMATED');
   });
 
   it('sin credenciales en el servidor muestra el motivo', async () => {
@@ -155,13 +162,13 @@ describe('ProfitPage', () => {
     http
       .expectOne((req) => req.url === '/api/market/suggested-price/')
       .flush(
-        { detail: 'El servidor no tiene configurada la conexión con Matba Rofex.' },
+        { detail: 'The server has no Matba Rofex connection configured.' },
         { status: 503, statusText: 'Service Unavailable' },
       );
     await fixture.whenStable();
-    expect(text()).toContain('no tiene configurada la conexión');
+    expect(text()).toContain('no Matba Rofex connection configured');
     // a la vista, el motivo corto; el mensaje del servidor, en el (i)
-    expect(visible('.suggest')).toBe('Sin precio de Rofex Reintentar');
+    expect(visible('.suggest')).toBe('No Rofex price Retry');
   });
 
   it('el precio sugerido de otra campaña no queda rotulando el precio nuevo', async () => {
@@ -176,7 +183,7 @@ describe('ProfitPage', () => {
     };
     http.expectOne('/api/lots/1/footprint/').flush(two);
     await fixture.whenStable();
-    buttonNamed('Usar precio sugerido de Rofex')!.click();
+    buttonNamed('Use suggested Rofex price')!.click();
     http
       .expectOne((req) => req.url === '/api/market/suggested-price/')
       .flush({
@@ -191,10 +198,10 @@ describe('ProfitPage', () => {
         disclaimer: 'Precio sugerido de mercado.',
       });
     await fixture.whenStable();
-    expect(text()).toContain('Estimado');
+    expect(origins()).toContain('ESTIMATED');
     // un precio del mercado real no se rotula como de prueba
-    expect(visible('.hero')).toContain('Con el precio de Rofex');
-    expect(visible('.hero')).not.toContain('prueba');
+    expect(visible('.hero')).toContain('With the Rofex price');
+    expect(visible('.hero')).not.toContain('test price');
 
     const select = (fixture.nativeElement as HTMLElement).querySelector('select')!;
     select.value = '4';
@@ -205,13 +212,13 @@ describe('ProfitPage', () => {
       campaign: { id: 4, label: '2024/25', crop: 'SOY', crop_origin: 'DECLARED' },
     });
     await fixture.whenStable();
-    expect(text()).not.toContain('Estimado');
-    expect(visible('.suggest')).toBe('Usar precio sugerido de Rofex');
+    expect(origins()).not.toContain('ESTIMATED');
+    expect(visible('.suggest')).toBe('Use suggested Rofex price');
   });
 
   it('al volver a abrir, el precio de Rofex sigue estimado y con el aviso de prueba', async () => {
     await setup(3);
-    buttonNamed('Usar precio sugerido de Rofex')!.click();
+    buttonNamed('Use suggested Rofex price')!.click();
     http
       .expectOne((req) => req.url === '/api/market/suggested-price/')
       .flush({
@@ -226,7 +233,7 @@ describe('ProfitPage', () => {
         disclaimer: 'Precio sugerido de mercado.',
       });
     await fixture.whenStable();
-    expect(text()).toContain('Estimado');
+    expect(origins()).toContain('ESTIMATED');
 
     // la misma pantalla otra vez (por ejemplo, al recargar): lo guardado vuelve con su origen
     const reopen = async () => {
@@ -239,28 +246,24 @@ describe('ProfitPage', () => {
     };
     await reopen();
     expect(amounts()).toEqual(['900', '9.000']);
-    expect(visible('.price .field__hint')).toContain('Estimado');
+    expect(origins('.price .field__hint')).toEqual(['ESTIMATED']);
     // guardada puede ser de otro día: se ofrece actualizarla
-    expect(visible('.suggest')).toBe(
-      'Sugerido por Matba Rofex · 13/11/2026 Precio de prueba Actualizar',
-    );
-    expect(visible('.hero')).toContain('Con el precio de prueba de Rofex');
+    expect(visible('.suggest')).toBe('Suggested by Matba Rofex · 13/11/2026 Test price Update');
+    expect(visible('.hero')).toContain('With the Rofex test price');
 
     // si no se puede actualizar, queda la que había, con su precio y su origen
-    buttonNamed('Actualizar')!.click();
+    buttonNamed('Update')!.click();
     http
       .expectOne((req) => req.url === '/api/market/suggested-price/')
-      .flush({ detail: 'Rofex tardó demasiado en responder.' }, { status: 502, statusText: 'Bad' });
+      .flush({ detail: 'Rofex took too long to respond.' }, { status: 502, statusText: 'Bad' });
     await fixture.whenStable();
-    expect(visible('.suggest')).toBe(
-      'Sugerido por Matba Rofex · 13/11/2026 Precio de prueba Reintentar',
-    );
-    expect(text()).toContain('No se pudo actualizar: Rofex tardó demasiado en responder.');
+    expect(visible('.suggest')).toBe('Suggested by Matba Rofex · 13/11/2026 Test price Retry');
+    expect(text()).toContain('Could not update: Rofex took too long to respond.');
     expect(amounts()).toEqual(['900', '9.000']);
-    expect(visible('.price .field__hint')).toContain('Estimado');
+    expect(origins('.price .field__hint')).toEqual(['ESTIMATED']);
 
     // actualizada: el precio nuevo pasa al campo y ya no hace falta actualizar
-    buttonNamed('Reintentar')!.click();
+    buttonNamed('Retry')!.click();
     http
       .expectOne((req) => req.url === '/api/market/suggested-price/')
       .flush({
@@ -275,20 +278,20 @@ describe('ProfitPage', () => {
         disclaimer: 'Precio sugerido de mercado.',
       });
     await fixture.whenStable();
-    expect(visible('.suggest')).toBe('Sugerido por Matba Rofex · 14/11/2026');
+    expect(visible('.suggest')).toBe('Suggested by Matba Rofex · 14/11/2026');
     expect(amounts()).toEqual(['960', '9.600']);
-    expect(visible('.hero')).toContain('Con el precio de Rofex');
+    expect(visible('.hero')).toContain('With the Rofex price');
 
     // un precio propio sigue declarado, con el sugerido a mano
     page().setPrice('310');
     await reopen();
-    expect(text()).not.toContain('Estimado');
-    expect(visible('.suggest')).toBe('Rofex: US$ 320/t · 14/11/2026 Usar Actualizar');
+    expect(origins()).not.toContain('ESTIMATED');
+    expect(visible('.suggest')).toBe('Rofex: US$ 320/t · 14/11/2026 Use Update');
   });
 
   it('si solo falta el precio, lo dice como motivo del margen', async () => {
     await setup(3);
-    expect(text()).toContain('Falta el precio del grano.');
+    expect(text()).toContain('Grain price is missing.');
   });
 
   it('con precio y rinde muestra el margen por hectárea y del lote', async () => {
@@ -297,7 +300,7 @@ describe('ProfitPage', () => {
     await fixture.whenStable();
     // 3 t/ha x 300 US$/t = 900 US$/ha, en 10 ha
     expect(amounts()).toEqual(['900', '9.000']);
-    expect(text()).toContain('Todavía sin costos');
+    expect(text()).toContain('No costs yet');
   });
 
   it('con un solo costo sin cargar lo dice en singular', async () => {
@@ -307,7 +310,7 @@ describe('ProfitPage', () => {
     const loaded: CostKey[] = ['seed', 'fertilizer', 'pesticide', 'labor', 'harvest', 'rent'];
     for (const key of loaded) page().setCost(key, '10');
     await fixture.whenStable();
-    expect(text()).toContain('Falta 1 costo por cargar');
+    expect(text()).toContain('1 cost still to enter');
   });
 
   it('el rinde que carga el productor reemplaza al de la huella y al borrarlo vuelve', async () => {
@@ -316,16 +319,16 @@ describe('ProfitPage', () => {
     page().setYield('4,5');
     await fixture.whenStable();
     expect(amounts()).toEqual(['450', '4.500']);
-    expect(text()).toContain('Lo cargaste vos · huella: 3 t/ha');
+    expect(text()).toContain('Entered by you · footprint: 3 t/ha');
     page().setYield('');
     await fixture.whenStable();
     expect(amounts()).toEqual(['300', '3.000']);
-    expect(text()).toContain('De tu declaración en la huella');
+    expect(text()).toContain('From what you declared in Footprint');
   });
 
   it('sin campañas igual calcula con el rinde que se carga a mano', async () => {
     await setup(null, false);
-    expect(text()).toContain('Sin campañas todavía: cargalo vos');
+    expect(text()).toContain('No seasons yet: enter it yourself');
     page().setPrice('200');
     page().setYield('2');
     await fixture.whenStable();
@@ -346,7 +349,7 @@ describe('ProfitPage', () => {
     await setup(3);
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('app-lot-tabs')).not.toBeNull();
-    expect(el.querySelector('app-page-header h1')?.textContent).toContain('Rentabilidad');
+    expect(el.querySelector('app-page-header h1')?.textContent).toContain('Profitability');
   });
 
   it('embebida en el popup toma el id del input y no repite las pestañas ni el encabezado', async () => {
@@ -359,6 +362,6 @@ describe('ProfitPage', () => {
     expect(el.querySelector('app-lot-tabs')).toBeNull();
     expect(el.querySelector('app-page-header')).toBeNull();
     expect(el.querySelector('.hero app-kpi-card')).not.toBeNull();
-    expect(text()).toContain('Tus números');
+    expect(text()).toContain('Your numbers');
   });
 });

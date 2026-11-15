@@ -36,10 +36,10 @@ describe('StatusRing', () => {
     expect(segments[3].style.fill).toMatch(/-no/);
     const symbols = [...el().querySelectorAll('text.sym')].map((t) => t.textContent?.trim());
     expect(symbols).toEqual(['✓', '✓', '?', '✗']);
-    expect(el().querySelector('text.center')?.textContent?.trim()).toBe('2 de 4');
+    expect(el().querySelector('text.center')?.textContent?.trim()).toBe('2 of 4');
     const list = el().querySelector('ul.ring__list')?.textContent?.replace(/\s+/g, ' ') ?? '';
-    expect(list).toContain('Cobertura invernal · Sin dato');
-    expect(list).toContain('Sin quema · No cumple');
+    expect(list).toContain('Cobertura invernal · No data');
+    expect(list).toContain('Sin quema · Not met');
   });
 
   it('usa el rótulo central pedido', async () => {
@@ -52,17 +52,17 @@ describe('StatusRing', () => {
 
     const label = el().querySelector('svg[role="img"]')?.getAttribute('aria-label') ?? '';
     expect(label).toContain(
-      'Puntaje provisional. Anillo de 4 criterios: 2 cumplen, 1 no cumple y 1 sin dato',
+      'Puntaje provisional. Ring of 4 criteria: 2 met, 1 not met and 1 with no data',
     );
     const rows = [...el().querySelectorAll('details tbody tr')].map((row) =>
       [...row.children].map((cell) => cell.textContent),
     );
-    expect(rows[3]).toEqual(['Sin quema', 'No cumple']);
+    expect(rows[3]).toEqual(['Sin quema', 'Not met']);
   });
 
   it('muestra el estado vacío', async () => {
     await render({ items: [] });
     expect(el().querySelector('svg')).toBeNull();
-    expect(el().textContent).toContain('Sin criterios para mostrar');
+    expect(el().textContent).toContain('No criteria to show');
   });
 });

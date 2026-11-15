@@ -1,12 +1,12 @@
-<app-section-card heading="Lo que ve el satélite" class="main">
-  <app-info-tip actions label="De dónde salen estos datos">
-    <p>Datos abiertos de la NASA, consultados en vivo para el polígono del lote.</p>
+<app-section-card heading="What the satellite sees" class="main">
+  <app-info-tip actions label="Where this data comes from">
+    <p>Open NASA data, queried live for this field's boundary.</p>
     <ul>
-      <li>Verdor (NDVI): de 0 a 1, cuanto más alto, más verde. MODIS Terra, cada 16 días.</li>
-      <li>Lluvia y humedad: NASA POWER, en una grilla de unos 50 km. Describen la zona.</li>
-      <li>Humedad del suelo: de 0 (seco) a 100 (saturado).</li>
+      <li>Greenness (NDVI): from 0 to 1, the higher, the greener. MODIS Terra, every 16 days.</li>
+      <li>Rainfall and moisture: NASA POWER, on a grid of about 50 km. They describe the area.</li>
+      <li>Soil moisture: from 0 (dry) to 100 (saturated).</li>
     </ul>
-    <p>Lo que llega queda guardado en este dispositivo para verlo sin conexión.</p>
+    <p>What arrives is saved on this device so you can see it offline.</p>
   </app-info-tip>
 
   <div class="kpis">
@@ -14,7 +14,8 @@
     <app-kpi-card
       class="kpi kpi--lead"
       icon="leaf"
-      label="Verdor (NDVI)"
+      label="Greenness (NDVI)"
+      emptyLabel="No data"
       [value]="ndviView?.value"
       [caption]="ndviView?.caption ?? null"
       [trend]="ndviView?.trend ?? null"
@@ -31,7 +32,8 @@
     <app-kpi-card
       class="kpi"
       icon="cloud"
-      label="Lluvia en 30 días"
+      label="Rainfall, last 30 days"
+      emptyLabel="No data"
       [value]="rainView?.value"
       unit="mm"
       [caption]="rainView?.caption ?? null"
@@ -47,7 +49,8 @@
     <app-kpi-card
       class="kpi"
       icon="layers"
-      label="Humedad del suelo"
+      label="Soil moisture"
+      emptyLabel="No data"
       [value]="soilView?.value"
       unit="%"
       [caption]="soilView?.caption ?? null"
@@ -62,13 +65,13 @@
 
   <div class="chart">
     <app-series-chart
-      [title]="fullHistory() ? 'Verdor del lote desde 2020' : 'Verdor del lote, últimos 12 meses'"
-      description="NDVI medio del lote en cada imagen de 16 días de MODIS Terra, con los eventos de la bitácora marcados"
+      [title]="fullHistory() ? 'Field greenness since 2020' : 'Field greenness, last 12 months'"
+      description="Mean field NDVI in each 16-day MODIS Terra image, with field log events marked"
       [series]="ndviSeries()"
       [markers]="markers()"
       [yDomain]="[0, 1]"
       [decimals]="2"
-      emptyText="Todavía no llegó la serie de NDVI"
+      emptyText="The NDVI series hasn't arrived yet"
     />
     <div class="chart__notes">
       @if (pending(ndvi())) {
@@ -76,32 +79,32 @@
           {{
             offline()
               ? offlineText
-              : 'Consultando MODIS (' + percent(ndvi().progress) + '): ' + modisWait
+              : 'Querying MODIS (' + percent(ndvi().progress) + '): ' + modisWait
           }}
         </p>
       } @else if (ndvi().error && ndvi().data) {
         <!-- llegó una parte: se dice en pocas palabras y el motivo del servicio va en la ayuda -->
         <p class="note">
-          Faltan algunas fechas del verdor
-          <app-info-tip label="Por qué faltan fechas">
-            <p>No llegaron todas las fechas del verdor. {{ serviceText(ndvi().error) }}</p>
+          Some greenness dates are missing
+          <app-info-tip label="Why dates are missing">
+            <p>Not all greenness dates arrived. {{ serviceText(ndvi().error) }}</p>
           </app-info-tip>
         </p>
       }
       @if (ndvi().stale) {
-        <p class="note">Copia guardada: no se pudo actualizar.</p>
+        <p class="note">Saved copy: couldn't update.</p>
       }
       @if (ndvi().data) {
         <app-origin-badge [origin]="dataSources.modisNdvi.origin" />
       }
-      <span class="source">Fuente: MODIS Terra (MOD13Q1)</span>
+      <span class="source">Source: MODIS Terra (MOD13Q1)</span>
     </div>
   </div>
 
   @if (anyFailed()) {
     <p class="retry-line" role="status">
-      Algunos datos no llegaron.
-      <button type="button" class="btn btn--sm" (click)="retry()">Reintentar</button>
+      Some data didn't arrive.
+      <button type="button" class="btn btn--sm" (click)="retry()">Try again</button>
     </p>
   }
 </app-section-card>
@@ -114,16 +117,16 @@
   <app-disclosure
     class="more more--fold"
     flat
-    label="Más datos"
-    hint="Lluvia, uso del suelo, NISAR"
+    label="More data"
+    hint="Rainfall, land use, NISAR"
     [(open)]="moreOpen"
   >
-    <div class="more__body" role="region" aria-label="Más datos" aria-roledescription="carrusel">
+    <div class="more__body" role="region" aria-label="More data" aria-roledescription="carousel">
       <ng-container [ngTemplateOutlet]="moreCards" />
     </div>
   </app-disclosure>
 } @else {
-  <section class="more" aria-labelledby="sat-more-title" aria-roledescription="carrusel">
+  <section class="more" aria-labelledby="sat-more-title" aria-roledescription="carousel">
     <ng-container [ngTemplateOutlet]="moreCards" />
   </section>
 }
@@ -131,7 +134,7 @@
 <ng-template #moreCards>
   <div class="more__head">
     @if (!narrow()) {
-      <h2 id="sat-more-title">Más datos</h2>
+      <h2 id="sat-more-title">More data</h2>
     }
     <div class="more__nav">
       <p class="more__count" aria-live="polite" aria-atomic="true">{{ slider.position() }}</p>
@@ -143,7 +146,7 @@
           [attr.aria-disabled]="slider.atStart() || null"
           (click)="slider.step(-1)"
         >
-          <app-icon name="chevron-left" /><span class="visually-hidden">Tarjeta anterior</span>
+          <app-icon name="chevron-left" /><span class="visually-hidden">Previous card</span>
         </button>
         <button
           type="button"
@@ -152,7 +155,7 @@
           [attr.aria-disabled]="slider.atEnd() || null"
           (click)="slider.step(1)"
         >
-          <app-icon name="chevron-right" /><span class="visually-hidden">Tarjeta siguiente</span>
+          <app-icon name="chevron-right" /><span class="visually-hidden">Next card</span>
         </button>
       }
     </div>
@@ -162,15 +165,15 @@
     <article
       class="slide card"
       role="group"
-      aria-roledescription="tarjeta"
+      aria-roledescription="card"
       [attr.aria-label]="slideLabel(0)"
     >
       <h3 class="slide__title"><app-icon name="cloud" /> {{ slides[0] }}</h3>
       <app-column-chart
-        description="Lluvia mensual de NASA POWER en el centro del lote, últimos 12 meses, en mm"
+        description="Monthly NASA POWER rainfall at the field's center, last 12 months, in mm"
         [items]="rainColumns()"
         unit="mm"
-        emptyText="Todavía no llegó la lluvia de NASA POWER"
+        emptyText="NASA POWER rainfall hasn't arrived yet"
       />
       @if (rainOpenMonth(); as open) {
         <p class="note">{{ open.aside }}</p>
@@ -178,33 +181,33 @@
       @if (offline() && pending(climate()) && !climate().data) {
         <p class="note" role="status">{{ offlineText }}</p>
       } @else if (!pending(climate()) && !climate().data) {
-        <p class="note">Sin dato: {{ reason(climate()) }}</p>
+        <p class="note">No data: {{ reason(climate()) }}</p>
       }
       <p class="slide__source">
         @if (climate().data) {
           <app-origin-badge [origin]="dataSources.power.origin" />
         }
-        <span class="source">NASA POWER, zona de 50 km</span>
+        <span class="source">NASA POWER, 50 km area</span>
       </p>
     </article>
 
     <article
       class="slide card"
       role="group"
-      aria-roledescription="tarjeta"
+      aria-roledescription="card"
       [attr.aria-label]="slideLabel(1)"
     >
       <h3 class="slide__title">
         <app-icon name="map" /> {{ slides[1] }}
         @if (landUse().data; as evidence) {
-          <app-info-tip label="Cómo se lee">
+          <app-info-tip label="How to read it">
             <p>{{ forLot(evidence.reason, mine()) }}</p>
             <p>
-              Cobertura del suelo de MODIS en píxeles de unos 460 m: es orientativa.
+              MODIS land cover in pixels of about 460 m: a rough guide only.
               {{
                 mine()
-                  ? 'En Prácticas la comparás con lo que declarás.'
-                  : 'En Prácticas se ve año por año.'
+                  ? 'In Practices you compare it with what you declare.'
+                  : 'Practices shows it year by year.'
               }}
             </p>
           </app-info-tip>
@@ -228,17 +231,17 @@
         </ul>
       } @else if (pending(landUse())) {
         <p class="note" role="status">
-          {{ offline() ? offlineText : 'Consultando MODIS: ' + modisWait }}
+          {{ offline() ? offlineText : 'Querying MODIS: ' + modisWait }}
         </p>
       } @else {
-        <p class="note">Sin dato: {{ reason(landUse()) }}</p>
+        <p class="note">No data: {{ reason(landUse()) }}</p>
       }
       <p class="slide__source">
         @if (landUse().data; as evidence) {
           <app-origin-badge [origin]="evidence.origin" />
         }
-        <span class="source">Fuente: MODIS (MCD12Q1), orientativo</span>
-        <a class="slide__link" [routerLink]="['/lotes', lot().id, 'practicas']">Ver en Prácticas</a>
+        <span class="source">Source: MODIS (MCD12Q1), indicative</span>
+        <a class="slide__link" [routerLink]="['/lotes', lot().id, 'practicas']">See in Practices</a>
       </p>
     </article>
 
@@ -246,14 +249,14 @@
     <article
       class="slide card"
       role="group"
-      aria-roledescription="tarjeta"
+      aria-roledescription="card"
       [attr.aria-label]="slideLabel(2)"
     >
       <h3 class="slide__title">
         <app-icon name="satellite" /> {{ slides[2] }}
-        <app-info-tip label="Qué es NISAR">
-          <p>Radar de la NASA y la ISRO en banda L: ve a través de las nubes.</p>
-          <p>Son las pasadas sobre el lote en el catálogo CMR de Earthdata (NISAR L2 GCOV).</p>
+        <app-info-tip label="What is NISAR">
+          <p>NASA and ISRO L-band radar: it sees through clouds.</p>
+          <p>These are the passes over the field in the Earthdata CMR catalog (NISAR L2 GCOV).</p>
         </app-info-tip>
       </h3>
       @if (nisar().length) {
@@ -261,24 +264,22 @@
           @for (scene of nisar().slice(0, 3); track scene.title) {
             <li>
               <strong>{{ day(scene.start) }}</strong>
-              <span
-                >Órbita {{ scene.track ?? 'sin dato' }} · {{ scene.direction ?? 'sin dato' }}</span
-              >
+              <span>Track {{ scene.track ?? 'no data' }} · {{ scene.direction ?? 'no data' }}</span>
             </li>
           }
         </ul>
         @if (nisar().length > 3) {
-          <p class="note">Y {{ nisar().length - 3 }} más en el catálogo.</p>
+          <p class="note">And {{ nisar().length - 3 }} more in the catalog.</p>
         }
       } @else if (scenesFailure(); as failure) {
         <p class="note">{{ failure }}</p>
       } @else if (pending(scenes())) {
-        <p class="note" role="status">{{ offline() ? offlineText : 'Consultando…' }}</p>
+        <p class="note" role="status">{{ offline() ? offlineText : 'Querying…' }}</p>
       } @else {
-        <p class="note">Sin pasadas en el catálogo por ahora.</p>
+        <p class="note">No passes in the catalog yet.</p>
       }
       <p class="slide__source">
-        <span class="source">Fuente: catálogo CMR de Earthdata</span>
+        <span class="source">Source: Earthdata CMR catalog</span>
       </p>
     </article>
 
@@ -286,14 +287,14 @@
     <article
       class="slide card"
       role="group"
-      aria-roledescription="tarjeta"
+      aria-roledescription="card"
       [attr.aria-label]="slideLabel(3)"
     >
       <h3 class="slide__title">
         <app-icon name="eye" /> {{ slides[3] }}
-        <app-info-tip label="Qué es HLS">
-          <p>Imágenes ópticas de Landsat y Sentinel-2 armonizadas por la NASA, de 30 m.</p>
-          <p>Las nubes son las de toda la escena, no las del lote.</p>
+        <app-info-tip label="What is HLS">
+          <p>Optical Landsat and Sentinel-2 imagery harmonized by NASA, at 30 m.</p>
+          <p>Cloud cover is for the whole scene, not just the field.</p>
         </app-info-tip>
       </h3>
       @if (hls().length) {
@@ -301,35 +302,35 @@
           @for (scene of hls().slice(0, 3); track scene.title) {
             <li>
               <strong>{{ day(scene.start) }}</strong>
-              <span>{{ scene.sensorLabel }} · {{ scene.cloudCover ?? '?' }} % de nubes</span>
+              <span>{{ scene.sensorLabel }} · {{ scene.cloudCover ?? '?' }}% cloud cover</span>
             </li>
           }
         </ul>
         @if (lastClearHls(); as clear) {
-          <p class="note">Última despejada: {{ day(clear.start) }}</p>
+          <p class="note">Last clear image: {{ day(clear.start) }}</p>
         }
       } @else if (scenesFailure()) {
-        <p class="note">Sin respuesta del catálogo: no se sabe si hay imágenes.</p>
+        <p class="note">No response from the catalog: we can't tell whether there are images.</p>
       } @else if (pending(scenes())) {
-        <p class="note" role="status">{{ offline() ? offlineText : 'Consultando…' }}</p>
+        <p class="note" role="status">{{ offline() ? offlineText : 'Querying…' }}</p>
       } @else {
-        <p class="note">Sin imágenes en el catálogo por ahora.</p>
+        <p class="note">No images in the catalog yet.</p>
       }
       <p class="slide__source">
-        <span class="source">Fuente: catálogo CMR de Earthdata</span>
+        <span class="source">Source: Earthdata CMR catalog</span>
       </p>
     </article>
 
     <article
       class="slide card"
       role="group"
-      aria-roledescription="tarjeta"
+      aria-roledescription="card"
       [attr.aria-label]="slideLabel(4)"
     >
       <h3 class="slide__title"><app-icon name="leaf" /> {{ slides[4] }}</h3>
       <div class="facts-block">
         <p class="facts-block__head">
-          Verdor (NDVI)
+          Greenness (NDVI)
           @if (summary().latest) {
             <app-origin-badge [origin]="dataSources.modisNdvi.origin" />
           }
@@ -338,35 +339,35 @@
           <ul class="facts">
             <li>
               {{ formatDate(latest.date) }} · MODIS {{ latest.satellite }} ·
-              {{ latest.validPixels }} de {{ latest.pixels }} píxeles válidos
+              {{ latest.validPixels }} of {{ latest.pixels }} valid pixels
             </li>
             <li>
-              Frente al anterior: {{ signed(summary().changeVsPrevious) }} · frente a hace un año:
+              Vs. previous: {{ signed(summary().changeVsPrevious) }} · vs. a year ago:
               {{ signed(summary().changeVsLastYear) }}
             </li>
             <!-- core/nasa pondera cada píxel por su parte dentro del lote; si ninguno lo toca, usa el más cercano -->
             @if (latest.centroidOnly) {
-              <li>Ningún píxel cae sobre el lote: se usa el más cercano a su centro.</li>
+              <li>No pixel falls on the field: the one closest to its center is used.</li>
             }
           </ul>
         } @else {
-          <p class="note">{{ pending(ndvi()) ? 'Consultando…' : reason(ndvi()) }}</p>
+          <p class="note">{{ pending(ndvi()) ? 'Querying…' : reason(ndvi()) }}</p>
         }
       </div>
       <div class="facts-block">
         <p class="facts-block__head">
-          Humedad del suelo
+          Soil moisture
           @if (soil()) {
             <app-origin-badge [origin]="dataSources.power.origin" />
           }
         </p>
         @if (soil(); as s) {
           <ul class="facts">
-            <li>Raíces: {{ percent(s.soilRoot) }} · superficie: {{ percent(s.soilTop) }}</li>
-            <li>Al {{ formatDate(s.date) }}</li>
+            <li>Root zone: {{ percent(s.soilRoot) }} · surface: {{ percent(s.soilTop) }}</li>
+            <li>As of {{ formatDate(s.date) }}</li>
           </ul>
         } @else {
-          <p class="note">{{ pending(climate()) ? 'Consultando…' : reason(climate()) }}</p>
+          <p class="note">{{ pending(climate()) ? 'Querying…' : reason(climate()) }}</p>
         }
       </div>
     </article>
@@ -374,12 +375,12 @@
     <article
       class="slide card"
       role="group"
-      aria-roledescription="tarjeta"
+      aria-roledescription="card"
       [attr.aria-label]="slideLabel(5)"
     >
       <h3 class="slide__title">
         <app-icon name="info" /> {{ slides[5] }}
-        <app-info-tip label="Detalle de las fuentes">
+        <app-info-tip label="Source details">
           <ul>
             @for (source of sources; track source.short) {
               <li>
@@ -398,13 +399,13 @@
           </li>
         }
       </ul>
-      <div class="options" role="group" aria-label="Opciones de la consulta">
+      <div class="options" role="group" aria-label="Query options">
         @if (!fullHistory()) {
           <button type="button" class="btn btn--sm" (click)="ndviSince.set('2020-01-01')">
-            Historial desde 2020
+            History since 2020
           </button>
         }
-        <button type="button" class="btn btn--sm btn--ghost" (click)="retry()">Actualizar</button>
+        <button type="button" class="btn btn--sm btn--ghost" (click)="retry()">Refresh</button>
       </div>
     </article>
   </div>

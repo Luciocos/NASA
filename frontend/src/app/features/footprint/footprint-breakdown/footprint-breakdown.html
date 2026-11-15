@@ -2,25 +2,24 @@
 
 <div class="headline" [class.headline--missing]="fp.total_kg_co2e_per_t === null">
   <p class="headline__label">
-    Huella estimada
+    Estimated footprint
     @if (fp.campaign) {
-      · campaña {{ fp.campaign.label }}
+      · season {{ fp.campaign.label }}
     }
   </p>
   @if (fp.total_kg_co2e_per_t !== null) {
     <p class="headline__value">{{ formatKgPerTonne(fp.total_kg_co2e_per_t) }}</p>
   } @else {
-    <p class="headline__value">No se puede calcular todavía</p>
+    <p class="headline__value">Cannot be calculated yet</p>
     @if (why(); as text) {
       <p class="headline__why">{{ text }}</p>
     }
   }
   <p class="headline__confidence">
-    Nivel de confianza: <strong>{{ confidenceLabels[fp.confidence.level] }}</strong>
+    Confidence level: <strong>{{ confidenceLabels[fp.confidence.level] }}</strong>
     <span class="muted">
-      ({{ fp.confidence.counts.VERIFIED }} verificados,
-      {{ fp.confidence.counts.DECLARED }} declarados,
-      {{ fp.confidence.counts.ESTIMATED }} estimados)
+      ({{ fp.confidence.counts.VERIFIED }} verified, {{ fp.confidence.counts.DECLARED }} declared,
+      {{ fp.confidence.counts.ESTIMATED }} estimated)
     </span>
   </p>
   @if (!compact()) {
@@ -32,20 +31,20 @@
 </div>
 
 <details class="legend" [open]="!compact()">
-  <summary>¿De dónde sale cada dato?</summary>
+  <summary>Where does each piece of data come from?</summary>
   <ul>
-    <li><strong>Verificado:</strong> observado por satélite (NISAR, HLS).</li>
-    <li><strong>Declarado:</strong> cargado por el productor.</li>
+    <li><strong>Verified:</strong> observed by satellite (NISAR, HLS).</li>
+    <li><strong>Declared:</strong> entered by the farmer.</li>
     <li>
-      <strong>Estimado:</strong> valor de referencia cargado por el equipo con su fuente. No es un
-      dato del lote ni una observación satelital.
+      <strong>Estimated:</strong> reference value added by the team, with its source. It is not data
+      from this field or a satellite observation.
     </li>
-    <li>Los factores de emisión son constantes publicadas, con su fuente en cada fila.</li>
+    <li>Emission factors are published constants, with their source in each row.</li>
   </ul>
 </details>
 
 <p class="yield">
-  Rendimiento:
+  Yield:
   @if (fp.yield.value !== null) {
     <strong>{{ formatNumber(fp.yield.value) }} t/ha</strong>
     @if (fp.yield.origin) {
@@ -53,17 +52,17 @@
     }
     @if (fp.yield.reference) {
       <span class="reference" [class.print-only]="compact()">
-        Valor de referencia regional, no observado por satélite. Fuente:
+        Regional reference value, not observed by satellite. Source:
         {{ fp.yield.reference }}
       </span>
       @if (compact()) {
         <span class="reference screen-only">
-          Valor de referencia regional, no observado por satélite.
+          Regional reference value, not observed by satellite.
         </span>
       }
     }
   } @else {
-    <strong>Sin dato</strong>
+    <strong>No data</strong>
     <span class="reason">{{ fp.yield.reason }}</span>
   }
 </p>
@@ -72,21 +71,21 @@
      renglón "Ver" -->
 <details class="fold" [open]="!compact()" [attr.data-print-open]="compact() ? '' : null">
   <summary [class.visually-hidden]="!compact()">
-    Ver el desglose por componente ({{ fp.components.length }})
+    See the breakdown by component ({{ fp.components.length }})
   </summary>
   <table class="breakdown">
     <caption class="visually-hidden">
-      Desglose de la huella por componente
+      Footprint breakdown by component
     </caption>
     <thead>
       <tr>
-        <th scope="col">Componente</th>
-        <th scope="col">Dato de actividad</th>
+        <th scope="col">Component</th>
+        <th scope="col">Activity data</th>
         @if (!compact()) {
-          <th scope="col">Factor de emisión</th>
+          <th scope="col">Emission factor</th>
         }
         <th scope="col">kg CO2e/t</th>
-        <th scope="col">Estado</th>
+        <th scope="col">Status</th>
       </tr>
     </thead>
     <tbody>
@@ -97,20 +96,20 @@
             @if (c.activity.quantity !== null) {
               {{ formatNumber(c.activity.quantity, 2) }} {{ c.activity.unit }}
             } @else if (c.activity.records > 0) {
-              {{ c.activity.records }} registro/s
+              {{ c.activity.records }} {{ c.activity.records === 1 ? 'record' : 'records' }}
             } @else {
-              Sin dato
+              No data
             }
             @if (c.activity.origin) {
               <app-origin-badge [origin]="c.activity.origin" />
             }
             @if (c.activity.reference) {
               <span class="reference" [class.print-only]="compact()">
-                Valor de referencia, no observado por satélite. Fuente: {{ c.activity.reference }}
+                Reference value, not observed by satellite. Source: {{ c.activity.reference }}
               </span>
               @if (compact()) {
                 <span class="reference screen-only"
-                  >Valor de referencia, no observado por satélite.</span
+                  >Reference value, not observed by satellite.</span
                 >
               }
             }
@@ -122,16 +121,16 @@
             <td>
               @if (c.factor.value !== null && c.factor.value !== undefined) {
                 {{ formatNumber(c.factor.value, 3) }} {{ c.factor.unit }}
-                <span class="muted small">Fuente: {{ c.factor.source }}</span>
+                <span class="muted small">Source: {{ c.factor.source }}</span>
               } @else {
-                Sin factor con fuente
+                No factor with a source
               }
             </td>
           }
           <td>{{ c.status === 'calculado' ? formatNumber(c.kg_co2e_per_t) : '—' }}</td>
           <td>
             <span class="status">
-              {{ c.status === 'calculado' ? '✓ Calculado' : '? Sin dato' }}
+              {{ c.status === 'calculado' ? '✓ Calculated' : '? No data' }}
             </span>
             @if (c.reason) {
               <span class="reason">{{ c.reason }}</span>
@@ -149,7 +148,7 @@
 <!-- en pantalla, las fuentes largas de las referencias se piden; al imprimir van en cada fila -->
 @if (compact() && references().length > 0) {
   <details class="legend sources screen-only">
-    <summary>Fuentes de los valores de referencia</summary>
+    <summary>Sources of the reference values</summary>
     <ul>
       @for (ref of references(); track ref.name) {
         <li>

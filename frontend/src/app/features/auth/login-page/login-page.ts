@@ -65,7 +65,7 @@ export class LoginPage {
     const fields: AuthFormErrors['fields'] = {};
     const badEmail = emailError(this.email());
     if (badEmail) fields.email = badEmail;
-    if (!this.password()) fields.password = 'Escribí tu contraseña.';
+    if (!this.password()) fields.password = 'Enter your password.';
     if (Object.keys(fields).length > 0) {
       this.fail({ fields, message: null });
       return;
@@ -80,7 +80,7 @@ export class LoginPage {
         next: () => void this.router.navigateByUrl(this.back ?? HOME_PATH),
         error: (error: unknown) => {
           this.sending.set(false);
-          this.fail(authFormErrors(error, 'ingresar'));
+          this.fail(authFormErrors(error, 'log in'));
         },
       });
   }

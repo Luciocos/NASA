@@ -1,11 +1,11 @@
 @let s = score();
 
 <p class="value">
-  Puntaje provisional:
+  Provisional score:
   @if (s.score !== null) {
     <strong>{{ formatNumber(s.score) }} / {{ s.max_score }}</strong>
   } @else {
-    <strong>Sin calcular</strong>
+    <strong>Not calculated</strong>
   }
 </p>
 @if (hint(); as why) {
@@ -19,7 +19,7 @@
 <details class="fold" data-print-open>
   <summary>
     {{
-      s.criteria.length === 1 ? 'Ver el criterio' : 'Ver los ' + s.criteria.length + ' criterios'
+      s.criteria.length === 1 ? 'See the criterion' : 'See all ' + s.criteria.length + ' criteria'
     }}
   </summary>
   @if (hint() && s.message) {
@@ -33,12 +33,12 @@
           {{ status[c.status].label }}
         </span>
         <span class="criterion__body">
-          <strong>{{ c.label }}</strong>
+          <strong>{{ criterionLabel(c) }}</strong>
           @if (c.origin) {
             <app-origin-badge [origin]="c.origin" />
           }
           @if (c.hypothetical) {
-            <span class="tag">Hipotético</span>
+            <span class="tag">Hypothetical</span>
           }
           @if (c.is_simulated) {
             <app-simulated-notice />

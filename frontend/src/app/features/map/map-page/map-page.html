@@ -2,14 +2,14 @@
   <section class="welcome" aria-labelledby="welcome-title" animate.enter="enter-rise">
     <span class="iso-tile welcome__art" aria-hidden="true"></span>
     <app-page-header
-      heading="Marcá tu primer lote"
+      heading="Add your first field"
       headingId="welcome-title"
-      subtitle="Con el perímetro alcanza para ver lo que observan los satélites de la NASA."
+      subtitle="The boundary is all you need to see what NASA satellites observe."
     />
 
     <div class="locate card card--raised" role="group" aria-labelledby="locate-title">
-      <h2 id="locate-title">¿Usamos tu ubicación para encontrar tu campo más rápido?</h2>
-      <p class="locate__note"><app-icon name="eye" /> No la guardamos.</p>
+      <h2 id="locate-title">Use your location to find your farm faster?</h2>
+      <p class="locate__note"><app-icon name="eye" /> We don't store it.</p>
       <div class="locate__actions">
         <button
           type="button"
@@ -18,10 +18,10 @@
           (click)="useLocation()"
         >
           <app-icon name="locate" />
-          {{ locating() ? 'Buscando tu ubicación…' : 'Usar mi ubicación' }}
+          {{ locating() ? 'Finding your location…' : 'Use my location' }}
         </button>
         <a class="btn btn--lg" routerLink="/mapa/nuevo">
-          <app-icon name="search" /> Buscar en el mapa
+          <app-icon name="search" /> Search the map
         </a>
       </div>
       @if (locationError(); as message) {
@@ -30,18 +30,18 @@
     </div>
 
     <a class="example-link" routerLink="/ejemplos">
-      Ver un lote de ejemplo <app-icon name="arrow-right" />
+      See a sample field <app-icon name="arrow-right" />
     </a>
   </section>
 } @else {
   <!-- sin encabezado de página: la maqueta y la lista hablan solas. "Marcar lote" ya está en la
   barra de arriba y, en el celular, en las pestañas de abajo -->
-  <h1 class="visually-hidden">Mi campo</h1>
+  <h1 class="visually-hidden">My fields</h1>
 
   @if (error(); as message) {
     <p class="alert alert--error" role="alert">
       {{ message }}
-      <button type="button" class="btn btn--sm" (click)="reload()">Reintentar</button>
+      <button type="button" class="btn btn--sm" (click)="reload()">Retry</button>
     </p>
   }
 
@@ -49,31 +49,31 @@
     <div class="layout" aria-busy="true">
       <p class="skeleton stage-placeholder" aria-hidden="true"></p>
       <p class="skeleton side-placeholder" aria-hidden="true"></p>
-      <p class="visually-hidden">Cargando tus lotes…</p>
+      <p class="visually-hidden">Loading your fields…</p>
     </div>
   } @else if (listed().length > 0) {
     <div class="layout">
       <section class="stage" aria-labelledby="stage-title">
         <div class="stage__bar">
-          <h2 id="stage-title" class="visually-hidden">Vista del campo</h2>
-          <div class="seg" role="group" aria-label="Tipo de vista">
+          <h2 id="stage-title" class="visually-hidden">Farm view</h2>
+          <div class="seg" role="group" aria-label="View type">
             <button
               type="button"
               [attr.aria-pressed]="view() === 'maqueta'"
               (click)="view.set('maqueta')"
             >
-              Maqueta
+              3D view
             </button>
             <button
               type="button"
               [attr.aria-pressed]="view() === 'satelital'"
               (click)="view.set('satelital')"
             >
-              Satélite
+              Satellite
             </button>
           </div>
           @if (view() === 'maqueta') {
-            <app-info-tip label="Cómo leer la maqueta"><app-maqueta-legend /></app-info-tip>
+            <app-info-tip label="How to read the 3D view"><app-maqueta-legend /></app-info-tip>
           }
         </div>
 
@@ -84,19 +84,19 @@
             [selectedId]="selectedId()"
             [showGrid]="showGrid()"
             [ambient]="true"
-            ariaLabel="Maqueta isométrica de tus lotes"
+            ariaLabel="Isometric 3D view of your fields"
             (lotSelect)="select($event)"
             (lotOpen)="open($event)"
           >
-            <nav class="hud stage__hud" aria-label="Controles de la maqueta">
+            <nav class="hud stage__hud" aria-label="3D view controls">
               <button type="button" class="hud__btn" (click)="zoom(1 / 1.4)">
-                <app-icon name="zoom-out" /><span>Alejar</span>
+                <app-icon name="zoom-out" /><span>Zoom out</span>
               </button>
               <button type="button" class="hud__btn" (click)="zoom(1.4)">
-                <app-icon name="zoom-in" /><span>Acercar</span>
+                <app-icon name="zoom-in" /><span>Zoom in</span>
               </button>
               <button type="button" class="hud__btn" (click)="rotate()">
-                <app-icon name="rotate" /><span>Girar</span>
+                <app-icon name="rotate" /><span>Rotate</span>
               </button>
               <span class="hud__sep" aria-hidden="true"></span>
               <button
@@ -114,7 +114,7 @@
                 <div
                   class="stage__lot"
                   role="group"
-                  [attr.aria-label]="'Secciones de ' + lot.name"
+                  [attr.aria-label]="'Sections of ' + lot.name"
                   animate.enter="enter-fade"
                 >
                   @for (item of shortcuts; track item.tab) {
@@ -122,7 +122,7 @@
                       class="hud__btn"
                       [appLotLink]="lot.id"
                       [lotTab]="item.tab"
-                      [attr.aria-label]="item.action + ' de ' + lot.name"
+                      [attr.aria-label]="item.action + ' for ' + lot.name"
                     >
                       <app-icon [name]="item.icon" /><span>{{ item.label }}</span>
                     </a>
@@ -131,13 +131,13 @@
               }
 
               <app-more-menu
-                label="Más opciones de la maqueta"
-                text="Más"
+                label="More 3D view options"
+                text="More"
                 triggerClass="hud__btn"
                 align="end"
               >
                 <button type="button" class="menu-item" (click)="fit()">
-                  <app-icon name="fit" /> Ver todos los lotes
+                  <app-icon name="fit" /> Show all fields
                 </button>
                 <button
                   type="button"
@@ -145,7 +145,7 @@
                   [attr.aria-pressed]="showGrid()"
                   (click)="showGrid.set(!showGrid())"
                 >
-                  <app-icon name="grid" /> Grilla de hectáreas
+                  <app-icon name="grid" /> Hectare grid
                 </button>
                 @if (selectedLot(); as lot) {
                   <hr class="menu-sep" />
@@ -155,7 +155,7 @@
                       class="menu-item"
                       [appLotLink]="lot.id"
                       [lotTab]="item.tab"
-                      [attr.aria-label]="item.action + ' de ' + lot.name"
+                      [attr.aria-label]="item.action + ' for ' + lot.name"
                     >
                       <app-icon [name]="item.icon" /> {{ item.label }}
                     </a>
@@ -175,23 +175,23 @@
         }
 
         @if (layer() === 'ndvi' && view() === 'maqueta') {
-          <div class="ndvi-legend" role="note" aria-label="Escala del NDVI">
+          <div class="ndvi-legend" role="note" aria-label="NDVI scale">
             <p class="ndvi-legend__title">
-              <strong>Verdor (NDVI de MODIS)</strong>
+              <strong>Greenness (MODIS NDVI)</strong>
               <!-- el origen es de un dato: mientras se consulta o sin dato no hay nada que etiquetar -->
               @if (hasNdvi()) {
                 <app-origin-badge origin="VERIFIED" />
               }
             </p>
             @if (ndvi()?.status === 'loading' || (ndvi()?.status === 'partial' && !ndvi()?.error)) {
-              <p class="small">Consultando a la NASA…</p>
+              <p class="small">Fetching data from NASA…</p>
             } @else if (ndvi()?.error; as reason) {
               <p class="small">
                 <strong
-                  >Sin NDVI{{ ndvi()?.status === 'partial' ? ' en algunos lotes' : '' }}.</strong
+                  >No NDVI{{ ndvi()?.status === 'partial' ? ' for some fields' : '' }}.</strong
                 >
                 {{ reason }}
-                <button type="button" class="btn btn--sm" (click)="retryNdvi()">Reintentar</button>
+                <button type="button" class="btn btn--sm" (click)="retryNdvi()">Retry</button>
               </p>
             }
             <span
@@ -199,8 +199,8 @@
               [style.background]="ndviGradient"
               aria-hidden="true"
             ></span>
-            <p class="ndvi-legend__scale"><span>0 suelo</span><span>0,85 cultivo denso</span></p>
-            <p class="ndvi-legend__scale">Rayado: sin dato (nubes o sin imagen)</p>
+            <p class="ndvi-legend__scale"><span>0 bare soil</span><span>0.85 dense crop</span></p>
+            <p class="ndvi-legend__scale">Hatched: no data (clouds or no image)</p>
           </div>
         }
       </section>

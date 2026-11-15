@@ -2,7 +2,14 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
-import { CampaignDetail, EventLogItem, EventType, LotDetail, Sensor } from '../../../core/models';
+import {
+  CampaignDetail,
+  EventLogItem,
+  EventType,
+  LotDetail,
+  ORIGIN_LABELS,
+  Sensor,
+} from '../../../core/models';
 import { makeEvent } from '../testing';
 import { EVENTS_SHOWN, FILTERS_FROM, LotLog } from './lot-log';
 
@@ -147,17 +154,19 @@ describe('LotLog', () => {
   it('sin eventos lo dice en una línea y deja el detalle en la ayuda', async () => {
     await render([], { lot: { ...LOT, campaigns: [], event_count: 0 }, editable: true });
 
-    expect(text()).toContain('Todavía no hay eventos');
+    expect(text()).toContain('No events yet');
     expect(squash(el().querySelector('.log-empty__line')?.textContent)).toBe(
-      'Salen de observaciones satelitales procesadas.',
+      'They come from processed satellite observations.',
     );
     expect(rows().length).toBe(0);
-    expect(button('Filtrar')).toBeUndefined();
+    expect(button('Filter')).toBeUndefined();
     expect(el().querySelector('.campaigns')).toBeNull();
     // sin culpar a nadie: qué va a aparecer y de dónde sale, a pedido
-    expect(help()).toContain('No se inventan');
-    expect(help()).toContain('Acá van a aparecer la siembra, la cosecha, las labores');
-    expect(help()).toContain('Podés confirmar o corregir cada evento');
+    expect(help()).toContain('Nothing is made up');
+    expect(help()).toContain(
+      'Sowing, harvest, field work and other detected changes will show up here',
+    );
+    expect(help()).toContain('You can confirm or correct each event');
     expect(list().querySelector('details')?.open).toBe(false);
   });
 
@@ -166,11 +175,11 @@ describe('LotLog', () => {
 
     const campaigns = [...el().querySelectorAll('.campaign')].map(words);
     expect(campaigns).toEqual([
-      '2025/26 Soja Verificado Rinde 3,1 t/ha Declarado',
-      '2024/25 Maíz Estimado Rinde Sin dato (no declarado)',
+      `2025/26 Soja ${ORIGIN_LABELS.VERIFIED} Yield 3.1 t/ha ${ORIGIN_LABELS.DECLARED}`,
+      `2024/25 Maíz ${ORIGIN_LABELS.ESTIMATED} Yield No data (not declared)`,
     ]);
     // sin poder editar, la ayuda no ofrece revisar nada
-    expect(help()).not.toContain('Podés confirmar o corregir');
+    expect(help()).not.toContain('You can confirm or correct');
   });
 
   it('agrupa por campaña: el encabezado dice el cultivo y el rinde, y cada evento es una fila', async () => {
@@ -180,23 +189,23 @@ describe('LotLog', () => {
 
     const heads = [...el().querySelectorAll('.group__head')].map(words);
     expect(heads).toEqual([
-      'Campaña 2025/26 Soja Verificado Rinde 3,1 t/ha Declarado 1 evento',
+      `Season 2025/26 Soja ${ORIGIN_LABELS.VERIFIED} Yield 3.1 t/ha ${ORIGIN_LABELS.DECLARED} 1 event`,
       // una campaña sin eventos igual muestra lo suyo
-      'Campaña 2024/25 Maíz Estimado Rinde Sin dato (no declarado) Sin eventos',
+      `Season 2024/25 Maíz ${ORIGIN_LABELS.ESTIMATED} Yield No data (not declared) No events`,
     ]);
     expect(el().querySelector('.campaigns')).toBeNull();
 
     expect(rows().length).toBe(1);
     const row = squash(rows()[0].textContent);
-    expect(row).toContain('Remoción de suelo');
-    expect(row).toContain('7 sep 2026 ± 6 días');
+    expect(row).toContain('Tillage');
+    expect(row).toContain('7 Sep 2026 ± 6 days');
     expect(row).toContain('Manual');
-    expect(row).toContain('Estimado');
+    expect(row).toContain(ORIGIN_LABELS.ESTIMATED);
     expect(rows()[0].getAttribute('aria-haspopup')).toBe('dialog');
     expect(rows()[0].getAttribute('aria-expanded')).toBe('false');
     // sin imagen de evidencia no la promete
-    expect(text()).toContain('1 evento · abrilo para ver el detalle');
-    expect(row).not.toContain('con evidencia');
+    expect(text()).toContain('1 event · open it to see the details');
+    expect(row).not.toContain('with evidence');
   });
 
   it('marca las filas con imagen de evidencia y recién ahí la promete', async () => {
@@ -206,20 +215,20 @@ describe('LotLog', () => {
     ]);
     const row = (id: number) => rows().find((item) => item.dataset['eventId'] === String(id));
     expect(row(1)?.querySelector('.row__evidence')).not.toBeNull();
-    expect(squash(row(1)?.textContent)).toContain('con evidencia');
+    expect(squash(row(1)?.textContent)).toContain('with evidence');
     expect(row(2)?.querySelector('.row__evidence')).toBeNull();
-    expect(text()).toContain('2 eventos · abrí uno para ver su evidencia');
+    expect(text()).toContain('2 events · open one to see its evidence');
   });
 
   it('si todos los eventos son simulados lo dice una vez arriba, no en cada fila', async () => {
     await render([makeEvent({ id: 1 }), makeEvent({ id: 2, date: '2026-10-20' })]);
 
     expect(words(el().querySelector('.sim-all') as Element)).toBe(
-      'Dato simulado para la demostración en todos los eventos',
+      'Simulated data for the demo across all events',
     );
     expect(el().querySelectorAll('.row app-simulated-notice').length).toBe(0);
     // quien usa un lector de pantalla lo oye en cada fila
-    expect(rows()[0].textContent).toContain('(dato simulado)');
+    expect(rows()[0].textContent).toContain('(simulated data)');
   });
 
   it('si solo algunos son simulados, la marca va en esas filas', async () => {
@@ -240,7 +249,7 @@ describe('LotLog', () => {
     ]);
 
     const titles = [...el().querySelectorAll('.group__head')].map(words);
-    expect(titles).toEqual(['Octubre de 2026 1 evento', 'Agosto de 2026 1 evento']);
+    expect(titles).toEqual(['October 2026 1 event', 'August 2026 1 event']);
     expect(words(el().querySelector('.campaign') as Element)).toContain('2025/26 Soja');
   });
 
@@ -248,7 +257,7 @@ describe('LotLog', () => {
     const events = manyEvents();
     await render(events);
 
-    const toggle = button('Filtrar');
+    const toggle = button('Filter');
     expect(toggle).toBeDefined();
     expect(toggle?.getAttribute('aria-expanded')).toBe('false');
     expect(el().querySelector('select')).toBeNull();
@@ -259,14 +268,7 @@ describe('LotLog', () => {
     const [typeSelect, sensorSelect] = [...el().querySelectorAll('select')];
     // cada filtro ofrece solo lo que hay en la bitácora
     const types = [...typeSelect.options].map((option) => option.textContent?.trim());
-    expect(types).toEqual([
-      'Todos',
-      'Siembra',
-      'Cosecha',
-      'Remoción de suelo',
-      'Cultivo de cobertura',
-      'Anegamiento',
-    ]);
+    expect(types).toEqual(['All', 'Sowing', 'Harvest', 'Tillage', 'Cover crop', 'Flooding']);
     expect([...sensorSelect.options].map((option) => option.value)).toEqual([
       '',
       'NISAR',
@@ -278,34 +280,34 @@ describe('LotLog', () => {
     typeSelect.dispatchEvent(new Event('change'));
     await fixture.whenStable();
     expect(rows().map((row) => squash(row.querySelector('.row__type')?.textContent))).toEqual([
-      'Cosecha',
-      'Cosecha',
+      'Harvest',
+      'Harvest',
     ]);
-    expect(text()).toContain('2 de 7 eventos con los filtros elegidos.');
-    expect(text()).toContain('1 filtro activo');
+    expect(text()).toContain('2 of 7 events match the selected filters.');
+    expect(text()).toContain('1 active filter');
 
-    button('Quitar filtros')?.click();
+    button('Clear filters')?.click();
     await fixture.whenStable();
     expect(rows().length).toBe(Math.min(FILTERS_FROM, EVENTS_SHOWN));
-    expect(button(`Ver los ${FILTERS_FROM} eventos`)).toBeDefined();
+    expect(button(`Show all ${FILTERS_FROM} events`)).toBeDefined();
   });
 
   it('con pocos eventos no ofrece filtros', async () => {
     await render(manyEvents(FILTERS_FROM - 1));
-    expect(button('Filtrar')).toBeUndefined();
+    expect(button('Filter')).toBeUndefined();
   });
 
   it('con muchos eventos muestra los primeros y el resto se pide', async () => {
     await render(manyEvents(EVENTS_SHOWN + 3));
 
     expect(rows().length).toBe(EVENTS_SHOWN);
-    const more = button(`Ver los ${EVENTS_SHOWN + 3} eventos`);
+    const more = button(`Show all ${EVENTS_SHOWN + 3} events`);
     expect(more?.getAttribute('aria-expanded')).toBe('false');
 
     more?.click();
     await fixture.whenStable();
     expect(rows().length).toBe(EVENTS_SHOWN + 3);
-    expect(button('Ver menos')?.getAttribute('aria-expanded')).toBe('true');
+    expect(button('Show less')?.getAttribute('aria-expanded')).toBe('true');
   });
 
   it('en el celular abre el detalle como hoja: retiene el foco y Escape la cierra sin seguir de largo', async () => {
@@ -326,11 +328,11 @@ describe('LotLog', () => {
     expect(sheet.getAttribute('role')).toBe('dialog');
     expect(sheet.getAttribute('aria-modal')).toBe('true');
     const title = sheet.querySelector('h2');
-    expect(title?.textContent).toContain('Remoción de suelo');
+    expect(title?.textContent).toContain('Tillage');
     expect(sheet.getAttribute('aria-labelledby')).toBe(title?.id);
     expect(rows()[0].getAttribute('aria-expanded')).toBe('true');
     expect(rows()[0].getAttribute('aria-controls')).toBe(sheet.id);
-    expect(sheet.textContent).toContain('NISAR (radar, banda L)');
+    expect(sheet.textContent).toContain('NISAR (radar, L-band)');
     expect(sheet.textContent).toContain('Cambio de superficie compatible con una labranza.');
     expect(sheet.querySelector('app-radar-optical-compare')).not.toBeNull();
     // el foco entra a la hoja y la lista de atrás queda inerte, con el velo encima
@@ -394,7 +396,7 @@ describe('LotLog', () => {
 
       // otro evento cambia el detalle sin cerrarlo
       await openRow(1);
-      expect(squash(panel()?.querySelector('h2')?.textContent)).toBe('Cosecha');
+      expect(squash(panel()?.querySelector('h2')?.textContent)).toBe('Harvest');
 
       await press('Escape');
       expect(panel()).toBeNull();
@@ -409,8 +411,8 @@ describe('LotLog', () => {
     await render([makeEvent()], { editable: false });
     await openRow();
     expect(panel()?.querySelector('app-event-log-item')).not.toBeNull();
-    expect(button('Confirmar')).toBeUndefined();
-    expect(button('Corregir')).toBeUndefined();
+    expect(button('Confirm')).toBeUndefined();
+    expect(button('Correct')).toBeUndefined();
   });
 
   it('un lote de ejemplo es de solo lectura aunque llegue editable', async () => {
@@ -418,29 +420,29 @@ describe('LotLog', () => {
       lot: EXAMPLE,
       editable: true,
     });
-    expect(text()).toContain('abrilo para ver su evidencia');
+    expect(text()).toContain('open it to see its evidence');
     await openRow();
-    expect(button('Confirmar')).toBeUndefined();
-    expect(button('Corregir')).toBeUndefined();
+    expect(button('Confirm')).toBeUndefined();
+    expect(button('Correct')).toBeUndefined();
   });
 
   it('en un lote propio confirma desde el detalle y la fila muestra el nuevo origen', async () => {
     await render([makeEvent()], { editable: true });
     const reviewed: EventLogItem[] = [];
     fixture.componentInstance.reviewed.subscribe((event) => reviewed.push(event));
-    expect(text()).toContain('1 evento · abrilo para revisarlo');
+    expect(text()).toContain('1 event · open it to review it');
     await openRow();
-    expect(button('Corregir')).toBeDefined();
+    expect(button('Correct')).toBeDefined();
 
-    button('Confirmar')?.click();
+    button('Confirm')?.click();
     const request = http.expectOne('/api/events/1/');
     expect(request.request.method).toBe('PATCH');
     expect(request.request.body).toEqual({ confirm: true });
     request.flush(makeEvent({ origin: 'DECLARED' }));
     await fixture.whenStable();
 
-    expect(panel()?.textContent).toContain('ahora figura como dato declarado');
-    expect(rows()[0].textContent).toContain('Declarado');
+    expect(panel()?.textContent).toContain('now shows as declared data');
+    expect(rows()[0].textContent).toContain(ORIGIN_LABELS.DECLARED);
     // el espacio del lote se entera, así las marcas del verdor muestran el evento revisado
     expect(reviewed.map((event) => event.origin)).toEqual(['DECLARED']);
   });
@@ -451,9 +453,9 @@ describe('LotLog', () => {
     await fixture.whenStable();
     http.expectOne('/api/lots/1/events/').flush('', { status: 0, statusText: 'Unknown Error' });
     await fixture.whenStable();
-    expect(text()).toContain('No se pudo cargar la bitácora');
+    expect(text()).toContain("Couldn't load the field log");
 
-    button('Reintentar')?.click();
+    button('Try again')?.click();
     await fixture.whenStable();
     http
       .expectOne('/api/lots/1/events/')

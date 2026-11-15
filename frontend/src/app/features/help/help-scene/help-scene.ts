@@ -24,13 +24,13 @@ interface SceneTab {
  * aire para las fuentes del sistema de cada equipo
  */
 const TABS: readonly { key: LotTabKey; label: string; icon: string; labelWidth: number }[] = [
-  { key: 'satellite', label: 'Satélite', icon: ICON_PATHS.satellite, labelWidth: 39 },
-  { key: 'log', label: 'Bitácora', icon: ICON_PATHS.calendar, labelWidth: 42 },
-  { key: 'practices', label: 'Prácticas', icon: ICON_PATHS.check, labelWidth: 47 },
-  { key: 'footprint', label: 'Huella', icon: ICON_PATHS.footprint, labelWidth: 32 },
-  { key: 'fertilization', label: 'Fertilización', icon: ICON_PATHS.leaf, labelWidth: 62 },
-  { key: 'profit', label: 'Rentabilidad', icon: ICON_PATHS.coins, labelWidth: 63 },
-  { key: 'passport', label: 'Pasaporte', icon: ICON_PATHS.passport, labelWidth: 50 },
+  { key: 'satellite', label: 'Satellite', icon: ICON_PATHS.satellite, labelWidth: 42 },
+  { key: 'log', label: 'Field log', icon: ICON_PATHS.calendar, labelWidth: 45 },
+  { key: 'practices', label: 'Practices', icon: ICON_PATHS.check, labelWidth: 47 },
+  { key: 'footprint', label: 'Footprint', icon: ICON_PATHS.footprint, labelWidth: 47 },
+  { key: 'fertilization', label: 'Fertilization', icon: ICON_PATHS.leaf, labelWidth: 60 },
+  { key: 'profit', label: 'Profitability', icon: ICON_PATHS.coins, labelWidth: 59 },
+  { key: 'passport', label: 'Passport', icon: ICON_PATHS.passport, labelWidth: 45 },
 ];
 /**
  * la mano que toca, con el índice para arriba, dibujada en una caja de 24: la punta del dedo está

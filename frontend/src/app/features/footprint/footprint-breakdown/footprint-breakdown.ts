@@ -32,7 +32,7 @@ export class FootprintBreakdown {
   protected readonly references = computed(() => {
     const fp = this.footprint();
     return [
-      ...(fp.yield.reference ? [{ name: 'Rendimiento', source: fp.yield.reference }] : []),
+      ...(fp.yield.reference ? [{ name: 'Yield', source: fp.yield.reference }] : []),
       ...fp.components
         .filter((c) => c.activity.reference)
         .map((c) => ({ name: c.label, source: c.activity.reference as string })),

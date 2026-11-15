@@ -339,7 +339,7 @@ function buildView(
 
 function valueText(point: SeriesPoint | null, unit: string, decimals: number): string {
   if (!point) {
-    return 'sin medición en esa fecha';
+    return 'no reading on that date';
   }
   const text = formatValue(point.value, unit, decimals);
   return point.label ? `${text} (${point.label})` : text;
@@ -382,7 +382,7 @@ export class SeriesChart {
   readonly band = input<SeriesBand>();
   readonly title = input<string>();
   readonly description = input<string>();
-  readonly emptyText = input('Sin datos para mostrar');
+  readonly emptyText = input('No data to show');
 
   private readonly width = injectHostWidth();
   private readonly plot = viewChild<ElementRef<SVGSVGElement>>('plot');
@@ -454,14 +454,14 @@ export class SeriesChart {
     const unit = this.unit();
     const decimals = this.decimals();
     if (dates.length === 0) {
-      return chartLabel(this.description(), 'Serie temporal sin datos.');
+      return chartLabel(this.description(), 'Time series with no data.');
     }
     const parts = series.map((item) => {
       const valid = item.points.filter((point) => isNumber(point.value));
       const missing = item.points.length - valid.length;
-      const missingText = missing ? `; ${countLabel(missing, 'fecha', 'fechas')} sin dato` : '';
+      const missingText = missing ? `; ${countLabel(missing, 'date', 'dates')} with no data` : '';
       if (valid.length === 0) {
-        return `${item.name}: ${NO_DATA} en ninguna fecha${missingText}`;
+        return `${item.name}: ${NO_DATA} on any date${missingText}`;
       }
       const pick = (compare: (a: number, b: number) => boolean) =>
         valid.reduce((best, point) =>
@@ -471,21 +471,21 @@ export class SeriesChart {
       const max = pick((a, b) => a > b);
       const last = valid[valid.length - 1];
       const at = (point: SeriesPoint) =>
-        `${formatValue(point.value, unit, decimals)} el ${formatDate(point.date)}`;
-      return `${item.name}: mínimo ${at(min)}, máximo ${at(max)}, último valor ${at(last)}${missingText}`;
+        `${formatValue(point.value, unit, decimals)} on ${formatDate(point.date)}`;
+      return `${item.name}: minimum ${at(min)}, maximum ${at(max)}, latest value ${at(last)}${missingText}`;
     });
     const band = this.band();
     const markers = this.markers();
     const summary =
-      `Serie temporal con ${countLabel(dates.length, 'fecha', 'fechas')}, ` +
-      `del ${formatDate(dates[0])} al ${formatDate(dates[dates.length - 1])}. ${parts.join('. ')}.` +
+      `Time series with ${countLabel(dates.length, 'date', 'dates')}, ` +
+      `from ${formatDate(dates[0])} to ${formatDate(dates[dates.length - 1])}. ${parts.join('. ')}.` +
       (band && isNumber(band.from) && isNumber(band.to)
-        ? ` Franja de referencia ${band.label}: de ${formatValue(band.from, unit, decimals)} a ${formatValue(band.to, unit, decimals)}.`
+        ? ` Reference band ${band.label}: from ${formatValue(band.from, unit, decimals)} to ${formatValue(band.to, unit, decimals)}.`
         : '') +
       (markers.length
-        ? ` Marcas: ${markers.map((marker) => `${marker.label} el ${formatDate(marker.date)}`).join('; ')}.`
+        ? ` Markers: ${markers.map((marker) => `${marker.label} on ${formatDate(marker.date)}`).join('; ')}.`
         : '') +
-      ' Con el foco en el gráfico, las flechas recorren las fechas.';
+      ' With the chart focused, the arrow keys move through the dates.';
     return chartLabel(this.description(), summary);
   });
 
@@ -498,14 +498,14 @@ export class SeriesChart {
       ...new Set([...unionDates(series), ...markers.map((marker) => marker.date)]),
     ].sort();
     const columns = [
-      'Fecha',
+      'Date',
       ...series.map((item) => (unit ? `${item.name} (${unit})` : item.name)),
     ];
     if (markers.length) {
-      columns.push('Marca');
+      columns.push('Marker');
     }
     return {
-      caption: this.title() ?? 'Datos de la serie temporal',
+      caption: this.title() ?? 'Time series data',
       columns,
       rows: dates.map((date) => {
         const row = [

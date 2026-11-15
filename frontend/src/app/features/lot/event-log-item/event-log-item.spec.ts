@@ -38,15 +38,18 @@ describe('EventLogItemCard', () => {
   it('a la vista, el origen, lo simulado y cuatro datos; el significado queda en la ayuda', async () => {
     await render(makeEvent());
 
-    expect(tags()).toEqual(['Estimado', 'Dato simulado para la demostración']);
-    expect(text()).toContain('12 oct 2026 ± 12 días');
-    expect(text()).toContain('Manual (sin sensor satelital)');
-    expect(text()).toContain('Sin dato (no la informó el procesamiento)');
+    // el origen y el aviso de simulado los dibujan componentes compartidos
+    expect(tags().length).toBe(2);
+    expect(tags()[0].toLowerCase()).toContain('estimat');
+    expect(tags()[1].toLowerCase()).toContain('simula');
+    expect(text()).toContain('12 Oct 2026 ± 12 days');
+    expect(text()).toContain('Manual (no satellite sensor)');
+    expect(text()).toContain('No data (not reported by the processing)');
     expect(text()).toContain('2025/26');
-    expect(text()).toContain('Sin imágenes: lo informó una persona');
+    expect(text()).toContain('No images: a person reported it');
     // lo declaró una persona: no es una detección satelital
-    expect(text()).not.toContain('Prueba de concepto');
-    expect(help()).toContain('Es una estimación, no una observación directa.');
+    expect(text()).not.toContain('Proof of concept');
+    expect(help()).toContain('It is an estimate, not a direct observation.');
     expect(el().querySelector('details')?.open).toBe(false);
   });
 
@@ -65,23 +68,25 @@ describe('EventLogItemCard', () => {
       }),
     );
 
-    expect(tags()).toEqual(['Verificado', 'Prueba de concepto']);
-    expect(text()).toContain('70 %');
-    expect(help()).toContain('Lo observó un satélite.');
-    expect(help()).toContain('la detección no está validada en campo');
+    expect(tags().length).toBe(2);
+    expect(tags()[0].toLowerCase()).toContain('verifi');
+    expect(tags()[1]).toBe('Proof of concept');
+    expect(text()).toContain('70%');
+    expect(help()).toContain('A satellite observed it.');
+    expect(help()).toContain("detection isn't validated in the field");
     const metrics = el().querySelector('app-disclosure .metrics')?.textContent ?? '';
-    expect(metrics).toContain('-1,78');
+    expect(metrics).toContain('-1.78');
     expect(metrics).toContain('no');
     expect(metrics).toContain('2026-09-01 · 2026-09-13');
   });
 
   it('en un lote de solo lectura no ofrece confirmar ni corregir', async () => {
     await render(makeEvent({ evidence_image_url: '/media/evidence/a.png' }));
-    expect(button('Confirmar')).toBeUndefined();
-    expect(button('Corregir')).toBeUndefined();
+    expect(button('Confirm')).toBeUndefined();
+    expect(button('Correct')).toBeUndefined();
     expect(el().querySelector('form')).toBeNull();
     expect(el().querySelector('img')?.getAttribute('src')).toBe('/media/evidence/a.png');
-    expect(help()).not.toContain('declarado por vos');
+    expect(help()).not.toContain('declared by you');
   });
 
   it('confirma un dato estimado con PATCH, avisa el cambio de origen y deja el foco en Corregir', async () => {
@@ -89,8 +94,8 @@ describe('EventLogItemCard', () => {
     let reviewed: EventLogItem | undefined;
     fixture.componentInstance.reviewed.subscribe((event) => (reviewed = event));
 
-    button('Confirmar')?.focus();
-    button('Confirmar')?.click();
+    button('Confirm')?.focus();
+    button('Confirm')?.click();
     const request = http.expectOne('/api/events/1/');
     expect(request.request.method).toBe('PATCH');
     expect(request.request.body).toEqual({ confirm: true });
@@ -99,36 +104,36 @@ describe('EventLogItemCard', () => {
 
     expect(reviewed?.origin).toBe('DECLARED');
     expect(el().querySelector('[role="status"]')?.textContent).toContain(
-      'ahora figura como dato declarado',
+      'now shows as declared data',
     );
     // ya no es estimado: Confirmar se va y el foco no se pierde
     fixture.componentRef.setInput('event', reviewed);
     await fixture.whenStable();
-    expect(button('Confirmar')).toBeUndefined();
-    expect(document.activeElement).toBe(button('Corregir'));
+    expect(button('Confirm')).toBeUndefined();
+    expect(document.activeElement).toBe(button('Correct'));
     // el aviso sigue: es el mismo evento
-    expect(el().querySelector('[role="status"]')?.textContent).toContain('ahora figura');
+    expect(el().querySelector('[role="status"]')?.textContent).toContain('now shows');
   });
 
   it('un dato verificado no se confirma (no cambiaría nada), solo se corrige', async () => {
     await render(makeEvent({ origin: 'VERIFIED', sensor: 'NISAR' }), true);
-    expect(button('Confirmar')).toBeUndefined();
-    expect(button('Corregir')).toBeDefined();
-    expect(help()).toContain('declarado por vos');
+    expect(button('Confirm')).toBeUndefined();
+    expect(button('Correct')).toBeDefined();
+    expect(help()).toContain('declared by you');
   });
 
   it('corrige el evento: el formulario toma el foco y al guardar vuelve a Corregir', async () => {
     await render(makeEvent(), true);
-    const toggle = button('Corregir');
+    const toggle = button('Correct');
     toggle?.click();
     await fixture.whenStable();
 
     const form = el().querySelector('form') as HTMLFormElement;
     expect(form).not.toBeNull();
     expect(toggle?.getAttribute('aria-expanded')).toBe('true');
-    expect(toggle?.textContent?.trim()).toBe('Cancelar corrección');
+    expect(toggle?.textContent?.trim()).toBe('Cancel correction');
     // mientras corrige, la acción principal es guardar: Confirmar se va
-    expect(button('Confirmar')).toBeUndefined();
+    expect(button('Confirm')).toBeUndefined();
     expect(document.activeElement).toBe(form.querySelector('select'));
 
     (form.querySelector('input[type="date"]') as HTMLInputElement).value = '2026-10-20';
@@ -144,18 +149,18 @@ describe('EventLogItemCard', () => {
     await fixture.whenStable();
 
     expect(el().querySelector('form')).toBeNull();
-    expect(text()).toContain('Corrección guardada: el dato pasa a figurar como declarado.');
-    expect(document.activeElement).toBe(button('Corregir'));
+    expect(text()).toContain('Correction saved: the record now shows as declared.');
+    expect(document.activeElement).toBe(button('Correct'));
   });
 
   it('otro evento en el mismo panel empieza sin formulario ni aviso', async () => {
     await render(makeEvent(), true);
-    button('Corregir')?.click();
+    button('Correct')?.click();
     await fixture.whenStable();
     expect(el().querySelector('form')).not.toBeNull();
 
     await render(makeEvent({ id: 2, type: 'HARVEST', type_label: 'Cosecha' }), true);
     expect(el().querySelector('form')).toBeNull();
-    expect(button('Corregir')?.getAttribute('aria-expanded')).toBe('false');
+    expect(button('Correct')?.getAttribute('aria-expanded')).toBe('false');
   });
 });

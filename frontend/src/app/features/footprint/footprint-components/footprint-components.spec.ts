@@ -25,18 +25,18 @@ describe('FootprintComponents', () => {
     expect(rows().length).toBe(3);
 
     // sin dato: el motivo corto a la vista y el del backend al abrir la fila
-    expect(summary(yieldRow)).toContain('Sin dato');
-    expect(summary(yieldRow)).toContain('Falta el rinde');
+    expect(summary(yieldRow)).toContain('No data');
+    expect(summary(yieldRow)).toContain('Missing yield');
     expect(body(yieldRow)).toContain('Falta el rendimiento de la campaña 2025/26.');
 
-    expect(summary(seed)).toContain('Calculado');
-    expect(summary(seed)).toContain('Semilla');
-    expect(summary(seed)).toContain('7,5 kg CO2e/t');
-    expect(summary(seed)).toContain('Estimado');
+    expect(summary(seed)).toContain('Calculated');
+    expect(summary(seed)).toContain('Seed');
+    expect(summary(seed)).toContain('7.5 kg CO2e/t');
+    expect(summary(seed)).toContain('Estimated');
 
-    expect(summary(diesel)).toContain('Sin dato');
-    expect(summary(diesel)).toContain('Gasoil');
-    expect(summary(diesel)).toContain('Faltan el dato y el factor');
+    expect(summary(diesel)).toContain('No data');
+    expect(summary(diesel)).toContain('Diesel');
+    expect(summary(diesel)).toContain('Missing data and factor');
     expect(summary(diesel)).not.toContain('factors.yaml');
     expect(body(diesel)).toContain('Falta el factor de emisión (sin valor con fuente');
     expect(diesel.classList).toContain('row--missing');
@@ -49,15 +49,15 @@ describe('FootprintComponents', () => {
     expect(details.open).toBe(false);
     const text = body(rows()[1]);
     expect(text).toContain('34 kg/ha');
-    expect(text).toContain('1,772 kg CO2e/kg');
-    expect(text).toContain('Fuente del factor: Fuente de prueba, tabla 1');
-    expect(text).toContain('Valor de referencia, no observado por satélite.');
+    expect(text).toContain('1.772 kg CO2e/kg');
+    expect(text).toContain('Factor source: Fuente de prueba, tabla 1');
+    expect(text).toContain('Reference value, not observed by satellite.');
   });
 
   it('sin factor lo dice al abrir la fila', async () => {
     fixture.componentRef.setInput('footprint', makeFootprint());
     await fixture.whenStable();
-    expect(body(rows()[1])).toContain('Sin factor con fuente');
+    expect(body(rows()[1])).toContain('No factor with a source');
     expect(body(rows()[1])).toContain('Gasoil de labores');
   });
 
@@ -71,17 +71,17 @@ describe('FootprintComponents', () => {
       }),
     );
     await fixture.whenStable();
-    expect(summary(rows()[0])).toContain('Con dato');
-    expect(summary(rows()[0])).toContain('3,2 t/ha');
-    expect(summary(rows()[0])).toContain('Declarado');
+    expect(summary(rows()[0])).toContain('Has data');
+    expect(summary(rows()[0])).toContain('3.2 t/ha');
+    expect(summary(rows()[0])).toContain('Declared');
     // el total ya está en la tarjeta de resumen: el desglose no lo repite
     expect(el().textContent).not.toContain('37,5');
     const help = el().querySelector('app-info-tip');
     expect(help?.querySelector('button')?.getAttribute('aria-label')).toBe(
-      '¿De dónde sale cada dato?',
+      'Where does each piece of data come from?',
     );
-    expect(help?.textContent).toContain('Verificado:');
-    expect(help?.textContent).toContain('Estimado:');
+    expect(help?.textContent).toContain('Verified:');
+    expect(help?.textContent).toContain('Estimated:');
   });
 
   it('sin rinde, lo calculado se muestra por hectárea', async () => {
@@ -90,6 +90,6 @@ describe('FootprintComponents', () => {
       makeFootprint({ components: [makeComponent({ kg_co2e_per_t: null })] }),
     );
     await fixture.whenStable();
-    expect(summary(rows()[1])).toContain('60,2 kg CO2e/ha');
+    expect(summary(rows()[1])).toContain('60.2 kg CO2e/ha');
   });
 });

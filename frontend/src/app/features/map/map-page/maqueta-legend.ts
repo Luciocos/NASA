@@ -7,15 +7,15 @@ import { EVENT_TYPES, EVENT_TYPE_LABELS } from '../../lot/labels';
 
 /** rótulos cortos para que la leyenda entre en la ayuda chica sin cortar renglones */
 const SHORT_LABELS: Partial<Record<EventType, string>> = {
-  TILLAGE: 'Remoción',
-  COVER_CROP: 'Cobertura',
-  LAND_USE_CHANGE: 'Cambio de uso',
+  TILLAGE: 'Tillage',
+  COVER_CROP: 'Cover crop',
+  LAND_USE_CHANGE: 'Land use change',
 };
 
 const GLYPHS: readonly { type: IsoGlyph; label: string }[] = [
   ...EVENT_TYPES.map((type) => ({ type, label: SHORT_LABELS[type] ?? EVENT_TYPE_LABELS[type] })),
-  { type: 'NO_DATA', label: 'Sin eventos' },
-  { type: 'PENDING', label: 'Sin sincronizar' },
+  { type: 'NO_DATA', label: 'No events' },
+  { type: 'PENDING', label: 'Not synced' },
 ];
 
 /**
@@ -29,8 +29,8 @@ const GLYPHS: readonly { type: IsoGlyph; label: string }[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [EventGlyph],
   template: `
-    <p>Cada bloque es un lote. Su textura ilustra el último evento: no es una foto de hoy.</p>
-    <p class="title">El globo: qué pasó</p>
+    <p>Each block is a field. Its texture shows the latest event: it is not a photo from today.</p>
+    <p class="title">The bubble: what happened</p>
     <ul class="glyphs">
       @for (item of glyphs; track item.type) {
         <li>
@@ -38,33 +38,33 @@ const GLYPHS: readonly { type: IsoGlyph; label: string }[] = [
         </li>
       }
     </ul>
-    <p class="title">El borde: de dónde sale el dato</p>
+    <p class="title">The border: where the data comes from</p>
     <ul class="origins">
       <li>
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <circle class="verified" cx="12" cy="12" r="8" />
         </svg>
-        Llena: verificado por satélite
+        Solid: verified by satellite
       </li>
       <li>
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <circle class="declared" cx="12" cy="12" r="9" />
           <circle class="declared" cx="12" cy="12" r="5.5" />
         </svg>
-        Doble: declarado por el productor
+        Double: declared by the farmer
       </li>
       <li>
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <circle class="estimated" cx="12" cy="12" r="8" />
         </svg>
-        Punteada: estimado (valor de referencia)
+        Dotted: estimated (reference value)
       </li>
       <li>
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <circle class="plain" cx="12" cy="12" r="6" />
           <circle class="simulated" cx="12" cy="12" r="10" />
         </svg>
-        Discontinua: simulado para la demostración
+        Dashed: simulated for the demo
       </li>
     </ul>
   `,

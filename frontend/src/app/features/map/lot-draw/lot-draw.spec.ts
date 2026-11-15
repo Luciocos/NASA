@@ -95,7 +95,7 @@ describe('LotDraw', () => {
   }
 
   async function paintMode(): Promise<void> {
-    button('Pintar hectáreas').click();
+    button('Paint hectares').click();
     await fixture.whenStable();
   }
 
@@ -109,14 +109,14 @@ describe('LotDraw', () => {
     it('arranca trazando en la región pampeana, sin poder guardar y sin lo avanzado a la vista', async () => {
       await setup();
 
-      expect(hint()).toContain('Buscá tu campo arriba o acercate al mapa');
-      expect(el().textContent).toContain('Tocá 3 esquinas más para cerrar la forma');
+      expect(hint()).toContain('Search for your farm above or zoom in on the map');
+      expect(el().textContent).toContain('Tap 3 more corners to close the shape');
       expect(saveButton().disabled).toBe(true);
       // en el mapa solo hay dos correcciones
       const tools = [...el().querySelectorAll('.tools button')].map((b) => b.textContent?.trim());
-      expect(tools).toEqual(['Deshacer', 'Empezar de nuevo']);
+      expect(tools).toEqual(['Undo', 'Start over']);
       // pintar y el ajuste fino quedan plegados en "Opciones avanzadas"
-      const paint = button('Pintar hectáreas');
+      const paint = button('Paint hectares');
       expect(paint.getAttribute('aria-pressed')).toBe('false');
       expect(paint.closest('details')?.open).toBe(false);
       expect(el().querySelector('app-paint-hud')).toBeNull();
@@ -132,7 +132,7 @@ describe('LotDraw', () => {
       expect(map.getZoom()).toBe(FIELD_ZOOM);
       expect(map.getCenter().lat).toBeCloseTo(-33.1, 5);
       expect(map.getCenter().lng).toBeCloseTo(-61.2, 5);
-      expect(hint()).toContain('Tocá las esquinas de tu lote');
+      expect(hint()).toContain('Tap the corners of your field');
       expect(el().querySelector('.me-dot')).toBeTruthy();
     });
 
@@ -142,23 +142,23 @@ describe('LotDraw', () => {
       await trace(...TRIANGLE);
 
       const checks = el().querySelector('.checks')?.textContent ?? '';
-      expect(checks).toContain('Forma cerrada: 3 esquinas');
-      expect(checks).toContain('Sin cruces');
-      expect(checks).toMatch(/Superficie: 5\d,\d ha/);
-      expect(hint()).toContain('Listo: ya podés guardar');
-      expect(el().textContent).toContain('se guarda como «Lote 1»');
+      expect(checks).toContain('Shape closed: 3 corners');
+      expect(checks).toContain('No crossings');
+      expect(checks).toMatch(/Area: 5\d\.\d ha/);
+      expect(hint()).toContain('Done: you can save now');
+      expect(el().textContent).toContain('saved as “Field 1”');
       expect(saveButton().disabled).toBe(false);
       saveButton().click();
 
       const req = http.expectOne((r) => r.method === 'POST' && r.url === '/api/lots/');
-      expect(req.request.body.name).toBe('Lote 1');
+      expect(req.request.body.name).toBe('Field 1');
       expect(req.request.body.renspa).toBeNull();
       expect(req.request.body.geometry.coordinates[0][0]).toEqual([-61.2, -33.05]);
       expect(req.request.body.geometry.coordinates[0].length).toBe(4);
-      req.flush({ id: 42, name: 'Lote 1' });
+      req.flush({ id: 42, name: 'Field 1' });
       await fixture.whenStable();
 
-      expect(el().textContent).toContain('Listo: guardamos «Lote 1»');
+      expect(el().textContent).toContain('Done: we saved “Field 1”');
       await vi.waitFor(
         () =>
           expect(navigate).toHaveBeenCalledWith(['/mapa'], {
@@ -177,8 +177,8 @@ describe('LotDraw', () => {
       // las esquinas de un rectángulo en orden cruzado forman un moño
       await trace([-33.05, -61.2], [-33.04, -61.19], [-33.05, -61.19], [-33.04, -61.2]);
 
-      expect(el().querySelector('.checks')?.textContent).toContain('Los lados se cruzan');
-      expect(hint()).toContain('Los lados se cruzan');
+      expect(el().querySelector('.checks')?.textContent).toContain('The sides cross');
+      expect(hint()).toContain('The sides cross');
       expect(saveButton().disabled).toBe(true);
     });
 
@@ -219,7 +219,7 @@ describe('LotDraw', () => {
       await search('Pueblo de Prueba');
       expect(fetch).not.toHaveBeenCalled();
 
-      button('Buscar').click();
+      button('Search').click();
       await vi.waitFor(() => expect(el().querySelector('.results')).toBeTruthy());
       expect(fetch).toHaveBeenCalledTimes(1);
       expect(String(fetch.mock.calls[0][0])).toBe(
@@ -228,7 +228,7 @@ describe('LotDraw', () => {
       const results = el().querySelector('.results')!.textContent ?? '';
       expect(results).toContain('Pueblo de Prueba');
       expect(results).toContain('Departamento Uno, Santa Fe');
-      expect(results).toContain('© colaboradores de OpenStreetMap');
+      expect(results).toContain('© OpenStreetMap contributors');
 
       button('Departamento Uno').click();
       await fixture.whenStable();
@@ -241,10 +241,10 @@ describe('LotDraw', () => {
       Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
 
       await search('Pueblo de Prueba');
-      button('Buscar').click();
+      button('Search').click();
       await vi.waitFor(() =>
         expect(el().querySelector('.results [role=alert]')?.textContent).toContain(
-          'Sin conexión no podemos buscar lugares',
+          "We can't search for places offline",
         ),
       );
       expect(fetch).not.toHaveBeenCalled();
@@ -255,9 +255,9 @@ describe('LotDraw', () => {
     it('se elige en Opciones avanzadas y pide al menos un recuadro', async () => {
       await setup();
       await paintMode();
-      expect(button('Pintar hectáreas').getAttribute('aria-pressed')).toBe('true');
+      expect(button('Paint hectares').getAttribute('aria-pressed')).toBe('true');
       expect(el().querySelector('app-paint-hud')).toBeTruthy();
-      expect(el().textContent).toContain('Pintá al menos un recuadro');
+      expect(el().textContent).toContain('Paint at least one square');
       expect(saveButton().disabled).toBe(true);
     });
 
@@ -270,8 +270,8 @@ describe('LotDraw', () => {
       await typeName('QA pintado');
 
       const checks = el().querySelector('.checks')?.textContent ?? '';
-      expect(checks).toContain('Un solo sector');
-      expect(checks).toContain('Superficie: 8 ha');
+      expect(checks).toContain('Single area');
+      expect(checks).toContain('Area: 8 ha');
       saveButton().click();
 
       const req = http.expectOne((r) => r.method === 'POST' && r.url === '/api/lots/');
@@ -299,12 +299,12 @@ describe('LotDraw', () => {
       await paintStroke([0, 0], [2, 0]);
       await paintStroke([6, 6], [7, 6]);
 
-      expect(el().textContent).toContain('Tus recuadros forman 2 sectores separados');
+      expect(el().textContent).toContain('Your squares form 2 separate areas');
       expect(saveButton().disabled).toBe(true);
 
-      button('Quedarme con el sector más grande').click();
+      button('Keep the largest area').click();
       await fixture.whenStable();
-      expect(el().querySelector('.checks')?.textContent).toContain('Superficie: 3 ha');
+      expect(el().querySelector('.checks')?.textContent).toContain('Area: 3 ha');
       expect(saveButton().disabled).toBe(false);
     });
 
@@ -331,17 +331,17 @@ describe('LotDraw', () => {
       await setup((s) => s.setItem(DRAFT_KEY, JSON.stringify(draft)));
 
       expect(el().querySelector<HTMLInputElement>('input[name=name]')!.value).toBe('Lote borrador');
-      expect(el().textContent).toContain('Retomamos el lote que dejaste a medias');
-      expect(el().querySelector('.checks')?.textContent).toContain('Superficie: 3 ha');
+      expect(el().textContent).toContain('We restored the field you left unfinished');
+      expect(el().querySelector('.checks')?.textContent).toContain('Area: 3 ha');
       expect(internals().paint.rotationDeg).toBe(12);
       expect(saveButton().disabled).toBe(false);
 
-      button('Descartar').click();
+      button('Discard').click();
       await fixture.whenStable();
-      button('Sí, descartar').click();
+      button('Yes, discard').click();
       await fixture.whenStable();
       expect(el().querySelector<HTMLInputElement>('input[name=name]')!.value).toBe('');
-      expect(el().textContent).toContain('Pintá al menos un recuadro');
+      expect(el().textContent).toContain('Paint at least one square');
       expect(storage.getItem(DRAFT_KEY)).toBeNull();
     });
 
@@ -370,7 +370,7 @@ describe('LotDraw', () => {
         .flush(null, { status: 503, statusText: 'Service Unavailable' });
       await fixture.whenStable();
 
-      expect(el().textContent).toContain('Guardamos el lote en este dispositivo');
+      expect(el().textContent).toContain('We saved the field on this device');
       expect(TestBed.inject(LotOutbox).pending().length).toBe(1);
       await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith(['/mapa']), {
         timeout: 3000,

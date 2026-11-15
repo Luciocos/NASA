@@ -256,12 +256,12 @@ app-simulated-notice {
   }
 
   .breakdown td:nth-of-type(1)::before {
-    content: 'Dato de actividad';
+    content: 'Activity data';
   }
 
   /* con la columna del factor (5 columnas) y sin ella (pasaporte, 4 columnas) */
   .breakdown:has(thead th:nth-child(5)) td:nth-of-type(2)::before {
-    content: 'Factor de emisión';
+    content: 'Emission factor';
   }
 
   .breakdown:has(thead th:nth-child(5)) td:nth-of-type(3)::before,
@@ -271,7 +271,7 @@ app-simulated-notice {
 
   .breakdown:has(thead th:nth-child(5)) td:nth-of-type(4)::before,
   .breakdown:not(:has(thead th:nth-child(5))) td:nth-of-type(3)::before {
-    content: 'Estado';
+    content: 'Status';
   }
 
   .status {

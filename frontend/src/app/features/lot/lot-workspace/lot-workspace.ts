@@ -167,9 +167,9 @@ export type { LotTabChange } from '../../../shared/ui/lot-tabs/lot-tabs';
       @if (dialog()) {
         <div class="bare-head">
           <!-- el nombre del popup hasta que llega la ficha -->
-          <h2 class="visually-hidden" [id]="'lot-title-' + lotId()">Lote</h2>
+          <h2 class="visually-hidden" [id]="'lot-title-' + lotId()">Field</h2>
           <button type="button" class="btn btn--ghost btn--icon" (click)="closed.emit()">
-            <app-icon name="close" /><span class="visually-hidden">Cerrar</span>
+            <app-icon name="close" /><span class="visually-hidden">Close</span>
           </button>
         </div>
       }

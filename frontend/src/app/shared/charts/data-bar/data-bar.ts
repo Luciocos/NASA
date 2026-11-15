@@ -60,7 +60,7 @@ export class DataBar {
     const known = this.known();
     if (!known) {
       const reason = this.reason();
-      const why = reason || (isNumber(this.value()) ? 'sin máximo de referencia' : '');
+      const why = reason || (isNumber(this.value()) ? 'no reference maximum' : '');
       return why ? `${NO_DATA} · ${why}` : NO_DATA;
     }
     return formatValue(known.value, this.unit(), this.decimals());
@@ -93,9 +93,9 @@ export class DataBar {
 
   protected readonly ariaLabel = computed(() => {
     const known = this.known();
-    const name = this.label() ?? this.title() ?? 'Dato';
+    const name = this.label() ?? this.title() ?? 'Value';
     const summary = known
-      ? `${name}: ${formatValue(known.value, this.unit(), this.decimals())} de un máximo de ` +
+      ? `${name}: ${formatValue(known.value, this.unit(), this.decimals())} out of a maximum of ` +
         `${formatValue(known.max, this.unit(), this.decimals())} (${formatPercent(known.value / known.max)}).`
       : `${name}: ${this.valueText()}.`;
     return chartLabel(this.description(), summary);
@@ -108,11 +108,11 @@ export class DataBar {
     const unit = this.unit();
     const known = this.known();
     return {
-      caption: this.title() ?? this.label() ?? 'Dato',
-      columns: ['Dato', unit ? `Valor (${unit})` : 'Valor', 'Máximo', 'Porcentaje'],
+      caption: this.title() ?? this.label() ?? 'Value',
+      columns: ['Item', unit ? `Value (${unit})` : 'Value', 'Maximum', 'Share'],
       rows: [
         [
-          this.label() ?? this.title() ?? 'Dato',
+          this.label() ?? this.title() ?? 'Value',
           known ? formatNumber(known.value, this.decimals()) : this.valueText(),
           formatNumber(isNumber(this.max()) ? this.max() : null, this.decimals()),
           known ? formatPercent(known.value / known.max) : NO_DATA,

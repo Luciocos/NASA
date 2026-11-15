@@ -1,17 +1,17 @@
 @let fp = footprint();
 
-<app-section-card heading="Desglose" subtitle="Tocá una fila para ver su fuente." [level]="level()">
-  <app-info-tip actions label="¿De dónde sale cada dato?">
+<app-section-card heading="Breakdown" subtitle="Tap a row to see its source." [level]="level()">
+  <app-info-tip actions label="Where does each piece of data come from?">
     <ul>
-      <li><strong>Verificado:</strong> observado por satélite (NISAR, HLS).</li>
-      <li><strong>Declarado:</strong> cargado por el productor.</li>
+      <li><strong>Verified:</strong> observed by satellite (NISAR, HLS).</li>
+      <li><strong>Declared:</strong> entered by the farmer.</li>
       <li>
-        <strong>Estimado:</strong> valor de referencia cargado por el equipo con su fuente. No es un
-        dato del lote ni una observación satelital.
+        <strong>Estimated:</strong> reference value added by the team, with its source. It is not
+        data from this field or a satellite observation.
       </li>
     </ul>
-    <p>Los factores de emisión son constantes publicadas, con su fuente en cada fila.</p>
-    <p>La huella por tonelada es la suma de los componentes por hectárea dividida por el rinde.</p>
+    <p>Emission factors are published constants, with their source in each row.</p>
+    <p>The footprint per tonne is the sum of the components per hectare divided by the yield.</p>
   </app-info-tip>
 
   <ul class="rows">
@@ -25,11 +25,11 @@
             [class.chip--warn]="fp.yield.value === null"
           >
             <app-icon [name]="fp.yield.value !== null ? 'check' : 'alert'" />
-            {{ fp.yield.value !== null ? 'Con dato' : 'Sin dato' }}
+            {{ fp.yield.value !== null ? 'Has data' : 'No data' }}
           </span>
-          <span class="name">Rinde</span>
+          <span class="name">Yield</span>
           @if (fp.yield.value === null) {
-            <span class="why">Falta el rinde</span>
+            <span class="why">Missing yield</span>
           }
           @if (fp.yield.value !== null) {
             <span class="value">{{ formatNumber(fp.yield.value, 2) }} t/ha</span>
@@ -40,13 +40,13 @@
           <app-icon class="chevron" name="chevron-down" />
         </summary>
         <div class="body">
-          <p>Divide la suma de los componentes: más rinde, menos CO2e por tonelada.</p>
+          <p>It divides the sum of the components: more yield, less CO2e per tonne.</p>
           @if (fp.yield.reason) {
             <p>{{ fp.yield.reason }}</p>
           }
           @if (fp.yield.reference) {
             <p class="source-text">
-              Valor de referencia regional, no observado por satélite. Fuente:
+              Regional reference value, not observed by satellite. Source:
               {{ fp.yield.reference }}
             </p>
           }
@@ -67,7 +67,7 @@
               [class.chip--warn]="c.status !== 'calculado'"
             >
               <app-icon [name]="c.status === 'calculado' ? 'check' : 'alert'" />
-              {{ c.status === 'calculado' ? 'Calculado' : 'Sin dato' }}
+              {{ c.status === 'calculado' ? 'Calculated' : 'No data' }}
             </span>
             <span class="name">{{ shortLabel(c) }}</span>
             @if (why) {
@@ -97,7 +97,7 @@
             }
             <dl class="facts">
               <div>
-                <dt>Dato de actividad</dt>
+                <dt>Activity data</dt>
                 <dd>
                   {{ activity(c) }}
                   @if (c.activity.origin) {
@@ -106,16 +106,16 @@
                 </dd>
               </div>
               <div>
-                <dt>Factor de emisión</dt>
-                <dd>{{ factor ?? 'Sin factor con fuente' }}</dd>
+                <dt>Emission factor</dt>
+                <dd>{{ factor ?? 'No factor with a source' }}</dd>
               </div>
             </dl>
             @if (factor && c.factor.source) {
-              <p class="source-text">Fuente del factor: {{ c.factor.source }}</p>
+              <p class="source-text">Factor source: {{ c.factor.source }}</p>
             }
             @if (c.activity.reference) {
               <p class="source-text">
-                Valor de referencia, no observado por satélite. Fuente: {{ c.activity.reference }}
+                Reference value, not observed by satellite. Source: {{ c.activity.reference }}
               </p>
             }
             @if (c.note) {

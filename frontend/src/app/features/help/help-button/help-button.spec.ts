@@ -50,7 +50,7 @@ describe('HelpButton', () => {
   });
 
   it('es un botón con nombre que anuncia un diálogo, cerrado al principio', () => {
-    expect(trigger().getAttribute('aria-label')).toBe('Ayuda: cómo cargar datos');
+    expect(trigger().getAttribute('aria-label')).toBe('Help: how to enter your data');
     expect(trigger().getAttribute('aria-haspopup')).toBe('dialog');
     expect(trigger().getAttribute('aria-expanded')).toBe('false');
     expect(trigger().getAttribute('aria-controls')).toBe(dialog().id);
@@ -64,7 +64,7 @@ describe('HelpButton', () => {
     expect(isOpen()).toBe(true);
     expect(trigger().getAttribute('aria-expanded')).toBe('true');
     const title = dialog().querySelector('h2')!;
-    expect(title.textContent!.trim()).toBe('Cómo cargar tus datos');
+    expect(title.textContent!.trim()).toBe('How to enter your data');
     expect(dialog().getAttribute('aria-labelledby')).toBe(title.id);
     expect(step()).toBe('marcar');
     expect(document.activeElement).toBe(next());
@@ -114,7 +114,7 @@ describe('HelpButton', () => {
     await open();
     expect(step()).toBe('rentabilidad');
     const close = [...dialog().querySelectorAll('button')].find(
-      (button) => button.textContent!.trim() === 'Cerrar la ayuda',
+      (button) => button.textContent!.trim() === 'Close help',
     )!;
     close.click();
     await render();

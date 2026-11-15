@@ -1,6 +1,6 @@
 <app-page-header
-  heading="Lotes de ejemplo"
-  subtitle="Lotes reales de Casilda vistos por el radar NISAR de la NASA. Solo lectura."
+  heading="Sample fields"
+  subtitle="Real fields in Casilda, seen by NASA's NISAR radar. Read-only."
 >
   <a
     actions
@@ -8,16 +8,16 @@
     [routerLink]="auth.loggedIn() ? '/mapa/nuevo' : '/registrarse'"
   >
     @if (auth.loggedIn()) {
-      <app-icon name="plus" /> Marcar mi lote
+      <app-icon name="plus" /> Add my field
     } @else {
-      Crear cuenta gratis
+      Sign up for free
     }
   </a>
 </app-page-header>
 
 @switch (state().status) {
   @case ('loading') {
-    <ul class="examples" aria-busy="true" aria-label="Cargando los lotes de ejemplo">
+    <ul class="examples" aria-busy="true" aria-label="Loading the sample fields">
       @for (item of placeholders; track item) {
         <li class="card example" aria-hidden="true">
           <span class="skeleton example__skeleton-title"></span>
@@ -30,16 +30,16 @@
   @case ('error') {
     <div class="empty" role="status">
       <app-icon name="cloud-off" />
-      <p><strong>No pudimos cargar los lotes de ejemplo.</strong></p>
-      <p class="small">Revisá la conexión y probá de nuevo.</p>
-      <button type="button" class="btn" (click)="retry()">Reintentar</button>
+      <p><strong>We couldn't load the sample fields.</strong></p>
+      <p class="small">Check your connection and try again.</p>
+      <button type="button" class="btn" (click)="retry()">Try again</button>
     </div>
   }
   @default {
     @if (cards().length === 0) {
       <div class="empty" role="status">
         <app-icon name="map" />
-        <p>Todavía no hay lotes de ejemplo cargados.</p>
+        <p>No sample fields loaded yet.</p>
       </div>
     } @else {
       <ul class="examples">
@@ -71,7 +71,7 @@
               <p class="example__last">
                 <app-event-glyph [type]="last.type" />
                 <span class="example__event"
-                  ><span class="visually-hidden">Último evento: </span
+                  ><span class="visually-hidden">Latest event: </span
                   ><strong>{{ last.type_label }}</strong> {{ card.lastDate }} ·
                   {{ last.sensor_label }}
                   <app-origin-badge [origin]="last.origin" />
@@ -83,13 +83,13 @@
             } @else {
               <p class="example__last example__last--empty">
                 <app-event-glyph type="NO_DATA" />
-                <span>Sin eventos todavía</span>
+                <span>No events yet</span>
               </p>
             }
 
             <!-- en el celular queda solo la flecha, al lado del nombre: la tarjeta entera abre -->
             <span class="example__cta" aria-hidden="true">
-              <span class="example__cta-text">Ver su historia</span> <app-icon name="arrow-right" />
+              <span class="example__cta-text">See its history</span> <app-icon name="arrow-right" />
             </span>
           </li>
         }

@@ -1,12 +1,15 @@
 import { Component, input, signal } from '@angular/core';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 import { LotDetail } from '../../core/models';
-import { LoadState, LotSatellite, NdviGrid, NdviZones } from '../../core/nasa';
+import { LoadState, LotSatellite, NdviGrid, NdviZones, zonesByTerciles } from '../../core/nasa';
 import { provideOfflineTesting } from '../../core/offline/testing';
+import { OriginBadge } from '../../shared/origin-badge/origin-badge';
+import { formatDate } from '../lot/labels';
 import { FertilizationPage } from './fertilization-page';
 import { ZonesMap } from './zones-map';
 
@@ -53,6 +56,11 @@ describe('FertilizationPage', () => {
   let http: HttpTestingController;
   const el = () => fixture.nativeElement as HTMLElement;
   const text = () => el().textContent?.replace(/\s+/g, ' ') ?? '';
+  /** el origen de cada rótulo de un bloque, sin depender del texto del rótulo */
+  const origins = (selector: string) =>
+    fixture.debugElement
+      .queryAll(By.css(`${selector} app-origin-badge`))
+      .map((badge) => (badge.componentInstance as OriginBadge).origin());
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -83,14 +91,13 @@ describe('FertilizationPage', () => {
     http.expectOne('/api/lots/1/footprint/').flush({ components: [] });
     await fixture.whenStable();
     expect(el().querySelectorAll('.zones app-kpi-card')).toHaveLength(3);
-    expect(text()).toContain('NDVI alto');
-    expect(text()).toContain('33 % del lote');
+    expect(text()).toContain(zonesByTerciles(GRID).zones[0].label);
+    expect(text()).toContain('33 % of the field');
     // a la vista, en una línea con su origen; que es un compuesto de 16 días, en el (i)
-    expect(el().querySelector('.source-line')?.textContent).toContain(
-      'MODIS · imagen del 16/10/2026',
-    );
-    expect(el().querySelector('app-info-tip')?.textContent).toContain('compuesto del 16/10/2026');
-    expect(text()).toContain('Verificado');
+    const date = formatDate(GRID.date);
+    expect(el().querySelector('.source-line')?.textContent).toContain(`MODIS · image from ${date}`);
+    expect(el().querySelector('app-info-tip')?.textContent).toContain(`composite from ${date}`);
+    expect(origins('.source-line')).toEqual(['VERIFIED']);
     // una sola acción principal
     expect(el().querySelectorAll('.btn--primary')).toHaveLength(1);
   });
@@ -113,10 +120,10 @@ describe('FertilizationPage', () => {
     });
     await fixture.whenStable();
     // 10 ha en tres tercios: 100, 80 y 60 kg N/ha dan 800 kg de N, 80 de promedio
-    expect(text()).toContain('Con tu dosis variable');
-    expect(text()).toContain('800 kg de N');
-    expect(text()).toContain('Promedio 80 kg N/ha');
-    expect(text()).toContain('Declarado');
+    expect(text()).toContain('With your variable rate');
+    expect(text()).toContain('800 kg N');
+    expect(text()).toContain('Average 80 kg N/ha');
+    expect(origins('.summary')).toContain('DECLARED');
   });
 
   it('un lote ajeno o inexistente invita a ingresar', async () => {
@@ -144,12 +151,12 @@ describe('FertilizationPage', () => {
     expect(host.querySelectorAll('.zones app-kpi-card')).toHaveLength(3);
     // la acción principal pasa a la planilla: sigue siendo una sola
     expect(host.querySelectorAll('.btn--primary')).toHaveLength(1);
-    expect(host.querySelector('.planner .btn--primary')?.textContent).toContain('Armar dosis');
+    expect(host.querySelector('.planner .btn--primary')?.textContent).toContain('Plan rates');
     // cómo se arman los ambientes queda detrás de un (i)
-    expect(host.querySelector('button[aria-label="Cómo se arman los ambientes"]')).toBeTruthy();
+    expect(host.querySelector('button[aria-label="How the zones are built"]')).toBeTruthy();
   });
 
-  it('embebida, la planilla cerrada no repite la acción: "Armar dosis" la abre y la vuelve a dar', async () => {
+  it('embebida, la planilla cerrada no repite la acción: "Plan rates" la abre y la vuelve a dar', async () => {
     const embedded = TestBed.createComponent(FertilizationPage);
     embedded.componentRef.setInput('id', 2);
     embedded.componentRef.setInput('embedded', true);
@@ -161,7 +168,7 @@ describe('FertilizationPage', () => {
     const host = embedded.nativeElement as HTMLElement;
     const planner = () =>
       [...host.querySelectorAll<HTMLDetailsElement>('.planner app-disclosure details')].find(
-        (details) => details.querySelector('summary')?.textContent?.includes('Dosis por ambiente'),
+        (details) => details.querySelector('summary')?.textContent?.includes('Rate by zone'),
       );
     const armar = () => host.querySelector<HTMLButtonElement>('.planner .btn--primary');
     expect(planner()).toBeUndefined();
@@ -171,7 +178,7 @@ describe('FertilizationPage', () => {
     expect(planner()?.open).toBe(true);
     expect(armar()).toBeNull();
 
-    // al cerrarla con su rótulo vuelve "Armar dosis", con el foco
+    // al cerrarla con su rótulo vuelve "Plan rates", con el foco
     planner()!.open = false;
     planner()!.dispatchEvent(new Event('toggle'));
     await embedded.whenStable();

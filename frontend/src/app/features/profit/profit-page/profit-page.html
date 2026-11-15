@@ -10,18 +10,18 @@
 
     <app-page-header
       [kicker]="lot()?.name ?? null"
-      heading="Rentabilidad"
-      subtitle="¿Cuánto te deja este lote? Cargá el precio y el rinde."
+      heading="Profitability"
+      subtitle="How much does this field earn you? Enter the price and the yield."
     />
   }
 
   @if (ready()) {
     <div class="layout">
       <section class="hero" aria-labelledby="profit-result" aria-live="polite">
-        <h2 id="profit-result" class="visually-hidden">Cuánto te deja</h2>
+        <h2 id="profit-result" class="visually-hidden">What this field earns you</h2>
         <app-kpi-card
           icon="coins"
-          label="Margen bruto por hectárea"
+          label="Gross margin per hectare"
           [value]="marginHa()"
           unit="US$/ha"
           [caption]="marginCaption()"
@@ -34,10 +34,10 @@
           }
         </app-kpi-card>
         <app-kpi-card
-          label="Margen bruto del lote"
+          label="Gross margin for the field"
           [value]="marginTotal()"
           unit="US$"
-          [caption]="'En las ' + formatHectares(area()) + ' del lote.'"
+          [caption]="'Across the ' + formatHectares(area()) + ' of the field.'"
           [emptyReason]="missingReason()"
           [class.is-loss]="negative()"
         >
@@ -49,17 +49,17 @@
 
       <app-section-card
         class="numbers"
-        heading="Tus números"
+        heading="Your numbers"
         [subtitle]="
           signedIn()
-            ? 'Se guardan en este dispositivo, en tu cuenta.'
-            : 'Sin cuenta no se guardan: se borran al cerrar.'
+            ? 'Saved on this device, under your account.'
+            : 'Without an account they are not saved: they are cleared when you close.'
         "
       >
         <div class="fields">
           @if (campaigns().length > 1) {
             <label class="field">
-              Campaña
+              Season
               <select (change)="onCampaign($any($event.target).value)">
                 @for (c of campaigns(); track c.id) {
                   <option [value]="c.id" [selected]="c.id === footprint()?.campaign?.id">
@@ -70,28 +70,28 @@
             </label>
           } @else if (footprint()?.campaign; as campaign) {
             <p class="fact">
-              <span class="fact__label">Campaña</span>
+              <span class="fact__label">Season</span>
               <strong>{{ campaign.label }}</strong>
             </p>
           }
 
           <div class="price">
             <label class="field">
-              <span>Precio del grano <span class="unit">US$/t</span></span>
+              <span>Grain price <span class="unit">US$/t</span></span>
               <input
                 type="text"
                 inputmode="decimal"
                 autocomplete="off"
                 [value]="field('price')"
                 (input)="setPrice($any($event.target).value)"
-                placeholder="Sin cargar"
+                placeholder="Not entered"
               />
               <!-- el origen es del dato: recién con un precio cargado (estimado si es el de Rofex) -->
               <span class="field__hint">
                 @if (inputs().priceUsdT !== null) {
                   <app-origin-badge [origin]="priceOrigin()" />
                 }
-                Por tonelada, antes del flete.
+                Per tonne, before freight.
               </span>
             </label>
 
@@ -105,39 +105,39 @@
               <div class="suggest" aria-live="polite">
                 @if (suggestion(); as s) {
                   @if (priceOrigin() === 'ESTIMATED') {
-                    <span>Sugerido por Matba Rofex{{ suggestionDay(s.date) }}</span>
+                    <span>Suggested by Matba Rofex{{ suggestionDay(s.date) }}</span>
                   } @else {
                     <span>Rofex: US$ {{ number(s.price_usd_t) }}/t{{ suggestionDay(s.date) }}</span>
                     <button
                       type="button"
                       class="btn btn--ghost btn--sm"
-                      aria-label="Usar el precio sugerido de Rofex"
+                      aria-label="Use the suggested Rofex price"
                       (click)="useSuggestion(s)"
                     >
-                      Usar
+                      Use
                     </button>
                   }
                   @if (s.simulated_market) {
-                    <span class="chip chip--warn"><app-icon name="alert" /> Precio de prueba</span>
+                    <span class="chip chip--warn"><app-icon name="alert" /> Test price</span>
                   }
-                  <app-info-tip label="Sobre el precio sugerido">
+                  <app-info-tip label="About the suggested price">
                     <p>
-                      <strong>Precio sugerido de mercado:</strong> US$
-                      {{ number(s.price_usd_t) }}/t, {{ suggestionKind(s.kind)
-                      }}{{ suggestionDate(s.date) }} del futuro {{ s.symbol }} en Matba Rofex.
+                      <strong>Suggested market price:</strong> US$ {{ number(s.price_usd_t) }}/t,
+                      {{ suggestionKind(s.kind) }}{{ suggestionDate(s.date) }} of the
+                      {{ s.symbol }} future on Matba Rofex.
                     </p>
                     <p>{{ s.disclaimer }}</p>
                     @if (s.simulated_market) {
                       <p>
                         <strong
-                          >Viene del entorno de prueba reMarkets: no es un precio real de
-                          mercado.</strong
+                          >It comes from the reMarkets test environment: it is not a real market
+                          price.</strong
                         >
                       </p>
                     }
-                    <p>Fuente: {{ s.source }}.</p>
+                    <p>Source: {{ s.source }}.</p>
                     @if (suggestionError(); as message) {
-                      <p>No se pudo actualizar: {{ message }}</p>
+                      <p>Could not update: {{ message }}</p>
                     }
                   </app-info-tip>
                   <!-- guardada de otra vez (puede ser de otro día): se puede pedir de nuevo -->
@@ -150,16 +150,16 @@
                     >
                       {{
                         loadingSuggestion()
-                          ? 'Consultando Rofex…'
+                          ? 'Checking Rofex…'
                           : suggestionError()
-                            ? 'Reintentar'
-                            : 'Actualizar'
+                            ? 'Retry'
+                            : 'Update'
                       }}
                     </button>
                   }
                 } @else if (suggestionError(); as message) {
-                  <span class="suggest__error" role="alert">Sin precio de Rofex</span>
-                  <app-info-tip label="Por qué no hay precio de Rofex">
+                  <span class="suggest__error" role="alert">No Rofex price</span>
+                  <app-info-tip label="Why there is no Rofex price">
                     <p>{{ message }}</p>
                   </app-info-tip>
                   <button
@@ -168,7 +168,7 @@
                     [disabled]="loadingSuggestion()"
                     (click)="loadSuggestedPrice()"
                   >
-                    {{ loadingSuggestion() ? 'Consultando Rofex…' : 'Reintentar' }}
+                    {{ loadingSuggestion() ? 'Checking Rofex…' : 'Retry' }}
                   </button>
                 } @else {
                   <button
@@ -177,9 +177,7 @@
                     [disabled]="loadingSuggestion()"
                     (click)="loadSuggestedPrice()"
                   >
-                    {{
-                      loadingSuggestion() ? 'Consultando Rofex…' : 'Usar precio sugerido de Rofex'
-                    }}
+                    {{ loadingSuggestion() ? 'Checking Rofex…' : 'Use suggested Rofex price' }}
                   </button>
                 }
               </div>
@@ -187,14 +185,14 @@
           </div>
 
           <label class="field">
-            <span>Rinde <span class="unit">t/ha</span></span>
+            <span>Yield <span class="unit">t/ha</span></span>
             <input
               type="text"
               inputmode="decimal"
               autocomplete="off"
               [value]="field('yield')"
               (input)="setYield($any($event.target).value)"
-              [placeholder]="huellaYield() === null ? 'Sin cargar' : number(huellaYield())"
+              [placeholder]="huellaYield() === null ? 'Not entered' : number(huellaYield())"
             />
             <span class="field__hint">
               @if (yieldOrigin(); as origin) {
@@ -202,37 +200,35 @@
               }
               {{ yieldNote() }}
               @if (yieldReference(); as reference) {
-                <app-info-tip label="De dónde sale el rinde">
-                  <p>Valor de referencia regional: no es un dato de tu lote.</p>
-                  <p>Fuente: {{ reference }}.</p>
+                <app-info-tip label="Where the yield comes from">
+                  <p>Regional reference value: not data from your field.</p>
+                  <p>Source: {{ reference }}.</p>
                 </app-info-tip>
               }
             </span>
           </label>
 
           <p class="fact">
-            <span class="fact__label">Superficie</span>
+            <span class="fact__label">Area</span>
             <strong>{{ formatHectares(area()) }}</strong>
             <span class="field__hint">
-              <app-origin-badge origin="DECLARED" /> Del polígono que marcaste.
+              <app-origin-badge origin="DECLARED" /> From the polygon you drew.
             </span>
           </p>
         </div>
 
-        <app-disclosure footer flat label="Costos y gastos" [hint]="costsHint()">
+        <app-disclosure footer flat label="Costs and expenses" [hint]="costsHint()">
           <div class="costs">
-            <p class="small muted">
-              Por hectárea, salvo el flete. Si alguno no corresponde, poné 0.
-            </p>
+            <p class="small muted">Per hectare, except freight. If one does not apply, enter 0.</p>
             <label class="field cost">
-              <span>Flete y comercialización <span class="unit">US$/t</span></span>
+              <span>Freight and marketing <span class="unit">US$/t</span></span>
               <input
                 type="text"
                 inputmode="decimal"
                 autocomplete="off"
                 [value]="field('commercial')"
                 (input)="setCommercial($any($event.target).value)"
-                placeholder="Sin cargar"
+                placeholder="Not entered"
               />
             </label>
             @for (key of costKeys; track key) {
@@ -244,13 +240,11 @@
                   autocomplete="off"
                   [value]="field(key)"
                   (input)="setCost(key, $any($event.target).value)"
-                  placeholder="Sin cargar"
+                  placeholder="Not entered"
                 />
               </label>
             }
-            <p class="field__hint">
-              <app-origin-badge origin="DECLARED" /> Los costos los cargás vos.
-            </p>
+            <p class="field__hint"><app-origin-badge origin="DECLARED" /> You enter the costs.</p>
           </div>
         </app-disclosure>
       </app-section-card>
@@ -258,31 +252,31 @@
       @if (waterfall().length > 0) {
         <app-section-card
           class="chart"
-          heading="De dónde sale el margen"
-          subtitle="Por hectárea, en US$."
+          heading="Where the margin comes from"
+          subtitle="Per hectare, in US$."
         >
           <app-waterfall
-            description="Ingreso bruto por hectárea, cada costo cargado y el margen bruto que queda"
+            description="Gross income per hectare, each cost entered and the gross margin that remains"
             [steps]="waterfall()"
             unit="US$/ha"
           />
           <app-disclosure
             footer
             flat
-            label="Ver detalle"
-            hint="Desglose del lote, rinde de indiferencia y sensibilidad"
+            label="View details"
+            hint="Field breakdown, break-even yield and sensitivity"
           >
             <div class="detail">
               <div class="table-wrap">
                 <table class="table">
                   <caption class="visually-hidden">
-                    Desglose del margen
+                    Margin breakdown
                   </caption>
                   <thead>
                     <tr>
-                      <th scope="col">Concepto</th>
-                      <th scope="col" class="num">Por ha</th>
-                      <th scope="col" class="num">Lote</th>
+                      <th scope="col">Item</th>
+                      <th scope="col" class="num">Per ha</th>
+                      <th scope="col" class="num">Field</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -296,7 +290,7 @@
                   </tbody>
                   <tfoot>
                     <tr>
-                      <th scope="row">= Margen bruto</th>
+                      <th scope="row">= Gross margin</th>
                       <td class="num">{{ formatUsd(result().marginUsdHa) }}</td>
                       <td class="num">{{ formatUsd(result().marginTotalUsd) }}</td>
                     </tr>
@@ -305,30 +299,28 @@
               </div>
 
               <p>
-                <strong>Rinde de indiferencia:</strong>
+                <strong>Break-even yield:</strong>
                 @if (result().directUsdHa === 0) {
-                  cargá los costos para calcularlo.
+                  enter the costs to calculate it.
                 } @else if (result().breakEvenTHa !== null) {
-                  {{ tons(result().breakEvenTHa) }}. Con ese rinde cubrís los costos que cargaste.
+                  {{ tons(result().breakEvenTHa) }}. At that yield you cover the costs you entered.
                 } @else {
-                  sin dato: hace falta un precio mayor que el flete.
+                  no data: the price has to be higher than freight.
                 }
               </p>
 
               @if (table().length > 0) {
                 <div class="sens">
-                  <h3>Si cambian el precio o el rinde</h3>
-                  <p class="small muted">
-                    Margen por hectárea en US$. Filas: rinde. Columnas: precio.
-                  </p>
+                  <h3>If the price or the yield changes</h3>
+                  <p class="small muted">Margin per hectare in US$. Rows: yield. Columns: price.</p>
                   <div class="table-wrap">
                     <table class="table sens__table">
                       <caption class="visually-hidden">
-                        Margen por hectárea con el precio y el rinde movidos un 10 y un 20 %
+                        Margin per hectare with the price and the yield moved by 10 and 20 %
                       </caption>
                       <thead>
                         <tr>
-                          <th scope="col">Rinde</th>
+                          <th scope="col">Yield</th>
                           @for (cell of table()[0].cells; track cell.priceStep) {
                             <th scope="col" class="num">{{ percent(cell.priceStep) }}</th>
                           }
@@ -358,17 +350,18 @@
 
               @if (carbon(); as c) {
                 <p>
-                  <strong>Margen y huella:</strong> <app-origin-badge origin="ESTIMATED" /> tu
-                  campaña emite unos {{ number(c.perHa, 0) }} kg CO2e por hectárea.
+                  <strong>Margin and footprint:</strong>
+                  <app-origin-badge origin="ESTIMATED" /> your season emits about
+                  {{ number(c.perHa, 0) }} kg CO2e per hectare.
                   @if (c.perUsd !== null) {
-                    Son {{ number(c.perUsd, 2) }} kg CO2e por cada dólar de margen.
+                    That is {{ number(c.perUsd, 2) }} kg CO2e per dollar of margin.
                   }
                 </p>
               } @else {
                 <p>
-                  <strong>Margen y huella:</strong> la huella de esta campaña todavía no está
-                  completa. <a [routerLink]="['/huella', lotId()]">Completala en la huella</a> para
-                  ver cuánto emite cada dólar de margen.
+                  <strong>Margin and footprint:</strong> this season's footprint is not complete
+                  yet. <a [routerLink]="['/huella', lotId()]">Complete it in Footprint</a> to see
+                  how much each dollar of margin emits.
                 </p>
               }
             </div>
@@ -379,8 +372,8 @@
   } @else {
     <div class="layout" aria-busy="true">
       <div class="hero">
-        <app-kpi-card label="Margen bruto por hectárea" loading />
-        <app-kpi-card label="Margen bruto del lote" loading />
+        <app-kpi-card label="Gross margin per hectare" loading />
+        <app-kpi-card label="Gross margin for the field" loading />
       </div>
       <p class="numbers skeleton block" aria-hidden="true"></p>
     </div>

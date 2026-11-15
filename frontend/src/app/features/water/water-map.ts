@@ -62,7 +62,7 @@ export class WaterMap {
   readonly geometry = input.required<PolygonGeometry>();
   readonly analysis = input<WaterAnalysis | null>(null);
   readonly mode = input<WaterMapMode>('basin');
-  readonly label = input('Mapa de la cuenca del lote');
+  readonly label = input('Map of the field watershed');
   /** el usuario hizo clic para mover el punto de salida */
   readonly outletPick = output<OutletPick>();
 
@@ -81,7 +81,7 @@ export class WaterMap {
       });
       L.tileLayer(
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 19, attribution: 'Imágenes &copy; Esri, Maxar, Earthstar Geographics' },
+        { maxZoom: 19, attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics' },
       ).addTo(map);
       map.on('click', (e: L.LeafletMouseEvent) =>
         this.outletPick.emit({ lat: e.latlng.lat, lng: e.latlng.lng }),
@@ -118,7 +118,7 @@ export class WaterMap {
     const a = this.analysis();
     const overlays: Record<string, L.Layer> = {};
     const visible: L.Layer[] = [lot];
-    overlays['Lote'] = lot;
+    overlays['Field'] = lot;
 
     if (a) {
       const impact = this.mode() === 'impact';
@@ -132,24 +132,24 @@ export class WaterMap {
       const contributing = L.geoJSON(a.contributing.geometry as never, {
         style: { color: WATER_STYLE.contributing, weight: 2, dashArray: '6 4', fillOpacity: 0.08 },
       }).bindTooltip(
-        `Cuenca que aporta al lote: ${fmtHa(a.contributing.area_ha)} (${fmtHa(a.contributing.outside_lot_ha)} fuera del lote)`,
+        `Basin draining into the field: ${fmtHa(a.contributing.area_ha)} (${fmtHa(a.contributing.outside_lot_ha)} outside the field)`,
         { sticky: true },
       );
       const basin = L.geoJSON(a.basin.geometry as never, {
         style: { color: WATER_STYLE.basin, weight: 2.5, fillOpacity: 0.1 },
-      }).bindTooltip(`Cuenca al punto de salida: ${fmtHa(a.basin.area_ha)}`, { sticky: true });
+      }).bindTooltip(`Basin at the outlet point: ${fmtHa(a.basin.area_ha)}`, { sticky: true });
       const subbasins = L.layerGroup(
         a.subbasins.map((s) =>
           L.geoJSON(s.geometry as never, {
             style: { color: WATER_STYLE.subbasin, weight: 1, dashArray: '2 4', fillOpacity: 0 },
-          }).bindTooltip(`Subcuenca ${s.id}: ${fmtHa(s.area_ha)}`, { sticky: true }),
+          }).bindTooltip(`Sub-basin ${s.id}: ${fmtHa(s.area_ha)}`, { sticky: true }),
         ),
       );
       const streams = L.geoJSON(a.streams as never, {
         style: { color: WATER_STYLE.stream, weight: 3 },
         onEachFeature: (f, layer) =>
           layer.bindTooltip(
-            `Cauce potencial según el DEM · ${fmtHa(f.properties.upstream_ha ?? 0)} aguas arriba. Puede no existir en el terreno.`,
+            `Potential channel from the DEM · ${fmtHa(f.properties.upstream_ha ?? 0)} upstream. It may not exist on the ground.`,
             { sticky: true },
           ),
       });
@@ -157,7 +157,7 @@ export class WaterMap {
         style: { color: WATER_STYLE.osm, weight: 3, dashArray: '8 3' },
         onEachFeature: (f, layer) =>
           layer.bindTooltip(
-            `${f.properties.name ?? 'Curso mapeado'} (${f.properties.waterway ?? 'OSM'})${f.properties.culvert ? ' · alcantarilla' : ''} · OpenStreetMap`,
+            `${f.properties.name ?? 'Mapped waterway'} (${f.properties.waterway ?? 'OSM'})${f.properties.culvert ? ' · culvert' : ''} · OpenStreetMap`,
             { sticky: true },
           ),
       });
@@ -192,7 +192,7 @@ export class WaterMap {
             weight: 1,
             fillColor: WATER_STYLE.entry,
             fillOpacity: 0.95,
-          }).bindTooltip(`Ingreso de agua al lote · ${fmtHa(p.upstream_ha)} aguas arriba`),
+          }).bindTooltip(`Water inflow into the field · ${fmtHa(p.upstream_ha)} upstream`),
         ),
         ...a.exits.map((p) =>
           L.circleMarker([p.lat, p.lng], {
@@ -201,14 +201,14 @@ export class WaterMap {
             weight: 1,
             fillColor: WATER_STYLE.exit,
             fillOpacity: 0.95,
-          }).bindTooltip(`Salida de agua del lote · junta ${fmtHa(p.upstream_ha)}`),
+          }).bindTooltip(`Water outflow from the field · collects ${fmtHa(p.upstream_ha)}`),
         ),
       ]);
       const sectors = L.layerGroup(
         a.inspection.sectors.map((s, i) =>
           L.geoJSON(s.geometry as never, {
             style: { color: WATER_STYLE.sector, weight: 2, fillOpacity: 0.25 },
-          }).bindTooltip(`Sector ${i + 1} a inspeccionar · ${fmtHa(s.area_ha)} · ${s.reason}`, {
+          }).bindTooltip(`Sector ${i + 1} to inspect · ${fmtHa(s.area_ha)} · ${s.reason}`, {
             sticky: true,
           }),
         ),
@@ -219,21 +219,21 @@ export class WaterMap {
         weight: 3,
         fillColor: '#0b3d91',
         fillOpacity: 1,
-      }).bindTooltip('Punto de salida del análisis. Hacé clic en el mapa para moverlo.');
+      }).bindTooltip('Outlet point of the analysis. Click the map to move it.');
 
       Object.assign(overlays, {
-        'Cuenca que aporta al lote': contributing,
-        'Cuenca al punto de salida': basin,
-        Subcuencas: subbasins,
-        'Cauces potenciales (DEM)': streams,
-        'Canales y arroyos (OSM)': osm,
-        'Dirección del flujo': flow,
-        'Acumulación de flujo': accumulation,
-        'Índice de humedad (TWI)': twi,
-        'Bajos del terreno (DEM)': depressions,
-        'Ingresos y salidas de agua': points,
-        'Sectores a inspeccionar': sectors,
-        'Punto de salida': outlet,
+        'Basin draining into the field': contributing,
+        'Basin at the outlet point': basin,
+        'Sub-basins': subbasins,
+        'Potential channels (DEM)': streams,
+        'Canals and streams (OSM)': osm,
+        'Flow direction': flow,
+        'Flow accumulation': accumulation,
+        'Wetness index (TWI)': twi,
+        'Low spots (DEM)': depressions,
+        'Water inflows and outflows': points,
+        'Sectors to inspect': sectors,
+        'Outlet point': outlet,
       });
       visible.push(
         ...(impact

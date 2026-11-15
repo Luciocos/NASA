@@ -230,13 +230,11 @@ export class LotLog {
     const count = events.length;
     if (count === 0) return null;
     const what = this.canEdit()
-      ? 'revisarlo'
+      ? 'review it'
       : events.some((event) => this.hasEvidence(event))
-        ? 'ver su evidencia'
-        : 'ver el detalle';
-    return count === 1
-      ? `1 evento · abrilo para ${what}`
-      : `${count} eventos · abrí uno para ${what}`;
+        ? 'see its evidence'
+        : 'see the details';
+    return count === 1 ? `1 event · open it to ${what}` : `${count} events · open one to ${what}`;
   });
 
   protected readonly origins = ORIGINS;
@@ -299,7 +297,7 @@ export class LotLog {
   }
 
   protected countLabel(count: number): string {
-    return count === 1 ? '1 evento' : `${count} eventos`;
+    return count === 1 ? '1 event' : `${count} events`;
   }
 
   protected open(event: EventLogItem): void {
@@ -461,7 +459,7 @@ function campaignGroup(
   campaign: CampaignDetail | null,
   label: string | null,
 ): LogGroup {
-  const title = key === 'cnone' ? 'Sin campaña' : label ? `Campaña ${label}` : 'Campaña sin nombre';
+  const title = key === 'cnone' ? 'No season' : label ? `Season ${label}` : 'Unnamed season';
   return { key, title, campaign, sortKey: label ?? '', events: [], total: 0 };
 }
 

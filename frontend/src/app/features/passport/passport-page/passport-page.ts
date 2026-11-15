@@ -67,10 +67,10 @@ export class PassportPage {
         error: (error: { status?: number }) =>
           this.error.set(
             error.status === 410
-              ? 'Este pasaporte venció y ya no está disponible.'
+              ? 'This passport has expired and is no longer available.'
               : error.status === 404
-                ? 'No existe un pasaporte con este enlace. Revisá que esté completo.'
-                : plainError(error.status, 'este pasaporte'),
+                ? 'There is no passport at this link. Check that the link is complete.'
+                : plainError(error.status, 'this passport'),
           ),
       });
       onCleanup(() => subscription.unsubscribe());

@@ -109,14 +109,14 @@ export class EventLogItemCard {
     const before = this.event().origin;
     this.send({ confirm: true }, (updated) =>
       updated.origin !== before
-        ? 'Confirmado: ahora figura como dato declarado.'
-        : 'Confirmado. El dato ya tenía respaldo, no cambia su origen.',
+        ? 'Confirmed: it now shows as declared data.'
+        : 'Confirmed. The record was already backed, so its origin stays the same.',
     );
   }
 
   protected submitCorrection(type: string, date: string, uncertainty: string, notes: string): void {
     if (!date) {
-      this.message.set('Indicá una fecha.');
+      this.message.set('Enter a date.');
       return;
     }
     const body: EventReview = {
@@ -128,8 +128,8 @@ export class EventLogItemCard {
     const before = this.event().origin;
     this.send(body, (updated) =>
       updated.origin !== before
-        ? 'Corrección guardada: el dato pasa a figurar como declarado.'
-        : 'Cambios guardados.',
+        ? 'Correction saved: the record now shows as declared.'
+        : 'Changes saved.',
     );
   }
 
@@ -152,7 +152,7 @@ export class EventLogItemCard {
       error: () => {
         if (this.event().id !== id) return;
         this.saving.set(false);
-        this.message.set('No se pudo guardar. Revisá los datos e intentá de nuevo.');
+        this.message.set("Couldn't save. Check the data and try again.");
       },
     });
   }
@@ -161,9 +161,9 @@ export class EventLogItemCard {
 /** Valor de una métrica del pipeline, legible: listas separadas, números con coma, sí o no. */
 function formatMetric(value: unknown): string {
   if (Array.isArray(value)) return value.map(formatMetric).join(' · ');
-  if (typeof value === 'number') return value.toLocaleString('es-AR', { maximumFractionDigits: 4 });
-  if (typeof value === 'boolean') return value ? 'sí' : 'no';
-  if (value === null || value === undefined || value === '') return 'Sin dato';
+  if (typeof value === 'number') return value.toLocaleString('en-US', { maximumFractionDigits: 4 });
+  if (typeof value === 'boolean') return value ? 'yes' : 'no';
+  if (value === null || value === undefined || value === '') return 'No data';
   if (typeof value === 'object') return JSON.stringify(value);
   return String(value);
 }

@@ -16,6 +16,6 @@ describe('OriginBadge', () => {
     fixture.componentRef.setInput('origin', 'VERIFIED');
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.textContent?.trim()).toBe('Verificado');
+    expect(el.textContent?.trim()).toBe('Verified');
   });
 });

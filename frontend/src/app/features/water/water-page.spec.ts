@@ -1,10 +1,12 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 import { LotDetail } from '../../core/models';
 import { provideOfflineTesting } from '../../core/offline/testing';
+import { OriginBadge } from '../../shared/origin-badge/origin-badge';
 import { WaterPage } from './water-page';
 import { WaterAnalysis, WaterSimulation } from './water.types';
 
@@ -134,6 +136,11 @@ describe('WaterPage', () => {
   let fixture: ComponentFixture<WaterPage>;
   let http: HttpTestingController;
   const text = () => (fixture.nativeElement as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
+  /** el origen de cada rótulo, sin depender del texto del rótulo */
+  const origins = () =>
+    fixture.debugElement
+      .queryAll(By.directive(OriginBadge))
+      .map((badge) => (badge.componentInstance as OriginBadge).origin());
   const button = (label: string) =>
     Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).find((b) =>
       b.textContent?.includes(label),
@@ -161,10 +168,10 @@ describe('WaterPage', () => {
     await start();
     http.expectOne('/api/lots/3/hydrology/').flush(ANALYSIS);
     await fixture.whenStable();
-    expect(text()).toContain('132 ha aportan agua al lote');
-    expect(text()).toContain('45 ha están fuera del lote');
-    expect(text()).toContain('sin validar');
-    expect(text()).toContain('Estimado');
+    expect(text()).toContain('132 ha drain water into the field');
+    expect(text()).toContain('45 ha are outside the field');
+    expect(text()).toContain('not validated');
+    expect(origins()).toContain('ESTIMATED');
     expect(text()).not.toContain('Configurado para');
   });
 
@@ -178,14 +185,14 @@ describe('WaterPage', () => {
       );
     await fixture.whenStable();
     expect(text()).toContain('fuera de la zona procesada');
-    expect(text()).not.toContain('aportan agua al lote');
+    expect(text()).not.toContain('drain water into the field');
   });
 
   it('simula una lluvia hipotética y la marca como escenario, no pronóstico', async () => {
     await start();
     http.expectOne('/api/lots/3/hydrology/').flush(ANALYSIS);
     await fixture.whenStable();
-    button('Simulador de lluvia')?.click();
+    button('Rainfall simulator')?.click();
     await fixture.whenStable();
     const req = http.expectOne('/api/lots/3/hydrology/simulate/');
     expect(req.request.body).toEqual({ rain_mm: 60, duration_h: 6, arc: 'II', residue: true });
@@ -210,6 +217,6 @@ describe('WaterPage', () => {
     expect(req.request.params.get('lng')).toBe('-61.2');
     req.flush(ANALYSIS);
     await fixture.whenStable();
-    expect(button('Volver a la salida del lote')).toBeDefined();
+    expect(button('Back to the field outlet')).toBeDefined();
   });
 });

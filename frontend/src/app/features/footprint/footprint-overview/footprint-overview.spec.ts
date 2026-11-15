@@ -17,12 +17,10 @@ describe('FootprintOverview', () => {
     await fixture.whenStable();
     const region = el().querySelector('app-card-slides')!;
     expect(region.getAttribute('role')).toBe('region');
-    expect(region.getAttribute('aria-label')).toBe('Resumen de la huella');
+    expect(region.getAttribute('aria-label')).toBe('Footprint summary');
     const slides = [...el().querySelectorAll('.slide')];
-    expect(slides.map((s) => s.getAttribute('aria-label'))).toEqual(['1 de 3', '2 de 3', '3 de 3']);
-    expect(slides.every((s) => s.getAttribute('aria-roledescription') === 'diapositiva')).toBe(
-      true,
-    );
+    expect(slides.map((s) => s.getAttribute('aria-label'))).toEqual(['1 of 3', '2 of 3', '3 of 3']);
+    expect(slides.every((s) => s.getAttribute('aria-roledescription') === 'slide')).toBe(true);
   });
 
   it('lo que más pesa, ordenado, con su parte del total y su origen', async () => {
@@ -52,15 +50,15 @@ describe('FootprintOverview', () => {
       part(li, '.weight__origin'),
     ]);
     expect(items).toEqual([
-      ['Gasoil', '7,5 kg CO2e/t · 75 %', 'Declarado'],
-      ['Semilla', '2,5 kg CO2e/t · 25 %', 'Estimado'],
+      ['Diesel', '7.5 kg CO2e/t · 75 %', 'Declared'],
+      ['Seed', '2.5 kg CO2e/t · 25 %', 'Estimated'],
     ]);
     expect(el().querySelector('.weight__value .visually-hidden')?.textContent?.trim()).toBe(
       'kg CO2e/t',
     );
     // con todo calculado, el enlace lleva a ver todos en Desglose
-    expect(el().querySelector('.more-btn')?.textContent).toContain('Ver los 2 en Desglose');
-    expect(el().textContent).toContain('3,2');
+    expect(el().querySelector('.more-btn')?.textContent).toContain('See all 2 in Breakdown');
+    expect(el().textContent).toContain('3.2');
     expect(el().textContent).toContain('t/ha');
   });
 
@@ -83,29 +81,29 @@ describe('FootprintOverview', () => {
     await fixture.whenStable();
     const names = [...el().querySelectorAll('.weight__name')].map((n) => n.textContent?.trim());
     expect(names).toEqual([
-      'Fertilizante fosforado',
-      'Fertilizante nitrogenado',
-      'N2O del suelo',
-      'Fitosanitarios',
+      'Phosphate fertilizer',
+      'Nitrogen fertilizer',
+      'Soil N2O',
+      'Pesticides',
     ]);
-    expect(el().querySelector('.more-btn')?.textContent).toContain('Ver los 6 en Desglose');
+    expect(el().querySelector('.more-btn')?.textContent).toContain('See all 6 in Breakdown');
   });
 
   it('sin nada calculado lo dice; sin rinde muestra el motivo', async () => {
     fixture.componentRef.setInput('footprint', makeFootprint());
     await fixture.whenStable();
     const text = el().textContent ?? '';
-    expect(text).toContain('Todavía no hay ningún componente calculado.');
-    expect(text).toContain('Sin dato');
+    expect(text).toContain('No component has been calculated yet.');
+    expect(text).toContain('No data');
     expect(text).toContain('Falta el rendimiento de la campaña 2025/26.');
-    expect(text).toContain('referencias con fuente');
+    expect(text).toContain('references with a source');
     // qué significa cada origen y cómo se mide la confianza van en la ayuda (i) de la tarjeta
     const help = el().querySelector('app-info-tip')!;
-    expect(help.querySelector('button')?.getAttribute('aria-label')).toBe(
-      'Qué significa cada origen',
+    expect(help.querySelector('button')?.getAttribute('aria-label')).toBe('What each origin means');
+    expect(help.textContent).toContain(
+      'It is not data from this field or a satellite observation.',
     );
-    expect(help.textContent).toContain('No es un dato del lote ni una observación satelital.');
-    expect(help.textContent).toContain('Nivel de confianza: Bajo.');
+    expect(help.textContent).toContain('Confidence level: Low.');
   });
 
   it('"ver Desglose" pide a la página cambiar de vista', async () => {
@@ -114,7 +112,7 @@ describe('FootprintOverview', () => {
     fixture.componentRef.setInput('footprint', makeFootprint());
     await fixture.whenStable();
     const more = el().querySelector<HTMLButtonElement>('.more-btn')!;
-    expect(more.textContent).toContain('Faltan 1 de 1: ver Desglose');
+    expect(more.textContent).toContain('1 of 1 missing: see Breakdown');
     more.click();
     expect(asked).toBe(1);
   });
@@ -135,10 +133,10 @@ describe('FootprintOverview', () => {
     );
     await fixture.whenStable();
     const kpi = el().querySelector('app-kpi-card')!;
-    expect(kpi.textContent).toContain('7,85');
-    expect(kpi.textContent).toContain('Referencia regional');
+    expect(kpi.textContent).toContain('7.85');
+    expect(kpi.textContent).toContain('Regional reference');
     expect(kpi.querySelector('app-info-tip')?.textContent).toContain(
-      'Fuente: Informe regional de prueba',
+      'Source: Informe regional de prueba',
     );
   });
 });

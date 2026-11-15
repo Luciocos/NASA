@@ -42,6 +42,7 @@ import {
   STATUS_ICONS,
   STATUS_TONES,
   StatusTone,
+  criterionLabel,
   pickRecommendations,
   practiceRows,
   statusLabel,
@@ -55,11 +56,11 @@ type ScoreState =
 
 let nextId = 0;
 
-const SCORE_FORMAT = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 });
+const SCORE_FORMAT = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 });
 const CONFIDENCE_TEXT: Record<string, string> = {
-  ALTO: 'alta',
-  BAJO: 'baja',
-  'SIN DATOS': 'sin datos',
+  ALTO: 'high',
+  BAJO: 'low',
+  'SIN DATOS': 'no data',
 };
 const CHIP_CLASSES: Record<StatusTone, string> = {
   ok: 'chip--ok',
@@ -153,7 +154,7 @@ export class LotPractices {
     return criteria.length > 0 && criteria.every((criterion) => criterion.status === 'sin_dato');
   });
   protected readonly subtitle = computed(() =>
-    this.empty() ? 'Todavía no hay labores en la bitácora.' : 'Según la bitácora del lote.',
+    this.empty() ? 'No field work in the field log yet.' : 'Based on the field log.',
   );
   /**
    * sin labores todavía, las prácticas sin dato van plegadas en una línea ("5 prácticas sin dato
@@ -171,7 +172,7 @@ export class LotPractices {
   });
   protected readonly foldedLabel = computed(() => {
     const count = this.foldedRows().length;
-    return `${count} ${count === 1 ? 'práctica' : 'prácticas'} sin dato todavía`;
+    return `${count} ${count === 1 ? 'practice' : 'practices'} with no data yet`;
   });
 
   protected readonly recommendations = computed(() =>
@@ -203,15 +204,15 @@ export class LotPractices {
   protected readonly scoreHint = computed(() => {
     const score = this.score();
     if (!score || score.score !== null) return '';
-    if (!score.weights_defined) return 'Todavía sin pesos definidos';
+    if (!score.weights_defined) return 'No weights defined yet';
     const pending = this.declaration() !== null && score.missing_criteria.includes(LAND_USE_KEY);
     const missing = score.missing_criteria.length - (pending ? 1 : 0);
     if (missing > 0)
-      return `Faltan datos de ${missing} ${missing === 1 ? 'práctica' : 'prácticas'}`;
-    return pending ? '' : 'Sin dato';
+      return `Missing data for ${missing} ${missing === 1 ? 'practice' : 'practices'}`;
+    return pending ? '' : 'No data';
   });
   protected readonly confidenceText = computed(
-    () => CONFIDENCE_TEXT[this.score()?.confidence.level ?? ''] ?? 'sin dato',
+    () => CONFIDENCE_TEXT[this.score()?.confidence.level ?? ''] ?? 'no data',
   );
   protected readonly declaredOn = computed(() => {
     const declaration = this.declaration();
@@ -224,6 +225,7 @@ export class LotPractices {
   protected readonly origins: Origin[] = ['VERIFIED', 'DECLARED', 'ESTIMATED'];
   protected readonly statusIcons = STATUS_ICONS;
   protected readonly statusLabel = statusLabel;
+  protected readonly criterionLabel = criterionLabel;
   protected readonly formatDate = formatDate;
 
   constructor() {
@@ -293,8 +295,8 @@ export class LotPractices {
 
   protected weightText(weight: number | null, max: number): string {
     return weight === null
-      ? 'peso sin definir'
-      : `vale ${SCORE_FORMAT.format(weight)} de ${max} puntos`;
+      ? 'weight not defined'
+      : `worth ${SCORE_FORMAT.format(weight)} of ${max} points`;
   }
 
   protected eventLabel(type: EventType): string {

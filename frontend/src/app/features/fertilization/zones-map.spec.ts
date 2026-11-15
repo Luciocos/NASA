@@ -12,25 +12,25 @@ const pixel = (extra: Partial<NdviPixel>): NdviPixel => ({
 
 describe('pixelTooltip', () => {
   it('en un píxel mixto dice qué parte del cuadro es del lote', () => {
-    const text = pixelTooltip('NDVI alto', pixel({ insideHa: 1.24, insideShare: 0.23 }), true);
-    expect(text).toContain('NDVI alto: NDVI 0,62');
-    expect(text).toContain('1,2 ha en el lote');
-    expect(text).toContain('Píxel mixto: solo el 23 % del cuadro está en tu lote');
+    const text = pixelTooltip('High NDVI', pixel({ insideHa: 1.24, insideShare: 0.23 }), true);
+    expect(text).toContain('High NDVI: NDVI 0,62');
+    expect(text).toContain('1,2 ha in the field');
+    expect(text).toContain('Mixed pixel: only 23 % of the cell is in your field');
   });
 
   it('en uno mayormente adentro da la parte sin llamarlo mixto', () => {
-    const text = pixelTooltip('NDVI medio', pixel({ insideHa: 4, insideShare: 0.74 }), false);
-    expect(text).toContain('el 74 % del cuadro está en tu lote');
-    expect(text).not.toContain('mixto');
+    const text = pixelTooltip('Medium NDVI', pixel({ insideHa: 4, insideShare: 0.74 }), false);
+    expect(text).toContain('74 % of the cell is in your field');
+    expect(text).not.toMatch(/mixed/i);
   });
 
   it('un cuadro casi entero no muestra un 100 % redondeado', () => {
-    const text = pixelTooltip('NDVI alto', pixel({ insideHa: 5.3, insideShare: 0.997 }), false);
-    expect(text).not.toContain('% del cuadro');
+    const text = pixelTooltip('High NDVI', pixel({ insideHa: 5.3, insideShare: 0.997 }), false);
+    expect(text).not.toContain('% of the cell');
   });
 
   it('en un píxel entero no habla de mezcla', () => {
-    const text = pixelTooltip('NDVI bajo', pixel({ insideHa: 5.4, insideShare: 1 }), false);
-    expect(text).not.toContain('mixto');
+    const text = pixelTooltip('Low NDVI', pixel({ insideHa: 5.4, insideShare: 1 }), false);
+    expect(text).not.toMatch(/mixed/i);
   });
 });

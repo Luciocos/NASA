@@ -99,9 +99,9 @@ describe('ExamplesPage', () => {
 
     await flushExamples([LOT, { ...LOT, id: 2, name: 'Lote 2', event_count: 0 }], [EVENT]);
 
-    expect(el().querySelector('h1')?.textContent).toContain('Lotes de ejemplo');
-    expect(el().textContent).toContain('vistos por el radar NISAR de la NASA');
-    expect(el().textContent).toContain('Solo lectura.');
+    expect(el().querySelector('h1')?.textContent).toContain('Sample fields');
+    expect(el().textContent).toContain("seen by NASA's NISAR radar");
+    expect(el().textContent).toContain('Read-only.');
     const cards = el().querySelectorAll('.example');
     expect(cards).toHaveLength(2);
     const first = cards[0];
@@ -113,24 +113,22 @@ describe('ExamplesPage', () => {
     // el último evento en una sola línea, con su origen al lado
     expect(first.querySelectorAll('.example__last')).toHaveLength(1);
     expect(first.querySelector('.example__last app-origin-badge')).not.toBeNull();
-    expect(first.textContent).toContain('Dato simulado para la demostración');
+    expect(first.textContent).toContain('Simulated data for the demo');
     expect(first.querySelector('.example__shape path')?.getAttribute('d')).toMatch(/^M.+Z$/);
-    expect(cards[1].querySelector('.example__last')?.textContent?.trim()).toBe(
-      'Sin eventos todavía',
-    );
+    expect(cards[1].querySelector('.example__last')?.textContent?.trim()).toBe('No events yet');
   });
 
   it('sin cuenta invita a crearla; con la sesión abierta, a marcar su lote', async () => {
     await setup();
     await flushExamples([]);
-    expect(headerAction().textContent).toContain('Crear cuenta gratis');
+    expect(headerAction().textContent).toContain('Sign up for free');
     expect(headerAction().getAttribute('href')).toBe('/registrarse');
-    expect(el().textContent).toContain('Todavía no hay lotes de ejemplo cargados.');
+    expect(el().textContent).toContain('No sample fields loaded yet.');
 
     TestBed.resetTestingModule();
     await setup(true);
     await flushExamples([]);
-    expect(headerAction().textContent).toContain('Marcar mi lote');
+    expect(headerAction().textContent).toContain('Add my field');
     expect(headerAction().getAttribute('href')).toBe('/mapa/nuevo');
   });
 
@@ -149,7 +147,7 @@ describe('ExamplesPage', () => {
     http.expectOne('/api/lots/1/events/').flush({ lot: 1, count: 0, message: null, events: [] });
     await fixture.whenStable();
     expect(dialog?.querySelector('h2#lot-title-1')?.textContent).toContain(LOT.name);
-    expect(dialog?.textContent).toContain('Lote de ejemplo · solo lectura');
+    expect(dialog?.textContent).toContain('Sample field · read-only');
     // la lista sigue detrás
     expect(el().querySelectorAll('li.example')).toHaveLength(1);
   });
@@ -160,7 +158,7 @@ describe('ExamplesPage', () => {
     await fixture.whenStable();
 
     expect(el().querySelector('.empty')?.textContent).toContain(
-      'No pudimos cargar los lotes de ejemplo.',
+      "We couldn't load the sample fields.",
     );
     el().querySelector<HTMLButtonElement>('.empty button')!.click();
     await fixture.whenStable();

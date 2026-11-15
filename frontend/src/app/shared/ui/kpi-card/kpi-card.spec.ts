@@ -29,7 +29,7 @@ describe('KpiCard', () => {
     fixture.componentRef.setInput('caption', 'Superficie de tus lotes');
     await fixture.whenStable();
 
-    expect(el().querySelector('.amount')?.textContent?.trim()).toBe('24,9');
+    expect(el().querySelector('.amount')?.textContent?.trim()).toBe('24.9');
     expect(el().querySelector('.unit')?.textContent?.trim()).toBe('ha');
     expect(el().querySelector('.caption')?.textContent).toContain('Superficie de tus lotes');
     expect(el().getAttribute('role')).toBe('group');
@@ -42,7 +42,7 @@ describe('KpiCard', () => {
     fixture.componentRef.setInput('emptyReason', 'Nubes en todas las pasadas');
     await fixture.whenStable();
 
-    expect(el().querySelector('.value')?.textContent?.trim()).toBe('Sin dato');
+    expect(el().querySelector('.value')?.textContent?.trim()).toBe('No data');
     expect(el().textContent).toContain('Nubes en todas las pasadas');
     expect(el().querySelector('.amount')).toBeNull();
   });

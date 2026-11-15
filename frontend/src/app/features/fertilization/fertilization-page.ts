@@ -46,6 +46,12 @@ import { ZONE_STYLE, ZonesMap } from './zones-map';
 // sin sesión no se guardan: la planilla vive mientras la pantalla esté abierta
 const STORAGE_NAME = 'fertilization:v1';
 const LEVELS: NdviZoneLevel[] = ['alto', 'medio', 'bajo'];
+/** rótulo de cada ambiente mientras carga el NDVI */
+const LEVEL_LABELS: Record<NdviZoneLevel, string> = {
+  alto: 'High NDVI',
+  medio: 'Medium NDVI',
+  bajo: 'Low NDVI',
+};
 type Doses = Record<NdviZoneLevel, number | null>;
 
 /** id del lote de un input o de la ruta: un número o su texto; vacío = no llegó */
@@ -119,6 +125,7 @@ export class FertilizationPage {
   private readonly plannerButton = viewChild<ElementRef<HTMLButtonElement>>('plannerButton');
 
   protected readonly levels = LEVELS;
+  protected readonly levelLabels = LEVEL_LABELS;
   protected readonly zoneStyle = ZONE_STYLE;
   protected readonly modis = DATA_SOURCES.modisNdvi;
   protected readonly formatHectares = formatHectares;
@@ -153,7 +160,7 @@ export class FertilizationPage {
   protected readonly dosesHint = computed(() => {
     const rows = this.rows();
     const loaded = rows.filter((row) => row.dose !== null).length;
-    return `${loaded} de ${rows.length} ambientes con dosis`;
+    return `${loaded} of ${rows.length} zones with a rate`;
   });
   private readonly component = (key: string): FootprintComponent | null =>
     this.footprint()?.components.find((item) => item.key === key) ?? null;
@@ -191,7 +198,7 @@ export class FertilizationPage {
     effect((onCleanup) => {
       const id = this.lotId();
       if (!Number.isInteger(id)) {
-        this.error.set('El identificador del lote no es válido.');
+        this.error.set('The field ID is not valid.');
         return;
       }
       this.doses.set(this.loadDoses(id));
@@ -216,7 +223,7 @@ export class FertilizationPage {
             next: useLot,
             error: (err: { status?: number }) => {
               if (err.status === 404) this.notFound.set(true);
-              else this.error.set('No se pudo cargar el lote. Revisá la conexión.');
+              else this.error.set('Could not load the field. Check your connection.');
             },
           }),
         );
@@ -226,7 +233,7 @@ export class FertilizationPage {
   }
 
   /**
-   * la persona abre o cierra la planilla con su rótulo. en el popup, cerrada vuelve "Armar dosis"
+   * la persona abre o cierra la planilla con su rótulo. en el popup, cerrada vuelve "Plan rates"
    * a su lugar y el foco va ahí, así no se pierde con el rótulo que desaparece
    */
   protected togglePlanner(open: boolean): void {
@@ -274,7 +281,7 @@ export class FertilizationPage {
 
   protected number(value: number | null | undefined, digits = 0): string {
     return value == null
-      ? 'Sin dato'
+      ? 'No data'
       : value.toLocaleString('es-AR', { maximumFractionDigits: digits });
   }
 

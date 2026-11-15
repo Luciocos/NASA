@@ -1,14 +1,14 @@
 <div class="layout">
-  <app-section-card class="practices-card" heading="Buenas prácticas" [subtitle]="subtitle()">
+  <app-section-card class="practices-card" heading="Good practices" [subtitle]="subtitle()">
     @if (score(); as s) {
       <p actions class="stat score">
-        <span class="stat__label">Puntaje provisional</span>
+        <span class="stat__label">Provisional score</span>
         @if (scoreValue(); as value) {
           <span class="stat__value">
-            {{ value }} <span class="stat__unit">de {{ s.max_score }}</span>
+            {{ value }} <span class="stat__unit">of {{ s.max_score }}</span>
           </span>
         } @else {
-          <span class="score__none">Sin calcular</span>
+          <span class="score__none">Not calculated</span>
           <span class="stat__hint">{{ scoreHint() }}</span>
         }
       </p>
@@ -20,13 +20,13 @@
           <span class="skeleton loading__line"></span>
           <span class="skeleton loading__line"></span>
           <span class="skeleton loading__line loading__line--short"></span>
-          <p class="visually-hidden" role="status">Cargando las buenas prácticas…</p>
+          <p class="visually-hidden" role="status">Loading good practices…</p>
         </div>
       }
       @case ('error') {
         <p class="alert alert--error failure" role="alert">
-          No se pudieron cargar las buenas prácticas.
-          <button type="button" class="btn btn--sm" (click)="retry()">Reintentar</button>
+          Could not load good practices.
+          <button type="button" class="btn btn--sm" (click)="retry()">Retry</button>
         </p>
       }
       @case ('ready') {
@@ -34,28 +34,28 @@
           <section
             class="recs-block"
             [attr.aria-labelledby]="recsId"
-            [attr.aria-roledescription]="slides.overflowing() ? 'carrusel' : null"
+            [attr.aria-roledescription]="slides.overflowing() ? 'carousel' : null"
           >
             <div class="bar">
-              <h3 class="sub" [id]="recsId">Qué conviene hacer</h3>
+              <h3 class="sub" [id]="recsId">What to do next</h3>
               @if (slides.overflowing()) {
                 <div class="nav">
                   <button
                     type="button"
                     class="btn btn--ghost btn--icon"
-                    aria-label="Recomendación anterior"
+                    aria-label="Previous recommendation"
                     [attr.aria-disabled]="slides.current() === 0 ? 'true' : null"
                     (click)="slides.go(-1)"
                   >
                     <app-icon name="chevron-left" />
                   </button>
                   <p class="count" aria-live="polite">
-                    {{ slides.current() + 1 }} de {{ recommendations().length }}
+                    {{ slides.current() + 1 }} of {{ recommendations().length }}
                   </p>
                   <button
                     type="button"
                     class="btn btn--ghost btn--icon"
-                    aria-label="Recomendación siguiente"
+                    aria-label="Next recommendation"
                     [attr.aria-disabled]="
                       slides.current() === recommendations().length - 1 ? 'true' : null
                     "
@@ -76,7 +76,7 @@
                 <li class="rec" [attr.data-status]="rec.status">
                   <span class="rec__num" aria-hidden="true">{{ i + 1 }}</span>
                   <p class="rec__action">{{ rec.action }}</p>
-                  <app-info-tip class="rec__tip" [label]="'Por qué: ' + rec.action">
+                  <app-info-tip class="rec__tip" [label]="'Why: ' + rec.action">
                     <p>{{ rec.why }}</p>
                     <p>{{ rec.now }}</p>
                     @if (rec.where) {
@@ -94,7 +94,7 @@
           </section>
         } @else {
           <p class="all-good">
-            <app-icon name="check" /> Por ahora la bitácora no muestra nada para mejorar.
+            <app-icon name="check" /> For now, the field log shows nothing to improve.
           </p>
         }
 
@@ -107,7 +107,7 @@
               <span>
                 {{ row.label }}
                 @if (row.hypothetical) {
-                  <span class="muted">(supuesto)</span>
+                  <span class="muted">(assumption)</span>
                 }
               </span>
               @if (row.origin) {
@@ -124,7 +124,7 @@
 
         @if (shownRows().length > 0) {
           <!-- el título va con las prácticas a la vista: si están todas plegadas, la línea plegada ya lo dice -->
-          <h3 class="sub" [id]="listId">Cómo está cada práctica</h3>
+          <h3 class="sub" [id]="listId">Where each practice stands</h3>
           <ul class="practices" [attr.aria-labelledby]="listId">
             @for (row of shownRows(); track row.key) {
               <ng-container *ngTemplateOutlet="practiceRow; context: { $implicit: row }" />
@@ -138,7 +138,7 @@
             flat
             icon="minus"
             [label]="foldedLabel()"
-            hint="Ver cuáles"
+            hint="Show which"
           >
             <ul class="practices" [attr.aria-label]="foldedLabel()">
               @for (row of foldedRows(); track row.key) {
@@ -154,17 +154,23 @@
     }
 
     @if (score(); as s) {
-      <app-disclosure footer flat icon="info" label="Cómo se calcula" hint="Pesos y evidencia">
+      <app-disclosure
+        footer
+        flat
+        icon="info"
+        label="How it is calculated"
+        hint="Weights and evidence"
+      >
         <div class="how">
           <p class="how__lead"><app-icon name="alert" /> {{ s.disclaimer }}</p>
           <p>
-            El puntaje suma los puntos de las prácticas que se cumplen, sobre {{ s.max_score }}. Si
-            falta el dato de alguna, no hay número.
+            The score adds up the points of the practices that are met, out of {{ s.max_score }}. If
+            data is missing for any of them, there is no number.
             @if (s.weights_defined) {
-              Los pesos son una regla simple del equipo, no salen de una norma: por eso es
-              provisional.
+              The weights are a simple rule set by the team, not taken from a standard: that is why
+              it is provisional.
             } @else {
-              Todavía no hay pesos definidos: por eso es provisional.
+              No weights are defined yet: that is why it is provisional.
             }
           </p>
           @if (s.message) {
@@ -174,7 +180,7 @@
             @for (criterion of s.criteria; track criterion.key) {
               <li class="how__item">
                 <p class="how__head">
-                  <strong>{{ criterion.label }}</strong>
+                  <strong>{{ criterionLabel(criterion) }}</strong>
                   <span class="chip" [class]="tone(criterion.status)">
                     <app-icon [name]="statusIcons[criterion.status]" />
                     {{ statusLabel(criterion) }}
@@ -188,24 +194,27 @@
                 <!-- el puntaje usa la declaración, salvo que la bitácora tenga el cambio detectado -->
                 @if (criterion.key === landUseKey && declaration() && criterion.evidence.length) {
                   <p>
-                    Tu declaración del {{ declaredOn() }} no cuenta acá: manda el cambio de uso que
-                    registra la bitácora.
+                    Your declaration of {{ declaredOn() }} does not count here: the land-use change
+                    recorded in the field log takes precedence.
                   </p>
                 }
                 @if (criterion.hypothetical) {
-                  <p class="muted">Incluye un supuesto.</p>
+                  <p class="muted">Includes an assumption.</p>
                 }
                 @if (criterion.is_simulated) {
                   <app-simulated-notice />
                 }
                 @if (criterion.evidence.length > 0) {
-                  <ul class="how__evidence" [attr.aria-label]="'Evidencia: ' + criterion.label">
+                  <ul
+                    class="how__evidence"
+                    [attr.aria-label]="'Evidence: ' + criterionLabel(criterion)"
+                  >
                     @for (item of criterion.evidence; track $index) {
                       <li>
-                        {{ eventLabel(item.type) }} del {{ formatDate(item.date) }}
+                        {{ eventLabel(item.type) }} on {{ formatDate(item.date) }}
                         <app-origin-badge [origin]="item.origin" />
                         @if (item.hypothetical) {
-                          <span class="muted">(supuesto)</span>
+                          <span class="muted">(assumption)</span>
                         }
                         @if (item.is_simulated) {
                           <app-simulated-notice />
@@ -217,9 +226,9 @@
               </li>
             }
           </ul>
-          <p>Confianza {{ confidenceText() }}. {{ s.confidence.rule }}</p>
+          <p>Confidence: {{ confidenceText() }}. {{ s.confidence.rule }}</p>
           <p class="how__counts">
-            <span>Datos que usa el puntaje:</span>
+            <span>Data used by the score:</span>
             @for (origin of origins; track origin) {
               <span class="how__count">
                 <app-origin-badge [origin]="origin" /> {{ s.confidence.counts[origin] ?? 0 }}

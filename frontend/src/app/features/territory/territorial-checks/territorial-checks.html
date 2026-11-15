@@ -3,11 +3,11 @@
   resumen del backend, el detalle propio de cada chequeo y las fuentes. el aviso de que es un cruce
   indicativo va en el subtítulo; el descargo completo, en el (i)
 -->
-<app-section-card heading="Chequeos territoriales" subtitle="Cruce indicativo con capas públicas.">
-  <app-info-tip actions label="Sobre los chequeos territoriales">
+<app-section-card heading="Territorial checks" subtitle="Indicative overlay with public layers.">
+  <app-info-tip actions label="About the territorial checks">
     <p>
-      Cruzan el lote con el ordenamiento de bosque nativo de Santa Fe y con las áreas urbanas
-      cercanas, y muestran lo que se declaró sobre Buenas Prácticas.
+      They overlay the field with the Santa Fe native forest zoning (OTBN) and with nearby urban
+      areas, and show what was declared about Good practices.
     </p>
     @if (data(); as d) {
       <p>{{ d.disclaimer }}</p>
@@ -16,8 +16,8 @@
 
   @if (error()) {
     <div class="failure" role="alert">
-      <span>No se pudieron cargar los chequeos.</span>
-      <button type="button" class="btn btn--sm" (click)="reload()">Reintentar</button>
+      <span>Could not load the checks.</span>
+      <button type="button" class="btn btn--sm" (click)="reload()">Retry</button>
     </div>
   } @else if (data(); as d) {
     <ul class="checks">
@@ -41,7 +41,7 @@
                   }
                 }
                 @if (invitesDeclaring(check)) {
-                  <span class="act">Declarar</span>
+                  <span class="act">Declare</span>
                 }
               </span>
               <app-icon class="chevron" name="chevron-down" />
@@ -71,7 +71,7 @@
               }
               @if (check.sources.length) {
                 <p class="sources">
-                  Fuente:
+                  Source:
                   @for (s of check.sources; track s.name; let last = $last) {
                     @if (s.url) {
                       <a [href]="s.url" target="_blank" rel="noopener">{{ s.name }}</a>
@@ -95,7 +95,7 @@
               <app-icon name="alert" />
               <!-- el texto y, si sale de un evento simulado, su leyenda, al lado del ícono -->
               <span>
-                Posible desmonte: revisalo con la autoridad provincial.
+                Possible clearing: review it with the provincial authority.
                 @if (simulatedAlert(check)) {
                   <app-simulated-notice />
                 }
@@ -110,7 +110,7 @@
       <span class="skeleton loading__line"></span>
       <span class="skeleton loading__line"></span>
       <span class="skeleton loading__line"></span>
-      <p class="visually-hidden" role="status">Cargando los chequeos territoriales…</p>
+      <p class="visually-hidden" role="status">Loading territorial checks…</p>
     </div>
   }
 </app-section-card>

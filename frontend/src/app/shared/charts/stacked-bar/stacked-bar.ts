@@ -62,7 +62,7 @@ export class StackedBar {
   readonly decimals = input(0);
   readonly title = input<string>();
   readonly description = input<string>();
-  readonly emptyText = input('Sin datos para mostrar');
+  readonly emptyText = input('No data to show');
 
   protected readonly uid = nextChartId('stack');
   private readonly width = injectHostWidth();
@@ -124,9 +124,9 @@ export class StackedBar {
     const items = this.legend().map((item) => `${item.label}: ${item.value} (${item.share})`);
     const summary =
       total > 0
-        ? `Barra apilada de ${countLabel(this.segments().length, 'parte', 'partes')} que suman ` +
+        ? `Stacked bar of ${countLabel(this.segments().length, 'part', 'parts')} adding up to ` +
           `${formatValue(total, this.unit(), this.decimals())}. ${items.join('; ')}.`
-        : `Barra apilada sin valores: ${NO_DATA}.`;
+        : `Stacked bar with no values: ${NO_DATA}.`;
     return chartLabel(this.description(), summary);
   });
 
@@ -134,8 +134,8 @@ export class StackedBar {
     const unit = this.unit();
     const legend = this.legend();
     return {
-      caption: this.title() ?? 'Datos de la barra apilada',
-      columns: ['Parte', unit ? `Valor (${unit})` : 'Valor', 'Porcentaje'],
+      caption: this.title() ?? 'Stacked bar data',
+      columns: ['Part', unit ? `Value (${unit})` : 'Value', 'Share'],
       rows: this.segments().map((segment, index) => [
         segment.label,
         formatNumber(Number.isFinite(segment.value) ? segment.value : null, this.decimals()),

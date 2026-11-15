@@ -50,9 +50,9 @@ let nextId = 0;
       >
         <span class="avatar" aria-hidden="true">{{ initial() }}</span>
         @if (variant() === 'tab') {
-          <span>Cuenta</span>
+          <span>Account</span>
         } @else {
-          <span class="visually-hidden">Cuenta de </span>
+          <span class="visually-hidden">Account: </span>
           <span class="name">{{ displayName() }}</span>
         }
       </button>
@@ -65,18 +65,18 @@ let nextId = 0;
             }
           </div>
           <p class="menu__text menu__privacy">
-            <app-icon name="check" /> Tus lotes y tus datos son privados: solo vos los ves.
+            <app-icon name="check" /> Your fields and your data are private: only you can see them.
           </p>
           @if (pendingCount(); as count) {
             <p class="alert alert--warn">
-              Tenés {{ count }} {{ count === 1 ? 'lote' : 'lotes' }} sin subir en este dispositivo:
-              si salís, {{ count === 1 ? 'se borra' : 'se borran' }}.
+              You have {{ count }} {{ count === 1 ? 'field' : 'fields' }} not uploaded yet on this
+              device: if you log out, {{ count === 1 ? 'it will be' : 'they will be' }} deleted.
             </p>
           }
           <a class="menu-item" routerLink="/ejemplos" (click)="open.set(false)">
-            <app-icon name="map" /> Lotes de ejemplo
+            <app-icon name="map" /> Sample fields
           </a>
-          <button type="button" class="btn btn--sm btn--block" (click)="exit()">Salir</button>
+          <button type="button" class="btn btn--sm btn--block" (click)="exit()">Log out</button>
         </div>
       }
     } @else {
@@ -88,7 +88,7 @@ let nextId = 0;
         [attr.aria-current]="onAuthScreen() ? 'page' : null"
       >
         <span class="avatar avatar--guest" aria-hidden="true"><app-icon name="user" /></span>
-        <span>Ingresar</span>
+        <span>Log in</span>
       </a>
     }
   `,

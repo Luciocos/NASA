@@ -1,8 +1,8 @@
 {
   "name": "LoTestigo",
   "short_name": "LoTestigo",
-  "description": "Bitácora de manejo de un lote agrícola, detectada por satélite. Prueba de concepto.",
-  "lang": "es-AR",
+  "description": "A field log of farm management, detected by satellite. Proof of concept.",
+  "lang": "en",
   "dir": "ltr",
   "id": "/",
   "start_url": "/mapa",

@@ -36,13 +36,13 @@ const NISAR: Collection[] = [
   {
     query: 'short_name=NISAR_L2_GCOV_V1',
     mission: 'NISAR',
-    sensorLabel: 'NISAR radar banda L (GCOV)',
+    sensorLabel: 'NISAR L-band radar (GCOV)',
     maturity: 'validada',
   },
   {
     query: 'short_name=NISAR_L2_GCOV_PROVISIONAL_V1',
     mission: 'NISAR',
-    sensorLabel: 'NISAR radar banda L (GCOV)',
+    sensorLabel: 'NISAR L-band radar (GCOV)',
     maturity: 'provisional',
   },
 ];

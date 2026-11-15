@@ -3,9 +3,9 @@ import { Component, computed, inject } from '@angular/core';
 import { Connectivity } from '../connectivity';
 import { LotOutbox, PendingLot } from '../lot-outbox';
 
-const SAVED_AT_FORMAT = new Intl.DateTimeFormat('es-AR', {
+const SAVED_AT_FORMAT = new Intl.DateTimeFormat('en-GB', {
   day: 'numeric',
-  month: 'numeric',
+  month: 'short',
   hour: '2-digit',
   minute: '2-digit',
 });

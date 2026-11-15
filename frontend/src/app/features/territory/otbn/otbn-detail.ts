@@ -33,21 +33,26 @@ interface OtbnDetails {
 const CATEGORIES: { key: OtbnCategory; name: string; color: string; meaning: string }[] = [
   {
     key: 'I',
-    name: 'I · Rojo',
+    name: 'I · Red',
     color: '#b91c1c',
-    meaning: 'Muy alto valor: no se puede desmontar',
+    meaning: 'Very high value: cannot be cleared',
   },
   {
     key: 'II',
-    name: 'II · Amarillo',
+    name: 'II · Yellow',
     color: '#ca8a04',
-    meaning: 'Valor medio: no se puede desmontar, admite uso sostenible',
+    meaning: 'Medium value: cannot be cleared, allows sustainable use',
   },
-  { key: 'III', name: 'III · Verde', color: '#15803d', meaning: 'Bajo valor (Santa Fe no la usa)' },
+  {
+    key: 'III',
+    name: 'III · Green',
+    color: '#15803d',
+    meaning: 'Low value (not used in Santa Fe)',
+  },
 ];
 
-const NUMBER = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
-const KM = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 });
+const NUMBER = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
+const KM = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 });
 
 /** Detalle propio del chequeo 'otbn' dentro del panel de chequeos territoriales. */
 @Component({
@@ -57,37 +62,35 @@ const KM = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 });
     @if (details(); as d) {
       @if (d.strong_alert) {
         <div class="alert" role="alert">
-          <strong>Atención: posible desmonte.</strong>
-          El lote se superpone con bosque nativo protegido (categoría I o II) y
+          <strong>Warning: possible clearing.</strong>
+          The field overlaps protected native forest (category I or II) and
           @if (d.land_use_change_detected) {
-            la bitácora registra un cambio de uso del suelo
+            the field log records a land-use change
             @for (e of d.land_use_change_events ?? []; track e.id; let last = $last) {
               ({{ e.date }}, {{ e.sensor
-              }}{{ e.is_simulated ? ', dato simulado para la demostración' : '' }}){{
-                last ? '' : ','
-              }}
+              }}{{ e.is_simulated ? ', simulated data for the demo' : '' }}){{ last ? '' : ',' }}
             }
             @if (d.land_use_change_declared) {
-              y
+              and
             }
           }
           @if (d.land_use_change_declared) {
-            el productor declaró un cambio de uso desde 2020
+            the farmer declared a land-use change since 2020
           }
-          . Conviene revisarlo con la autoridad provincial de bosques.
+          . It is worth reviewing it with the provincial forestry authority.
         </div>
       }
 
       @if (d.overlap) {
         <table class="table">
           <caption>
-            Superficie del lote en cada categoría del OTBN
+            Field area in each OTBN category
           </caption>
           <thead>
             <tr>
-              <th scope="col">Categoría</th>
+              <th scope="col">Category</th>
               <th scope="col" class="num">ha</th>
-              <th scope="col" class="num">% del lote</th>
+              <th scope="col" class="num">% of field</th>
             </tr>
           </thead>
           <tbody>
@@ -108,7 +111,7 @@ const KM = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 });
 
       @if (nearestKm(); as km) {
         <p class="note">
-          Polígono de bosque protegido más cercano: a {{ km }} km (categoría
+          Nearest protected forest polygon: {{ km }} km away (category
           {{ d.nearest_protected_category }}).
         </p>
       }

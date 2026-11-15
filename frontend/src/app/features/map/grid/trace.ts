@@ -7,9 +7,9 @@ import { isSingleRegion } from './regions';
 export type GridShapeProblem = 'empty' | 'multiple-regions';
 
 const PROBLEM_MESSAGES: Record<GridShapeProblem, string> = {
-  empty: 'No hay recuadros marcados.',
+  empty: 'No squares painted.',
   'multiple-regions':
-    'Los recuadros marcados forman más de un bloque: tienen que quedar unidos por un lado.',
+    'The painted squares form more than one block: they must be joined along a side.',
 };
 
 /**

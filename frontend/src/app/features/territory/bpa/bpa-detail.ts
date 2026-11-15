@@ -19,9 +19,9 @@ import { BpaChoice, BpaDeclarationRequest, BpaDetails } from './bpa.types';
 let nextId = 0;
 
 const CHOICES: { value: BpaChoice; label: string }[] = [
-  { value: 'yes', label: 'Sí' },
+  { value: 'yes', label: 'Yes' },
   { value: 'no', label: 'No' },
-  { value: 'unset', label: 'Sin declarar' },
+  { value: 'unset', label: 'Not declared' },
 ];
 
 /**
@@ -38,32 +38,34 @@ const CHOICES: { value: BpaChoice; label: string }[] = [
     @if (details().adheres !== undefined) {
       <dl class="declared">
         <div>
-          <dt>Adhesión</dt>
+          <dt>Enrollment</dt>
           <dd>
-            {{ details().adheres ? 'Declaró estar adherido' : 'Declaró no estar adherido' }}
-            <span class="badge">Declarado</span>
+            {{ details().adheres ? 'Declared as enrolled' : 'Declared as not enrolled' }}
+            <span class="badge">Declared</span>
           </dd>
         </div>
         @if (details().registration_number) {
           <div>
-            <dt>N.º de inscripción</dt>
+            <dt>Registration no.</dt>
             <dd>{{ details().registration_number }}</dd>
           </div>
         }
         @if (declaredAt(); as date) {
           <div>
-            <dt>Fecha de la declaración</dt>
+            <dt>Declaration date</dt>
             <dd>{{ date }}</dd>
           </div>
         }
       </dl>
-      <p class="note">No se verificó contra el registro provincial.</p>
+      <p class="note">Not checked against the provincial registry.</p>
     }
 
     @if (editable()) {
       <form class="form" novalidate (submit)="$event.preventDefault(); save()">
         <fieldset class="fieldset">
-          <legend class="legend-text">¿Adherís al programa provincial de Buenas Prácticas?</legend>
+          <legend class="legend-text">
+            Are you enrolled in the provincial Good practices program?
+          </legend>
           <div class="seg">
             @for (c of choices; track c.value) {
               <label>
@@ -82,7 +84,7 @@ const CHOICES: { value: BpaChoice; label: string }[] = [
 
         @if (choice() === 'yes') {
           <div class="field">
-            <label [for]="uid + '-number'">N.º de inscripción (opcional)</label>
+            <label [for]="uid + '-number'">Registration no. (optional)</label>
             <input
               [id]="uid + '-number'"
               autocomplete="off"
@@ -101,11 +103,11 @@ const CHOICES: { value: BpaChoice; label: string }[] = [
 
         <div class="foot">
           <button type="submit" class="btn btn--primary btn--sm" [disabled]="saving()">
-            <app-icon name="save" /> {{ saving() ? 'Guardando…' : 'Guardar declaración' }}
+            <app-icon name="save" /> {{ saving() ? 'Saving…' : 'Save declaration' }}
           </button>
           @if (saved()) {
             <p class="saved" role="status">
-              <app-icon name="check" /><span>Declaración guardada.</span>
+              <app-icon name="check" /><span>Declaration saved.</span>
             </p>
           }
         </div>
@@ -170,10 +172,10 @@ export class BpaDetail {
 
 /** el error en lenguaje llano */
 function describeError(err: HttpErrorResponse): string {
-  if (err.status === 0) return 'No hay conexión: revisá tu internet y probá de nuevo.';
-  if (err.status === 401) return 'Tu sesión se cerró: volvé a ingresar para declarar.';
-  if (err.status === 403) return 'Este lote es de solo lectura: no se puede declarar.';
-  if (err.status === 404) return 'No encontramos el lote.';
-  if (err.status >= 500) return 'No pudimos guardar en este momento. Probá de nuevo en un rato.';
-  return 'Revisá los datos: el número de inscripción puede tener hasta 64 caracteres.';
+  if (err.status === 0) return 'No connection: check your internet and try again.';
+  if (err.status === 401) return 'Your session has ended: log in again to declare.';
+  if (err.status === 403) return 'This field is read-only: you cannot declare.';
+  if (err.status === 404) return 'We could not find the field.';
+  if (err.status >= 500) return 'We could not save right now. Please try again in a moment.';
+  return 'Check the data: the registration number can be up to 64 characters long.';
 }

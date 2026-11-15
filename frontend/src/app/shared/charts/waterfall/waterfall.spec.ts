@@ -63,18 +63,18 @@ describe('WaterfallChart', () => {
     await render({ steps: STEPS, unit: 'USD/ha' });
 
     const label = el().querySelector('svg.plot')?.getAttribute('aria-label') ?? '';
-    expect(label).toContain('Cascada de 5 pasos');
+    expect(label).toContain('Waterfall with 5 steps');
     expect(label).toContain('Labores: -95 USD/ha');
     const rows = [...el().querySelectorAll('details tbody tr')].map((row) =>
       [...row.children].map((cell) => cell.textContent),
     );
-    expect(rows[2]).toEqual(['Labores', 'Variación', '-95', '875']);
+    expect(rows[2]).toEqual(['Labores', 'Change', '-95', '875']);
     expect(rows[4]).toEqual(['Margen', 'Total', '915', '915']);
   });
 
   it('muestra el estado vacío', async () => {
     await render({ steps: [] });
     expect(el().querySelector('svg.plot')).toBeNull();
-    expect(el().textContent).toContain('Sin datos para mostrar');
+    expect(el().textContent).toContain('No data to show');
   });
 });

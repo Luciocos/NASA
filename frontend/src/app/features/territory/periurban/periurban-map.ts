@@ -31,7 +31,7 @@ export const PERIURBAN_STYLE = {
     #map
     class="map"
     role="region"
-    aria-label="Mapa del lote y las franjas de exclusión periurbanas"
+    aria-label="Map of the field and the peri-urban exclusion buffers"
   ></div>`,
   styles: `
     :host {
@@ -99,11 +99,11 @@ export class PeriurbanMap {
         .addTo(layer);
     };
     // de la franja más ancha a la más angosta, para que se vean superpuestas
-    add(zones.aerial, PERIURBAN_STYLE.aerial, 'Franja de aplicación aérea');
-    add(zones.terrestrial, PERIURBAN_STYLE.terrestrial, 'Franja de aplicación terrestre');
-    add(zones.urban, PERIURBAN_STYLE.urban, 'Área urbana aproximada (OpenStreetMap)');
+    add(zones.aerial, PERIURBAN_STYLE.aerial, 'Aerial spraying buffer');
+    add(zones.terrestrial, PERIURBAN_STYLE.terrestrial, 'Ground spraying buffer');
+    add(zones.urban, PERIURBAN_STYLE.urban, 'Approximate urban area (OpenStreetMap)');
     const outline = L.geoJSON(this.lotGeometry(), { style: PERIURBAN_STYLE.lot })
-      .bindTooltip('Lote')
+      .bindTooltip('Field')
       .addTo(layer);
     map.fitBounds(outline.getBounds().pad(1.2), { maxZoom: 15 });
   }

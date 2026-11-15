@@ -3,19 +3,19 @@
 
 /** claves de `metrics` que hoy entrega el pipeline (pipeline/README.md), con su rótulo */
 export const METRIC_LABELS: Record<string, string> = {
-  hh_anomaly_change_db: 'Cambio de HH frente al paisaje',
-  hv_anomaly_change_db: 'Cambio de HV frente al paisaje',
-  threshold_db: 'Umbral de detección',
-  threshold_rule: 'Regla del umbral',
-  threshold_validated: 'Umbral validado',
-  dates_compared: 'Fechas comparadas',
-  nisar_product: 'Producto NISAR',
-  nisar_track: 'Órbita NISAR',
-  ndvi_before: 'NDVI antes',
-  ndvi_before_date: 'Fecha del NDVI anterior',
-  ndvi_last: 'NDVI más reciente',
-  ndvi_last_date: 'Fecha del NDVI más reciente',
-  optical_sensor: 'Sensor óptico',
+  hh_anomaly_change_db: 'HH change vs. the surrounding landscape',
+  hv_anomaly_change_db: 'HV change vs. the surrounding landscape',
+  threshold_db: 'Detection threshold',
+  threshold_rule: 'Threshold rule',
+  threshold_validated: 'Threshold validated',
+  dates_compared: 'Dates compared',
+  nisar_product: 'NISAR product',
+  nisar_track: 'NISAR track',
+  ndvi_before: 'NDVI before',
+  ndvi_before_date: 'Date of the earlier NDVI',
+  ndvi_last: 'Latest NDVI',
+  ndvi_last_date: 'Date of the latest NDVI',
+  optical_sensor: 'Optical sensor',
 };
 
 /** unidad de las métricas numéricas conocidas (vacío: sin unidad) */

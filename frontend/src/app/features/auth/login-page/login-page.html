@@ -14,14 +14,14 @@
   />
   <header class="auth__head">
     <span class="auth__mark icon-mark" aria-hidden="true"><app-icon name="user" /></span>
-    <h1 id="login-title">Ingresá a tu cuenta</h1>
-    <p class="auth__lead">Seguí con tus lotes y lo que vio el satélite.</p>
+    <h1 id="login-title">Log in to your account</h1>
+    <p class="auth__lead">Get back to your fields and what the satellite saw.</p>
   </header>
 
   @if (offline()) {
     <p class="alert alert--warn" role="status">
       <app-icon name="cloud-off" />
-      <span>Estás sin conexión. Para ingresar hace falta internet.</span>
+      <span>You're offline. You need internet to log in.</span>
     </p>
   }
 
@@ -34,7 +34,7 @@
     }
 
     <div class="field">
-      <label for="login-email">Mail</label>
+      <label for="login-email">Email</label>
       <input
         #emailInput
         id="login-email"
@@ -57,7 +57,7 @@
     </div>
 
     <div class="field">
-      <label for="login-password">Contraseña</label>
+      <label for="login-password">Password</label>
       <div class="password">
         <input
           #passwordInput
@@ -79,8 +79,7 @@
           (click)="showPassword.set(!showPassword())"
         >
           <app-icon name="eye" />
-          {{ showPassword() ? 'Ocultar' : 'Mostrar'
-          }}<span class="visually-hidden"> contraseña</span>
+          {{ showPassword() ? 'Hide' : 'Show' }}<span class="visually-hidden"> password</span>
         </button>
       </div>
       @if (errors().fields.password; as message) {
@@ -93,21 +92,21 @@
       class="btn btn--primary btn--lg btn--block"
       [attr.aria-disabled]="sending() ? 'true' : null"
     >
-      {{ sending() ? 'Ingresando…' : 'Ingresar' }}
+      {{ sending() ? 'Logging in…' : 'Log in' }}
     </button>
   </form>
 
   <p class="auth__privacy">
     <app-icon name="check" />
-    <span>Tus lotes y tus datos son privados: solo vos los ves.</span>
+    <span>Your fields and your data are private: only you can see them.</span>
   </p>
 
   <p class="auth__switch">
-    ¿Todavía no tenés cuenta?
-    <a routerLink="/registrarse" [queryParams]="switchParams">Creá una gratis</a>
+    Don't have an account yet?
+    <a routerLink="/registrarse" [queryParams]="switchParams">Sign up for free</a>
   </p>
 </section>
 
 <p class="auth__aside">
-  <a routerLink="/ejemplos">Mirá los lotes de ejemplo sin cuenta</a>
+  <a routerLink="/ejemplos">See the sample fields without an account</a>
 </p>

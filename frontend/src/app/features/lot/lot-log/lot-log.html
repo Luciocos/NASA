@@ -4,14 +4,14 @@
     {{ campaign.crop_label }} <app-origin-badge [origin]="campaign.crop_origin" />
   </span>
   <span class="campaign__fact">
-    <span class="campaign__key">Rinde</span>
+    <span class="campaign__key">Yield</span>
     @if (campaign.yield_t_ha !== null) {
       {{ yieldLabel(campaign.yield_t_ha) }}
       @if (campaign.yield_origin) {
         <app-origin-badge [origin]="campaign.yield_origin" />
       }
     } @else {
-      Sin dato <span class="campaign__key">(no declarado)</span>
+      No data <span class="campaign__key">(not declared)</span>
     }
   </span>
 </ng-template>
@@ -19,7 +19,7 @@
 <div class="log" [class.log--split]="sideOpen()">
   <app-section-card
     class="log__list"
-    heading="Eventos y campañas"
+    heading="Events and seasons"
     [subtitle]="subtitle()"
     [attr.inert]="sheetOpen() ? '' : null"
   >
@@ -32,18 +32,18 @@
         [attr.aria-controls]="filtersOpen() ? uid + '-filters' : null"
         (click)="filtersOpen.set(!filtersOpen())"
       >
-        <app-icon name="filter" /> Filtrar
+        <app-icon name="filter" /> Filter
         @if (activeFilters() > 0) {
           <span class="filter-count" aria-hidden="true">{{ activeFilters() }}</span>
           <span class="visually-hidden">
-            ({{ activeFilters() === 1 ? '1 filtro activo' : activeFilters() + ' filtros activos' }})
+            ({{ activeFilters() === 1 ? '1 active filter' : activeFilters() + ' active filters' }})
           </span>
         }
       </button>
     }
 
     @if (campaignChips().length > 0) {
-      <ul class="campaigns" aria-label="Campañas del lote">
+      <ul class="campaigns" aria-label="Field seasons">
         @for (campaign of campaignChips(); track campaign.id) {
           <li class="campaign">
             <span class="campaign__label">{{ campaign.label }}</span>
@@ -57,11 +57,11 @@
     }
 
     @if (filtersOpen() && canFilter()) {
-      <div class="filters" role="group" aria-label="Filtros de la bitácora" [id]="uid + '-filters'">
+      <div class="filters" role="group" aria-label="Field log filters" [id]="uid + '-filters'">
         <label class="field">
-          Tipo
+          Type
           <select (change)="onTypeFilter($any($event.target).value)">
-            <option value="" [selected]="typeFilter() === ''">Todos</option>
+            <option value="" [selected]="typeFilter() === ''">All</option>
             @for (type of typeOptions(); track type) {
               <option [value]="type" [selected]="type === typeFilter()">
                 {{ eventTypeLabels[type] }}
@@ -72,7 +72,7 @@
         <label class="field">
           Sensor
           <select (change)="onSensorFilter($any($event.target).value)">
-            <option value="" [selected]="sensorFilter() === ''">Todos</option>
+            <option value="" [selected]="sensorFilter() === ''">All</option>
             @for (sensor of sensorOptions(); track sensor) {
               <option [value]="sensor" [selected]="sensor === sensorFilter()">
                 {{ sensorShort[sensor] }}
@@ -82,9 +82,9 @@
         </label>
         @if (campaignOptions().length > 1) {
           <label class="field">
-            Campaña
+            Season
             <select (change)="onCampaignFilter($any($event.target).value)">
-              <option value="" [selected]="campaignFilter() === ''">Todas</option>
+              <option value="" [selected]="campaignFilter() === ''">All</option>
               @for (campaign of campaignOptions(); track campaign.id) {
                 <option [value]="campaign.id" [selected]="campaign.id === campaignFilter()">
                   {{ campaign.label }}
@@ -95,7 +95,7 @@
         }
         @if (activeFilters() > 0) {
           <button type="button" class="btn btn--sm btn--ghost" (click)="clearFilters()">
-            Quitar filtros
+            Clear filters
           </button>
         }
       </div>
@@ -103,25 +103,25 @@
 
     @if (failed()) {
       <div class="alert alert--error failure" role="alert">
-        <p>No se pudo cargar la bitácora.</p>
-        <button type="button" class="btn btn--sm" (click)="retry()">Reintentar</button>
+        <p>Couldn't load the field log.</p>
+        <button type="button" class="btn btn--sm" (click)="retry()">Try again</button>
       </div>
     } @else if (events(); as all) {
       @if (all.length === 0) {
         <div class="log-empty">
           <span class="icon-mark"><app-icon name="satellite" /></span>
           <div class="log-empty__text">
-            <p class="log-empty__title">Todavía no hay eventos</p>
-            <p class="log-empty__line">Salen de observaciones satelitales procesadas.</p>
+            <p class="log-empty__title">No events yet</p>
+            <p class="log-empty__line">They come from processed satellite observations.</p>
           </div>
         </div>
       } @else {
         @if (allSimulated()) {
-          <p class="sim-all"><app-simulated-notice /> <span>en todos los eventos</span></p>
+          <p class="sim-all"><app-simulated-notice /> <span>across all events</span></p>
         }
         @if (activeFilters() > 0) {
           <p class="result" role="status">
-            {{ visible().length }} de {{ all.length }} eventos con los filtros elegidos.
+            {{ visible().length }} of {{ all.length }} events match the selected filters.
           </p>
         }
         @for (group of shownGroups(); track group.key) {
@@ -135,7 +135,7 @@
                 />
               }
               <span class="group__count">
-                {{ group.total === 0 ? 'Sin eventos' : countLabel(group.total) }}
+                {{ group.total === 0 ? 'No events' : countLabel(group.total) }}
               </span>
             </header>
             @if (group.events.length > 0) {
@@ -156,10 +156,12 @@
                         <app-event-glyph [type]="event.type" />
                       </span>
                       <span class="row__what">
-                        <span class="row__type">{{ event.type_label }}</span>
+                        <span class="row__type">{{
+                          eventTypeLabels[event.type] ?? event.type_label
+                        }}</span>
                         @if (event.is_simulated) {
                           @if (allSimulated()) {
-                            <span class="visually-hidden">(dato simulado)</span>
+                            <span class="visually-hidden">(simulated data)</span>
                           } @else {
                             <app-simulated-notice />
                           }
@@ -177,7 +179,7 @@
                           @if (hasEvidence(event)) {
                             <app-icon class="row__evidence" name="image" /><span
                               class="visually-hidden"
-                              >, con evidencia</span
+                              >, with evidence</span
                             >
                           }
                         </span>
@@ -192,9 +194,9 @@
           </section>
         } @empty {
           <div class="empty no-match">
-            <p>Ningún evento coincide con los filtros.</p>
+            <p>No events match the filters.</p>
             <button type="button" class="btn btn--sm" (click)="clearFilters()">
-              Quitar filtros
+              Clear filters
             </button>
           </div>
         }
@@ -205,7 +207,7 @@
             [attr.aria-expanded]="showAll()"
             (click)="showAll.set(!showAll())"
           >
-            {{ showAll() ? 'Ver menos' : 'Ver los ' + visible().length + ' eventos' }}
+            {{ showAll() ? 'Show less' : 'Show all ' + visible().length + ' events' }}
           </button>
         }
       }
@@ -214,33 +216,33 @@
         <span class="skeleton loading__row"></span>
         <span class="skeleton loading__row"></span>
         <span class="skeleton loading__row"></span>
-        <p class="visually-hidden" role="status">Cargando la bitácora…</p>
+        <p class="visually-hidden" role="status">Loading the field log…</p>
       </div>
     }
 
-    <app-disclosure footer flat icon="info" label="Cómo se arma la bitácora">
+    <app-disclosure footer flat icon="info" label="How the field log is built">
       <ul class="help">
         <li>
-          Los eventos salen de observaciones satelitales procesadas para este lote, o los informa
-          una persona (sensor Manual). No se inventan.
+          Events come from satellite observations processed for this field, or a person reports them
+          (Manual sensor). Nothing is made up.
         </li>
         @if (events()?.length === 0) {
           <li>
-            Acá van a aparecer la siembra, la cosecha, las labores y otros cambios que se detecten.
-            Todavía no hay observaciones procesadas para este lote.
+            Sowing, harvest, field work and other detected changes will show up here. There are no
+            processed observations for this field yet.
           </li>
         }
         @for (origin of origins; track origin) {
           <li><app-origin-badge [origin]="origin" /> {{ originMeaning[origin] }}</li>
         }
-        <li>La detección es una prueba de concepto: no está validada en campo.</li>
+        <li>Detection is a proof of concept: it isn't validated in the field.</li>
         @if (usesSentinel()) {
-          <li>Sentinel-1 es de la ESA y se usa de respaldo: no es dato NASA.</li>
+          <li>Sentinel-1 is from ESA and is used as a backup: it isn't NASA data.</li>
         }
         @if (canEdit()) {
           <li>
-            Podés confirmar o corregir cada evento. Si confirmás uno estimado o le cambiás el tipo o
-            la fecha, pasa a figurar como declarado por vos.
+            You can confirm or correct each event. If you confirm an estimated one or change its
+            type or date, it shows as declared by you.
           </li>
         }
       </ul>
@@ -267,10 +269,12 @@
         <span class="glyph" [attr.data-type]="event.type">
           <app-event-glyph [type]="event.type" />
         </span>
-        <h2 class="panel__title" [id]="uid + '-title'">{{ event.type_label }}</h2>
+        <h2 class="panel__title" [id]="uid + '-title'">
+          {{ eventTypeLabels[event.type] ?? event.type_label }}
+        </h2>
         <button #closeButton type="button" class="btn btn--ghost btn--icon" (click)="close()">
           <app-icon name="close" />
-          <span class="visually-hidden">Cerrar el detalle</span>
+          <span class="visually-hidden">Close details</span>
         </button>
       </header>
       <div class="panel__body">

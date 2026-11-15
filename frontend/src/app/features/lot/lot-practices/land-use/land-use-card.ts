@@ -138,18 +138,18 @@ export class LandUseCard {
   /** MODIS vio algo en algún año: recién ahí lleva su origen (VERIFICADO) */
   protected readonly hasData = computed(() => this.years().some((year) => year.pixels > 0));
   protected readonly errorShort = computed(
-    () => firstSentence(this.modis().error) || 'No se pudo consultar a MODIS',
+    () => firstSentence(this.modis().error) || 'Could not query MODIS',
   );
 
   protected readonly retrievedOn = computed(() => {
     const evidence = this.evidence();
     return evidence ? formatDay(evidence.source.retrievedAt) : '';
   });
-  /** "Orientativo · píxeles de 460 m", y si es una copia vieja, de cuándo */
+  /** "Indicative · 460 m pixels", y si es una copia vieja, de cuándo */
   protected readonly note = computed(() => {
-    const base = `Orientativo · píxeles de ${pixelSize(this.evidence())} m`;
+    const base = `Indicative · ${pixelSize(this.evidence())} m pixels`;
     return this.modis().stale && this.retrievedOn()
-      ? `${base} · copia del ${this.retrievedOn()}`
+      ? `${base} · copy from ${this.retrievedOn()}`
       : base;
   });
 
@@ -165,15 +165,15 @@ export class LandUseCard {
   protected readonly sourceText = computed(() => {
     const source = this.source();
     const parts = [
-      `Fuente: ${source.name}.`,
+      `Source: ${source.name}.`,
       `${source.product}.`,
-      `Resolución: ${source.resolution}.`,
-      `Frecuencia: ${source.cadence}.`,
+      `Resolution: ${source.resolution}.`,
+      `Frequency: ${source.cadence}.`,
     ];
     const day = this.retrievedOn();
     if (day) {
-      const stale = this.modis().stale ? ', copia guardada sin poder actualizarla' : '';
-      parts.push(`Consultado el ${day}${stale}.`);
+      const stale = this.modis().stale ? ', saved copy that could not be updated' : '';
+      parts.push(`Retrieved on ${day}${stale}.`);
     }
     return parts.join(' ');
   });
@@ -204,7 +204,7 @@ export class LandUseCard {
           this.changing.set(false);
           this.declaration.set(declaration);
           this.announcement.set(
-            `Guardamos tu declaración del ${formatDay(declaration.declared_at)}.`,
+            `We saved your declaration of ${formatDay(declaration.declared_at)}.`,
           );
           this.focus(this.changeButton);
         },

@@ -166,24 +166,24 @@ describe('pickRecommendations', () => {
 
   it('una frase a la vista; el porqué, el estado de hoy y dónde seguir, para la ayuda', () => {
     const [cover, burn, rotation] = pickRecommendations(MIXED);
-    expect(cover.action).toBe('Sumá un cultivo de cobertura en invierno.');
-    expect(cover.why).toContain('lo protege de la erosión');
-    expect(cover.now).toBe('Hoy figura como «No cumple»: Motivo de winter_cover.');
-    expect(cover.where).toContain('pestaña Huella');
+    expect(cover.action).toBe('Add a winter cover crop.');
+    expect(cover.why).toContain('it protects it from erosion');
+    expect(cover.now).toBe('It currently shows as “Not met”: Motivo de winter_cover.');
+    expect(cover.where).toContain('Footprint tab');
     // lo que no cumple por un evento detectado se revisa en la bitácora
-    expect(burn.where).toContain('pestaña Bitácora');
-    expect(rotation.where).toContain('pestaña Fertilización');
+    expect(burn.where).toContain('Field log tab');
+    expect(rotation.where).toContain('Fertilization tab');
   });
 
   it('cada recomendación que sigue en otra pestaña lleva un enlace corto a esa pestaña', () => {
     const [cover, burn, rotation] = pickRecommendations(MIXED);
     expect(cover.link).toEqual({
-      label: 'Simular en Huella',
+      label: 'Simulate in Footprint',
       tab: 'footprint',
       params: { vista: 'simulador' },
     });
-    expect(burn.link).toEqual({ label: 'Revisar en Bitácora', tab: 'log' });
-    expect(rotation.link).toEqual({ label: 'Ir a Fertilización', tab: 'fertilization' });
+    expect(burn.link).toEqual({ label: 'Review in Field log', tab: 'log' });
+    expect(rotation.link).toEqual({ label: 'Go to Fertilization', tab: 'fertilization' });
     expect(pickRecommendations([criterion('nuevo', 'no_cumple')])[0].link).toBeNull();
   });
 
@@ -209,9 +209,9 @@ describe('practiceRows', () => {
   it('sin declaración muestra lo que cuenta el puntaje, con el nombre corto', () => {
     const [row, till] = practiceRows([landUse, MIXED[1]], null, null);
     expect(row).toEqual(
-      expect.objectContaining({ status: 'sin_dato', chip: 'Sin dato', origin: null, note: null }),
+      expect.objectContaining({ status: 'sin_dato', chip: 'No data', origin: null, note: null }),
     );
-    expect(till.label).toBe('Siembra directa');
+    expect(till.label).toBe('No-till');
     expect(shortLabel('Sin cambio de uso del suelo desde 2020')).toBe(
       'Sin cambio de uso del suelo desde 2020',
     );
@@ -221,32 +221,32 @@ describe('practiceRows', () => {
     // recién declarado, el puntaje que se ve todavía es el de antes: no se dice que la usa
     const [same] = practiceRows([landUse], declared(true), 'match');
     expect(same).toEqual(
-      expect.objectContaining({ status: 'cumple', chip: 'Cumple', tone: 'ok', origin: 'DECLARED' }),
+      expect.objectContaining({ status: 'cumple', chip: 'Met', tone: 'ok', origin: 'DECLARED' }),
     );
-    expect(same.note).toBe('Lo declaraste el 15/11/2026 y lo respalda lo que vio MODIS.');
+    expect(same.note).toBe('You declared it on 15/11/2026, and what MODIS saw supports it.');
     const [counted] = practiceRows(declaredLot(true).slice(0, 1), declared(true), 'match');
     expect(counted.note).toBe(
-      'Lo declaraste el 15/11/2026 y lo respalda lo que vio MODIS. El puntaje provisional y la huella usan tu declaración.',
+      'You declared it on 15/11/2026, and what MODIS saw supports it. The provisional score and the footprint use your declaration.',
     );
-    expect(counted.note).not.toContain('todavía no');
+    expect(counted.note).not.toContain('not yet');
 
     const [review] = practiceRows([landUse], declared(true), 'mismatch');
     expect(review).toEqual(
-      expect.objectContaining({ chip: 'Revisar', icon: 'alert', tone: 'warn', declared: true }),
+      expect.objectContaining({ chip: 'Review', icon: 'alert', tone: 'warn', declared: true }),
     );
-    expect(review.note).toContain('no coincide con lo que vio MODIS: revisalo');
+    expect(review.note).toContain('does not match what MODIS saw: check it');
 
     const [change] = practiceRows([landUse], declared(false), 'declared_change');
-    expect(change).toEqual(expect.objectContaining({ status: 'no_cumple', chip: 'No cumple' }));
-    expect(change.note).toContain('Declaraste el 15/11/2026 que hubo un cambio de uso del suelo.');
+    expect(change).toEqual(expect.objectContaining({ status: 'no_cumple', chip: 'Not met' }));
+    expect(change.note).toContain('On 15/11/2026 you declared a land-use change.');
 
     const [waiting] = practiceRows([landUse], declared(true), 'no_modis');
-    expect(waiting.note).toContain('Lo declaraste el 15/11/2026.');
+    expect(waiting.note).toContain('You declared it on 15/11/2026.');
 
     // un empate de MODIS en el año base no contradice: la fila no pide revisar
     const [unclear] = practiceRows([landUse], declared(true), 'unconfirmed');
-    expect(unclear).toEqual(expect.objectContaining({ chip: 'Cumple', tone: 'ok' }));
-    expect(unclear.note).toContain('MODIS no alcanza para confirmarlo');
+    expect(unclear).toEqual(expect.objectContaining({ chip: 'Met', tone: 'ok' }));
+    expect(unclear.note).toContain('MODIS is not enough to confirm it');
   });
 
   it('si la bitácora registra un cambio de uso, manda ese evento y pide revisar lo declarado', () => {
@@ -266,18 +266,18 @@ describe('practiceRows', () => {
     expect(review).toEqual(
       expect.objectContaining({
         status: 'no_cumple',
-        chip: 'Revisar',
+        chip: 'Review',
         tone: 'warn',
         origin: 'VERIFIED',
         declared: false,
       }),
     );
-    expect(review.note).toContain('la bitácora registra un cambio de uso del suelo');
-    expect(review.note).toContain('el puntaje y la huella usan ese evento');
+    expect(review.note).toContain('the field log records a land-use change');
+    expect(review.note).toContain('the score and the footprint use that event');
 
     const [agree] = practiceRows([detected], declared(false), 'declared_change');
-    expect(agree).toEqual(expect.objectContaining({ chip: 'No cumple', origin: 'VERIFIED' }));
-    expect(agree.note).toContain('la bitácora también lo registra');
+    expect(agree).toEqual(expect.objectContaining({ chip: 'Not met', origin: 'VERIFIED' }));
+    expect(agree.note).toContain('the field log records it too');
   });
 
   it('las demás prácticas no cambian con la declaración', () => {
@@ -341,37 +341,37 @@ describe('LotPractices', () => {
 
     const recs = [...el().querySelectorAll('.rec')];
     expect(recs.map((rec) => squash(rec.querySelector('.rec__action')?.textContent))).toEqual([
-      'Sumá un cultivo de cobertura en invierno.',
-      'Dejá el rastrojo como cobertura, sin quemarlo.',
-      'Alterná cultivos entre campañas.',
+      'Add a winter cover crop.',
+      'Leave the crop residue as cover, without burning it.',
+      'Rotate crops between seasons.',
     ]);
     // el porqué y el estado de hoy, en la ayuda (i) de cada tarjeta
-    expect(tipOf(recs[0])).toContain('Hoy figura como «No cumple»');
+    expect(tipOf(recs[0])).toContain('It currently shows as “Not met”');
     expect(recs[0].querySelector('app-info-tip button')?.getAttribute('aria-label')).toBe(
-      'Por qué: Sumá un cultivo de cobertura en invierno.',
+      'Why: Add a winter cover crop.',
     );
     // las recomendaciones son una región con nombre
     const region = el().querySelector('section.recs-block');
     expect(el().querySelector(`#${region?.getAttribute('aria-labelledby')}`)?.textContent).toBe(
-      'Qué conviene hacer',
+      'What to do next',
     );
 
     const rows = [...el().querySelectorAll('.practices li')];
     expect(rows.map((row) => row.querySelector('.state')?.textContent?.trim())).toEqual([
-      'Sin dato',
-      'Cumple',
-      'No cumple',
-      'Sin dato',
-      'No cumple',
+      'No data',
+      'Met',
+      'Not met',
+      'No data',
+      'Not met',
     ]);
     // el estado nunca va solo con color: cada chip lleva su ícono
     expect(rows.every((row) => row.querySelector('.state app-icon'))).toBe(true);
-    expect(squash(rows[1].querySelector('.name')?.textContent)).toBe('Siembra directa Estimado');
-    expect(squash(el().querySelector('.score')?.textContent)).toBe('Puntaje provisional 40 de 100');
+    expect(squash(rows[1].querySelector('.name')?.textContent)).toBe('No-till Estimated');
+    expect(squash(el().querySelector('.score')?.textContent)).toBe('Provisional score 40 of 100');
     // a la vista no hay párrafos: ni porqués ni motivos del backend
     expect(visible()).not.toContain('Motivo de');
-    expect(visible()).not.toContain('erosión');
-    expect(text()).not.toContain('Dato simulado para la demostración');
+    expect(visible()).not.toContain('erosion');
+    expect(text()).not.toContain('Simulated data for the demo');
   });
 
   it('el enlace de una recomendación pide la pestaña al espacio del lote, sin navegar', async () => {
@@ -382,9 +382,9 @@ describe('LotPractices', () => {
 
     const links = [...el().querySelectorAll<HTMLAnchorElement>('.rec__link')];
     expect(links.map((link) => squash(link.textContent))).toEqual([
-      'Simular en Huella',
-      'Revisar en Bitácora',
-      'Ir a Fertilización',
+      'Simulate in Footprint',
+      'Review in Field log',
+      'Go to Fertilization',
     ]);
     // con dirección de verdad: Ctrl+clic o el botón del medio abren la pestaña aparte
     expect(links[0].getAttribute('href')).toBe('/huella/1?vista=simulador');
@@ -412,12 +412,12 @@ describe('LotPractices', () => {
     const how = el().querySelector('app-disclosure .how');
     const howText = squash(how?.textContent);
     expect(howText).toContain('Prueba de concepto: no es una calculadora auditada.');
-    expect(howText).toContain('por eso es provisional');
-    expect(howText).toContain('vale 20 de 100 puntos');
-    expect(howText).toContain('Siembra directa (sin remoción de suelo)');
+    expect(howText).toContain('that is why it is provisional');
+    expect(howText).toContain('worth 20 of 100 points');
+    expect(howText).toContain('No-till (no soil disturbance)');
     expect(howText).toContain('Motivo de no_burn.');
-    expect(howText).toContain('Confianza baja. Regla.');
-    expect(howText).toContain('Quema del 02/08/2026');
+    expect(howText).toContain('Confidence: low. Regla.');
+    expect(howText).toContain('Burning on 02/08/2026');
     expect(how?.querySelectorAll('.how__item').length).toBe(5);
     expect(how?.querySelectorAll('.how__evidence app-origin-badge').length).toBe(1);
   });
@@ -425,16 +425,16 @@ describe('LotPractices', () => {
   it('en un lote nuevo lo dice en una línea, sin culpar a nadie', async () => {
     await render(LOT, score(NEW_LOT));
 
-    expect(el().querySelector('h2')?.textContent).toContain('Buenas prácticas');
-    expect(visible()).toContain('Todavía no hay labores en la bitácora.');
-    expect(el().querySelector('.score .score__none')?.textContent?.trim()).toBe('Sin calcular');
+    expect(el().querySelector('h2')?.textContent).toContain('Good practices');
+    expect(visible()).toContain('No field work in the field log yet.');
+    expect(el().querySelector('.score .score__none')?.textContent?.trim()).toBe('Not calculated');
     expect(el().querySelector('.score .stat__hint')?.textContent?.trim()).toBe(
-      'Faltan datos de 5 prácticas',
+      'Missing data for 5 practices',
     );
     expect(el().querySelectorAll('.rec').length).toBe(3);
     // las cinco sin dato van plegadas en una línea: "Sin dato" no se repite en cada fila
     expect(squash(el().querySelector('.folded summary')?.textContent)).toContain(
-      '5 prácticas sin dato todavía',
+      '5 practices with no data yet',
     );
     expect(el().querySelectorAll('app-disclosure.folded .practices li').length).toBe(5);
     expect(el().querySelectorAll('.practices li').length).toBe(5);
@@ -446,13 +446,13 @@ describe('LotPractices', () => {
       (row) => !row.closest('app-disclosure'),
     );
     expect(shown.length).toBe(1);
-    expect(shown[0].querySelector('.state')?.textContent?.trim()).toBe('Cumple');
+    expect(shown[0].querySelector('.state')?.textContent?.trim()).toBe('Met');
     expect(squash(el().querySelector('.folded summary')?.textContent)).toContain(
-      '4 prácticas sin dato todavía',
+      '4 practices with no data yet',
     );
     // el puntaje ya usa la declaración: faltan las mismas que en la lista, sin más aclaraciones
     expect(el().querySelector('.score .stat__hint')?.textContent?.trim()).toBe(
-      'Faltan datos de 4 prácticas',
+      'Missing data for 4 practices',
     );
     expect(text()).not.toContain('no suma');
   });
@@ -470,8 +470,8 @@ describe('LotPractices', () => {
   it('en un ejemplo es de solo lectura: no invita a declarar y muestra solo lo de MODIS', async () => {
     await render({ ...LOT, is_example: true, owned: false }, score(NEW_LOT));
 
-    expect(button('No cambié')).toBeUndefined();
-    expect(text()).not.toContain('Declarado por vos');
+    expect(button('No, it did not change')).toBeUndefined();
+    expect(text()).not.toContain('Declared by you');
     expect(el().querySelectorAll('app-land-use-card .year').length).toBe(4);
   });
 
@@ -480,11 +480,11 @@ describe('LotPractices', () => {
     await render(lot, score(declaredLot(true)));
 
     const row = landUseRow();
-    expect(row?.querySelector('.state')?.textContent?.trim()).toBe('Cumple');
-    expect(row?.querySelector('app-origin-badge')?.textContent).toContain('Declarado');
-    expect(tipOf(row)).toContain('lo respalda lo que vio MODIS');
-    expect(tipOf(row)).toContain('El puntaje provisional y la huella usan tu declaración');
-    expect(visible()).toContain('Respaldado por lo que vio MODIS');
+    expect(row?.querySelector('.state')?.textContent?.trim()).toBe('Met');
+    expect(row?.querySelector('app-origin-badge')?.textContent).toContain('Declared');
+    expect(tipOf(row)).toContain('what MODIS saw supports it');
+    expect(tipOf(row)).toContain('The provisional score and the footprint use your declaration');
+    expect(visible()).toContain('Supported by what MODIS saw');
     // lo declarado ya no se recomienda como si faltara el dato
     const recs = [...el().querySelectorAll('.rec')].map((rec) => rec.textContent ?? '');
     expect(recs.some((rec) => rec.includes('montes'))).toBe(false);
@@ -493,7 +493,7 @@ describe('LotPractices', () => {
     expect(how).toContain(
       'El productor declaró que el lote no cambió de uso del suelo desde 2020.',
     );
-    expect(how).not.toContain('todavía no entra');
+    expect(how).not.toContain('not counted yet');
   });
 
   it('si la bitácora registra el cambio de uso, "Cómo se calcula" dice que manda ese evento', async () => {
@@ -514,9 +514,9 @@ describe('LotPractices', () => {
         : c,
     );
     await render({ ...LOT, land_use_declaration: declared(true) }, score(detected));
-    expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('Revisar');
+    expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('Review');
     expect(squash(el().querySelector('app-disclosure .how')?.textContent)).toContain(
-      'Tu declaración del 15/11/2026 no cuenta acá: manda el cambio de uso que registra la bitácora.',
+      'Your declaration of 15/11/2026 does not count here: the land-use change recorded in the field log takes precedence.',
     );
   });
 
@@ -525,9 +525,9 @@ describe('LotPractices', () => {
     await render({ ...LOT, land_use_declaration: declared(true) }, score(declaredLot(true)));
 
     const state = landUseRow()?.querySelector('.state');
-    expect(state?.textContent?.trim()).toBe('Revisar');
+    expect(state?.textContent?.trim()).toBe('Review');
     expect(state?.classList).toContain('chip--warn');
-    expect(visible()).toContain('No coincide con MODIS: revisalo');
+    expect(visible()).toContain('Does not match MODIS: review it');
   });
 
   it('sin declaración, si el puntaje lo da por cumplido y MODIS vio otro uso, pide revisarlo', async () => {
@@ -541,27 +541,27 @@ describe('LotPractices', () => {
 
     const row = landUseRow();
     const state = row?.querySelector('.state');
-    expect(state?.textContent?.trim()).toBe('Revisar');
+    expect(state?.textContent?.trim()).toBe('Review');
     expect(state?.classList).toContain('chip--warn');
-    expect(row?.querySelector('app-origin-badge')?.textContent).toContain('Estimado');
+    expect(row?.querySelector('app-origin-badge')?.textContent).toContain('Estimated');
     expect(row?.querySelector('app-info-tip button')?.getAttribute('aria-label')).toBe(
-      'MODIS y el puntaje',
+      'MODIS and the score',
     );
-    expect(tipOf(row)).toContain('MODIS vio un uso distinto');
+    expect(tipOf(row)).toContain('MODIS saw a different use');
 
     // si MODIS no vio nada distinto, queda lo que dice el puntaje
     modis.set(MODIS_SAME);
     await fixture.whenStable();
-    expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('Cumple');
+    expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('Met');
   });
 
   it('al declarar desde la tarjeta, la fila pasa a mostrar lo declarado y el puntaje se pide de nuevo', async () => {
     const emitted: LandUseDeclaration[] = [];
     fixture.componentInstance.declared.subscribe((value) => emitted.push(value));
     await render(LOT, score(NEW_LOT));
-    expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('Sin dato');
+    expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('No data');
 
-    button('Sí, hubo un cambio')?.click();
+    button('Yes, there was a change')?.click();
     await fixture.whenStable();
     http.expectOne('/api/lots/1/land-use/').flush(declared(false));
     await fixture.whenStable();
@@ -569,22 +569,24 @@ describe('LotPractices', () => {
     // el espacio del lote se entera, así la declaración sigue al volver a la pestaña
     expect(emitted).toEqual([declared(false)]);
     // mientras llega el puntaje nuevo se ve lo declarado
-    expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('No cumple');
-    expect(visible()).toContain('Con un cambio, la práctica no se cumple');
+    expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('Not met');
+    expect(visible()).toContain('With a change, the practice is not met');
 
     // el backend ya usa la declaración: el puntaje se vuelve a pedir y la ayuda lo dice
     http.expectOne('/api/lots/1/score/').flush(score(declaredLot(false)));
     await fixture.whenStable();
-    expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('No cumple');
-    expect(tipOf(landUseRow())).toContain('El puntaje provisional y la huella usan tu declaración');
+    expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('Not met');
+    expect(tipOf(landUseRow())).toContain(
+      'The provisional score and the footprint use your declaration',
+    );
     expect(el().querySelector('.score .stat__hint')?.textContent?.trim()).toBe(
-      'Faltan datos de 4 prácticas',
+      'Missing data for 4 practices',
     );
   });
 
   it('sin editable no ofrece declarar aunque el lote sea propio', async () => {
     await render(LOT, score(NEW_LOT), false);
-    expect(button('No cambié')).toBeUndefined();
+    expect(button('No, it did not change')).toBeUndefined();
   });
 
   it('avisa si alguna evidencia es simulada', async () => {
@@ -598,7 +600,7 @@ describe('LotPractices', () => {
         : c,
     );
     await render(LOT, score(simulated));
-    expect(visible()).toContain('Dato simulado para la demostración');
+    expect(visible()).toContain('Simulated data for the demo');
   });
 
   it('si no carga, lo dice y deja reintentar', async () => {
@@ -606,11 +608,9 @@ describe('LotPractices', () => {
     await fixture.whenStable();
     http.expectOne('/api/lots/1/score/').flush('', { status: 500, statusText: 'Error' });
     await fixture.whenStable();
-    expect(text()).toContain('No se pudieron cargar las buenas prácticas');
+    expect(text()).toContain('Could not load good practices');
 
-    [...el().querySelectorAll('button')]
-      .find((b) => b.textContent?.trim() === 'Reintentar')
-      ?.click();
+    [...el().querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Retry')?.click();
     await fixture.whenStable();
     http.expectOne('/api/lots/1/score/').flush(score(MIXED));
     await fixture.whenStable();

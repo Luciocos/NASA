@@ -59,7 +59,7 @@ describe('FootprintPage', () => {
 
   const practicesLink = () =>
     [...el().querySelectorAll('a')].find((a) =>
-      a.textContent?.includes('Ver puntaje y buenas prácticas'),
+      a.textContent?.includes('See score and good practices'),
     )!;
 
   afterEach(() => {
@@ -73,25 +73,25 @@ describe('FootprintPage', () => {
     await flush();
     expect(text()).toContain('Lote de prueba');
     expect(el().querySelector('app-lot-tabs')).not.toBeNull();
-    expect(text()).toContain('Huella estimada');
-    expect(text()).toContain('Todavía no se puede calcular');
+    expect(text()).toContain('Estimated footprint');
+    expect(text()).toContain('Cannot be calculated yet');
     // a la vista: los chips de lo que falta y el aviso de provisional
-    expect(text()).toContain('Provisional · prueba de concepto');
+    expect(text()).toContain('Provisional · proof of concept');
     // el detalle, en las ayudas (i): están en el DOM aunque cerradas
-    expect(text()).toContain('Qué falta para calcularla');
+    expect(text()).toContain('What is missing to calculate it');
     expect(text()).toContain('Faltan 1 de 1 componentes y falta el rendimiento.');
-    expect(text()).toContain('Rinde de la campaña 2025/26');
-    expect(text()).toContain('Insumos gasoil');
-    expect(text()).toContain('Factor de emisión con fuente gasoil');
-    expect(text()).toContain('Nivel de confianza: Bajo');
-    expect(text()).toContain('Estimación con respaldo satelital. Prueba de concepto.');
-    expect(text()).toContain('Los valores son provisionales.');
-    expect(text()).toContain('Dato simulado para la demostración');
+    expect(text()).toContain('Yield for the 2025/26 season');
+    expect(text()).toContain('Inputs diesel');
+    expect(text()).toContain('Emission factor with a source diesel');
+    expect(text()).toContain('Confidence level: Low');
+    expect(text()).toContain('Satellite-backed estimate. Proof of concept.');
+    expect(text()).toContain('Values are provisional.');
+    expect(text()).toContain('Simulated data for the demo');
     // el desglose está en el DOM aunque su vista esté oculta, con el motivo de cada componente
     expect(text()).toContain('Gasoil de labores');
-    expect(text()).toContain('Falta el factor de emisión');
-    expect(text()).toContain('Estimado');
-    expect(text()).toContain('Simulación: no modifica los datos del lote.');
+    expect(text()).toContain('Missing data and factor');
+    expect(text()).toContain('Estimated');
+    expect(text()).toContain('Simulation: it does not change the field’s data.');
     expect(text().toLowerCase()).not.toContain('certific');
   });
 
@@ -99,7 +99,7 @@ describe('FootprintPage', () => {
     await setup();
     await flush();
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
-    expect(text()).not.toContain('Puntaje de sustentabilidad');
+    expect(text()).not.toContain('Sustainability score');
     expect(practicesLink().getAttribute('href')).toBe('/lotes/1/practicas');
     // como página (nadie escucha openTab) navega a la pestaña Prácticas
     practicesLink().click();
@@ -129,12 +129,12 @@ describe('FootprintPage', () => {
     expect(el().querySelector('app-lot-tabs')).toBeNull();
     // el popup titula el lote con un h2: adentro, los títulos bajan a h3
     expect(el().querySelector('app-footprint-summary h3')?.textContent).toContain(
-      'Huella estimada',
+      'Estimated footprint',
     );
     expect(el().querySelector('h2')).toBeNull();
     // ?vista= es la vista interna de la huella también en el popup
-    expect(tab('Simulador').getAttribute('aria-selected')).toBe('true');
-    tab('Desglose').click();
+    expect(tab('Simulator').getAttribute('aria-selected')).toBe('true');
+    tab('Breakdown').click();
     await fixture.whenStable();
     expect(panel('desglose').hidden).toBe(false);
     expect(navigate).toHaveBeenLastCalledWith([], {
@@ -171,7 +171,7 @@ describe('FootprintPage', () => {
   it('acepta el id como texto, como lo pasa el router al enlazar parámetros', async () => {
     await setup({}, { lotId: '12' });
     await flush({}, makeFootprint(), 12);
-    expect(text()).toContain('Todavía no se puede calcular');
+    expect(text()).toContain('Cannot be calculated yet');
   });
 
   it('muestra el valor por tonelada cuando el backend lo calcula', async () => {
@@ -186,8 +186,8 @@ describe('FootprintPage', () => {
         components: [makeComponent()],
       }),
     );
-    expect(text()).toContain('37,5 kg CO2e/t');
-    expect(text()).not.toContain('Qué falta para calcularla');
+    expect(text()).toContain('37.5 kg CO2e/t');
+    expect(text()).not.toContain('What is missing to calculate it');
   });
 
   it('pide la huella de la campaña elegida', async () => {
@@ -209,20 +209,20 @@ describe('FootprintPage', () => {
     const navigate = vi.spyOn(router, 'navigate');
 
     expect(tabs().map((t) => t.textContent?.trim())).toEqual([
-      'Resumen',
-      'Desglose',
-      'Simulador',
-      'Tus datos',
+      'Summary',
+      'Breakdown',
+      'Simulator',
+      'Your data',
     ]);
-    expect(tab('Resumen').getAttribute('aria-selected')).toBe('true');
+    expect(tab('Summary').getAttribute('aria-selected')).toBe('true');
     expect(panel('resumen').hidden).toBe(false);
     expect(panel('desglose').hidden).toBe(true);
 
-    tab('Desglose').click();
+    tab('Breakdown').click();
     await fixture.whenStable();
-    expect(tab('Desglose').getAttribute('aria-selected')).toBe('true');
-    expect(tab('Desglose').tabIndex).toBe(0);
-    expect(tab('Resumen').tabIndex).toBe(-1);
+    expect(tab('Breakdown').getAttribute('aria-selected')).toBe('true');
+    expect(tab('Breakdown').tabIndex).toBe(0);
+    expect(tab('Summary').tabIndex).toBe(-1);
     expect(panel('desglose').hidden).toBe(false);
     expect(panel('resumen').hidden).toBe(true);
     expect(navigate).toHaveBeenLastCalledWith([], {
@@ -233,45 +233,45 @@ describe('FootprintPage', () => {
     });
 
     // con las flechas avanza, da la vuelta y lleva el foco a la pestaña elegida
-    tab('Desglose').dispatchEvent(
+    tab('Breakdown').dispatchEvent(
       new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
     );
     await fixture.whenStable();
-    expect(tab('Simulador').getAttribute('aria-selected')).toBe('true');
-    expect(document.activeElement).toBe(tab('Simulador'));
+    expect(tab('Simulator').getAttribute('aria-selected')).toBe('true');
+    expect(document.activeElement).toBe(tab('Simulator'));
     expect(navigate).toHaveBeenLastCalledWith([], {
       queryParams: { vista: 'simulador' },
       queryParamsHandling: 'merge',
       replaceUrl: true,
       scroll: 'manual',
     });
-    tab('Simulador').dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    tab('Simulator').dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
     await fixture.whenStable();
-    expect(tab('Tus datos').getAttribute('aria-selected')).toBe('true');
-    tab('Tus datos').dispatchEvent(
+    expect(tab('Your data').getAttribute('aria-selected')).toBe('true');
+    tab('Your data').dispatchEvent(
       new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
     );
     await fixture.whenStable();
-    expect(tab('Resumen').getAttribute('aria-selected')).toBe('true');
+    expect(tab('Summary').getAttribute('aria-selected')).toBe('true');
   });
 
   it('abre la vista del enlace (?vista=simulador)', async () => {
     await setup({ vista: 'simulador' });
     await flush();
-    expect(tab('Simulador').getAttribute('aria-selected')).toBe('true');
+    expect(tab('Simulator').getAttribute('aria-selected')).toBe('true');
     expect(panel('simulador').hidden).toBe(false);
   });
 
   it('la acción principal abre Tus datos con el formulario', async () => {
     await setup();
     await flush();
-    button('Cargar rinde e insumos')!.click();
+    button('Enter yield and inputs')!.click();
     await fixture.whenStable();
-    expect(tab('Tus datos').getAttribute('aria-selected')).toBe('true');
+    expect(tab('Your data').getAttribute('aria-selected')).toBe('true');
     expect(panel('datos').hidden).toBe(false);
     expect(panel('datos').querySelector('app-declaration-form')).not.toBeNull();
     // ya está en el formulario: la acción no se repite
-    expect(button('Cargar rinde e insumos')).toBeUndefined();
+    expect(button('Enter yield and inputs')).toBeUndefined();
   });
 
   it('con el rinde ya cargado no repite la vista "Tus datos" con un botón en el resumen', async () => {
@@ -281,26 +281,26 @@ describe('FootprintPage', () => {
       {},
       { ...footprint, yield: { ...footprint.yield, value: 3.2, origin: 'DECLARED' } },
     );
-    expect(button('Cargar rinde e insumos')).toBeUndefined();
-    expect(button('Ver tus datos')).toBeUndefined();
+    expect(button('Enter yield and inputs')).toBeUndefined();
+    expect(button('See your data')).toBeUndefined();
     // en el resumen solo quedan las ayudas (i): ninguna acción
     expect(el().querySelector('app-footprint-summary button.btn')).toBeNull();
     // lo declarado se revisa en su vista, a un toque
-    tab('Tus datos').click();
+    tab('Your data').click();
     await fixture.whenStable();
-    expect(tab('Tus datos').getAttribute('aria-selected')).toBe('true');
+    expect(tab('Your data').getAttribute('aria-selected')).toBe('true');
   });
 
   it('en un ejemplo no se cargan datos: ni la acción ni la vista Tus datos', async () => {
     await setup({ vista: 'datos' });
     await flush({ is_example: true, owned: false });
-    expect(button('Cargar rinde e insumos')).toBeUndefined();
+    expect(button('Enter yield and inputs')).toBeUndefined();
     expect(el().querySelector('app-declaration-form')).toBeNull();
-    expect(tabs().map((t) => t.textContent?.trim())).toEqual(['Resumen', 'Desglose', 'Simulador']);
+    expect(tabs().map((t) => t.textContent?.trim())).toEqual(['Summary', 'Breakdown', 'Simulator']);
     // quien mira un ejemplo no carga nada: lo carga el productor
-    expect(text()).toContain('Insumos gasoil: los carga el productor.');
+    expect(text()).toContain('Inputs diesel: the farmer enters them.');
     // ?vista=datos no existe en un ejemplo: vuelve al resumen
-    expect(tab('Resumen').getAttribute('aria-selected')).toBe('true');
+    expect(tab('Summary').getAttribute('aria-selected')).toBe('true');
   });
 
   it('un lote ajeno o inexistente invita a ingresar', async () => {
@@ -317,12 +317,12 @@ describe('FootprintPage', () => {
     http.expectOne('/api/lots/1/').flush('', { status: 500, statusText: 'Server Error' });
     http.expectOne('/api/lots/1/footprint/').flush('', { status: 500, statusText: 'Server Error' });
     await fixture.whenStable();
-    expect(text()).toContain('No pudimos mostrar este lote en este momento.');
+    expect(text()).toContain('We could not show this field right now.');
     expect(text().toLowerCase()).not.toContain('backend');
 
-    button('Reintentar')!.click();
+    button('Retry')!.click();
     await fixture.whenStable();
     await flush();
-    expect(text()).toContain('Todavía no se puede calcular');
+    expect(text()).toContain('Cannot be calculated yet');
   });
 });

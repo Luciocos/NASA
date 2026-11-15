@@ -23,29 +23,29 @@ interface Field {
 const FIELDS: Field[] = [
   {
     key: 'FERTILIZER_N',
-    label: 'Nitrógeno',
+    label: 'Nitrogen',
     unit: 'kg N/ha',
-    hint: 'aplicado como nutriente, no como producto: 100 kg de urea son 46 kg de N.',
+    hint: 'applied as a nutrient, not as a product: 100 kg of urea is 46 kg of N.',
   },
   {
     key: 'FERTILIZER_P',
-    label: 'Fósforo',
+    label: 'Phosphorus',
     unit: 'kg P2O5/ha',
-    hint: 'aplicado como nutriente, no como producto: 100 kg de MAP son 52 kg de P2O5.',
+    hint: 'applied as a nutrient, not as a product: 100 kg of MAP is 52 kg of P2O5.',
   },
   {
     key: 'DIESEL',
-    label: 'Gasoil',
+    label: 'Diesel',
     unit: 'l/ha',
-    hint: 'el de las labores: siembra, pulverizaciones y cosecha.',
+    hint: 'used in field work: sowing, spraying and harvest.',
   },
   {
     key: 'PESTICIDE',
-    label: 'Fitosanitarios',
-    unit: 'kg p. a./ha',
-    hint: 'herbicidas, insecticidas y fungicidas, en kg de principio activo (p. a.) por hectárea.',
+    label: 'Pesticides',
+    unit: 'kg a.i./ha',
+    hint: 'herbicides, insecticides and fungicides, in kg of active ingredient (a.i.) per hectare.',
   },
-  { key: 'SEED', label: 'Semilla', unit: 'kg/ha', hint: '' },
+  { key: 'SEED', label: 'Seed', unit: 'kg/ha', hint: '' },
 ];
 
 // Componente de la huella del que se toma el valor declarado de cada categoría
@@ -58,10 +58,10 @@ const COMPONENT_OF: Record<DeclarableInput, string> = {
 };
 
 const CROPS: { value: Crop; label: string }[] = [
-  { value: 'SOY', label: 'Soja' },
-  { value: 'CORN', label: 'Maíz' },
-  { value: 'WHEAT', label: 'Trigo' },
-  { value: 'OTHER', label: 'Otro' },
+  { value: 'SOY', label: 'Soybean' },
+  { value: 'CORN', label: 'Corn' },
+  { value: 'WHEAT', label: 'Wheat' },
+  { value: 'OTHER', label: 'Other' },
 ];
 
 /**
@@ -149,8 +149,8 @@ export class DeclarationForm {
     if (!body.campaign || invalid.length > 0) {
       this.error.set(
         !body.campaign
-          ? 'Escribí la campaña, por ejemplo 2026/27.'
-          : 'Revisá los campos marcados: usá solo números, con coma para los decimales.',
+          ? 'Enter the season, for example 2026/27.'
+          : 'Check the highlighted fields: use numbers only, for example 9.5.',
       );
       return;
     }
@@ -170,12 +170,12 @@ export class DeclarationForm {
   }
 }
 
-/** valor precargado con coma decimal y sin separador de miles: 9.5 -> "9,5" */
+/** valor precargado con punto decimal y sin separador de miles, como el resto de la pantalla: 9.5 -> "9.5" */
 function toText(value: number): string {
-  return String(value).replace('.', ',');
+  return String(value);
 }
 
-/** Campo vacío: null (borra lo declarado). Acepta coma decimal. */
+/** Campo vacío: null (borra lo declarado). Acepta punto o coma decimal. */
 function toNumber(raw: string): number | null {
   const text = raw.trim().replace(',', '.');
   if (text === '') return null;
@@ -185,18 +185,18 @@ function toNumber(raw: string): number | null {
 
 /** nombre de cada campo del backend en el idioma de la pantalla */
 const FIELD_NAMES: Record<string, string> = {
-  campaign: 'Campaña',
-  crop: 'Cultivo',
-  yield_t_ha: 'Rinde',
-  inputs: 'Insumos',
+  campaign: 'Season',
+  crop: 'Crop',
+  yield_t_ha: 'Yield',
+  inputs: 'Inputs',
 };
 
 /** el error en lenguaje llano: sin conexión, sin permiso o lo que el servidor objetó del dato */
 function describeError(err: HttpErrorResponse): string {
-  if (err.status === 0) return 'No hay conexión: revisá tu internet y probá de nuevo.';
-  if (err.status === 401) return 'Tu sesión se cerró: volvé a ingresar para guardar tus datos.';
-  if (err.status === 403) return 'Este lote es de solo lectura: no se pueden cargar datos.';
-  if (err.status >= 500) return 'No pudimos guardar en este momento. Probá de nuevo en un rato.';
+  if (err.status === 0) return 'No connection: check your internet and try again.';
+  if (err.status === 401) return 'Your session has ended: log in again to save your data.';
+  if (err.status === 403) return 'This field is read-only: data cannot be entered.';
+  if (err.status >= 500) return 'We could not save right now. Please try again in a moment.';
   const body = err.error as Record<string, unknown> | null;
   if (body && typeof body === 'object') {
     const text = Object.entries(body)
@@ -207,9 +207,9 @@ function describeError(err: HttpErrorResponse): string {
       })
       .filter(Boolean)
       .join(' · ');
-    if (text) return `No se pudo guardar. ${text}`;
+    if (text) return `Could not save. ${text}`;
   }
-  return 'No se pudo guardar. Probá de nuevo.';
+  return 'Could not save. Please try again.';
 }
 
 /** los textos de un error de validación, aunque vengan anidados ({"inputs": {"DIESEL": [..]}}) */

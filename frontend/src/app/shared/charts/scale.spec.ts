@@ -179,7 +179,7 @@ describe('timeTicks', () => {
     const { unit, ticks } = timeTicks('2026-08-28', '2026-10-31', 8);
     expect(unit).toBe('month');
     expect(ticks.map((tick) => tick.date)).toEqual(['2026-09-01', '2026-10-01']);
-    expect(ticks.map((tick) => tick.label)).toEqual(['sep 26', 'oct 26']);
+    expect(ticks.map((tick) => tick.label)).toEqual(['Sep 26', 'Oct 26']);
     expect(ticks.every((tick) => !tick.major)).toBe(true);
   });
 
@@ -192,7 +192,7 @@ describe('timeTicks', () => {
       '2023-10-01',
       '2024-01-01',
     ]);
-    expect(ticks.map((tick) => tick.label)).toEqual(['abr 23', 'jul 23', 'oct 23', 'ene 24']);
+    expect(ticks.map((tick) => tick.label)).toEqual(['Apr 23', 'Jul 23', 'Oct 23', 'Jan 24']);
     expect(ticks.map((tick) => tick.major)).toEqual([false, false, false, true]);
   });
 
@@ -217,7 +217,7 @@ describe('timeTicks', () => {
   it('cruza el cambio de año', () => {
     const { ticks } = timeTicks('2025-12-31', '2026-01-01', 8);
     expect(ticks.map((tick) => tick.date)).toEqual(['2026-01-01']);
-    expect(ticks[0].label).toBe('ene 26');
+    expect(ticks[0].label).toBe('Jan 26');
     expect(ticks[0].major).toBe(true);
   });
 

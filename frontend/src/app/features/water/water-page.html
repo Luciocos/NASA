@@ -9,25 +9,25 @@
     }
     <app-page-header
       [kicker]="lot()?.name ?? null"
-      heading="Cuenca y Caudal"
-      subtitle="De dónde viene el agua que llega al lote, cuánto escurre con una lluvia y dónde se junta."
+      heading="Watershed"
+      subtitle="Where the water that reaches the field comes from, how much runs off in a rainfall event and where it collects."
     />
   }
 
   @if (unavailable(); as message) {
-    <app-section-card heading="Cuenca y Caudal" subtitle="Análisis hidrológico del lote">
+    <app-section-card heading="Watershed" subtitle="Hydrological analysis of the field">
       <p class="empty"><app-icon name="info" /> {{ message }}</p>
     </app-section-card>
   } @else {
     <p class="notice" role="note">
       <app-icon name="alert" />
       <span>
-        Estimaciones de un modelo físico con datos satelitales, sin validar: en esta cuenca no hay
-        caudales ni niveles medidos.
+        Estimates from a physical model with satellite data, not validated: there are no measured
+        flows or water levels in this watershed.
       </span>
     </p>
 
-    <nav class="sections" aria-label="Secciones de Cuenca y Caudal">
+    <nav class="sections" aria-label="Watershed sections">
       @for (s of sections; track s.key; let i = $index) {
         <button
           type="button"
@@ -45,20 +45,20 @@
       <p class="outlet-bar">
         <app-icon name="pin" />
         <span>
-          Punto de salida: {{ num(a.outlet.lat, 5) }}, {{ num(a.outlet.lng, 5) }}
+          Outlet point: {{ num(a.outlet.lat, 5) }}, {{ num(a.outlet.lng, 5) }}
           @if (a.outlet.elevation_m !== null) {
-            · {{ num(a.outlet.elevation_m) }} m s. n. m. (DEM)
+            · {{ num(a.outlet.elevation_m) }} m a.s.l. (DEM)
           }
-          · {{ outlet() ? 'elegido en el mapa' : 'salida principal del lote' }}.
-          <span class="hint">Hacé clic en el mapa para analizar otro punto.</span>
+          · {{ outlet() ? 'picked on the map' : 'main outlet of the field' }}.
+          <span class="hint">Click the map to analyze another point.</span>
         </span>
         @if (outlet()) {
           <button type="button" class="btn btn--sm btn--ghost" (click)="pickOutlet(null)">
-            Volver a la salida del lote
+            Back to the field outlet
           </button>
         }
         @if (loadingAnalysis()) {
-          <span class="status" role="status">Calculando la cuenca…</span>
+          <span class="status" role="status">Calculating the watershed…</span>
         }
       </p>
     }
@@ -68,8 +68,8 @@
         <div class="layout">
           <app-section-card
             class="map-card"
-            heading="A · Cuenca aportante"
-            subtitle="Toda la superficie aguas arriba, también fuera del lote."
+            heading="A · Contributing basin"
+            subtitle="All the upstream area, including outside the field."
             flush
           >
             @if (lot(); as lot) {
@@ -85,84 +85,85 @@
             }
             <ul footer class="legend">
               <li>
-                <span class="sw sw--line" [style.border-color]="style.contributing"></span> Aporta
-                al lote
+                <span class="sw sw--line" [style.border-color]="style.contributing"></span> Drains
+                into the field
               </li>
               <li>
-                <span class="sw" [style.border-color]="style.basin"></span> Cuenca al punto de
-                salida
+                <span class="sw" [style.border-color]="style.basin"></span> Basin at the outlet
+                point
               </li>
               <li>
-                <span class="sw sw--thin" [style.border-color]="style.stream"></span> Cauce
-                potencial (DEM)
+                <span class="sw sw--thin" [style.border-color]="style.stream"></span> Potential
+                channel (DEM)
               </li>
               <li>
-                <span class="sw sw--thin" [style.border-color]="style.osm"></span> Canal o arroyo
+                <span class="sw sw--thin" [style.border-color]="style.osm"></span> Canal or stream
                 (OSM)
               </li>
-              <li><app-icon name="layers" /> Más capas en el control del mapa</li>
+              <li><app-icon name="layers" /> More layers in the map control</li>
             </ul>
           </app-section-card>
 
           @if (analysis(); as a) {
             <div class="facts">
-              <app-section-card heading="Qué le llega al lote" [level]="3">
+              <app-section-card heading="What reaches the field" [level]="3">
                 <p class="big">
-                  {{ num(a.contributing.area_ha) }} <small>ha aportan agua al lote</small>
+                  {{ num(a.contributing.area_ha) }} <small>ha drain water into the field</small>
                 </p>
                 <p>
-                  {{ num(a.contributing.outside_lot_ha) }} ha están fuera del lote ({{
+                  {{ num(a.contributing.outside_lot_ha) }} ha are outside the field ({{
                     percent(externalShare())
-                  }}). El agua entra por {{ a.entries.length }}
-                  {{ a.entries.length === 1 ? 'punto' : 'puntos' }} y sale por {{ a.exits.length }}.
+                  }}). Water enters at {{ a.entries.length }}
+                  {{ a.entries.length === 1 ? 'point' : 'points' }} and leaves at
+                  {{ a.exits.length }}.
                 </p>
                 @if (a.contributing.touches_window_edge) {
                   <p class="warn">
-                    La cuenca toca el borde de la zona procesada: puede ser más grande.
+                    The basin touches the edge of the processed area: it may be larger.
                   </p>
                 }
                 <p class="src">
-                  <app-origin-badge origin="ESTIMATED" /> DEM Copernicus 30 m + red D8.
+                  <app-origin-badge origin="ESTIMATED" /> Copernicus 30 m DEM + D8 flow network.
                 </p>
               </app-section-card>
 
-              <app-section-card heading="Cuenca al punto de salida" [level]="3">
+              <app-section-card heading="Basin at the outlet point" [level]="3">
                 <dl class="dl">
-                  <dt>Superficie</dt>
+                  <dt>Area</dt>
                   <dd>{{ num(a.basin.area_ha) }} ha</dd>
-                  <dt>Fuera del lote</dt>
+                  <dt>Outside the field</dt>
                   <dd>{{ num(a.basin.outside_lot_ha) }} ha</dd>
-                  <dt>Subcuencas</dt>
+                  <dt>Sub-basins</dt>
                   <dd>
                     {{ a.basin.subbasins }}
-                    <small>(umbral {{ num(a.subbasin_threshold_ha) }} ha)</small>
+                    <small>(threshold {{ num(a.subbasin_threshold_ha) }} ha)</small>
                   </dd>
-                  <dt>Pendiente media</dt>
+                  <dt>Mean slope</dt>
                   <dd>{{ num(a.basin.mean_slope_pct, 2) }} %</dd>
-                  <dt>Desnivel</dt>
-                  <dd>{{ num(a.basin.relief_m) }} m <small>(percentiles 2 a 98)</small></dd>
-                  <dt>Recorrido más largo</dt>
+                  <dt>Relief</dt>
+                  <dd>{{ num(a.basin.relief_m) }} m <small>(2nd to 98th percentile)</small></dd>
+                  <dt>Longest flow path</dt>
                   <dd>{{ km(a.basin.hydraulic_length_m) }}</dd>
-                  <dt>Cauces potenciales</dt>
+                  <dt>Potential channels</dt>
                   <dd>{{ km(a.basin.stream_length_m) }}</dd>
-                  <dt>Canales y arroyos OSM</dt>
-                  <dd>{{ a.basin.osm_length_m ? km(a.basin.osm_length_m) : 'ninguno mapeado' }}</dd>
-                  <dt>Sin canales OSM</dt>
-                  <dd>{{ num(a.basin.dem_only_area_ha) }} ha <small>(solo DEM)</small></dd>
-                  <dt>CN medio (ARC II)</dt>
+                  <dt>OSM canals and streams</dt>
+                  <dd>{{ a.basin.osm_length_m ? km(a.basin.osm_length_m) : 'none mapped' }}</dd>
+                  <dt>No OSM canals</dt>
+                  <dd>{{ num(a.basin.dem_only_area_ha) }} ha <small>(DEM only)</small></dd>
+                  <dt>Mean CN (ARC II)</dt>
                   <dd>
                     {{ num(a.basin.cn_arc_ii) }}
-                    <small>suelo {{ a.soil.hsg ?? 'B (supuesto)' }}</small>
+                    <small>soil {{ a.soil.hsg ?? 'B (assumed)' }}</small>
                   </dd>
                 </dl>
                 @if (a.basin.touches_window_edge) {
                   <p class="warn">
-                    La cuenca toca el borde de la zona procesada: puede ser más grande.
+                    The basin touches the edge of the processed area: it may be larger.
                   </p>
                 }
               </app-section-card>
 
-              <app-section-card heading="Cobertura del suelo" [level]="3">
+              <app-section-card heading="Land cover" [level]="3">
                 <ul class="bars">
                   @for (c of a.basin.land_cover; track c.igbp) {
                     <li>
@@ -188,11 +189,11 @@
 
       @case ('history') {
         <app-section-card
-          heading="B · Historial hidrológico"
-          subtitle="Lluvias fuertes desde 2020 y lo que el modelo estima que escurrió en cada una."
+          heading="B · Hydrological history"
+          subtitle="Heavy rainfall events since 2020 and how much the model estimates ran off in each."
         >
           @if (loadingHistory()) {
-            <p class="status" role="status">Calculando los eventos…</p>
+            <p class="status" role="status">Calculating the events…</p>
           } @else if (historyError(); as msg) {
             <p class="alert alert--error" role="alert">{{ msg }}</p>
           } @else if (history(); as h) {
@@ -201,22 +202,22 @@
                 <div>
                   <h3>{{ eventLabel(e) }}, {{ eventTime(e) }} h</h3>
                   <p class="muted">
-                    {{ num(e.rain_mm) }} mm en {{ num(e.duration_h) }} h · máx.
+                    {{ num(e.rain_mm) }} mm in {{ num(e.duration_h) }} h · max.
                     {{ num(e.max_intensity_mm_h) }} mm/h · IMERG {{ e.run }}
                     @if (e.run === 'Late') {
-                      (preliminar)
+                      (preliminary)
                     }
                   </p>
                 </div>
                 <dl class="dl dl--row">
-                  <dt>Escorrentía</dt>
+                  <dt>Runoff</dt>
                   <dd>
                     {{ num(e.runoff_mm, 1) }} mm
                     <small>({{ num(e.range.I.runoff_mm) }}–{{ num(e.range.III.runoff_mm) }})</small>
                   </dd>
-                  <dt>Volumen</dt>
+                  <dt>Volume</dt>
                   <dd>{{ num(e.volume_m3, 0) }} m³</dd>
-                  <dt>Caudal pico</dt>
+                  <dt>Peak flow</dt>
                   <dd>
                     {{ num(e.peak_m3s, 3) }} m³/s
                     <small
@@ -229,41 +230,41 @@
                 [rain]="e.hyetograph_mm"
                 [rainStepH]="e.step_h"
                 [series]="eventSeries()"
-                ariaLabel="Lluvia del evento y caudal simulado en el punto de salida"
+                ariaLabel="Event rainfall and simulated flow at the outlet point"
               />
               <p class="ante">
-                <strong>Condición antecedente:</strong>
-                lluvia de los 5 días previos
-                {{ e.antecedent_5d_mm === null ? 'sin dato' : num(e.antecedent_5d_mm) + ' mm' }}
-                · humedad SMAP
+                <strong>Antecedent conditions:</strong>
+                rainfall in the previous 5 days
+                {{ e.antecedent_5d_mm === null ? 'no data' : num(e.antecedent_5d_mm) + ' mm' }}
+                · SMAP soil moisture
                 {{
                   e.smap
                     ? num(e.smap.m3_m3, 2) + ' m³/m³ (' + formatDate(e.smap.date) + ', 9 km)'
-                    : 'sin pasada válida'
+                    : 'no valid pass'
                 }}
                 · ET MOD16
-                {{ e.et_before ? num(e.et_before.et_mm_8d) + ' mm en 8 días' : 'sin dato' }}.
+                {{ e.et_before ? num(e.et_before.et_mm_8d) + ' mm in 8 days' : 'no data' }}.
                 <span class="muted"
-                  >Rango entre paréntesis: suelo seco (ARC I) a húmedo (ARC III).</span
+                  >Range in brackets: dry soil (ARC I) to wet soil (ARC III).</span
                 >
               </p>
             }
             <div class="table-wrap">
               <table class="events">
                 <caption class="visually-hidden">
-                  Eventos de lluvia
+                  Rainfall events
                 </caption>
                 <thead>
                   <tr>
-                    <th scope="col">Fecha</th>
-                    <th scope="col">Lluvia</th>
-                    <th scope="col">Intensidad máx.</th>
-                    <th scope="col">5 días previos</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Rainfall</th>
+                    <th scope="col">Max. intensity</th>
+                    <th scope="col">Previous 5 days</th>
                     <th scope="col">SMAP</th>
-                    <th scope="col">Escorrentía</th>
-                    <th scope="col">Volumen</th>
-                    <th scope="col">Pico</th>
-                    <th scope="col"><span class="visually-hidden">Comparar</span></th>
+                    <th scope="col">Runoff</th>
+                    <th scope="col">Volume</th>
+                    <th scope="col">Peak</th>
+                    <th scope="col"><span class="visually-hidden">Compare</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -293,7 +294,7 @@
                             [checked]="compareEvents().includes(ev.start)"
                             (change)="toggleCompare(ev)"
                           />
-                          Comparar
+                          Compare
                         </label>
                       </td>
                     </tr>
@@ -302,7 +303,7 @@
               </table>
             </div>
             <p class="src">
-              <app-origin-badge origin="VERIFIED" /> Lluvia: {{ h.sources.rain }}
+              <app-origin-badge origin="VERIFIED" /> Rainfall: {{ h.sources.rain }}
               <br /><app-origin-badge origin="ESTIMATED" /> {{ h.method }} {{ h.selection }}
             </p>
             <p class="warn">{{ h.validation }}</p>
@@ -312,12 +313,12 @@
 
       @case ('simulator') {
         <app-section-card
-          heading="C · Simulador de lluvia"
-          subtitle="Escenarios hipotéticos: no son pronósticos meteorológicos."
+          heading="C · Rainfall simulator"
+          subtitle="Hypothetical scenarios, not weather forecasts."
         >
           <form class="sim-form" (submit)="$event.preventDefault(); runSimulation()">
             <fieldset>
-              <legend>Lluvia</legend>
+              <legend>Rainfall</legend>
               <div class="chips">
                 @for (p of presets; track p) {
                   <button
@@ -331,7 +332,7 @@
                   </button>
                 }
                 <label class="inline">
-                  Otra
+                  Other
                   <input
                     type="number"
                     min="1"
@@ -345,7 +346,7 @@
               </div>
             </fieldset>
             <label>
-              Duración
+              Duration
               <select (change)="durationH.set(+$any($event.target).value)">
                 @for (d of durations; track d) {
                   <option [value]="d" [selected]="d === durationH()">{{ d }} h</option>
@@ -353,7 +354,7 @@
               </select>
             </label>
             <label>
-              Humedad previa
+              Antecedent moisture
               <select (change)="arc.set($any($event.target).value)">
                 @for (a of arcs; track a) {
                   <option [value]="a" [selected]="a === arc()">{{ arcLabels[a] }}</option>
@@ -361,10 +362,10 @@
               </select>
             </label>
             <label>
-              Grupo hidrológico del suelo
+              Hydrologic soil group
               <select (change)="hsg.set($any($event.target).value || null)">
                 <option value="" [selected]="!hsg()">
-                  Según SoilGrids ({{ analysis()?.soil?.hsg ?? 'B' }})
+                  From SoilGrids ({{ analysis()?.soil?.hsg ?? 'B' }})
                 </option>
                 @for (g of hsgs; track g) {
                   <option [value]="g" [selected]="g === hsg()">{{ g }}</option>
@@ -377,14 +378,14 @@
                 [checked]="residue()"
                 (change)="residue.set($any($event.target).checked)"
               />
-              Cultivos con rastrojo en superficie (siembra directa)
+              Crops with surface residue (no-till)
             </label>
             <div class="actions">
               <button type="submit" class="btn btn--primary" [disabled]="simulating()">
-                <app-icon name="play" /> {{ simulating() ? 'Simulando…' : 'Simular' }}
+                <app-icon name="play" /> {{ simulating() ? 'Simulating…' : 'Simulate' }}
               </button>
               <button type="button" class="btn" [disabled]="!simulation()" (click)="saveScenario()">
-                <app-icon name="plus" /> Guardar para comparar
+                <app-icon name="plus" /> Save to compare
               </button>
             </div>
           </form>
@@ -398,22 +399,22 @@
             </p>
             <div class="results">
               <div class="result">
-                <span class="result__label">Escorrentía</span>
+                <span class="result__label">Runoff</span>
                 <span class="result__value">{{ num(sim.result.runoff_mm) }} <small>mm</small></span>
                 <span class="result__range"
-                  >{{ num(sim.range.I.runoff_mm) }}–{{ num(sim.range.III.runoff_mm) }} mm según
-                  humedad</span
+                  >{{ num(sim.range.I.runoff_mm) }}–{{ num(sim.range.III.runoff_mm) }} mm depending
+                  on moisture</span
                 >
               </div>
               <div class="result">
-                <span class="result__label">Volumen</span>
+                <span class="result__label">Volume</span>
                 <span class="result__value"
                   >{{ num(sim.result.volume_m3, 0) }} <small>m³</small></span
                 >
-                <span class="result__range">sobre {{ num(sim.basin_area_ha) }} ha de cuenca</span>
+                <span class="result__range">over {{ num(sim.basin_area_ha) }} ha of basin</span>
               </div>
               <div class="result">
-                <span class="result__label">Caudal pico</span>
+                <span class="result__label">Peak flow</span>
                 <span class="result__value"
                   >{{ num(sim.result.peak_m3s, 3) }} <small>m³/s</small></span
                 >
@@ -425,34 +426,32 @@
                 >
               </div>
               <div class="result">
-                <span class="result__label">Pico a las</span>
+                <span class="result__label">Time to peak</span>
                 <span class="result__value"
                   >{{ num(sim.result.time_to_peak_h) }} <small>h</small></span
                 >
-                <span class="result__range"
-                  >retardo de la cuenca {{ num(sim.result.lag_h) }} h</span
-                >
+                <span class="result__range">basin lag {{ num(sim.result.lag_h) }} h</span>
               </div>
             </div>
             <app-hydro-chart
               [rain]="sim.result.hyetograph_mm"
               [rainStepH]="sim.result.step_h"
               [series]="scenarioSeries()"
-              ariaLabel="Lluvia del escenario e hidrograma simulado"
+              ariaLabel="Scenario rainfall and simulated hydrograph"
             />
             @if (saved().length) {
               <ul class="saved">
                 @for (s of saved(); track $index; let i = $index) {
                   <li>
                     {{ s.label }}: {{ num(s.sim.result.runoff_mm) }} mm,
-                    {{ num(s.sim.result.volume_m3, 0) }} m³, pico
+                    {{ num(s.sim.result.volume_m3, 0) }} m³, peak
                     {{ num(s.sim.result.peak_m3s, 3) }} m³/s
                     <button
                       type="button"
                       class="btn btn--sm btn--ghost"
                       (click)="removeScenario(i)"
                     >
-                      Quitar
+                      Remove
                     </button>
                   </li>
                 }
@@ -462,13 +461,13 @@
               <p class="warn">{{ note }}</p>
             }
             <p class="src">
-              <app-origin-badge origin="ESTIMATED" /> {{ sim.method }} CN medio
-              {{ num(sim.result.cn_arc_ii) }} (ARC II), paso de cálculo
+              <app-origin-badge origin="ESTIMATED" /> {{ sim.method }} Mean CN
+              {{ num(sim.result.cn_arc_ii) }} (ARC II), time step
               {{ num(sim.result.step_h * 60, 0) }} min.
             </p>
             <p class="warn">{{ sim.disclaimer }}</p>
           } @else if (simulating()) {
-            <p class="status" role="status">Simulando…</p>
+            <p class="status" role="status">Simulating…</p>
           }
         </app-section-card>
       }
@@ -477,8 +476,8 @@
         <div class="layout">
           <app-section-card
             class="map-card"
-            heading="D · Impacto sobre el lote"
-            subtitle="Por dónde entra y sale el agua y dónde tiende a juntarse."
+            heading="D · Impact on the field"
+            subtitle="Where water enters and leaves the field, and where it tends to collect."
             flush
           >
             @if (lot(); as lot) {
@@ -487,27 +486,27 @@
                 [geometry]="lot.geometry"
                 [analysis]="analysis()"
                 mode="impact"
-                label="Mapa de impacto del agua sobre el lote"
+                label="Map of the water impact on the field"
                 (outletPick)="pickOutlet($event)"
               />
             } @else {
               <div class="map skeleton" aria-hidden="true"></div>
             }
             <ul footer class="legend">
-              <li><span class="dot" [style.background]="style.entry"></span> Ingreso de agua</li>
-              <li><span class="dot" [style.background]="style.exit"></span> Salida de agua</li>
+              <li><span class="dot" [style.background]="style.entry"></span> Water inflow</li>
+              <li><span class="dot" [style.background]="style.exit"></span> Water outflow</li>
               <li>
-                <span class="sw" [style.border-color]="style.sector"></span> Sector a inspeccionar
+                <span class="sw" [style.border-color]="style.sector"></span> Sector to inspect
               </li>
               <li>
-                <span class="sw sw--fill"></span> Índice de humedad (más azul, más acumulación)
+                <span class="sw sw--fill"></span> Wetness index (bluer means more accumulation)
               </li>
             </ul>
           </app-section-card>
 
           @if (analysis(); as a) {
             <div class="facts">
-              <app-section-card heading="Qué revisar en el campo" [level]="3">
+              <app-section-card heading="What to check on the ground" [level]="3">
                 @if (a.inspection.sectors.length) {
                   <ol class="todo">
                     @for (s of a.inspection.sectors; track $index; let i = $index) {
@@ -515,31 +514,31 @@
                         <strong>Sector {{ i + 1 }}</strong> · {{ num(s.area_ha) }} ha.
                         {{ s.reason }}.
                         @if (s.depression_m >= 0.1) {
-                          Bajo de hasta {{ num(s.depression_m, 2) }} m en el DEM.
+                          Low spot up to {{ num(s.depression_m, 2) }} m deep in the DEM.
                         }
-                        Junta {{ num(s.max_upstream_ha) }} ha aguas arriba.
+                        Collects water from {{ num(s.max_upstream_ha) }} ha upstream.
                       </li>
                     }
                   </ol>
                 } @else {
-                  <p>El modelo no marca sectores de acumulación dentro del lote.</p>
+                  <p>The model shows no accumulation sectors inside the field.</p>
                 }
                 @for (p of topEntries().slice(0, 3); track $index; let i = $index) {
                   <p class="todo-extra">
                     <span class="dot" [style.background]="style.entry"></span>
-                    Ingreso {{ i + 1 }}: llega el agua de {{ num(p.upstream_ha) }} ha. Revisar
-                    alambrado, cuneta o alcantarilla en ese borde.
+                    Inflow {{ i + 1 }}: water arrives from {{ num(p.upstream_ha) }} ha. Check the
+                    fence, ditch or culvert on that edge.
                   </p>
                 }
                 <p class="src"><app-origin-badge origin="ESTIMATED" /> {{ a.inspection.method }}</p>
                 <p class="warn">{{ a.inspection.limitation }}</p>
               </app-section-card>
-              <app-section-card heading="Salidas de agua" [level]="3">
+              <app-section-card heading="Water outflows" [level]="3">
                 <ul class="plain">
                   @for (p of a.exits; track $index) {
                     <li>
                       <span class="dot" [style.background]="style.exit"></span>
-                      Junta {{ num(p.upstream_ha) }} ha
+                      Collects {{ num(p.upstream_ha) }} ha
                     </li>
                   }
                 </ul>
@@ -551,49 +550,47 @@
     }
 
     @if (analysis(); as a) {
-      <app-disclosure class="method" icon="info" label="Fuentes, parámetros y limitaciones">
-        <h3>Fuentes</h3>
+      <app-disclosure class="method" icon="info" label="Sources, parameters and limitations">
+        <h3>Sources</h3>
         <ul>
           <li>{{ a.sources.dem.name }} ({{ a.sources.dem.provider }}). {{ a.sources.dem.note }}</li>
           <li>
-            {{ a.sources.osm.name }}: {{ a.sources.osm.count }} cursos en la zona, bajados el
+            {{ a.sources.osm.name }}: {{ a.sources.osm.count }} waterways in the area, downloaded on
             {{ formatDate(a.sources.osm.downloaded) }}.
           </li>
           @if (a.sources.land_cover; as lc) {
-            <li>{{ lc.product }}, año {{ lc.year }}.</li>
+            <li>{{ lc.product }}, year {{ lc.year }}.</li>
           }
           <li>{{ a.soil.source }}. {{ a.soil.method }} {{ a.soil.limitation }}</li>
           <li>
-            Lluvia NASA GPM IMERG V07, humedad NASA SMAP y evapotranspiración NASA MODIS MOD16
-            (sección Historial).
+            Rainfall from NASA GPM IMERG V07, soil moisture from NASA SMAP and evapotranspiration
+            from NASA MODIS MOD16 (History section).
           </li>
           <li>
-            Números de curva: {{ a.parameters.curve_number_source }}.
+            Curve numbers: {{ a.parameters.curve_number_source }}.
             {{ a.parameters.cover_assumption }}
           </li>
         </ul>
-        <h3>Métodos</h3>
+        <h3>Methods</h3>
         <ul>
           @for (m of a.parameters.methods | keyvalue; track m.key) {
             <li>{{ m.value }}</li>
           }
           <li>
-            Escorrentía SCS-CN por cobertura; retardo de Mockus (NEH 630 cap. 15); hidrograma
-            unitario adimensional SCS (NEH 630 cap. 16).
+            SCS-CN runoff by land cover; Mockus lag (NEH 630 ch. 15); SCS dimensionless unit
+            hydrograph (NEH 630 ch. 16).
           </li>
         </ul>
-        <h3>Parámetros de modelado (criterios, no mediciones)</h3>
+        <h3>Modeling parameters (assumptions, not measurements)</h3>
         <ul>
           <li>
-            Quemado de cursos OSM en el DEM: {{ a.parameters.terrain['burn_m'] }} m (solo fuerza el
-            recorrido).
+            OSM waterways burned into the DEM: {{ a.parameters.terrain['burn_m'] }} m (it only
+            forces the flow path).
           </li>
-          <li>
-            Pendiente mínima del relleno: {{ a.parameters.terrain['epsilon_m'] }} m por celda.
-          </li>
-          <li>Umbral de subcuencas: {{ num(a.subbasin_threshold_ha) }} ha de área aportante.</li>
+          <li>Minimum fill slope: {{ a.parameters.terrain['epsilon_m'] }} m per cell.</li>
+          <li>Sub-basin threshold: {{ num(a.subbasin_threshold_ha) }} ha of contributing area.</li>
         </ul>
-        <h3>Limitaciones</h3>
+        <h3>Limitations</h3>
         <ul>
           @for (l of a.limitations; track $index) {
             <li>{{ l }}</li>

@@ -78,7 +78,7 @@ const fmt = (v: number, d = 2) => v.toLocaleString('es-AR', { maximumFractionDig
         text-anchor="middle"
         class="axis-label"
       >
-        horas desde el inicio de la lluvia
+        hours since the rain started
       </text>
       <text
         [attr.x]="12"
@@ -87,7 +87,7 @@ const fmt = (v: number, d = 2) => v.toLocaleString('es-AR', { maximumFractionDig
         text-anchor="middle"
         [attr.transform]="'rotate(-90 12 ' + (baseY + pad.top + rainH) / 2 + ')'"
       >
-        caudal m³/s
+        flow m³/s
       </text>
       <!-- lluvia -->
       @for (bar of rainBars(); track bar.x) {
@@ -179,7 +179,7 @@ export class HydroChart {
   readonly rain = input<number[]>([]);
   readonly rainStepH = input(0.5);
   readonly series = input<HydroSeries[]>([]);
-  readonly ariaLabel = input('Lluvia e hidrograma');
+  readonly ariaLabel = input('Rainfall and hydrograph');
 
   protected readonly width = W;
   protected readonly height = H;

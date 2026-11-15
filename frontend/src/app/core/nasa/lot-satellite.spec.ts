@@ -208,7 +208,7 @@ describe('LotSatellite', () => {
     expect(calls).toHaveLength(4);
     // al rendirse queda como terminada (progress 1) para que la pantalla muestre el error
     expect(history()).toMatchObject({ status: 'partial', progress: 1 });
-    expect(history().error).toContain('Faltan 14 de 16 tandas');
+    expect(history().error).toContain('14 of 16 batches are missing');
     // retry retoma: vuelve a pedir y conserva lo que ya había llegado mientras tanto
     sat.retry({ id: 3, geometry: LOT3 });
     expect(history().status).toBe('loading');
@@ -252,7 +252,7 @@ describe('LotSatellite', () => {
     const cover = sat.landCover(lot);
     await settle();
     expect(scenes()).toMatchObject({ status: 'partial', data: { total: 20 } });
-    expect(scenes().error).toContain('Sin respuesta');
+    expect(scenes().error).toContain('No response');
     expect(cover()).toMatchObject({ status: 'ready', stale: true });
     sat.retry(lot);
     await settle();
@@ -306,13 +306,13 @@ describe('LotSatellite', () => {
     const landUse = sat.landUse(lot);
     await settle();
     expect(landUse()).toMatchObject({ status: 'error', data: null, progress: 1 });
-    expect(landUse().error).toContain('Sin respuesta');
+    expect(landUse().error).toContain('No response');
     sat.retry(lot);
     await settle();
     expect(landCoverGrid).toHaveBeenCalledTimes(2);
     expect(landUse()).toMatchObject({ status: 'ready', stale: true, error: null });
     expect(landUse().data?.verdict).toBe('possible_change');
-    expect(landUse().data?.reason).toContain('En 2020 MODIS vio vegetación natural (pastizal)');
+    expect(landUse().data?.reason).toContain('In 2020 MODIS saw natural vegetation (grassland)');
   });
 
   it('sin el cliente de la grilla, el uso del suelo queda en error con su motivo', async () => {

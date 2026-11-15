@@ -74,7 +74,7 @@ export function describeError(error: unknown): string {
   if (error instanceof NasaServiceError) {
     if (error.kind === 'offline') return NO_DATA_REASONS.offline;
     if (error.kind === 'service' || (error.kind === 'http' && !error.retryable)) {
-      return `El servicio de la NASA rechazó el pedido (${error.message}).`;
+      return `The NASA service rejected the request (${error.message}).`;
     }
   }
   return NO_DATA_REASONS.noResponse;
@@ -231,7 +231,7 @@ export class LotSatellite {
           stale,
           updatedAt,
           error: missing
-            ? `${describeError(lastError)} Faltan ${missing} de ${batches.length} tandas.`
+            ? `${describeError(lastError)} ${missing} of ${batches.length} batches are missing.`
             : null,
         });
         if (giveUp) return;

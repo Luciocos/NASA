@@ -74,9 +74,9 @@ interface Pointer {
     ></canvas>
     @if (interactive()) {
       <p [id]="helpId" class="visually-hidden">
-        Arrastrá para mover la vista, usá la rueda o pellizcá para acercar. Con el teclado: flechas
-        para mover, más y menos para acercar, R para girar, 0 para ver todos los lotes, Enter abre
-        el lote elegido y Escape lo deselecciona.
+        Drag to move the view, use the wheel or pinch to zoom. With the keyboard: arrows to move,
+        plus and minus to zoom, R to rotate, 0 to see all fields, Enter opens the selected field and
+        Escape deselects it.
       </p>
     }
     <div class="iso-scene__chrome" aria-hidden="true">
@@ -191,7 +191,7 @@ export class IsoScene {
   readonly gridSize = input(100, { transform: numberAttribute });
   /** movimiento ambiente sutil (agua, cultivos), solo con la vista en pantalla */
   readonly ambient = input(false, { transform: booleanAttribute });
-  readonly ariaLabel = input('Maqueta isométrica de los lotes');
+  readonly ariaLabel = input('Isometric 3D view of the fields');
   /** margen libre al encuadrar, en px */
   readonly fitPadding = input(48, { transform: numberAttribute });
 

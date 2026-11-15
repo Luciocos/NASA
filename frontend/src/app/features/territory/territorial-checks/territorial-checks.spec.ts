@@ -100,17 +100,17 @@ describe('TerritorialChecks', () => {
   it('una fila corta por chequeo: nombre, estado con ícono y origen; el resto, plegado', async () => {
     await render();
     expect(rows().map(parts)).toEqual([
-      ['Distancia a zonas urbanas', 'Sin conflicto detectado', 'Capa pública', ''],
-      ['Bosque nativo (OTBN)', 'Posible desmonte', 'Capa pública', ''],
+      ['Distance to urban areas', 'No conflict detected', 'Public layer', ''],
+      ['Native forest (OTBN)', 'Possible clearing', 'Public layer', ''],
       // sin dato no hay origen que mostrar
-      ['Buenas Prácticas (BPA)', 'Sin declarar', '', 'Declarar'],
+      ['Good practices (BPA)', 'Not declared', '', 'Declare'],
     ]);
     // el estado nunca va solo con color
     expect(rows().every((row) => row.querySelector('.state app-icon'))).toBe(true);
     // a la vista no van los resúmenes ni las fuentes; el aviso de indicativo, en una línea
     expect(visible()).not.toContain('4.000 m');
     expect(visible()).not.toContain('Norma de prueba');
-    expect(visible()).toContain('Cruce indicativo con capas públicas.');
+    expect(visible()).toContain('Indicative overlay with public layers.');
     // el descargo completo, en el (i)
     expect(squash(el().querySelector('[popover]')?.textContent)).toContain(
       'Cruce con capas públicas, indicativo.',
@@ -122,7 +122,7 @@ describe('TerritorialChecks', () => {
     const otbn = rows()[1];
     expect(otbn.querySelector('.state')?.classList).toContain('chip--danger');
     expect(squash(otbn.querySelector('.strong')?.textContent)).toBe(
-      'Posible desmonte: revisalo con la autoridad provincial.',
+      'Possible clearing: review it with the provincial authority.',
     );
     // el detalle propio se arma recién al abrir la fila
     expect(otbn.querySelector('app-otbn-detail')).toBeNull();
@@ -170,13 +170,13 @@ describe('TerritorialChecks', () => {
     http.expectOne('/api/lots/1/territorial-checks/').flush(simulated);
     await fixture.whenStable();
     expect(squash(rows()[1].querySelector('.strong')?.textContent)).toBe(
-      'Posible desmonte: revisalo con la autoridad provincial. Dato simulado para la demostración',
+      'Possible clearing: review it with the provincial authority. Simulated data for the demo',
     );
   });
 
   it('sin poder escribir no invita a declarar BPA', async () => {
     await render(false);
-    expect(parts(rows()[2])).toEqual(['Buenas Prácticas (BPA)', 'Sin declarar', '', '']);
+    expect(parts(rows()[2])).toEqual(['Good practices (BPA)', 'Not declared', '', '']);
   });
 
   it('cuando cambia la ficha (por ejemplo, la declaración de uso del suelo) se vuelven a pedir', async () => {
@@ -203,11 +203,9 @@ describe('TerritorialChecks', () => {
       .flush('', { status: 500, statusText: 'Error' });
     await fixture.whenStable();
     expect(squash(el().querySelector('[role="alert"]')?.textContent)).toContain(
-      'No se pudieron cargar los chequeos.',
+      'Could not load the checks.',
     );
-    [...el().querySelectorAll('button')]
-      .find((b) => b.textContent?.trim() === 'Reintentar')!
-      .click();
+    [...el().querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Retry')!.click();
     await fixture.whenStable();
     http.expectOne('/api/lots/1/territorial-checks/').flush(CHECKS);
     await fixture.whenStable();

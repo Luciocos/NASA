@@ -441,7 +441,7 @@ describe('traceRings: errores y forma canónica', () => {
     } catch (error) {
       expect((error as GridShapeError).problem).toBe('empty');
       expect((error as GridShapeError).name).toBe('GridShapeError');
-      expect((error as GridShapeError).message).toBe('No hay recuadros marcados.');
+      expect((error as GridShapeError).message).toBe('No squares painted.');
     }
   });
 
@@ -452,7 +452,7 @@ describe('traceRings: errores y forma canónica', () => {
       traceRings(cells);
     } catch (error) {
       expect((error as GridShapeError).problem).toBe('multiple-regions');
-      expect((error as GridShapeError).message).toContain('más de un bloque');
+      expect((error as GridShapeError).message).toContain('more than one block');
     }
   });
 

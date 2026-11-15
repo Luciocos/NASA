@@ -22,23 +22,23 @@ export const DRAW_TUTORIAL_KEY = 'lotestigo:draw-tutorial:v1';
         animate.enter="enter-pop"
         animate.leave="leave-fade"
       >
-        <h2 id="draw-tutorial-title">Tu lote en tres pasos</h2>
+        <h2 id="draw-tutorial-title">Your field in three steps</h2>
         <ol>
           <li>
             <span class="step" aria-hidden="true">1</span>
-            <span><strong>Buscá tu campo</strong> con el buscador o tu ubicación.</span>
+            <span><strong>Find your field</strong> with the search box or your location.</span>
           </li>
           <li>
             <span class="step" aria-hidden="true">2</span>
-            <span><strong>Tocá sus esquinas</strong> una por una sobre la imagen.</span>
+            <span><strong>Tap its corners</strong> one by one on the image.</span>
           </li>
           <li>
             <span class="step" aria-hidden="true">3</span>
-            <span><strong>Guardalo</strong> y mirá lo que ven los satélites.</span>
+            <span><strong>Save it</strong> and see what the satellites see.</span>
           </li>
         </ol>
         <button type="button" class="btn btn--primary btn--block" (click)="close()">
-          <app-icon name="check" /> Empezar
+          <app-icon name="check" /> Start
         </button>
       </section>
     }

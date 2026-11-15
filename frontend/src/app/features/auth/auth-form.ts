@@ -15,16 +15,16 @@ export const NO_ERRORS: AuthFormErrors = { fields: {}, message: null };
 /** orden de los campos en pantalla: el primero con error recibe el foco */
 export const FIELD_ORDER: readonly AuthField[] = ['name', 'email', 'password'];
 
-const OFFLINE_MESSAGE = 'No pudimos conectar con el servidor. Revisá tu conexión y probá de nuevo.';
-const THROTTLED_MESSAGE = 'Hiciste muchos intentos seguidos. Esperá un minuto y probá de nuevo.';
+const OFFLINE_MESSAGE = "We couldn't reach the server. Check your connection and try again.";
+const THROTTLED_MESSAGE = 'Too many attempts in a row. Wait a minute and try again.';
 
 /** el error del mail, o null si está bien escrito */
 export function emailError(value: string): string | null {
   const email = value.trim();
-  if (!email) return 'Escribí tu mail.';
+  if (!email) return 'Enter your email.';
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
     ? null
-    : 'Revisá el mail: tiene que ser como nombre@ejemplo.com.';
+    : 'Check your email: it should look like name@example.com.';
 }
 
 export function hasErrors(errors: AuthFormErrors): boolean {
@@ -39,12 +39,12 @@ export function hasErrors(errors: AuthFormErrors): boolean {
 export function authFormErrors(error: unknown, action: string): AuthFormErrors {
   if (isConnectivityError(error)) return { fields: {}, message: OFFLINE_MESSAGE };
   if (!(error instanceof HttpErrorResponse)) {
-    return { fields: {}, message: `No se pudo ${action}. Probá de nuevo.` };
+    return { fields: {}, message: `Couldn't ${action}. Please try again.` };
   }
   if (error.status !== 400 && error.status !== 429) {
     return {
       fields: {},
-      message: `No se pudo ${action} (error ${error.status}). Probá de nuevo en un rato.`,
+      message: `Couldn't ${action} (error ${error.status}). Please try again in a while.`,
     };
   }
   const fields: AuthFormErrors['fields'] = {};
@@ -63,7 +63,7 @@ export function authFormErrors(error: unknown, action: string): AuthFormErrors {
   if (error.status === 429 && general.length === 0) general.push(THROTTLED_MESSAGE);
   const message =
     general.join(' ') ||
-    (Object.keys(fields).length > 0 ? null : `No se pudo ${action}. Probá de nuevo.`);
+    (Object.keys(fields).length > 0 ? null : `Couldn't ${action}. Please try again.`);
   return { fields, message };
 }
 

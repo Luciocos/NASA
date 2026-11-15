@@ -1,20 +1,42 @@
-import { ConfidenceLevel, CriterionStatus, Footprint, FootprintComponent } from '../../core/models';
+import {
+  ConfidenceLevel,
+  CriterionStatus,
+  Footprint,
+  FootprintComponent,
+  ScoreCriterion,
+} from '../../core/models';
 import { IconName } from '../../shared/ui/icon/icons';
 
-/** Texto fijo de la pantalla. Nunca usar las palabras "certificado" ni "certificación". */
-export const ESTIMATE_NOTICE = 'Estimación con respaldo satelital. Prueba de concepto.';
+/** Texto fijo de la pantalla. Nunca usar las palabras "certificado" ni "certificación" ("certified"). */
+export const ESTIMATE_NOTICE = 'Satellite-backed estimate. Proof of concept.';
 
 /** Estado de un criterio con símbolo y texto: el significado no depende solo del color. */
 export const CRITERION_STATUS: Record<CriterionStatus, { icon: string; label: string }> = {
-  cumple: { icon: '✓', label: 'Cumple' },
-  no_cumple: { icon: '✗', label: 'No cumple' },
-  sin_dato: { icon: '?', label: 'Sin dato' },
+  cumple: { icon: '✓', label: 'Met' },
+  no_cumple: { icon: '✗', label: 'Not met' },
+  sin_dato: { icon: '?', label: 'No data' },
 };
 
+/**
+ * nombre de cada criterio del puntaje por su clave (backend/carbon/score.py, CRITERIA), en el
+ * idioma de la pantalla. un criterio nuevo que no esté acá usa el rótulo que manda el backend
+ */
+const CRITERION_LABELS: Record<string, string> = {
+  no_land_use_change_since_2020: 'No land-use change since 2020',
+  no_till: 'No-till (no soil disturbance)',
+  winter_cover: 'Winter cover (cover crop)',
+  rotation: 'Crop rotation between seasons',
+  no_burn: 'No burning',
+};
+
+export function criterionLabel(criterion: Pick<ScoreCriterion, 'key' | 'label'>): string {
+  return CRITERION_LABELS[criterion.key] ?? criterion.label;
+}
+
 export const CONFIDENCE_LABELS: Record<ConfidenceLevel, string> = {
-  ALTO: 'Alto',
-  BAJO: 'Bajo',
-  'SIN DATOS': 'Sin datos',
+  ALTO: 'High',
+  BAJO: 'Low',
+  'SIN DATOS': 'No data',
 };
 
 /** El nivel de confianza en un chip: el texto y el ícono dicen lo mismo que el color. */
@@ -22,19 +44,19 @@ export const CONFIDENCE_CHIP: Record<
   ConfidenceLevel,
   { text: string; tone: 'ok' | 'warn' | 'plain'; icon: IconName }
 > = {
-  ALTO: { text: 'Confianza alta', tone: 'ok', icon: 'check' },
-  BAJO: { text: 'Confianza baja', tone: 'warn', icon: 'alert' },
-  'SIN DATOS': { text: 'Sin datos del lote', tone: 'plain', icon: 'info' },
+  ALTO: { text: 'High confidence', tone: 'ok', icon: 'check' },
+  BAJO: { text: 'Low confidence', tone: 'warn', icon: 'alert' },
+  'SIN DATOS': { text: 'No data for this field', tone: 'plain', icon: 'info' },
 };
 
 export function formatNumber(value: number | null, digits = 1): string {
   return value === null
-    ? 'Sin dato'
-    : value.toLocaleString('es-AR', { maximumFractionDigits: digits });
+    ? 'No data'
+    : value.toLocaleString('en-US', { maximumFractionDigits: digits });
 }
 
 export function formatKgPerTonne(value: number | null): string {
-  return value === null ? 'Sin dato' : `${formatNumber(value)} kg CO2e/t`;
+  return value === null ? 'No data' : `${formatNumber(value)} kg CO2e/t`;
 }
 
 /** "2026-11-14T10:00:00-03:00" -> "14/11/2026 10:00", en hora de Argentina. */
@@ -51,33 +73,33 @@ export function formatDateTime(iso: string): string {
 
 /** Nombre corto de cada componente, para listas y gráficas angostas. */
 const SHORT_LABELS: Record<string, string> = {
-  fertilizer_n_production: 'Fertilizante nitrogenado',
-  fertilizer_p_production: 'Fertilizante fosforado',
-  soil_n2o: 'N2O del suelo',
-  diesel: 'Gasoil',
-  pesticides: 'Fitosanitarios',
-  seed: 'Semilla',
-  land_use_change: 'Cambio de uso del suelo',
+  fertilizer_n_production: 'Nitrogen fertilizer',
+  fertilizer_p_production: 'Phosphate fertilizer',
+  soil_n2o: 'Soil N2O',
+  diesel: 'Diesel',
+  pesticides: 'Pesticides',
+  seed: 'Seed',
+  land_use_change: 'Land-use change',
 };
 
 /** El insumo que tiene que cargar el productor para cada componente. */
 const INPUT_NAMES: Record<string, string> = {
-  fertilizer_n_production: 'nitrógeno',
-  soil_n2o: 'nitrógeno',
-  fertilizer_p_production: 'fósforo',
-  diesel: 'gasoil',
-  pesticides: 'fitosanitarios',
-  seed: 'semilla',
+  fertilizer_n_production: 'nitrogen',
+  soil_n2o: 'nitrogen',
+  fertilizer_p_production: 'phosphorus',
+  diesel: 'diesel',
+  pesticides: 'pesticides',
+  seed: 'seed',
 };
 
 export function shortLabel(component: FootprintComponent): string {
   return SHORT_LABELS[component.key] ?? component.label;
 }
 
-/** "a, b y c" en castellano. */
+/** "a, b and c" */
 export function joinList(items: readonly string[]): string {
   if (items.length <= 1) return items[0] ?? '';
-  return `${items.slice(0, -1).join(', ')} y ${items[items.length - 1]}`;
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 }
 
 export type MissingKind = 'yield' | 'inputs' | 'factors' | 'landUse' | 'other';
@@ -85,13 +107,13 @@ export type MissingKind = 'yield' | 'inputs' | 'factors' | 'landUse' | 'other';
 /** Un renglón de "Para calcularla falta", en lenguaje llano. */
 export interface MissingItem {
   kind: MissingKind;
-  /** el texto del chip, de una o dos palabras: "Insumos", "Factor de emisión" */
+  /** el texto del chip, de una o dos palabras: "Inputs", "Emission factor" */
   chip: string;
-  /** "Insumos" */
+  /** "Inputs" */
   title: string;
-  /** "nitrógeno, fósforo y gasoil" */
+  /** "nitrogen, phosphorus and diesel" */
   detail: string;
-  /** quién lo completa: "lo cargás vos" */
+  /** quién lo completa: "you enter it" */
   who: string;
 }
 
@@ -108,10 +130,10 @@ export function missingItems(fp: Footprint, own = true): MissingItem[] {
   if (fp.yield.value === null) {
     items.push({
       kind: 'yield',
-      chip: 'Rinde',
-      title: 'Rinde',
-      detail: fp.campaign ? `de la campaña ${fp.campaign.label}` : 'de la campaña',
-      who: own ? 'lo cargás vos' : 'lo carga el productor',
+      chip: 'Yield',
+      title: 'Yield',
+      detail: fp.campaign ? `for the ${fp.campaign.label} season` : 'for the season',
+      who: own ? 'you enter it' : 'the farmer enters it',
     });
   }
   const inputs = new Set<string>();
@@ -134,19 +156,19 @@ export function missingItems(fp: Footprint, own = true): MissingItem[] {
   if (inputs.size > 0) {
     items.push({
       kind: 'inputs',
-      chip: 'Insumos',
-      title: 'Insumos',
+      chip: 'Inputs',
+      title: 'Inputs',
       detail: joinList([...inputs]),
-      who: own ? 'los cargás vos' : 'los carga el productor',
+      who: own ? 'you enter them' : 'the farmer enters them',
     });
   }
   if (factors.size > 0) {
     items.push({
       kind: 'factors',
-      chip: 'Factor de emisión',
-      title: 'Factor de emisión con fuente',
+      chip: 'Emission factor',
+      title: 'Emission factor with a source',
       detail: joinList([...factors]),
-      who: 'lo carga el equipo',
+      who: 'the team adds it',
     });
   }
   if (landUse) {
@@ -154,21 +176,21 @@ export function missingItems(fp: Footprint, own = true): MissingItem[] {
     // que vio MODIS es orientativo y no entra en la cuenta
     items.push({
       kind: 'landUse',
-      chip: 'Uso del suelo',
-      title: 'Uso del suelo',
-      detail: 'desde 2020',
+      chip: 'Land use',
+      title: 'Land use',
+      detail: 'since 2020',
       who: own
-        ? 'declaralo en la pestaña Prácticas (lo que vio MODIS es orientativo y no entra en la cuenta)'
-        : 'lo declara el productor o lo registra la bitácora (lo que vio MODIS es orientativo y no entra en la cuenta)',
+        ? 'declare it in the Practices tab (what MODIS saw is indicative and is not counted)'
+        : 'the farmer declares it or the field log records it (what MODIS saw is indicative and is not counted)',
     });
   }
   if (other.size > 0) {
     items.push({
       kind: 'other',
-      chip: 'Datos a revisar',
-      title: 'Datos a revisar',
+      chip: 'Data to review',
+      title: 'Data to review',
       detail: joinList([...other]),
-      who: 'mirá el motivo en Desglose',
+      who: 'see the reason in Breakdown',
     });
   }
   return items;
@@ -181,14 +203,13 @@ export function missingItems(fp: Footprint, own = true): MissingItem[] {
  */
 export function shortReason(c: FootprintComponent): string | null {
   if (c.status !== 'sin_dato') return null;
-  if (c.key === 'land_use_change' && c.activity.detected === null)
-    return 'Sin declaración ni evento';
+  if (c.key === 'land_use_change' && c.activity.detected === null) return 'No declaration or event';
   const noRecords = c.activity.records === 0 && c.activity.quantity === null;
   const noFactor = c.factor.value === null || c.factor.value === undefined;
-  if (noRecords && noFactor) return 'Faltan el dato y el factor';
-  if (noRecords) return `Falta cargar ${INPUT_NAMES[c.key] ?? 'el dato'}`;
-  if (noFactor) return 'Falta el factor de emisión';
-  return 'Dato incompleto';
+  if (noRecords && noFactor) return 'Missing data and factor';
+  if (noRecords) return `Missing ${INPUT_NAMES[c.key] ?? 'activity'} data`;
+  if (noFactor) return 'Missing emission factor';
+  return 'Incomplete data';
 }
 
 /** "No se puede calcular todavía: faltan 4 de 7 componentes." -> "Faltan 4 de 7 componentes." */
@@ -203,6 +224,6 @@ export function missingSentence(message: string | null): string | null {
  * del backend ni de códigos.
  */
 export function plainError(status: number | undefined, what: string): string {
-  if (status === 0) return `No hay conexión: revisá tu internet y probá de nuevo para ver ${what}.`;
-  return `No pudimos mostrar ${what} en este momento. Probá de nuevo en un rato.`;
+  if (status === 0) return `No connection: check your internet and try again to see ${what}.`;
+  return `We could not show ${what} right now. Please try again in a moment.`;
 }

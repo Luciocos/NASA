@@ -46,10 +46,10 @@ describe('StackedBar', () => {
     await render({ segments: ORIGINS, unit: 'datos' });
 
     const label = el().querySelector('svg.plot')?.getAttribute('aria-label') ?? '';
-    expect(label).toContain('Barra apilada de 3 partes que suman 9 datos');
+    expect(label).toContain('Stacked bar of 3 parts adding up to 9 datos');
     expect(label).toContain('Declarado: 3 datos (33 %)');
     const headers = [...el().querySelectorAll('details thead th')].map((th) => th.textContent);
-    expect(headers).toEqual(['Parte', 'Valor (datos)', 'Porcentaje']);
+    expect(headers).toEqual(['Part', 'Value (datos)', 'Share']);
   });
 
   it('con todo en cero muestra la pista con trama y "Sin dato"', async () => {
@@ -57,12 +57,12 @@ describe('StackedBar', () => {
 
     expect(el().querySelectorAll('svg.plot path.seg').length).toBe(0);
     expect(el().querySelector('svg.plot rect.missing')).not.toBeNull();
-    expect(el().querySelector('svg.plot')?.textContent).toContain('Sin dato');
+    expect(el().querySelector('svg.plot')?.textContent).toContain('No data');
   });
 
   it('muestra el estado vacío', async () => {
     await render({ segments: [] });
     expect(el().querySelector('svg.plot')).toBeNull();
-    expect(el().textContent).toContain('Sin datos para mostrar');
+    expect(el().textContent).toContain('No data to show');
   });
 });

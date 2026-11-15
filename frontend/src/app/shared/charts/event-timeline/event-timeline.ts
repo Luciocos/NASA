@@ -81,9 +81,9 @@ const TYPE_ORDER: readonly EventType[] = [
 ];
 const ORIGIN_ORDER: readonly Origin[] = ['VERIFIED', 'DECLARED', 'ESTIMATED'];
 const ORIGIN_HINT: Record<Origin, string> = {
-  VERIFIED: 'Verificado (satélite)',
-  DECLARED: 'Declarado (productor)',
-  ESTIMATED: 'Estimado (modelo o referencia)',
+  VERIFIED: 'Verified (satellite)',
+  DECLARED: 'Declared (farmer)',
+  ESTIMATED: 'Estimated (model or reference)',
 };
 const RADIUS = 6;
 const TOP = 26;
@@ -101,14 +101,14 @@ function originText(origin: Origin): string {
 export function eventText(event: TimelineEvent): string {
   const parts = [event.typeLabel, formatDateWithUncertainty(event.date, event.uncertaintyDays)];
   if (event.uncertaintyDays === null) {
-    parts.push('incertidumbre sin dato');
+    parts.push('uncertainty: no data');
   }
   parts.push(event.sensorLabel, originText(event.origin));
   if (event.campaignLabel) {
-    parts.push(`campaña ${event.campaignLabel}`);
+    parts.push(`season ${event.campaignLabel}`);
   }
   if (event.simulated) {
-    parts.push('dato simulado para la demostración');
+    parts.push('simulated data for the demo');
   }
   return parts.join(', ');
 }
@@ -231,7 +231,7 @@ export class EventTimelineChart {
   readonly today = input<string>();
   readonly title = input<string>();
   readonly description = input<string>();
-  readonly emptyText = input('Sin eventos para mostrar');
+  readonly emptyText = input('No events to show');
 
   /** se emite al hacer clic o con Enter o Espacio sobre una marca */
   readonly eventSelect = output<EventId>();
@@ -271,16 +271,16 @@ export class EventTimelineChart {
     const lines = [
       formatDateWithUncertainty(event.date, event.uncertaintyDays),
       `Sensor: ${event.sensorLabel}`,
-      `Origen: ${originText(event.origin)}`,
+      `Origin: ${originText(event.origin)}`,
     ];
     if (event.uncertaintyDays === null) {
-      lines.splice(1, 0, `Incertidumbre: ${NO_DATA}`);
+      lines.splice(1, 0, `Uncertainty: ${NO_DATA}`);
     }
     if (event.campaignLabel) {
-      lines.push(`Campaña ${event.campaignLabel}`);
+      lines.push(`Season ${event.campaignLabel}`);
     }
     if (event.simulated) {
-      lines.push('Dato simulado para la demostración');
+      lines.push('Simulated data for the demo');
     }
     const below = mark.y < 90;
     return {
@@ -308,7 +308,7 @@ export class EventTimelineChart {
     if (events.some((event) => uncertainty(event) > 0)) {
       items.push({
         key: 'whisker',
-        label: '± incertidumbre de la fecha',
+        label: '± date uncertainty',
         tone: 'neutral',
         kind: 'whisker',
         shape: '',
@@ -318,7 +318,7 @@ export class EventTimelineChart {
     if (events.some((event) => event.simulated)) {
       items.push({
         key: 'simulated',
-        label: 'Dato simulado para la demostración (contorno discontinuo)',
+        label: 'Simulated data for the demo (dashed outline)',
         tone: 'neutral',
         kind: 'halo',
         shape: shapePath('circle', 6.5),
@@ -331,7 +331,7 @@ export class EventTimelineChart {
   protected readonly label = computed(() => {
     const placed = chronological(this.events());
     if (placed.length === 0) {
-      return chartLabel(this.description(), 'Línea de tiempo sin eventos.');
+      return chartLabel(this.description(), 'Timeline with no events.');
     }
     const events = placed.map((item) => item.event);
     const types = laneTypes(events).map((type) => {
@@ -341,17 +341,17 @@ export class EventTimelineChart {
     const origins = ORIGIN_ORDER.map((origin) => {
       const count = events.filter((event) => event.origin === origin).length;
       const word = originText(origin);
-      return count ? countLabel(count, word, `${word}s`) : '';
+      return count ? `${count} ${word}` : '';
     }).filter(Boolean);
     const simulated = events.filter((event) => event.simulated).length;
     const summary =
-      `Línea de tiempo con ${countLabel(events.length, 'evento', 'eventos')}, ` +
-      `del ${formatDate(events[0].date)} al ${formatDate(events[events.length - 1].date)}, ` +
-      `una fila por tipo. ${types.join('; ')}. Orígenes: ${origins.join(', ')}.` +
+      `Timeline with ${countLabel(events.length, 'event', 'events')}, ` +
+      `from ${formatDate(events[0].date)} to ${formatDate(events[events.length - 1].date)}, ` +
+      `one row per type. ${types.join('; ')}. Origins: ${origins.join(', ')}.` +
       (simulated
-        ? ` ${countLabel(simulated, 'dato simulado', 'datos simulados')} para la demostración.`
+        ? ` ${countLabel(simulated, 'simulated data point', 'simulated data points')} for the demo.`
         : '') +
-      ` Hoy: ${formatDate(this.todayValue())}.`;
+      ` Today: ${formatDate(this.todayValue())}.`;
     return chartLabel(this.description(), summary);
   });
 
@@ -360,13 +360,13 @@ export class EventTimelineChart {
     const placed = chronological(events).map((item) => item.event);
     const rest = events.filter((event) => !placed.includes(event));
     const withCampaign = events.some((event) => !!event.campaignLabel);
-    const columns = ['Evento', 'Fecha', 'Incertidumbre', 'Sensor', 'Origen'];
+    const columns = ['Event', 'Date', 'Uncertainty', 'Sensor', 'Origin'];
     if (withCampaign) {
-      columns.push('Campaña');
+      columns.push('Season');
     }
-    columns.push('Dato simulado');
+    columns.push('Simulated data');
     return {
-      caption: this.title() ?? 'Eventos de la línea de tiempo',
+      caption: this.title() ?? 'Timeline events',
       columns,
       rows: [...placed, ...rest].map((event) => {
         const row = [
@@ -374,14 +374,14 @@ export class EventTimelineChart {
           formatDate(event.date),
           event.uncertaintyDays === null
             ? NO_DATA
-            : formatUncertainty(event.uncertaintyDays) || 'Sin incertidumbre',
+            : formatUncertainty(event.uncertaintyDays) || 'No uncertainty',
           event.sensorLabel,
           ORIGIN_LABELS[event.origin] ?? event.origin,
         ];
         if (withCampaign) {
           row.push(event.campaignLabel ?? NO_DATA);
         }
-        row.push(event.simulated ? 'Sí' : 'No');
+        row.push(event.simulated ? 'Yes' : 'No');
         return row;
       }),
     };

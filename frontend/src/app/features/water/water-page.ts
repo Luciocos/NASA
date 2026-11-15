@@ -31,18 +31,18 @@ import { Arc, Hsg, RainEvent, WaterAnalysis, WaterHistory, WaterSimulation } fro
 export type WaterSection = 'basin' | 'history' | 'simulator' | 'impact';
 
 const SECTIONS: { key: WaterSection; label: string }[] = [
-  { key: 'basin', label: 'Cuenca aportante' },
-  { key: 'history', label: 'Historial hidrológico' },
-  { key: 'simulator', label: 'Simulador de lluvia' },
-  { key: 'impact', label: 'Impacto sobre el lote' },
+  { key: 'basin', label: 'Contributing basin' },
+  { key: 'history', label: 'Hydrological history' },
+  { key: 'simulator', label: 'Rainfall simulator' },
+  { key: 'impact', label: 'Impact on the field' },
 ];
 
 export const RAIN_PRESETS = [30, 60, 100];
 export const DURATIONS_H = [1, 3, 6, 12, 24];
 export const ARC_LABELS: Record<Arc, string> = {
-  I: 'Suelo seco (ARC I)',
-  II: 'Humedad media (ARC II)',
-  III: 'Suelo húmedo (ARC III)',
+  I: 'Dry soil (ARC I)',
+  II: 'Average moisture (ARC II)',
+  III: 'Wet soil (ARC III)',
 };
 const COMPARE_COLORS = ['#0b6bcb', '#e76f51', '#2a9d8f', '#8e44ad'];
 const MAX_COMPARE = 4;
@@ -170,7 +170,7 @@ export class WaterPage {
     }));
     if (current) {
       list.unshift({
-        label: `Actual: ${this.scenarioLabel(current)}`,
+        label: `Current: ${this.scenarioLabel(current)}`,
         hydrograph: current.result.hydrograph,
         color: COMPARE_COLORS[0],
       });
@@ -188,14 +188,14 @@ export class WaterPage {
     effect((onCleanup) => {
       const id = this.lotId();
       if (!Number.isInteger(id)) {
-        this.error.set('El identificador del lote no es válido.');
+        this.error.set('The field ID is not valid.');
         return;
       }
       const sub = this.api.lot(id).subscribe({
         next: (lot) => this.lot.set(lot),
         error: (err: { status?: number }) => {
           if (err.status === 404) this.notFound.set(true);
-          else this.error.set('No se pudo cargar el lote. Revisá la conexión.');
+          else this.error.set('Could not load the field. Check your connection.');
         },
       });
       onCleanup(() => sub.unsubscribe());
@@ -216,11 +216,11 @@ export class WaterPage {
         error: (err: { status?: number; error?: { available?: boolean; detail?: string } }) => {
           this.loadingAnalysis.set(false);
           if (err.status === 404 && err.error?.available === false) {
-            this.unavailable.set(err.error.detail ?? 'Sin análisis para este lote.');
+            this.unavailable.set(err.error.detail ?? 'No analysis for this field.');
           } else if (err.status === 404) {
             this.notFound.set(true);
           } else {
-            this.error.set('No se pudo calcular la cuenca. Probá de nuevo en un rato.');
+            this.error.set('Could not calculate the watershed. Please try again in a moment.');
           }
         },
       });
@@ -241,7 +241,7 @@ export class WaterPage {
         },
         error: (err: { error?: { detail?: string } }) => {
           this.loadingHistory.set(false);
-          this.historyError.set(err.error?.detail ?? 'No se pudo cargar el historial.');
+          this.historyError.set(err.error?.detail ?? 'Could not load the history.');
         },
       });
       onCleanup(() => sub.unsubscribe());
@@ -289,7 +289,7 @@ export class WaterPage {
         },
         error: (err: { error?: { detail?: string } }) => {
           this.simulating.set(false);
-          this.simError.set(err.error?.detail ?? 'No se pudo simular. Revisá los valores.');
+          this.simError.set(err.error?.detail ?? 'Could not run the simulation. Check the values.');
         },
       });
   }
@@ -316,13 +316,13 @@ export class WaterPage {
 
   protected scenarioLabel(sim: WaterSimulation): string {
     const s = sim.scenario;
-    return `${num(s.rain_mm)} mm en ${num(s.duration_h)} h · ARC ${s.arc} · suelo ${s.hsg}${s.residue ? '' : ' · sin rastrojo'}`;
+    return `${num(s.rain_mm)} mm in ${num(s.duration_h)} h · ARC ${s.arc} · soil ${s.hsg}${s.residue ? '' : ' · no residue'}`;
   }
 
   protected eventLabel(e: RainEvent): string {
     // fechas en hora de Argentina (UTC-3), que es como se recuerda una lluvia
     const d = new Date(e.start);
-    return d.toLocaleDateString('es-AR', {
+    return d.toLocaleDateString('en-GB', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',

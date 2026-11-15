@@ -100,16 +100,16 @@ describe('veredicto de uso del suelo', () => {
       year: 2020,
       group: 'agricultural',
       classId: 12,
-      classLabel: 'Cultivo agrícola',
+      classLabel: 'Cropland',
       pixels: 3,
       agriculturalShare: 1,
     });
     expect(evidence.reason).toBe(
-      'MODIS vio uso agrícola todos los años de 2020 a 2025 en los 3 píxeles de unos 460 m que cubren tu lote.',
+      'MODIS saw agricultural use every year from 2020 to 2025 in the 3 pixels of about 460 m that cover your field.',
     );
     expect(evidence.source).toMatchObject({ origin: 'VERIFIED', retrievedAt: SAVED });
     expect(evidence.source.product).toContain('MCD12Q1');
-    expect(evidence.source.note).toContain('orientativo');
+    expect(evidence.source.note).toContain('a guide only');
   });
 
   it('cultivo y mosaico mezclados cuentan como el mismo uso agrícola', () => {
@@ -130,18 +130,18 @@ describe('veredicto de uso del suelo', () => {
     expect(evidence.years[0]).toMatchObject({
       group: 'natural',
       classId: 10,
-      classLabel: 'Pastizal',
+      classLabel: 'Grassland',
       agriculturalShare: 0.33,
     });
     expect(evidence.reason).toBe(
-      'En 2020 MODIS vio vegetación natural (pastizal) y en 2021, uso agrícola: puede ser un cambio de uso del suelo o un error de clasificación. Conviene revisarlo.',
+      'In 2020 MODIS saw natural vegetation (grassland) and in 2021, agricultural use: it may be a land use change or a classification error. It is worth checking.',
     );
   });
 
   it('sin el año base no hay veredicto', () => {
     const evidence = input(every(2021, 2025, [12, 12]));
     expect(evidence).toMatchObject({ verdict: 'no_data', lastYear: 2025 });
-    expect(evidence.reason).toContain('no tiene la clasificación de 2020');
+    expect(evidence.reason).toContain('has no 2020 classification');
     // 2020 vino pero sin clasificar (255 llega como null): tampoco
     const unclassified = input([[2020, [null, null]], ...every(2021, 2025, [12, 12])]);
     expect(unclassified.verdict).toBe('no_data');
@@ -154,7 +154,7 @@ describe('veredicto de uso del suelo', () => {
     expect(input([], { pixelCount: 0 })).toMatchObject({ verdict: 'no_data', lastYear: null });
     const onlyBase = input([[2020, [12]]]);
     expect(onlyBase.verdict).toBe('no_data');
-    expect(onlyBase.reason).toContain('falta un año posterior');
+    expect(onlyBase.reason).toContain('a later year is needed');
   });
 
   it('un empate de grupos deja el grupo en null y pide revisar', () => {
@@ -168,13 +168,13 @@ describe('veredicto de uso del suelo', () => {
     });
     expect(later.verdict).toBe('possible_change');
     expect(later.reason).toContain(
-      'en 2023, uso agrícola y vegetación natural en partes iguales: puede ser un cambio',
+      'in 2023, agricultural use and natural vegetation in equal parts: it may be a land use change',
     );
     // con empate en el año base no se puede confirmar que siguió igual
     const base = input([[2020, [12, 10]], ...every(2021, 2025, [12, 12])]);
     expect(base.years[0].group).toBeNull();
     expect(base.verdict).toBe('possible_change');
-    expect(base.reason).toContain('no se puede confirmar que el uso siguió igual');
+    expect(base.reason).toContain('it cannot confirm that the land use stayed the same');
   });
 
   it('el grupo es el más frecuente aunque la clase más frecuente sea de otro', () => {
@@ -184,7 +184,7 @@ describe('veredicto de uso del suelo', () => {
     ]);
     expect(evidence.years[0]).toMatchObject({ group: 'natural', classId: 12 });
     expect(evidence.verdict).toBe('unchanged');
-    expect(evidence.reason).toContain('MODIS vio vegetación natural todos los años');
+    expect(evidence.reason).toContain('MODIS saw natural vegetation every year');
   });
 
   it('avisa los años sin dato, deja afuera los anteriores al base y no vuelve a ordenar mal', () => {
@@ -198,7 +198,7 @@ describe('veredicto de uso del suelo', () => {
     expect(evidence.years.map((y) => y.year)).toEqual([2020, 2021, 2022, 2025]);
     expect(evidence.verdict).toBe('unchanged');
     expect(evidence.reason).toBe(
-      'MODIS vio uso agrícola todos los años con dato de 2020 a 2025 (sin dato en 2022, 2023 y 2024) en el único píxel de unos 460 m con su centro dentro de tu lote.',
+      'MODIS saw agricultural use every year with data from 2020 to 2025 (no data in 2022, 2023 and 2024) in the only pixel of about 460 m with its center inside your field.',
     );
   });
 
@@ -206,9 +206,9 @@ describe('veredicto de uso del suelo', () => {
     const fallback = input(every(2020, 2025, [12]), { centroidFallback: true });
     expect(fallback.centroidFallback).toBe(true);
     expect(fallback.reason).toContain(
-      'en el píxel de unos 460 m que contiene el centro de tu lote',
+      'in the pixel of about 460 m that contains the center of your field',
     );
-    expect(fallback.reason).toContain('el dato también abarca lo que lo rodea');
+    expect(fallback.reason).toContain('the data also covers its surroundings');
     const changed = input(
       [
         [2020, [10]],
@@ -216,8 +216,10 @@ describe('veredicto de uso del suelo', () => {
       ],
       { centroidFallback: true, clipped: true },
     );
-    expect(changed.reason).toContain('se usó el de unos 460 m que contiene el centro del lote');
-    expect(changed.reason).toContain('se leyó solo su parte central');
+    expect(changed.reason).toContain(
+      'the pixel of about 460 m that contains the center of the field was used',
+    );
+    expect(changed.reason).toContain('only its central part was read');
   });
 });
 
@@ -232,7 +234,7 @@ describe('cambios en parte del lote', () => {
     expect(evidence.years.every((y) => y.group === 'agricultural')).toBe(true);
     expect(evidence.verdict).toBe('possible_change');
     expect(evidence.reason).toBe(
-      'En 2022 MODIS vio uso agrícola en 3 de los 9 píxeles de tu lote, donde en 2020 había visto vegetación natural: puede ser un cambio de uso del suelo en parte del lote o un error de clasificación. Conviene revisarlo.',
+      'In 2022 MODIS saw agricultural use in 3 of the 9 pixels of your field, where in 2020 it had seen natural vegetation: it may be a land use change in part of the field or a classification error. It is worth checking.',
     );
     // si los píxeles que cambian no van todos al mismo uso, se dice sin nombrarlo
     const mixed = input([
@@ -241,7 +243,7 @@ describe('cambios en parte del lote', () => {
     ]);
     expect(mixed.verdict).toBe('possible_change');
     expect(mixed.reason).toContain(
-      'En 2021 MODIS vio un uso distinto del de 2020 en 2 de los 8 píxeles de tu lote:',
+      'In 2021 MODIS saw a use different from 2020 in 2 of the 8 pixels of your field:',
     );
   });
 
@@ -253,7 +255,7 @@ describe('cambios en parte del lote', () => {
     expect(evidence.years.find((y) => y.year === 2022)?.group).toBe('natural');
     expect(evidence.verdict).toBe('possible_change');
     expect(evidence.reason).toContain(
-      'En 2022 MODIS vio uso agrícola en 2 de los 6 píxeles de tu lote, donde en 2020 había visto vegetación natural:',
+      'In 2022 MODIS saw agricultural use in 2 of the 6 pixels of your field, where in 2020 it had seen natural vegetation:',
     );
   });
 
@@ -262,18 +264,18 @@ describe('cambios en parte del lote', () => {
     const chaco = input(LANDCOVER_CHACO_BLOCK.map(({ year, classes }) => [year, classes]));
     expect(chaco.verdict).toBe('unchanged');
     expect(chaco.reason).toBe(
-      'MODIS vio vegetación natural todos los años de 2020 a 2025 en al menos 7 de los 9 píxeles de unos 460 m que cubren tu lote. Algún año vio otro uso en 2 de los 9 píxeles, menos de una cuarta parte del lote: puede ser un error de clasificación.',
+      'MODIS saw natural vegetation every year from 2020 to 2025 in at least 7 of the 9 pixels of about 460 m that cover your field. In some year it saw a different use in 2 of the 9 pixels, less than a quarter of the field: it may be a classification error.',
     );
     // sin ningún píxel que cambie no se agrega nada
-    expect(input(every(2020, 2025, [12, 12, 12])).reason).not.toContain('otro uso');
+    expect(input(every(2020, 2025, [12, 12, 12])).reason).not.toContain('different use');
   });
 
   it('compara cada píxel con su propio año base y no cuenta los que vienen sin dato', () => {
     // un lote mixto que no cambia: ningún píxel cambia de uso
     const mixed = input(every(2020, 2025, [12, 12, 12, 10]));
     expect(mixed.verdict).toBe('unchanged');
-    expect(mixed.reason).toContain('en 3 de los 4 píxeles');
-    expect(mixed.reason).not.toContain('otro uso');
+    expect(mixed.reason).toContain('in 3 of the 4 pixels');
+    expect(mixed.reason).not.toContain('different use');
     // sin dato en 2021 en la mitad de los píxeles: no es un cambio
     const gaps = input([
       [2020, [12, 12, 12, 12]],
@@ -281,7 +283,7 @@ describe('cambios en parte del lote', () => {
       ...every(2022, 2025, [12, 12, 12, 12]),
     ]);
     expect(gaps.verdict).toBe('unchanged');
-    expect(gaps.reason).not.toContain('otro uso');
+    expect(gaps.reason).not.toContain('different use');
     // un píxel sin dato en el año base tampoco se compara
     const noBase = input([
       [2020, [null, 12, 12, 12, 12]],
@@ -299,13 +301,13 @@ describe('cambios en parte del lote', () => {
     ]);
     expect(blip.verdict).toBe('unchanged');
     expect(blip.reason).toBe(
-      'MODIS vio uso agrícola todos los años de 2020 a 2024 en al menos 2 de los 3 píxeles de unos 460 m que cubren tu lote. En 2022 vio otro uso en 1 de los 3 píxeles y al año siguiente ya no: puede ser un error de clasificación.',
+      'MODIS saw agricultural use every year from 2020 to 2024 in at least 2 of the 3 pixels of about 460 m that cover your field. In 2022 it saw a different use in 1 of the 3 pixels and the following year it no longer did: it may be a classification error.',
     );
     // con un solo píxel el año distinto cambia el dominante: no entra en "todos los años"
     const single = input([[2020, [12]], [2021, [10]], ...every(2022, 2024, [12])]);
     expect(single.verdict).toBe('unchanged');
     expect(single.reason).toBe(
-      'MODIS vio uso agrícola todos los años de 2020 a 2024 salvo 2021 en el único píxel de unos 460 m con su centro dentro de tu lote. En 2021 vio otro uso en el píxel del lote y al año siguiente ya no: puede ser un error de clasificación.',
+      'MODIS saw agricultural use every year from 2020 to 2024 except 2021 in the only pixel of about 460 m with its center inside your field. In 2021 it saw a different use in the field pixel and the following year it no longer did: it may be a classification error.',
     );
   });
 
@@ -313,11 +315,11 @@ describe('cambios en parte del lote', () => {
     const lasting = input([...every(2020, 2021, [12, 12, 12]), ...every(2022, 2024, [12, 12, 10])]);
     expect(lasting.verdict).toBe('possible_change');
     expect(lasting.reason).toContain(
-      'En 2022 MODIS vio vegetación natural en 1 de los 3 píxeles de tu lote, donde en 2020 había visto uso agrícola:',
+      'In 2022 MODIS saw natural vegetation in 1 of the 3 pixels of your field, where in 2020 it had seen agricultural use:',
     );
     const last = input([...every(2020, 2023, [12, 12, 12]), [2024, [12, 12, 10]]]);
     expect(last.verdict).toBe('possible_change');
-    expect(last.reason).toContain('En 2024 MODIS vio vegetación natural en 1 de los 3 píxeles');
+    expect(last.reason).toContain('In 2024 MODIS saw natural vegetation in 1 of the 3 pixels');
   });
 });
 
@@ -364,6 +366,6 @@ describe('píxeles del lote', () => {
       [2025, 'urban', 13, 9],
     ]);
     expect(evidence.verdict).toBe('unchanged');
-    expect(evidence.reason).toContain('(sin dato en 2021, 2022, 2023 y 2024)');
+    expect(evidence.reason).toContain('(no data in 2021, 2022, 2023 and 2024)');
   });
 });

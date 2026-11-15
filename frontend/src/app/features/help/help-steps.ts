@@ -30,65 +30,64 @@ export interface HelpStep {
 export const HELP_STEPS: readonly HelpStep[] = [
   {
     key: 'marcar',
-    caption: 'Marcá tu lote y guardalo',
+    caption: 'Add your field and save it',
     description:
-      'Marcar lote: sobre la imagen satelital se tocan las esquinas del lote, una por una, y después el botón verde Guardar lote.',
+      'Add field: on the satellite image, tap the corners of your field one by one, then the green Save field button.',
     tab: null,
   },
   {
     key: 'abrir',
-    caption: 'Abrí tu lote con la lupa',
+    caption: 'Open your field with the magnifier',
     description:
-      'Mi campo: en la lista Tus lotes, la lupa al lado de cada lote abre su ficha con las pestañas.',
+      'My fields: in the Your fields list, the magnifier next to each field opens its details with the tabs.',
     tab: null,
   },
   {
     key: 'satelite',
-    caption: 'Mirá lo que ve el satélite',
+    caption: 'See what the satellite sees',
     description:
-      'Pestaña Satélite de la ficha del lote: el verdor, la lluvia y la humedad del suelo, y la curva del verdor del último año.',
+      'Satellite tab of the field details: greenness, rainfall and soil moisture, plus the greenness curve for the last year.',
     tab: 'satellite',
   },
   {
     key: 'bitacora',
-    caption: 'Confirmá o corregí cada evento',
+    caption: 'Confirm or correct each event',
     description:
-      'Pestaña Bitácora: se abre un evento detectado por satélite, se mira su evidencia y se toca Confirmar, o Corregir si algo no coincide. Los eventos aparecen cuando el procesamiento satelital los entrega.',
+      'Field log tab: open an event detected by satellite, check its evidence and tap Confirm, or Correct if something does not match. Events show up once satellite processing delivers them.',
     tab: 'log',
   },
   {
     key: 'practicas',
-    caption: 'Declará el uso del suelo',
+    caption: 'Declare your land use',
     description:
-      'Pestaña Prácticas: en la tarjeta Uso del suelo se toca la respuesta que corresponde, No cambié el uso o Sí, hubo un cambio.',
+      'Practices tab: in the Land use card, tap the answer that applies, No change in use or Yes, it changed.',
     tab: 'practices',
   },
   {
     key: 'huella',
-    caption: 'Cargá rinde e insumos',
+    caption: 'Enter yield and inputs',
     description:
-      'Pestaña Huella: el botón verde Cargar rinde e insumos abre lo que tenés que completar.',
+      'Footprint tab: the green Enter yield and inputs button opens what you need to fill in.',
     tab: 'footprint',
   },
   {
     key: 'fertilizacion',
-    caption: 'Armá la dosis por ambiente',
+    caption: 'Plan the rate for each zone',
     description:
-      'Pestaña Fertilización: el lote partido en ambientes según su verdor y, en la tarjeta Dosis variable de nitrógeno, el botón verde Armar dosis.',
+      'Fertilization tab: the field split into zones by greenness and, in the Variable rate nitrogen card, the green Plan rates button.',
     tab: 'fertilization',
   },
   {
     key: 'rentabilidad',
-    caption: 'Poné precio, rinde y costos',
+    caption: 'Enter price, yield and costs',
     description:
-      'Pestaña Rentabilidad: se completan el precio del grano, el rinde y, más abajo, los costos y gastos.',
+      'Profitability tab: fill in the grain price, the yield and, further down, costs and expenses.',
     tab: 'profit',
   },
   {
     key: 'pasaporte',
-    caption: 'Compartí el pasaporte del lote',
-    description:
-      'Pestaña Pasaporte: el botón verde Compartir pasaporte copia un enlace para mandar.',
+    caption: 'Share the field passport',
+    description: 'Passport tab: the green Share passport button copies a link you can send.',
     tab: 'passport',
   },
 ];

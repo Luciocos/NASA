@@ -16,8 +16,8 @@ import { HelpGuide } from '../help-guide/help-guide';
   imports: [PageHeader, HelpGuide],
   template: `
     <app-page-header
-      heading="Cómo cargar tus datos"
-      subtitle="Qué tocar en cada pantalla, paso a paso."
+      heading="How to enter your data"
+      subtitle="What to tap on each screen, step by step."
       headingId="ayuda-titulo"
     />
     <div class="card guide-card">

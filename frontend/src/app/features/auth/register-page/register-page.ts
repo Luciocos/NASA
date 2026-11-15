@@ -90,7 +90,7 @@ export class RegisterPage {
     const fields: AuthFormErrors['fields'] = {};
     const badEmail = emailError(this.email());
     if (badEmail) fields.email = badEmail;
-    if (!this.password()) fields.password = 'Elegí una contraseña.';
+    if (!this.password()) fields.password = 'Choose a password.';
     if (Object.keys(fields).length > 0) {
       this.fail({ fields, message: null });
       return;
@@ -105,7 +105,7 @@ export class RegisterPage {
         next: () => void this.router.navigateByUrl(this.back ?? HOME_PATH),
         error: (error: unknown) => {
           this.sending.set(false);
-          this.fail(authFormErrors(error, 'crear la cuenta'));
+          this.fail(authFormErrors(error, 'sign up'));
         },
       });
   }

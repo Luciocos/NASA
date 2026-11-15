@@ -9,7 +9,7 @@
     <div class="alert alert--error" role="alert">
       <app-icon name="alert" />
       <p>{{ message }}</p>
-      <button type="button" class="btn btn--sm" (click)="retry()">Reintentar</button>
+      <button type="button" class="btn btn--sm" (click)="retry()">Retry</button>
     </div>
   } @else if (footprint(); as fp) {
     <app-footprint-summary
@@ -24,15 +24,15 @@
       -->
       @if (canDeclare() && view() !== 'datos' && fp.yield.origin !== 'DECLARED') {
         <button actions type="button" class="btn btn--primary" (click)="openDeclaration()">
-          <app-icon name="plus" /> Cargar rinde e insumos
+          <app-icon name="plus" /> Enter yield and inputs
         </button>
       }
       <a actions class="more-link" [href]="practicesHref()" (click)="openPractices($event)">
-        Ver puntaje y buenas prácticas <app-icon name="arrow-right" />
+        See score and good practices <app-icon name="arrow-right" />
       </a>
     </app-footprint-summary>
 
-    <div class="seg views" role="tablist" aria-label="Qué ver de la huella">
+    <div class="seg views" role="tablist" aria-label="Footprint views">
       @for (tab of views(); track tab.id) {
         <button
           type="button"
@@ -104,14 +104,14 @@
     <div class="alert alert--error" role="alert">
       <app-icon name="alert" />
       <p>{{ message }}</p>
-      <button type="button" class="btn btn--sm" (click)="retry()">Reintentar</button>
+      <button type="button" class="btn btn--sm" (click)="retry()">Retry</button>
     </div>
   } @else {
     <div class="card loading" aria-busy="true">
       <span class="skeleton loading__label"></span>
       <span class="skeleton loading__value"></span>
       <span class="skeleton loading__line"></span>
-      <p class="visually-hidden">Cargando huella…</p>
+      <p class="visually-hidden">Loading footprint…</p>
     </div>
   }
 }

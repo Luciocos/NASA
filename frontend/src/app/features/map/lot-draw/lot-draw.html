@@ -1,7 +1,7 @@
-<app-page-header heading="Marcá tu lote" subtitle="Alcanza con el perímetro de tu lote." />
+<app-page-header heading="Add your field" subtitle="All you need is the boundary of your field." />
 
 <div class="layout">
-  <section class="work" aria-label="Mapa para marcar el lote">
+  <section class="work" aria-label="Map to draw your field">
     <app-place-search (place)="goToPlace($event)" (located)="goToSpot($event)" />
 
     <div class="map-wrap" [class.is-paint]="mode() === 'paint'">
@@ -12,7 +12,7 @@
         [class.is-eraser]="mode() === 'paint' && activeTool() === 'eraser'"
         [class.is-hand]="mode() === 'paint' && activeTool() === 'hand'"
         role="region"
-        aria-label="Mapa satelital: tocá las esquinas de tu lote"
+        aria-label="Satellite map: tap the corners of your field"
       ></div>
 
       @let tip = hint();
@@ -27,16 +27,16 @@
       </p>
 
       @if (mode() === 'trace') {
-        <div class="tools" role="toolbar" aria-label="Corregir el perímetro">
+        <div class="tools" role="toolbar" aria-label="Fix the boundary">
           <button
             type="button"
             class="btn btn--sm"
             [disabled]="!canUndo()"
-            title="Deshacer (Ctrl o Cmd + Z)"
+            title="Undo (Ctrl or Cmd + Z)"
             aria-keyshortcuts="Control+Z Meta+Z"
             (click)="undo()"
           >
-            <app-icon name="undo" /> Deshacer
+            <app-icon name="undo" /> Undo
           </button>
           <button
             type="button"
@@ -44,7 +44,7 @@
             [disabled]="points().length === 0"
             (click)="clear()"
           >
-            <app-icon name="trash" /> Empezar de nuevo
+            <app-icon name="trash" /> Start over
           </button>
         </div>
         <app-draw-tutorial />
@@ -72,15 +72,15 @@
   </section>
 
   <form class="panel" aria-labelledby="lot-panel-title" (submit)="$event.preventDefault(); save()">
-    <h2 id="lot-panel-title" class="visually-hidden">Datos del lote</h2>
+    <h2 id="lot-panel-title" class="visually-hidden">Field details</h2>
 
     @if (draftRestored() && hasDraft()) {
       <div class="alert alert--info draft" role="status">
         @if (confirmDiscard()) {
-          <p>¿Borramos lo marcado y los datos?</p>
+          <p>Discard the shape and the details?</p>
           <span class="draft__buttons">
             <button type="button" class="btn btn--sm btn--danger" (click)="discardDraft()">
-              Sí, descartar
+              Yes, discard
             </button>
             <button
               type="button"
@@ -91,16 +91,16 @@
             </button>
           </span>
         } @else {
-          <p>Retomamos el lote que dejaste a medias en este dispositivo.</p>
+          <p>We restored the field you left unfinished on this device.</p>
           <button type="button" class="btn btn--sm btn--ghost" (click)="confirmDiscard.set(true)">
-            Descartar
+            Discard
           </button>
         }
       </div>
     }
 
     <label class="field">
-      <span>Nombre del lote</span>
+      <span>Field name</span>
       <input
         name="name"
         autocomplete="off"
@@ -110,30 +110,30 @@
       />
       @if (name().trim() === '') {
         <span class="field__hint"
-          >Si no le ponés nombre, se guarda como «{{ suggestedName() }}».</span
+          >If you don't name it, it's saved as “{{ suggestedName() }}”.</span
         >
       }
     </label>
 
     <div class="area" [class.is-empty]="shownArea() === null">
-      <span class="area__label">Superficie aproximada</span>
+      <span class="area__label">Approximate area</span>
       <p class="area__value" aria-live="polite">
         @if (shownArea(); as hectares) {
           {{ formatArea(hectares) }}
         } @else {
           <span aria-hidden="true">— ha</span>
-          <span class="visually-hidden">todavía sin forma</span>
+          <span class="visually-hidden">no shape yet</span>
         }
       </p>
       <app-origin-badge origin="DECLARED" />
     </div>
 
-    <ul class="checks" aria-label="Revisión del lote">
+    <ul class="checks" aria-label="Field check">
       @for (check of checks(); track check.id) {
         <li [class.is-ok]="check.ok">
           <app-icon [name]="check.ok ? 'check' : 'alert'" />
           <span>
-            <span class="visually-hidden">{{ check.ok ? 'Listo:' : 'Falta:' }}</span>
+            <span class="visually-hidden">{{ check.ok ? 'Done:' : 'To do:' }}</span>
             {{ check.text }}
           </span>
           @if (check.action) {
@@ -147,17 +147,17 @@
     @if (mode() === 'paint' && paintState().cells > 0) {
       @let state = paintState();
       <p class="small muted">
-        Perímetro {{ formatPerimeter(state.perimeterM) }} · {{ state.cells }}
-        {{ state.cells === 1 ? 'recuadro' : 'recuadros' }} de
+        Perimeter {{ formatPerimeter(state.perimeterM) }} · {{ state.cells }}
+        {{ state.cells === 1 ? 'square' : 'squares' }} of
         {{ state.cellSize === 100 ? '1 ha' : '¼ ha' }}
       </p>
     }
 
-    <app-disclosure label="Más datos (opcional)" hint="Localidad, provincia y RENSPA">
+    <app-disclosure label="More details (optional)" hint="Town, province and RENSPA">
       <div class="more">
         <div class="pair">
           <label class="field">
-            Localidad
+            Town
             <input
               name="locality"
               [value]="locality()"
@@ -165,7 +165,7 @@
             />
           </label>
           <label class="field">
-            Provincia
+            Province
             <input
               name="province"
               [value]="province()"
@@ -181,31 +181,30 @@
     </app-disclosure>
 
     <app-disclosure
-      label="Opciones avanzadas"
-      hint="Pintar hectáreas y ajuste fino"
+      label="Advanced options"
+      hint="Paint hectares and fine-tuning"
       [(open)]="advancedOpen"
     >
       <div class="advanced">
-        <div class="seg" role="group" aria-label="Cómo marcar el lote">
+        <div class="seg" role="group" aria-label="How to draw the field">
           <button type="button" [attr.aria-pressed]="mode() === 'trace'" (click)="setMode('trace')">
-            <app-icon name="vertices" /> Trazar perímetro
+            <app-icon name="vertices" /> Trace boundary
           </button>
           <button type="button" [attr.aria-pressed]="mode() === 'paint'" (click)="setMode('paint')">
-            <app-icon name="brush" /> Pintar hectáreas
+            <app-icon name="brush" /> Paint hectares
           </button>
         </div>
         <p class="small muted">
           @if (mode() === 'paint') {
-            Pintás recuadros de 1 ha o ¼ ha sobre una grilla que podés girar para seguir los
-            alambrados.
+            Paint 1 ha or ¼ ha squares on a grid you can rotate to follow the fence lines.
           } @else {
-            Pintar sirve si te resulta más fácil que marcar las esquinas.
+            Painting helps if it is easier for you than marking the corners.
           }
         </p>
 
         @if (mode() === 'trace' && points().length > 0) {
           <fieldset class="fine">
-            <legend>Ajuste fino de coordenadas</legend>
+            <legend>Fine-tune coordinates</legend>
             <ol>
               @for (point of points(); track $index; let i = $index) {
                 <li [class.is-selected]="i === selected()">
@@ -214,7 +213,7 @@
                     class="btn btn--sm btn--icon"
                     (click)="selectVertex(i)"
                     [attr.aria-pressed]="i === selected()"
-                    [attr.aria-label]="'Insertar después de la esquina ' + (i + 1)"
+                    [attr.aria-label]="'Insert after corner ' + (i + 1)"
                   >
                     {{ i + 1 }}
                   </button>
@@ -238,7 +237,7 @@
                     type="button"
                     class="btn btn--sm btn--ghost btn--icon"
                     (click)="removeVertex(i)"
-                    [attr.aria-label]="'Borrar la esquina ' + (i + 1)"
+                    [attr.aria-label]="'Delete corner ' + (i + 1)"
                   >
                     <app-icon name="close" />
                   </button>
@@ -259,15 +258,15 @@
       }
       <button type="submit" class="btn btn--primary btn--block btn--lg" [disabled]="!canSave()">
         <app-icon name="save" />
-        {{ saving() ? 'Guardando…' : 'Guardar lote' }}
+        {{ saving() ? 'Saving…' : 'Save field' }}
         @if (shownArea(); as hectares) {
           <span class="actions__area">· {{ formatArea(hectares) }}</span>
         }
       </button>
     </div>
     <p class="privacy">
-      <app-icon name="eye" /> Tus lotes son privados: solo vos los ves, salvo que compartas su
-      pasaporte.
+      <app-icon name="eye" /> Your fields are private: only you can see them, unless you share their
+      passport.
     </p>
   </form>
 </div>

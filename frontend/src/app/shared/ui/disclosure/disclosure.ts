@@ -107,7 +107,7 @@ import { IconName } from '../icon/icons';
 })
 export class Disclosure {
   /** texto del summary */
-  readonly label = input('Ver detalle técnico');
+  readonly label = input('See technical details');
   /** aclaración corta al lado del rótulo: qué hay adentro */
   readonly hint = input<string | null>(null);
   /** ícono opcional antes del rótulo */

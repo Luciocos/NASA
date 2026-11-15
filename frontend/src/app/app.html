@@ -1,4 +1,4 @@
-<a class="skip" href="#contenido" (click)="skipToContent($event, content)">Saltar al contenido</a>
+<a class="skip" href="#contenido" (click)="skipToContent($event, content)">Skip to content</a>
 
 @if (!isLanding()) {
   <header class="topbar">
@@ -17,18 +17,18 @@
 
     @if (loggedIn()) {
       <!-- en el celular esta navegación y la cuenta bajan a la barra de pestañas -->
-      <nav class="nav" aria-label="Principal">
+      <nav class="nav" aria-label="Main">
         <a
           routerLink="/mapa"
           [class.is-active]="section() === 'field'"
           [attr.aria-current]="path() === '/mapa' ? 'page' : null"
-          ><app-icon name="map" /> Mi campo</a
+          ><app-icon name="map" /> My fields</a
         >
         <a
           routerLink="/mapa/nuevo"
           [class.is-active]="section() === 'draw'"
           [attr.aria-current]="section() === 'draw' ? 'page' : null"
-          ><app-icon name="plus" /> Marcar lote</a
+          ><app-icon name="plus" /> Add field</a
         >
       </nav>
 
@@ -36,7 +36,7 @@
       <app-help-button [step]="section() === 'draw' ? 'marcar' : 'abrir'" />
       <app-account-chip class="topbar__account" />
     } @else if (path() !== '/ingresar') {
-      <a routerLink="/ingresar" [queryParams]="loginParams()" class="btn topbar__login">Ingresar</a>
+      <a routerLink="/ingresar" [queryParams]="loginParams()" class="btn topbar__login">Log in</a>
     }
   </header>
 }
@@ -46,18 +46,18 @@
 </main>
 
 @if (!isLanding()) {
-  <footer class="footer">Prueba de concepto. Usa datos abiertos de la NASA.</footer>
+  <footer class="footer">Proof of concept. Uses NASA open data.</footer>
 }
 
 @if (!isLanding() && loggedIn()) {
-  <nav class="tabbar" aria-label="Principal">
+  <nav class="tabbar" aria-label="Main">
     <a
       routerLink="/mapa"
       [class.is-active]="section() === 'field'"
       [attr.aria-current]="path() === '/mapa' ? 'page' : null"
     >
       <span class="tabbar__icon"><app-icon name="map" /></span>
-      <span>Mi campo</span>
+      <span>My fields</span>
     </a>
     <a
       routerLink="/mapa/nuevo"
@@ -65,7 +65,7 @@
       [attr.aria-current]="section() === 'draw' ? 'page' : null"
     >
       <span class="tabbar__icon"><app-icon name="plus" /></span>
-      <span>Marcar lote</span>
+      <span>Add field</span>
     </a>
     <app-account-chip variant="tab" />
   </nav>
@@ -73,10 +73,8 @@
 
 @if (navigationFailed()) {
   <div class="nav-error alert alert--error" role="alert" animate.enter="enter-rise">
-    <p>
-      No se pudo abrir esa pantalla. Si estás sin conexión, probá de nuevo cuando vuelva la red.
-    </p>
-    <button type="button" class="btn btn--sm" (click)="navigationFailed.set(false)">Cerrar</button>
+    <p>Couldn't open that screen. If you're offline, try again when you're back online.</p>
+    <button type="button" class="btn btn--sm" (click)="navigationFailed.set(false)">Close</button>
   </div>
 }
 

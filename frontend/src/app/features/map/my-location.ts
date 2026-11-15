@@ -22,7 +22,7 @@ export function locateOnce(geolocation: Geolocation | undefined): Promise<Spot> 
   return new Promise((resolve, reject) => {
     if (!geolocation) {
       reject(
-        new LocationError('Este navegador no comparte la ubicación. Buscá tu campo en el mapa.'),
+        new LocationError("This browser doesn't share your location. Find your farm on the map."),
       );
       return;
     }
@@ -37,12 +37,12 @@ export function locateOnce(geolocation: Geolocation | undefined): Promise<Spot> 
 // códigos de GeolocationPositionError: 1 sin permiso, 2 sin ubicación, 3 se agotó el tiempo
 function describeLocationError(error: Pick<GeolocationPositionError, 'code'>): string {
   if (error.code === 1) {
-    return 'No nos diste permiso para ver tu ubicación. No pasa nada: buscá tu campo en el mapa.';
+    return "You didn't allow location access. No problem: find your farm on the map.";
   }
   if (error.code === 3) {
-    return 'Tu ubicación tardó demasiado. Probá de nuevo o buscá tu campo en el mapa.';
+    return 'Getting your location took too long. Try again or find your farm on the map.';
   }
-  return 'No pudimos saber dónde estás. Buscá tu campo en el mapa.';
+  return "We couldn't get your location. Find your farm on the map.";
 }
 
 /** lee lat y lng de la dirección; null si faltan o no son coordenadas válidas */

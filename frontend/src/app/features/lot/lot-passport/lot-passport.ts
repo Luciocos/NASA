@@ -26,9 +26,9 @@ type ShareState =
 
 /** lo que muestra el enlace, en tres palabras: lo mismo que la página pública del pasaporte */
 const INCLUDES: readonly { icon: IconName; label: string }[] = [
-  { icon: 'list', label: 'Campañas' },
-  { icon: 'calendar', label: 'Bitácora' },
-  { icon: 'footprint', label: 'Huella y puntaje' },
+  { icon: 'list', label: 'Seasons' },
+  { icon: 'calendar', label: 'Field log' },
+  { icon: 'footprint', label: 'Footprint and score' },
 ];
 
 /**
@@ -49,10 +49,10 @@ const INCLUDES: readonly { icon: IconName; label: string }[] = [
   imports: [RouterLink, Icon, SectionCard],
   template: `
     <app-section-card
-      heading="Pasaporte del lote"
-      subtitle="Un enlace público, de solo lectura, para mostrar el lote a quien quieras."
+      heading="Field passport"
+      subtitle="A public, read-only link to show the field to anyone you choose."
     >
-      <ul class="includes" aria-label="Lo que muestra el enlace">
+      <ul class="includes" aria-label="What the link shows">
         @for (item of includes; track item.label) {
           <li class="chip"><app-icon [name]="item.icon" /> {{ item.label }}</li>
         }
@@ -64,32 +64,32 @@ const INCLUDES: readonly { icon: IconName; label: string }[] = [
         (click)="share()"
       >
         <app-icon name="passport" />
-        {{ sharing() ? 'Generando el enlace…' : 'Compartir pasaporte' }}
+        {{ sharing() ? 'Creating the link…' : 'Share passport' }}
       </button>
       <div class="result" aria-live="polite">
         @if (state(); as s) {
           @if (s.status === 'error') {
             <p class="msg msg--error" role="alert">
-              <app-icon name="alert" /> No se pudo generar el pasaporte. Probá de nuevo en un rato.
+              <app-icon name="alert" /> Couldn't create the passport. Try again in a little while.
             </p>
           } @else {
             @if (s.status === 'copied') {
               <p class="msg">
-                <app-icon name="check" /> Enlace copiado. Pegalo en un mensaje para compartirlo.
+                <app-icon name="check" /> Link copied. Paste it in a message to share it.
               </p>
             } @else {
-              <p class="msg">No se pudo copiar solo. Copiá el enlace:</p>
+              <p class="msg">Couldn't copy it automatically. Copy the link:</p>
               <input
                 class="url"
                 type="text"
                 readonly
-                aria-label="Enlace del pasaporte"
+                aria-label="Passport link"
                 [value]="s.url"
                 (focus)="selectAll($event)"
               />
             }
             <a class="open" [routerLink]="s.path"
-              >Abrir el pasaporte <app-icon name="arrow-right"
+              >Open the passport <app-icon name="arrow-right"
             /></a>
           }
         }

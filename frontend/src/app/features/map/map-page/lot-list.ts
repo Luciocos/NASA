@@ -18,7 +18,7 @@ import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
 import { SimulatedNotice } from '../../../shared/simulated-notice/simulated-notice';
 import { Icon } from '../../../shared/ui/icon/icon';
 import { SectionCard } from '../../../shared/ui/section-card/section-card';
-import { formatDate } from '../../lot/labels';
+import { EVENT_TYPE_LABELS, formatDate } from '../../lot/labels';
 import { LotLink } from '../../lot/lot-workspace/lot-link';
 
 /** un lote en la lista de Mi campo: de la cuenta o guardado solo en el dispositivo */
@@ -71,9 +71,9 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
   const pending = lots.length - own.length;
   const hectares = own.reduce((sum, lot) => sum + (lot.hectares ?? 0), 0);
   const parts = [
-    own.length > 0 ? `${own.length} ${own.length === 1 ? 'lote' : 'lotes'}` : '',
+    own.length > 0 ? `${own.length} ${own.length === 1 ? 'field' : 'fields'}` : '',
     own.length > 0 ? formatHectares(hectares) : '',
-    pending > 0 ? `${pending} sin sincronizar` : '',
+    pending > 0 ? `${pending} not synced` : '',
   ].filter(Boolean);
   return parts.length > 0 ? parts.join(' · ') : null;
 }
@@ -89,21 +89,21 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [SectionCard, EventGlyph, OriginBadge, SimulatedNotice, Icon, LotLink],
   template: `
-    <app-section-card heading="Tus lotes" [subtitle]="subtitle()">
+    <app-section-card heading="Your fields" [subtitle]="subtitle()">
       @if (tools()) {
         <div class="tools">
           <label class="field search">
-            <span class="visually-hidden">Buscar lote por nombre o localidad</span>
+            <span class="visually-hidden">Search fields by name or town</span>
             <app-icon name="search" />
-            <input type="search" placeholder="Buscar" [value]="query()" (input)="onQuery($event)" />
+            <input type="search" placeholder="Search" [value]="query()" (input)="onQuery($event)" />
           </label>
           <label class="field sort">
-            <span class="visually-hidden">Ordenar lotes</span>
+            <span class="visually-hidden">Sort fields</span>
             <app-icon name="sort" />
             <select [value]="sort()" (change)="onSort($event)">
-              <option value="name">Nombre</option>
-              <option value="area">Hectáreas</option>
-              <option value="recent">Último dato</option>
+              <option value="name">Name</option>
+              <option value="area">Hectares</option>
+              <option value="recent">Latest data</option>
             </select>
           </label>
         </div>
@@ -111,12 +111,10 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
       @if (loading() && lots().length === 0) {
         <p class="skeleton placeholder" aria-hidden="true"></p>
         <p class="skeleton placeholder" aria-hidden="true"></p>
-        <p class="visually-hidden">Cargando lotes…</p>
+        <p class="visually-hidden">Loading fields…</p>
       } @else if (visible().length === 0) {
         <p class="none">
-          {{
-            query() ? 'Ningún lote coincide con la búsqueda.' : 'Todavía no hay lotes para mostrar.'
-          }}
+          {{ query() ? 'No fields match your search.' : 'No fields to show yet.' }}
         </p>
       } @else {
         <ul #list class="lots" [class.is-long]="tools()">
@@ -144,23 +142,23 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
                   <span class="top">
                     <strong class="name">{{ lot.name }}</strong>
                     @if (lot.pending === 'waiting') {
-                      <span class="chip chip--warn">Sin sincronizar</span>
+                      <span class="chip chip--warn">Not synced</span>
                     } @else if (lot.pending === 'rejected') {
-                      <span class="chip chip--danger">Rechazado</span>
+                      <span class="chip chip--danger">Rejected</span>
                     }
                   </span>
                   @if (lot.pending === 'rejected') {
-                    <span class="line reason">{{ lot.error || 'El servidor no lo aceptó' }}</span>
+                    <span class="line reason">{{ lot.error || 'The server rejected it' }}</span>
                   } @else if (lot.pending) {
-                    <span class="line">Se sube cuando vuelva la conexión</span>
+                    <span class="line">Uploads when you're back online</span>
                   } @else {
                     <span class="line">
                       {{ hectaresOf(lot) }} ·
                       @if (lot.last; as event) {
-                        {{ event.type_label }} {{ formatDate(event.date) }}
+                        {{ eventLabel(event) }} {{ formatDate(event.date) }}
                         <app-origin-badge [origin]="event.origin" />
                       } @else {
-                        Sin eventos todavía
+                        No events yet
                       }
                     </span>
                   }
@@ -173,7 +171,7 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
                 <a
                   class="btn btn--ghost btn--icon lot__open"
                   [appLotLink]="numberOf(lot)"
-                  [attr.aria-label]="'Ver ' + lot.name"
+                  [attr.aria-label]="'View ' + lot.name"
                 >
                   <app-icon name="search" />
                 </a>
@@ -382,7 +380,7 @@ export class LotList {
   protected readonly subtitle = computed(() => {
     const total = this.lots().length;
     const shown = this.visible().length;
-    return shown < total ? `Mostrando ${shown} de ${total}` : describeCounts(this.lots());
+    return shown < total ? `Showing ${shown} of ${total}` : describeCounts(this.lots());
   });
 
   protected readonly formatDate = formatDate;
@@ -411,7 +409,12 @@ export class LotList {
   }
 
   protected hectaresOf(lot: ListedLot): string {
-    return lot.hectares === null ? 'Sin área' : formatHectares(lot.hectares);
+    return lot.hectares === null ? 'No area' : formatHectares(lot.hectares);
+  }
+
+  /** rótulo del tipo de evento por su clave; si no hay, el que mandó el backend */
+  protected eventLabel(event: EventLogItem): string {
+    return EVENT_TYPE_LABELS[event.type] ?? event.type_label;
   }
 
   protected onQuery(event: Event): void {

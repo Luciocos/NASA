@@ -41,7 +41,7 @@ describe('Connectivity', () => {
   it('no pide nada hasta que se llama a start()', () => {
     http.expectNone(HEALTH_URL);
     expect(connectivity.backend()).toBe('checking');
-    expect(connectivity.label()).toBe('Conectando…');
+    expect(connectivity.label()).toBe('Connecting…');
     expect(vi.getTimerCount()).toBe(0);
   });
 
@@ -52,7 +52,7 @@ describe('Connectivity', () => {
     answerHealthy();
 
     expect(connectivity.backend()).toBe('up');
-    expect(connectivity.label()).toBe('Conectado');
+    expect(connectivity.label()).toBe('Online');
     expect(connectivity.reconnectCount()).toBe(0);
   });
 
@@ -70,7 +70,7 @@ describe('Connectivity', () => {
     answerFailure(status);
 
     expect(connectivity.backend()).toBe('down');
-    expect(connectivity.label()).toBe('Sin conexión con el servidor');
+    expect(connectivity.label()).toBe('Offline: server unreachable');
   });
 
   it('da por caído un health que no responde en 10 segundos', () => {
@@ -183,7 +183,7 @@ describe('Connectivity', () => {
     expect(connectivity.backend()).toBe('up');
     answerFailure();
     expect(connectivity.backend()).toBe('down');
-    expect(connectivity.label()).toBe('Sin conexión a internet');
+    expect(connectivity.label()).toBe('Offline: no internet');
 
     window.dispatchEvent(new Event('online'));
     expect(connectivity.online()).toBe(true);
@@ -245,7 +245,7 @@ describe('Connectivity', () => {
 
       connectivity.noteCacheServed(SAVED);
 
-      expect(connectivity.label()).toBe('Sin conexión con el servidor · mostrando datos guardados');
+      expect(connectivity.label()).toBe('Offline: server unreachable · showing saved data');
     });
 
     it('sin internet el texto lo dice y avisa que se muestran datos guardados', () => {
@@ -255,7 +255,7 @@ describe('Connectivity', () => {
 
       connectivity.noteCacheServed(SAVED);
 
-      expect(connectivity.label()).toBe('Sin conexión a internet · mostrando datos guardados');
+      expect(connectivity.label()).toBe('Offline: no internet · showing saved data');
     });
 
     it('con el backend de vuelta sigue avisando hasta que llega una lectura de la red', () => {
@@ -265,10 +265,10 @@ describe('Connectivity', () => {
       vi.advanceTimersByTime(2_000);
       answerHealthy();
 
-      expect(connectivity.label()).toBe('Conectado · mostrando datos guardados');
+      expect(connectivity.label()).toBe('Online · showing saved data');
 
       connectivity.noteNetworkRead();
-      expect(connectivity.label()).toBe('Conectado');
+      expect(connectivity.label()).toBe('Online');
     });
   });
 

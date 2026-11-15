@@ -228,7 +228,7 @@ describe('subsets MODIS', () => {
       /^https:\/\/modis\.ornl\.gov\/rst\/api\/v1\/MCD12Q1\/subset\?latitude=-33\.\d{1,4}&longitude=-61\.\d{1,4}&band=LC_Type1&startDate=A2020001&endDate=A2026001&kmAboveBelow=0&kmLeftRight=0$/,
     );
     expect(res.data).toHaveLength(6);
-    expect(res.data[0]).toEqual({ year: 2020, classId: 12, label: 'Cultivo agrícola' });
+    expect(res.data[0]).toEqual({ year: 2020, classId: 12, label: 'Cropland' });
   });
 });
 

@@ -125,11 +125,13 @@ describe('uso del suelo: reglas', () => {
     expect(modisStatus(ready(TIED))).toBe('unclear');
     const line = matchLine('unconfirmed', TIED, null);
     expect(line).toEqual(
-      expect.objectContaining({ tone: 'neutral', title: 'MODIS no alcanza para confirmarlo' }),
+      expect.objectContaining({ tone: 'neutral', title: 'MODIS is not enough to confirm it' }),
     );
-    expect(line.detail).toContain('No contradice tu declaración, pero tampoco la respalda');
+    expect(line.detail).toContain(
+      'It does not contradict your declaration, but it does not support it either',
+    );
     expect(modisChangeLine(TIED, true)).toEqual(
-      expect.objectContaining({ tone: 'neutral', title: 'Sin un uso dominante en 2020' }),
+      expect.objectContaining({ tone: 'neutral', title: 'No dominant use in 2020' }),
     );
   });
 
@@ -155,17 +157,17 @@ describe('uso del suelo: reglas', () => {
 
     const line = modisChangeLine(partial, true);
     expect(line).toEqual(
-      expect.objectContaining({ tone: 'warn', title: 'Un uso distinto en parte del lote' }),
+      expect.objectContaining({ tone: 'warn', title: 'A different use in part of the field' }),
     );
     expect(line?.detail).toContain(partial.reason);
-    expect(line?.title).not.toContain('dominante');
+    expect(line?.title).not.toContain('dominant');
 
     const mismatch = matchLine('mismatch', partial, null);
-    expect(mismatch.detail).toContain('MODIS vio un uso distinto en parte del lote.');
+    expect(mismatch.detail).toContain('MODIS saw a different use in part of the field.');
     expect(mismatch.detail).toContain(partial.reason);
-    expect(mismatch.detail).not.toContain('uso dominante');
+    expect(mismatch.detail).not.toContain('dominant use');
     expect(matchLine('declared_change', partial, null).detail).toContain(
-      'MODIS también vio un uso distinto en parte del lote.',
+      'MODIS also saw a different use in part of the field.',
     );
   });
 
@@ -181,46 +183,46 @@ describe('uso del suelo: reglas', () => {
 
   it('la comparación es una línea corta y no acusa: el porqué va en la ayuda', () => {
     const mismatch = matchLine('mismatch', CHANGED, null);
-    expect(mismatch.title).toBe('No coincide con MODIS: revisalo');
-    expect(mismatch.detail).toContain('MODIS vio un uso distinto en 2022, 2023 y 2024.');
-    expect(mismatch.detail).toContain('error de clasificación del satélite');
-    expect(matchLine('match', UNCHANGED, null).title).toBe('Respaldado por lo que vio MODIS');
+    expect(mismatch.title).toBe('Does not match MODIS: review it');
+    expect(mismatch.detail).toContain('MODIS saw a different use in 2022, 2023 and 2024.');
+    expect(mismatch.detail).toContain('satellite classification error');
+    expect(matchLine('match', UNCHANGED, null).title).toBe('Supported by what MODIS saw');
     expect(matchLine('declared_change', UNCHANGED, null).title).toBe(
-      'Con un cambio, la práctica no se cumple',
+      'With a change, the practice is not met',
     );
     expect(matchLine('no_modis', null, 'Sin conexión.').detail).toBe('Sin conexión.');
   });
 
   it('cada año en una o dos palabras, con el detalle técnico aparte', () => {
     const [base] = visibleYears(UNCHANGED);
-    expect(yearLabel(base)).toBe('Agrícola');
+    expect(yearLabel(base)).toBe('Cropland');
     expect(yearDetails(visibleYears(UNCHANGED))).toEqual([
-      '2020 a 2024: Agrícola, clase IGBP 12 (Cultivo agrícola); 3 píxeles con dato, 100 % con uso agrícola.',
+      '2020 to 2024: Agricultural, IGBP class 12 (Cropland); 3 pixels with data, 100 % agricultural use.',
     ]);
     expect(yearDetails(visibleYears(CHANGED)).map((line) => line.slice(0, 32))).toEqual([
-      '2020 a 2021: Natural, clase IGBP',
-      '2022 a 2024: Agrícola, clase IGB',
+      '2020 to 2021: Natural, IGBP clas',
+      '2022 to 2024: Agricultural, IGBP',
     ]);
     // con un empate no se nombra una clase: ninguna domina
     expect(yearDetails(visibleYears(TIED))).toEqual([
-      '2020 a 2022: sin un uso dominante (empate entre usos); 2 píxeles con dato, 50 % con uso agrícola.',
+      '2020 to 2022: no dominant use (tie between uses); 2 pixels with data, 50 % agricultural use.',
     ]);
-    expect(yearLabel({ ...base, pixels: 0 })).toBe('Sin dato');
-    expect(yearLabel({ ...base, group: null })).toBe('Mixto');
+    expect(yearLabel({ ...base, pixels: 0 })).toBe('No data');
+    expect(yearLabel({ ...base, group: null })).toBe('Mixed');
   });
 
   it('"Sin dato" con un motivo cortito, y la primera oración de un error largo', () => {
-    expect(noDataShort(NO_DATA)).toBe('No hay píxeles sobre el lote');
-    expect(noDataShort(modis([null, CROP, CROP]))).toBe('Falta la clasificación de 2020');
-    expect(noDataShort(modis([CROP]))).toBe('Falta un año después de 2020');
+    expect(noDataShort(NO_DATA)).toBe('No pixels over the field');
+    expect(noDataShort(modis([null, CROP, CROP]))).toBe('Missing the 2020 classification');
+    expect(noDataShort(modis([CROP]))).toBe('Missing a year after 2020');
     expect(firstSentence(FAILED.error)).toBe('Sin respuesta del servicio de la NASA');
     expect(firstSentence('Sin punto')).toBe('Sin punto');
   });
 
   it('sin declaración solo habla si MODIS vio un uso distinto', () => {
     expect(modisChangeLine(UNCHANGED, true)).toBeNull();
-    expect(modisChangeLine(CHANGED, false)?.title).toBe('Uso distinto en 2022, 2023 y 2024');
-    expect(modisChangeLine(CHANGED, false)?.detail).not.toContain('tu lote');
+    expect(modisChangeLine(CHANGED, false)?.title).toBe('Different use in 2022, 2023 and 2024');
+    expect(modisChangeLine(CHANGED, false)?.detail).not.toContain('your field');
   });
 
   it('en un lote ajeno habla de "este lote"', () => {
@@ -228,6 +230,10 @@ describe('uso del suelo: reglas', () => {
       'Este lote es grande y este lote es chico.',
     );
     expect(forLot('Tu lote.', true)).toBe('Tu lote.');
+    expect(forLot('Your field is big and your field is small.', false)).toBe(
+      'This field is big and this field is small.',
+    );
+    expect(forLot('Your field.', true)).toBe('Your field.');
   });
 });
 
@@ -289,23 +295,23 @@ describe('LandUseCard', () => {
     // el uso nunca va solo con color: cada franja lleva su ícono y su nombre
     expect(years.every((y) => y.querySelector('.year__icon'))).toBe(true);
     expect(years.map((y) => y.querySelector('.year__label')?.textContent?.trim())).toEqual(
-      Array(5).fill('Agrícola'),
+      Array(5).fill('Cropland'),
     );
 
     // a la vista, poco: el origen y "orientativo" con el tamaño del píxel
-    expect(el().querySelector('.modis__head')?.textContent).toContain('Verificado');
-    expect(visible()).toContain('Orientativo · píxeles de 460 m');
-    expect(visible()).not.toContain('Fuente');
+    expect(el().querySelector('.modis__head')?.textContent).toContain('Verified');
+    expect(visible()).toContain('Indicative · 460 m pixels');
+    expect(visible()).not.toContain('Source');
     // el resto, en la ayuda: píxeles, clase IGBP de cada año y fuente
-    const how = help('Cómo lo mide MODIS');
-    expect(how).toContain('3 píxeles de unos 460 m cubren este lote.');
-    expect(how).toContain('clase IGBP 12 (Cultivo agrícola)');
-    expect(how).toContain('Fuente: MODIS Terra y Aqua (ORNL DAAC)');
-    expect(how).toContain('Consultado el 15/11/2026');
+    const how = help('How MODIS measures it');
+    expect(how).toContain('3 pixels of about 460 m cover this field.');
+    expect(how).toContain('IGBP class 12 (Cropland)');
+    expect(how).toContain('Source: MODIS Terra and Aqua (ORNL DAAC)');
+    expect(how).toContain('Retrieved on 15/11/2026');
     // sin declaración ni comparación, y sin hablarle al dueño
-    expect(button('No cambié')).toBeUndefined();
-    expect(text()).not.toContain('Declarado');
-    expect(text()).not.toContain('tu lote');
+    expect(button('No, it did not change')).toBeUndefined();
+    expect(text()).not.toContain('Declared');
+    expect(text()).not.toContain('your field');
     expect(el().querySelector('.line')).toBeNull();
   });
 
@@ -315,7 +321,7 @@ describe('LandUseCard', () => {
     expect(el().querySelectorAll('.year-skeleton').length).toBe(5);
     expect(el().querySelector('.modis')?.getAttribute('aria-busy')).toBe('true');
     expect(el().querySelector('.note[role="status"]')?.textContent).toContain(
-      'MODIS puede tardar un par de minutos',
+      'MODIS can take a couple of minutes',
     );
     // todavía no hay dato: nada que etiquetar como verificado
     expect(el().querySelector('.modis__head app-origin-badge')).toBeNull();
@@ -323,25 +329,25 @@ describe('LandUseCard', () => {
 
   it('sin dato dice el motivo corto y, si falló, deja reintentar', async () => {
     await render(EXAMPLE, false, ready(NO_DATA));
-    expect(visible()).toContain('Sin dato · No hay píxeles sobre el lote');
-    expect(help('Cómo lo mide MODIS')).toContain('No hay píxeles de MODIS sobre este lote.');
+    expect(visible()).toContain('No data · No pixels over the field');
+    expect(help('How MODIS measures it')).toContain('There are no MODIS pixels over this field.');
     expect(el().querySelectorAll('.year').length).toBe(0);
     expect(el().querySelector('.modis__head app-origin-badge')).toBeNull();
 
     state.set(FAILED);
     await fixture.whenStable();
-    expect(visible()).toContain('Sin dato · Sin respuesta del servicio de la NASA');
+    expect(visible()).toContain('No data · Sin respuesta del servicio de la NASA');
     expect(el().querySelector('.modis__head app-origin-badge')).toBeNull();
-    expect(help('Cómo lo mide MODIS')).toContain('Probá de nuevo en unos minutos.');
-    button('Reintentar')?.click();
+    expect(help('How MODIS measures it')).toContain('Probá de nuevo en unos minutos.');
+    button('Retry')?.click();
     expect(retry).toHaveBeenCalledTimes(1);
   });
 
   it('en un ejemplo con un uso distinto lo marca, sin acusar', async () => {
     await render(EXAMPLE, false, ready(CHANGED));
 
-    expect(visible()).toContain('Uso distinto en 2022, 2023 y 2024');
-    expect(help('Más sobre lo que vio MODIS')).toContain('error de clasificación');
+    expect(visible()).toContain('Different use in 2022, 2023 and 2024');
+    expect(help('More about what MODIS saw')).toContain('classification error');
     const flagged = [...el().querySelectorAll('.year.is-different')];
     expect(flagged.map((y) => y.querySelector('.year__num')?.textContent?.trim())).toEqual([
       '2022',
@@ -350,45 +356,47 @@ describe('LandUseCard', () => {
     ]);
     // la marca no es solo color: un ícono y, para el lector de pantalla, el texto
     expect(flagged.every((y) => y.querySelector('.year__flag'))).toBe(true);
-    expect(flagged[0].textContent).toContain('distinto de 2020');
+    expect(flagged[0].textContent).toContain('different from 2020');
   });
 
   it('coincide: declaraste sin cambio y MODIS vio el mismo uso', async () => {
     await render({ ...LOT, land_use_declaration: declared(true) }, true, ready(UNCHANGED));
 
-    expect(visible()).toContain('Sin cambio desde 2020');
-    expect(visible()).toContain('Declarado por vos el 15/11/2026');
+    expect(visible()).toContain('No change since 2020');
+    expect(visible()).toContain('Declared by you on 15/11/2026');
     expect(el().querySelector('.declared__meta app-origin-badge')?.textContent).toContain(
-      'Declarado',
+      'Declared',
     );
-    expect(visible()).toContain('Respaldado por lo que vio MODIS');
+    expect(visible()).toContain('Supported by what MODIS saw');
     expect(el().querySelector('.line--match')?.getAttribute('data-tone')).toBe('ok');
-    expect(help('Más sobre la comparación con MODIS')).toContain('vio uso agrícola en cada año');
+    expect(help('More about the comparison with MODIS')).toContain(
+      'saw agricultural use in every year',
+    );
   });
 
   it('no coincide: lo marca para revisar, sin acusar, y señala los años distintos', async () => {
     await render({ ...LOT, land_use_declaration: declared(true) }, true, ready(CHANGED));
 
-    expect(visible()).toContain('No coincide con MODIS: revisalo');
-    expect(help('Más sobre la comparación con MODIS')).toContain(
-      'error de clasificación del satélite',
+    expect(visible()).toContain('Does not match MODIS: review it');
+    expect(help('More about the comparison with MODIS')).toContain(
+      'satellite classification error',
     );
     expect(el().querySelector('.line--match')?.getAttribute('data-tone')).toBe('warn');
     expect(el().querySelectorAll('.year.is-different').length).toBe(3);
     // la comparación ya lo dice: no se repite la línea de MODIS
-    expect(visible()).not.toContain('Uso distinto en');
+    expect(visible()).not.toContain('Different use in');
   });
 
   it('sin un uso claro en el año base, no dice que no coincide', async () => {
     await render({ ...LOT, land_use_declaration: declared(true) }, true, ready(TIED));
 
-    expect(visible()).toContain('MODIS no alcanza para confirmarlo');
-    expect(visible()).not.toContain('No coincide');
+    expect(visible()).toContain('MODIS is not enough to confirm it');
+    expect(visible()).not.toContain('Does not match');
     expect(el().querySelector('.line--match')?.getAttribute('data-tone')).toBe('neutral');
     expect([...el().querySelectorAll('.year__label')].map((y) => y.textContent?.trim())).toEqual([
-      'Mixto',
-      'Mixto',
-      'Mixto',
+      'Mixed',
+      'Mixed',
+      'Mixed',
     ]);
     expect(el().querySelectorAll('.year.is-different').length).toBe(0);
   });
@@ -396,91 +404,91 @@ describe('LandUseCard', () => {
   it('declaraste un cambio: dice qué implica para la práctica', async () => {
     await render({ ...LOT, land_use_declaration: declared(false) }, true, ready(UNCHANGED));
 
-    expect(visible()).toContain('Hubo un cambio desde 2020');
-    expect(visible()).toContain('Con un cambio, la práctica no se cumple');
-    const why = help('Más sobre la comparación con MODIS');
-    expect(why).toContain('no cumple la práctica «Sin cambio de uso del suelo desde 2020»');
-    expect(why).toContain('MODIS no lo vio');
+    expect(visible()).toContain('Changed since 2020');
+    expect(visible()).toContain('With a change, the practice is not met');
+    const why = help('More about the comparison with MODIS');
+    expect(why).toContain('does not meet the “No land-use change since 2020” practice');
+    expect(why).toContain('MODIS did not see it');
   });
 
   it('sin dato de MODIS no compara, y lo dice', async () => {
     await render({ ...LOT, land_use_declaration: declared(true) }, true, ready(NO_DATA));
 
-    expect(visible()).toContain('Sin dato de MODIS para comparar');
-    expect(text()).not.toContain('Respaldado');
+    expect(visible()).toContain('No MODIS data to compare');
+    expect(text()).not.toContain('Supported');
   });
 
   it('declara con éxito: guarda, muestra la fecha con su origen y deja cambiarla', async () => {
     const changes: (LandUseDeclaration | null)[] = [];
     fixture.componentInstance.declaration.subscribe((value) => changes.push(value));
     await render(LOT, true, ready(UNCHANGED));
-    expect(visible()).toContain('¿Cambió el uso del suelo desde 2020?');
+    expect(visible()).toContain('Has the land use changed since 2020?');
 
-    button('No cambié el uso')?.click();
+    button('No, it did not change')?.click();
     await fixture.whenStable();
     const request = http.expectOne('/api/lots/1/land-use/');
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({ unchanged: true });
-    expect(button('Guardando')?.getAttribute('aria-disabled')).toBe('true');
-    expect(button('Sí, hubo un cambio')?.getAttribute('aria-disabled')).toBe('true');
+    expect(button('Saving')?.getAttribute('aria-disabled')).toBe('true');
+    expect(button('Yes, there was a change')?.getAttribute('aria-disabled')).toBe('true');
 
     request.flush(declared(true));
     await fixture.whenStable();
-    expect(visible()).toContain('Declarado por vos el 15/11/2026');
-    expect(el().querySelector('.declared app-origin-badge')?.textContent).toContain('Declarado');
-    expect(visible()).toContain('Respaldado por lo que vio MODIS');
+    expect(visible()).toContain('Declared by you on 15/11/2026');
+    expect(el().querySelector('.declared app-origin-badge')?.textContent).toContain('Declared');
+    expect(visible()).toContain('Supported by what MODIS saw');
     expect(changes).toEqual([declared(true)]);
     expect(el().querySelector('[role="status"]')?.textContent).toContain(
-      'Guardamos tu declaración',
+      'We saved your declaration',
     );
 
     // cambiarla vuelve a mostrar las dos opciones, con la elegida marcada
-    button('Cambiar')?.click();
+    button('Change')?.click();
     await fixture.whenStable();
-    expect(button('No cambié')?.getAttribute('aria-pressed')).toBe('true');
-    expect(button('Sí, hubo un cambio')?.getAttribute('aria-pressed')).toBe('false');
-    expect(document.activeElement).toBe(button('No cambié'));
-    button('Cancelar')?.click();
+    expect(button('No, it did not change')?.getAttribute('aria-pressed')).toBe('true');
+    expect(button('Yes, there was a change')?.getAttribute('aria-pressed')).toBe('false');
+    expect(document.activeElement).toBe(button('No, it did not change'));
+    button('Cancel')?.click();
     await fixture.whenStable();
-    expect(button('No cambié')).toBeUndefined();
-    expect(document.activeElement).toBe(button('Cambiar'));
+    expect(button('No, it did not change')).toBeUndefined();
+    expect(document.activeElement).toBe(button('Change'));
   });
 
   it('si no se puede guardar, lo dice y reintenta la misma respuesta', async () => {
     await render(LOT, true, ready(UNCHANGED));
 
-    button('Sí, hubo un cambio')?.click();
+    button('Yes, there was a change')?.click();
     await fixture.whenStable();
     http.expectOne('/api/lots/1/land-use/').flush('', { status: 500, statusText: 'Error' });
     await fixture.whenStable();
     expect(el().querySelector('[role="alert"]')?.textContent).toContain(
-      'No se pudo guardar tu declaración',
+      'Could not save your declaration',
     );
-    // las opciones siguen ahí, sin "Guardando…"
-    expect(button('Sí, hubo un cambio')?.getAttribute('aria-disabled')).toBeNull();
+    // las opciones siguen ahí, sin "Saving…"
+    expect(button('Yes, there was a change')?.getAttribute('aria-disabled')).toBeNull();
 
-    button('Reintentar')?.click();
+    button('Retry')?.click();
     await fixture.whenStable();
     const again = http.expectOne('/api/lots/1/land-use/');
     expect(again.request.body).toEqual({ unchanged: false });
     again.flush(declared(false));
     await fixture.whenStable();
     expect(el().querySelector('[role="alert"]')).toBeNull();
-    expect(visible()).toContain('Hubo un cambio desde 2020');
+    expect(visible()).toContain('Changed since 2020');
   });
 
   it('sin permiso de edición no ofrece declarar, pero muestra lo declarado', async () => {
     await render(LOT, false, ready(UNCHANGED));
-    expect(button('No cambié')).toBeUndefined();
+    expect(button('No, it did not change')).toBeUndefined();
     expect(el().querySelector('.ask')).toBeNull();
 
     await render({ ...LOT, land_use_declaration: declared(true) }, false, ready(UNCHANGED));
-    expect(visible()).toContain('Sin cambio desde 2020');
-    expect(button('Cambiar')).toBeUndefined();
+    expect(visible()).toContain('No change since 2020');
+    expect(button('Change')).toBeUndefined();
   });
 
   it('con una copia guardada que no se pudo renovar, dice de cuándo es', async () => {
     await render(EXAMPLE, false, ready(UNCHANGED, true));
-    expect(visible()).toContain('Orientativo · píxeles de 460 m · copia del 15/11/2026');
+    expect(visible()).toContain('Indicative · 460 m pixels · copy from 15/11/2026');
   });
 });

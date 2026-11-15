@@ -14,14 +14,14 @@
   />
   <header class="auth__head">
     <span class="auth__mark icon-mark" aria-hidden="true"><app-icon name="leaf" /></span>
-    <h1 id="register-title">Creá tu cuenta gratis</h1>
-    <p class="auth__lead">Marcá tu lote y mirá lo que vio el satélite en tu campo.</p>
+    <h1 id="register-title">Create your free account</h1>
+    <p class="auth__lead">Add your field and see what the satellite saw on your farm.</p>
   </header>
 
   @if (offline()) {
     <p class="alert alert--warn" role="status">
       <app-icon name="cloud-off" />
-      <span>Estás sin conexión. Para crear la cuenta hace falta internet.</span>
+      <span>You're offline. You need internet to sign up.</span>
     </p>
   }
 
@@ -34,7 +34,7 @@
     }
 
     <div class="field">
-      <label for="register-name">Nombre <span class="optional">(opcional)</span></label>
+      <label for="register-name">Name <span class="optional">(optional)</span></label>
       <input
         #nameInput
         id="register-name"
@@ -53,7 +53,7 @@
     </div>
 
     <div class="field">
-      <label for="register-email">Mail</label>
+      <label for="register-email">Email</label>
       <input
         #emailInput
         id="register-email"
@@ -76,7 +76,7 @@
     </div>
 
     <div class="field">
-      <label for="register-password">Contraseña</label>
+      <label for="register-password">Password</label>
       <div class="password">
         <input
           #passwordInput
@@ -98,12 +98,11 @@
           (click)="showPassword.set(!showPassword())"
         >
           <app-icon name="eye" />
-          {{ showPassword() ? 'Ocultar' : 'Mostrar'
-          }}<span class="visually-hidden"> contraseña</span>
+          {{ showPassword() ? 'Hide' : 'Show' }}<span class="visually-hidden"> password</span>
         </button>
       </div>
       <span id="register-password-hint" class="field__hint">
-        Al menos 8 caracteres, que no sean solo números.
+        At least 8 characters, not only numbers.
       </span>
       @if (errors().fields.password; as message) {
         <span id="register-password-error" class="field__error">{{ message }}</span>
@@ -115,21 +114,21 @@
       class="btn btn--primary btn--lg btn--block"
       [attr.aria-disabled]="sending() ? 'true' : null"
     >
-      {{ sending() ? 'Creando la cuenta…' : 'Crear cuenta' }}
+      {{ sending() ? 'Signing up…' : 'Sign up' }}
     </button>
   </form>
 
   <p class="auth__privacy">
     <app-icon name="check" />
-    <span>Tus lotes y tus datos son privados: solo vos los ves.</span>
+    <span>Your fields and your data are private: only you can see them.</span>
   </p>
 
   <p class="auth__switch">
-    ¿Ya tenés cuenta?
-    <a routerLink="/ingresar" [queryParams]="switchParams">Ingresá</a>
+    Already have an account?
+    <a routerLink="/ingresar" [queryParams]="switchParams">Log in</a>
   </p>
 </section>
 
 <p class="auth__aside">
-  <a routerLink="/ejemplos">Mirá los lotes de ejemplo sin cuenta</a>
+  <a routerLink="/ejemplos">See the sample fields without an account</a>
 </p>

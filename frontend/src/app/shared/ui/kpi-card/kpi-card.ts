@@ -35,7 +35,7 @@ let nextId = 0;
  * significado no dependa del color. lo proyectado va al pie de la tarjeta: ahí van
  * app-origin-badge, app-simulated-notice y la fuente (`<span class="source">`)
  *
- * los números se formatean en es-AR; un texto se muestra tal cual
+ * los números se formatean en en-US; un texto se muestra tal cual
  *
  * @example
  * <app-kpi-card icon="cloud" label="Lluvia" [value]="44" unit="mm"
@@ -63,7 +63,7 @@ let nextId = 0;
     @if (loading()) {
       <span class="skeleton value-skeleton" aria-hidden="true"></span>
       <span class="skeleton caption-skeleton" aria-hidden="true"></span>
-      <p class="visually-hidden">Cargando…</p>
+      <p class="visually-hidden">Loading…</p>
     } @else if (empty()) {
       <p class="value value--empty">{{ emptyLabel() }}</p>
       @if (emptyReason(); as reason) {
@@ -213,7 +213,7 @@ export class KpiCard {
   /** mientras carga muestra un esqueleto en lugar del valor */
   readonly loading = input(false, { transform: booleanAttribute });
   /** texto del estado sin dato */
-  readonly emptyLabel = input('Sin dato');
+  readonly emptyLabel = input('No data');
   /** por qué no hay dato: "Nubes en todas las pasadas del mes" */
   readonly emptyReason = input<string | null>(null);
 
@@ -224,7 +224,7 @@ export class KpiCard {
   });
   protected readonly display = computed(() => {
     const value = this.value();
-    return typeof value === 'number' ? value.toLocaleString('es-AR') : (value ?? '');
+    return typeof value === 'number' ? value.toLocaleString('en-US') : (value ?? '');
   });
   protected readonly trendIcon = computed(() => TREND_ICONS[this.trend() ?? 'flat']);
 }

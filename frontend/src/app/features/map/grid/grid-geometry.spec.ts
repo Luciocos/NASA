@@ -113,7 +113,7 @@ describe('cellsToGeometry', () => {
   it('sin celdas lanza un error que dice que no hay nada marcado', () => {
     const grid = createHectareGrid(ORIGIN);
     expect(() => cellsToGeometry(grid, new CellSet())).toThrow(GridShapeError);
-    expect(() => cellsToGeometry(grid, new CellSet())).toThrow('No hay recuadros marcados.');
+    expect(() => cellsToGeometry(grid, new CellSet())).toThrow('No squares painted.');
   });
 
   it('con más de una región lanza un error que lo explica', () => {
@@ -127,7 +127,7 @@ describe('cellsToGeometry', () => {
       }
       expect(thrown).toBeInstanceOf(GridShapeError);
       expect((thrown as GridShapeError).problem).toBe('multiple-regions');
-      expect((thrown as GridShapeError).message).toContain('más de un bloque');
+      expect((thrown as GridShapeError).message).toContain('more than one block');
     }
   });
 });

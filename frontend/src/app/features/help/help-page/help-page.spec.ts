@@ -46,11 +46,11 @@ describe('HelpPage', () => {
   it('es la misma guía como página, nombrada por su título y sin pedir cuenta', async () => {
     await setup('/ayuda', false);
     const title = el().querySelector('h1')!;
-    expect(title.textContent!.trim()).toBe('Cómo cargar tus datos');
+    expect(title.textContent!.trim()).toBe('How to enter your data');
     expect(el().querySelector('section')!.getAttribute('aria-labelledby')).toBe(title.id);
     expect(step()).toBe('marcar');
     // en la página no hay X: no hay nada que cerrar
-    expect(el().textContent).not.toContain('Cerrar la ayuda');
+    expect(el().textContent).not.toContain('Close help');
   });
 
   it('?paso= abre en ese paso, para compartir uno en particular', async () => {

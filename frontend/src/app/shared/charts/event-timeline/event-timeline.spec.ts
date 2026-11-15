@@ -58,9 +58,9 @@ describe('EventTimelineChart', () => {
     await render({ events: EVENTS, today: '2026-11-14', title: 'Bitácora' });
 
     expect(marks().map((mark) => mark.getAttribute('aria-label'))).toEqual([
-      'Cambio de uso, 02/03/2023, incertidumbre sin dato, Landsat, estimado',
-      'Cultivo de cobertura, 20/05/2025 ± 10 días, HLS, declarado, dato simulado para la demostración',
-      'Siembra, 07/09/2026 ± 6 días, NISAR, verificado, campaña 2026/27',
+      'Cambio de uso, 02/03/2023, uncertainty: no data, Landsat, estimated',
+      'Cultivo de cobertura, 20/05/2025 ± 10 days, HLS, declared, simulated data for the demo',
+      'Siembra, 07/09/2026 ± 6 days, NISAR, verified, season 2026/27',
     ]);
     expect(el().querySelectorAll('line.lane').length).toBe(3);
     // las filas siguen el orden fijo de tipos, no el de los datos
@@ -68,7 +68,7 @@ describe('EventTimelineChart', () => {
       node.textContent?.trim(),
     );
     expect(lanes).toEqual(['Siembra', 'Cultivo de cobertura', 'Cambio de uso']);
-    expect(el().textContent).toContain('Hoy');
+    expect(el().textContent).toContain('Today');
   });
 
   it('la forma depende del origen y el simulado lleva contorno discontinuo', async () => {
@@ -84,17 +84,17 @@ describe('EventTimelineChart', () => {
     expect(verified.querySelector('.mark__halo')).toBeNull();
     expect(el().querySelectorAll('g.whisker').length).toBe(2);
     const legend = el().querySelector('ul.legend')?.textContent ?? '';
-    expect(legend).toContain('Verificado');
-    expect(legend).toContain('Dato simulado para la demostración');
+    expect(legend).toContain('Verified');
+    expect(legend).toContain('Simulated data for the demo');
   });
 
   it('resume la bitácora en un role="img" con aria-label', async () => {
     await render({ events: EVENTS, today: '2026-11-14', description: 'Eventos del Lote 1' });
 
     const label = el().querySelector('g[role="img"]')?.getAttribute('aria-label') ?? '';
-    expect(label.startsWith('Eventos del Lote 1. Línea de tiempo con 3 eventos')).toBe(true);
-    expect(label).toContain('1 verificado, 1 declarado, 1 estimado');
-    expect(label).toContain('1 dato simulado para la demostración');
+    expect(label.startsWith('Eventos del Lote 1. Timeline with 3 events')).toBe(true);
+    expect(label).toContain('1 verified, 1 declared, 1 estimated');
+    expect(label).toContain('1 simulated data point for the demo');
   });
 
   it('se maneja con teclado: tabindex itinerante, flechas y Enter o Espacio', async () => {
@@ -138,7 +138,7 @@ describe('EventTimelineChart', () => {
     await fixture.whenStable();
     const tip = el().querySelector('.tip')?.textContent ?? '';
     expect(tip).toContain('Siembra');
-    expect(tip).toContain('07/09/2026 ± 6 días');
+    expect(tip).toContain('07/09/2026 ± 6 days');
     expect(tip).toContain('Sensor: NISAR');
     marks()[2].dispatchEvent(new MouseEvent('pointerleave'));
     await fixture.whenStable();
@@ -150,13 +150,13 @@ describe('EventTimelineChart', () => {
 
     const headers = [...el().querySelectorAll('details thead th')].map((th) => th.textContent);
     expect(headers).toEqual([
-      'Evento',
-      'Fecha',
-      'Incertidumbre',
+      'Event',
+      'Date',
+      'Uncertainty',
       'Sensor',
-      'Origen',
-      'Campaña',
-      'Dato simulado',
+      'Origin',
+      'Season',
+      'Simulated data',
     ]);
     const first = [...(el().querySelector('details tbody tr')?.children ?? [])].map(
       (cell) => cell.textContent,
@@ -164,10 +164,10 @@ describe('EventTimelineChart', () => {
     expect(first).toEqual([
       'Cambio de uso',
       '02/03/2023',
-      'Sin dato',
+      'No data',
       'Landsat',
-      'Estimado',
-      'Sin dato',
+      'Estimated',
+      'No data',
       'No',
     ]);
   });
@@ -175,6 +175,6 @@ describe('EventTimelineChart', () => {
   it('sin eventos muestra el estado vacío', async () => {
     await render({ events: [] });
     expect(el().querySelector('svg.plot')).toBeNull();
-    expect(el().textContent).toContain('Sin eventos para mostrar');
+    expect(el().textContent).toContain('No events to show');
   });
 });

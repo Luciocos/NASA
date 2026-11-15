@@ -79,18 +79,18 @@ describe('LotPage', () => {
     );
     expect(el().querySelector('app-lot-tabs a.back')?.getAttribute('href')).toBe('/mapa');
     const current = el().querySelector('nav a[aria-current="page"]');
-    expect(current?.textContent?.trim()).toBe('Satélite');
+    expect(current?.textContent?.trim()).toBe('Satellite');
     expect(current?.getAttribute('href')).toBe('/lotes/1');
     const nasa = fixture.debugElement.query(By.directive(LotNasa));
     expect((nasa.componentInstance as LotNasa).events().map((event) => event.id)).toEqual([1]);
-    expect(text()).toContain('Lo que ve el satélite');
+    expect(text()).toContain('What the satellite sees');
   });
 
   it('la pestaña sale de la ruta: en Bitácora no pide nada de Satélite', async () => {
     await setup('log');
     await load(LOT);
 
-    expect(el().querySelector('nav a[aria-current="page"]')?.textContent?.trim()).toBe('Bitácora');
+    expect(el().querySelector('nav a[aria-current="page"]')?.textContent?.trim()).toBe('Field log');
     expect(el().querySelector('app-lot-nasa')).toBeNull();
     const log = fixture.debugElement.query(By.directive(LotLog));
     expect((log.componentInstance as LotLog).editable()).toBe(true);
@@ -101,10 +101,10 @@ describe('LotPage', () => {
     await load(EXAMPLE);
 
     const current = el().querySelector('nav a[aria-current="page"]');
-    expect(current?.textContent?.trim()).toBe('Pasaporte');
+    expect(current?.textContent?.trim()).toBe('Passport');
     expect(current?.getAttribute('href')).toBe('/lotes/1/pasaporte');
     expect(el().querySelector('app-more-menu')).toBeNull();
-    button('Compartir pasaporte')?.click();
+    button('Share passport')?.click();
     expect(http.expectOne('/api/lots/1/passport/').request.method).toBe('POST');
   });
 
@@ -112,10 +112,10 @@ describe('LotPage', () => {
     await setup('log');
     await load(EXAMPLE);
 
-    expect(el().querySelector('.example')?.textContent).toContain('Lote de ejemplo · solo lectura');
+    expect(el().querySelector('.example')?.textContent).toContain('Sample field · read-only');
     expect(el().querySelector('app-more-menu')).toBeNull();
     const back = el().querySelector('app-lot-tabs a.back');
-    expect(back?.textContent).toContain('Ejemplos');
+    expect(back?.textContent).toContain('Examples');
     expect(back?.getAttribute('href')).toBe('/ejemplos');
     const log = fixture.debugElement.query(By.directive(LotLog));
     expect((log.componentInstance as LotLog).editable()).toBe(false);
@@ -134,9 +134,9 @@ describe('LotPage', () => {
     await setup('log');
     http.expectOne('/api/lots/1/').flush('', { status: 0, statusText: 'Unknown Error' });
     await fixture.whenStable();
-    expect(text()).toContain('No se pudo cargar el lote');
+    expect(text()).toContain("Couldn't load the field");
 
-    button('Reintentar')?.click();
+    button('Try again')?.click();
     await fixture.whenStable();
     await load(LOT);
     expect(el().querySelector('app-lot-tabs h1')?.textContent).toContain('Lote de prueba');

@@ -5,13 +5,13 @@
       <app-simulated-notice />
     }
     @if (detected()) {
-      <span class="chip">Prueba de concepto</span>
+      <span class="chip">Proof of concept</span>
     }
   </p>
 
   <dl class="facts">
     <div>
-      <dt>Fecha</dt>
+      <dt>Date</dt>
       <dd>{{ dateLabel() }}</dd>
     </div>
     <div>
@@ -19,31 +19,31 @@
       <dd>{{ sensorLabel() }}</dd>
     </div>
     <div>
-      <dt>Confianza</dt>
+      <dt>Confidence</dt>
       @if (confidence(); as value) {
         <dd>{{ value }}</dd>
       } @else {
-        <dd>Sin dato <span class="facts__why">(no la informó el procesamiento)</span></dd>
+        <dd>No data <span class="facts__why">(not reported by the processing)</span></dd>
       }
     </div>
     <div>
-      <dt>Campaña</dt>
-      <dd>{{ event().campaign_label ?? 'Sin campaña' }}</dd>
+      <dt>Season</dt>
+      <dd>{{ event().campaign_label ?? 'No season' }}</dd>
     </div>
   </dl>
 
   <section class="evidence" [attr.aria-labelledby]="ids.evidence">
-    <h3 class="visually-hidden" [id]="ids.evidence">Evidencia</h3>
+    <h3 class="visually-hidden" [id]="ids.evidence">Evidence</h3>
     <app-radar-optical-compare [event]="event()" />
   </section>
 
   <app-disclosure
     flat
     icon="info"
-    [label]="event().notes ? 'Notas y cómo leer este evento' : 'Cómo leer este evento'"
+    [label]="event().notes ? 'Notes and how to read this event' : 'How to read this event'"
   >
     @if (event().notes) {
-      <p class="help__title">Notas</p>
+      <p class="help__title">Notes</p>
       <p class="notes">{{ event().notes }}</p>
     }
     <ul class="help">
@@ -52,20 +52,20 @@
         {{ originMeaning() }}
       </li>
       @if (detected()) {
-        <li>Es una prueba de concepto: la detección no está validada en campo.</li>
+        <li>This is a proof of concept: detection isn't validated in the field.</li>
       }
       @if (bothImages()) {
-        <li>Mové la línea sobre la imagen para pasar del radar al óptico.</li>
+        <li>Drag the line across the image to switch from radar to optical.</li>
       }
       @if (editable()) {
         <li>
-          Si confirmás un dato estimado o corregís el tipo o la fecha, pasa a figurar como declarado
-          por vos.
+          If you confirm an estimated record or correct its type or date, it shows as declared by
+          you.
         </li>
       }
     </ul>
     @if (metrics().length > 0) {
-      <p class="help__title">Métricas del procesamiento</p>
+      <p class="help__title">Processing metrics</p>
       <dl class="metrics">
         @for (metric of metrics(); track metric.key) {
           <dt>{{ metric.key }}</dt>
@@ -85,10 +85,10 @@
       "
     >
       <p class="review__hint review__wide">
-        Si cambiás el tipo o la fecha, pasa a figurar como declarado por vos.
+        If you change the type or date, it shows as declared by you.
       </p>
       <label class="field">
-        Tipo
+        Type
         <select #typeInput [value]="event().type">
           @for (type of eventTypes; track type) {
             <option [value]="type" [selected]="type === event().type">
@@ -98,11 +98,11 @@
         </select>
       </label>
       <label class="field">
-        Fecha
+        Date
         <input #dateInput type="date" [value]="event().date" required />
       </label>
       <label class="field">
-        Margen (± días)
+        Margin (± days)
         <input
           #uncertaintyInput
           type="number"
@@ -112,11 +112,11 @@
         />
       </label>
       <label class="field review__wide">
-        Notas
+        Notes
         <textarea #notesInput rows="2" [value]="event().notes"></textarea>
       </label>
       <button type="submit" class="btn btn--primary review__wide" [disabled]="saving()">
-        Guardar corrección
+        Save correction
       </button>
     </form>
   }
@@ -127,7 +127,7 @@
     <p class="message" role="status">{{ message() }}</p>
     @if (canConfirm() && !editing()) {
       <button type="button" class="btn btn--primary" [disabled]="saving()" (click)="confirm()">
-        <app-icon name="check" /> Confirmar
+        <app-icon name="check" /> Confirm
       </button>
     }
     <button
@@ -139,7 +139,7 @@
       [attr.aria-controls]="editing() ? ids.form : null"
       (click)="toggleCorrection()"
     >
-      {{ editing() ? 'Cancelar corrección' : 'Corregir' }}
+      {{ editing() ? 'Cancel correction' : 'Correct' }}
     </button>
   </div>
 }

@@ -65,7 +65,7 @@ export class AuthService {
 
   private begin(response: unknown): AuthUser {
     const next = parseSession(response);
-    if (!next) throw new Error('La respuesta del servidor no trae la sesión.');
+    if (!next) throw new Error('The server response did not include a session.');
     // otra cuenta seguía abierta en este dispositivo: su token también se anula
     const previous = this.session.token();
     if (previous && this.session.user()?.id !== next.user.id) this.revoke(previous);

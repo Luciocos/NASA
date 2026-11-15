@@ -4,23 +4,23 @@
 <div class="result">
   <div class="head">
     @if (level() === 3) {
-      <h3 class="eyebrow">Huella estimada</h3>
+      <h3 class="eyebrow">Estimated footprint</h3>
     } @else {
-      <h2 class="eyebrow">Huella estimada</h2>
+      <h2 class="eyebrow">Estimated footprint</h2>
     }
     @if (fp.available_campaigns.length > 1) {
       <label class="campaign">
-        <span class="visually-hidden">Campaña</span>
+        <span class="visually-hidden">Season</span>
         <select (change)="onCampaign($any($event.target).value)">
           @for (c of fp.available_campaigns; track c.id) {
             <option [value]="c.id" [selected]="c.id === fp.campaign?.id">
-              Campaña {{ c.label }}
+              Season {{ c.label }}
             </option>
           }
         </select>
       </label>
     } @else if (fp.campaign) {
-      <span class="campaign-text">Campaña {{ fp.campaign.label }}</span>
+      <span class="campaign-text">Season {{ fp.campaign.label }}</span>
     }
   </div>
 
@@ -31,16 +31,16 @@
       >
     </p>
   } @else {
-    <p class="value value--missing">Todavía no se puede calcular</p>
+    <p class="value value--missing">Cannot be calculated yet</p>
   }
 
   @if (missing().length > 0) {
     <div class="chips">
-      <span class="chips__label">Falta</span>
+      <span class="chips__label">Missing</span>
       @for (item of missing(); track item.kind) {
         <span class="chip chip--warn">{{ item.chip }}</span>
       }
-      <app-info-tip label="Qué falta para calcularla">
+      <app-info-tip label="What is missing to calculate it">
         @if (why(); as text) {
           <p>{{ text }}</p>
         }
@@ -64,18 +64,18 @@
       <app-icon [name]="conf.icon" /> {{ conf.text }}
     </span>
     <!-- también en el celular: "prueba de concepto" es parte del aviso (CLAUDE.md, sección 13) -->
-    <span class="chip chip--info"><app-icon name="info" /> Provisional · prueba de concepto</span>
+    <span class="chip chip--info"><app-icon name="info" /> Provisional · proof of concept</span>
     @if (fp.uses_simulated_data) {
       <app-simulated-notice />
     }
-    <app-info-tip label="Sobre esta estimación">
-      <p>{{ notice }} Los valores son provisionales.</p>
+    <app-info-tip label="About this estimate">
+      <p>{{ notice }} Values are provisional.</p>
       <p>
-        Nivel de confianza: <strong>{{ confidenceLabels[fp.confidence.level] }}</strong> ({{
+        Confidence level: <strong>{{ confidenceLabels[fp.confidence.level] }}</strong> ({{
           fp.confidence.counts.VERIFIED
         }}
-        verificados, {{ fp.confidence.counts.DECLARED }} declarados,
-        {{ fp.confidence.counts.ESTIMATED }} estimados).
+        verified, {{ fp.confidence.counts.DECLARED }} declared,
+        {{ fp.confidence.counts.ESTIMATED }} estimated).
       </p>
       <p>{{ fp.confidence.rule }}</p>
       <p>{{ fp.disclaimer }}</p>

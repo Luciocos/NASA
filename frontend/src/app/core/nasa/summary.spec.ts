@@ -205,7 +205,7 @@ describe('zonesByTerciles', () => {
   });
 
   it('avisa cuando no alcanza para separar ambientes', () => {
-    expect(zonesByTerciles(grid(Array(16).fill(0.5))).note).toContain('parejo');
+    expect(zonesByTerciles(grid(Array(16).fill(0.5))).note).toContain('even across');
     expect(zonesByTerciles(grid(Array(16).fill(null))).zones).toEqual([]);
   });
 });

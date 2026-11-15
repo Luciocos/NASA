@@ -1,11 +1,11 @@
 @let fp = footprint();
 
-<app-card-slides label="Resumen de la huella">
+<app-card-slides label="Footprint summary">
   <div class="slide">
     <app-section-card
-      heading="Qué pesa más"
+      heading="What weighs the most"
       [level]="level()"
-      [subtitle]="perTonne() ? 'kg CO2e por tonelada' : 'Sin rinde: kg CO2e por hectárea'"
+      [subtitle]="perTonne() ? 'kg CO2e per tonne' : 'No yield: kg CO2e per hectare'"
     >
       @if (weights().length > 0) {
         <ol class="weights">
@@ -33,13 +33,13 @@
           }
         </ol>
       } @else {
-        <p class="empty-text">Todavía no hay ningún componente calculado.</p>
+        <p class="empty-text">No component has been calculated yet.</p>
       }
       <button footer type="button" class="more-btn" (click)="showBreakdown.emit()">
         @if (missingCount() > 0) {
-          Faltan {{ missingCount() }} de {{ fp.components.length }}: ver Desglose
+          {{ missingCount() }} of {{ fp.components.length }} missing: see Breakdown
         } @else {
-          Ver los {{ fp.components.length }} en Desglose
+          See all {{ fp.components.length }} in Breakdown
         }
         <app-icon name="arrow-right" />
       </button>
@@ -49,57 +49,59 @@
   <div class="slide">
     <app-kpi-card
       icon="chart"
-      label="Rinde"
+      label="Yield"
       [value]="fp.yield.value"
       unit="t/ha"
-      caption="Divide la huella: más rinde, menos CO2e por tonelada."
+      caption="It divides the footprint: more yield, less CO2e per tonne."
       [emptyReason]="fp.yield.reason"
     >
       @if (fp.yield.origin) {
         <app-origin-badge [origin]="fp.yield.origin" />
       }
       @if (fp.yield.reference) {
-        <span class="source">Referencia regional</span>
-        <app-info-tip label="De dónde sale el rinde">
-          <p>Valor de referencia regional: no es un dato del lote ni una observación satelital.</p>
-          <p>Fuente: {{ fp.yield.reference }}</p>
+        <span class="source">Regional reference</span>
+        <app-info-tip label="Where the yield comes from">
+          <p>
+            Regional reference value: it is not data from this field or a satellite observation.
+          </p>
+          <p>Source: {{ fp.yield.reference }}</p>
         </app-info-tip>
       }
     </app-kpi-card>
   </div>
 
   <div class="slide">
-    <app-section-card heading="De dónde salen los datos" [level]="level()">
-      <app-info-tip actions label="Qué significa cada origen">
+    <app-section-card heading="Where the data comes from" [level]="level()">
+      <app-info-tip actions label="What each origin means">
         <ul>
-          <li><strong>Verificado:</strong> observado por satélite (NISAR, HLS).</li>
-          <li><strong>Declarado:</strong> cargado por el productor.</li>
+          <li><strong>Verified:</strong> observed by satellite (NISAR, HLS).</li>
+          <li><strong>Declared:</strong> entered by the farmer.</li>
           <li>
-            <strong>Estimado:</strong> valor de referencia cargado por el equipo con su fuente. No
-            es un dato del lote ni una observación satelital.
+            <strong>Estimated:</strong> reference value added by the team, with its source. It is
+            not data from this field or a satellite observation.
           </li>
         </ul>
         <p>
-          Nivel de confianza: <strong>{{ confidenceLabels[fp.confidence.level] }}</strong>.
+          Confidence level: <strong>{{ confidenceLabels[fp.confidence.level] }}</strong>.
           {{ fp.confidence.rule }}
         </p>
-        <p>Los factores de emisión son constantes publicadas, con su fuente en cada componente.</p>
+        <p>Emission factors are published constants, with their source in each component.</p>
       </app-info-tip>
       <ul class="origins">
         <li>
           <span class="origins__count">{{ fp.confidence.counts.VERIFIED }}</span>
           <app-origin-badge origin="VERIFIED" />
-          <span>por satélite (NISAR, HLS)</span>
+          <span>by satellite (NISAR, HLS)</span>
         </li>
         <li>
           <span class="origins__count">{{ fp.confidence.counts.DECLARED }}</span>
           <app-origin-badge origin="DECLARED" />
-          <span>cargados por el productor</span>
+          <span>entered by the farmer</span>
         </li>
         <li>
           <span class="origins__count">{{ fp.confidence.counts.ESTIMATED }}</span>
           <app-origin-badge origin="ESTIMATED" />
-          <span>referencias con fuente</span>
+          <span>references with a source</span>
         </li>
       </ul>
     </app-section-card>

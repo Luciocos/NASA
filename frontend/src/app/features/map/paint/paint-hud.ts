@@ -14,9 +14,9 @@ interface ToolButton {
 }
 
 const TOOLS: readonly ToolButton[] = [
-  { tool: 'brush', label: 'Pincel', icon: 'brush', key: 'B' },
-  { tool: 'eraser', label: 'Borrador', icon: 'eraser', key: 'E' },
-  { tool: 'hand', label: 'Mover', icon: 'hand', key: 'H' },
+  { tool: 'brush', label: 'Brush', icon: 'brush', key: 'B' },
+  { tool: 'eraser', label: 'Eraser', icon: 'eraser', key: 'E' },
+  { tool: 'hand', label: 'Move', icon: 'hand', key: 'H' },
 ];
 
 let nextId = 0;
@@ -31,7 +31,7 @@ let nextId = 0;
   imports: [Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="hud tools" role="toolbar" aria-label="Herramientas para pintar">
+    <div class="hud tools" role="toolbar" aria-label="Painting tools">
       @for (item of tools; track item.tool) {
         <button
           type="button"
@@ -49,14 +49,14 @@ let nextId = 0;
         type="button"
         class="hud__btn"
         [disabled]="!canUndo()"
-        title="Deshacer (Ctrl o Cmd + Z)"
+        title="Undo (Ctrl or Cmd + Z)"
         aria-keyshortcuts="Control+Z Meta+Z"
         (click)="undo.emit()"
       >
-        <app-icon name="undo" />Deshacer
+        <app-icon name="undo" />Undo
       </button>
       <button type="button" class="hud__btn" [disabled]="!hasCells()" (click)="clear.emit()">
-        <app-icon name="trash" />De nuevo
+        <app-icon name="trash" />Clear
       </button>
       <span class="hud__sep" aria-hidden="true"></span>
       <button
@@ -64,18 +64,18 @@ let nextId = 0;
         class="hud__btn"
         [attr.aria-expanded]="tuneOpen()"
         [attr.aria-controls]="tuneId"
-        title="Tamaño y giro de la grilla"
+        title="Grid size and rotation"
         (click)="tuneOpen.set(!tuneOpen())"
       >
-        <app-icon name="grid" />Grilla
+        <app-icon name="grid" />Grid
       </button>
     </div>
 
     @if (zoomedOut()) {
       <div class="gate" role="status">
-        <p>Acercate para pintar hectáreas</p>
+        <p>Zoom in to paint hectares</p>
         <button type="button" class="btn btn--primary btn--sm" (click)="zoomIn.emit()">
-          <app-icon name="zoom-in" /> Acercar
+          <app-icon name="zoom-in" /> Zoom in
         </button>
       </div>
     }
@@ -83,15 +83,15 @@ let nextId = 0;
     <div
       class="hud tune"
       role="group"
-      aria-label="Grilla de recuadros"
+      aria-label="Square grid"
       [id]="tuneId"
       [hidden]="!tuneOpen()"
     >
-      <div class="seg" role="group" aria-label="Tamaño del recuadro">
+      <div class="seg" role="group" aria-label="Square size">
         <button
           type="button"
           [attr.aria-pressed]="cellSize() === 100"
-          title="Recuadros de 100 m: una hectárea"
+          title="100 m squares: one hectare"
           (click)="cellSizeChange.emit(100)"
         >
           1 ha
@@ -99,7 +99,7 @@ let nextId = 0;
         <button
           type="button"
           [attr.aria-pressed]="cellSize() === 50"
-          title="Recuadros de 50 m: un cuarto de hectárea"
+          title="50 m squares: a quarter hectare"
           (click)="cellSizeChange.emit(50)"
         >
           ¼ ha
@@ -107,7 +107,7 @@ let nextId = 0;
       </div>
       <label class="turn">
         <app-icon name="rotate" />
-        <span class="visually-hidden">Giro de la grilla</span>
+        <span class="visually-hidden">Grid rotation</span>
         <input
           type="range"
           step="0.5"
@@ -124,10 +124,10 @@ let nextId = 0;
         type="button"
         class="btn btn--sm"
         [disabled]="!canAlign()"
-        title="Gira la grilla para que los recuadros sigan los alambrados"
+        title="Rotates the grid so the squares follow the fence lines"
         (click)="align.emit()"
       >
-        Alinear con el lote
+        Align with field
       </button>
     </div>
   `,
@@ -239,6 +239,6 @@ export class PaintHud {
   protected readonly maxRotation = MAX_ROTATION_DEG;
 
   protected degrees(value: number): string {
-    return `${value.toLocaleString('es-AR', { maximumFractionDigits: 1 })}°`;
+    return `${value.toLocaleString('en-US', { maximumFractionDigits: 1 })}°`;
   }
 }

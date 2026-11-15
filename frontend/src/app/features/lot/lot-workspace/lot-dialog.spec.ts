@@ -114,7 +114,7 @@ describe('LotDialog', () => {
     )!;
   const closeButton = () =>
     [...dialog().querySelectorAll<HTMLButtonElement>('button')].find(
-      (item) => item.textContent?.trim() === 'Cerrar',
+      (item) => item.textContent?.trim() === 'Close',
     )!;
   const button = (label: string) =>
     [...dialog().querySelectorAll<HTMLButtonElement>('button')].find((item) =>
@@ -187,10 +187,10 @@ describe('LotDialog', () => {
     expect(dialog().querySelector('.meta')?.textContent?.trim()).toBe(
       '24,9 ha · Casilda, Santa Fe',
     );
-    expect(tab('Rentabilidad').getAttribute('aria-selected')).toBe('true');
+    expect(tab('Profitability').getAttribute('aria-selected')).toBe('true');
     const panel = dialog().querySelector('[role="tabpanel"]');
-    expect(panel?.getAttribute('aria-labelledby')).toBe(tab('Rentabilidad').id);
-    expect(tab('Rentabilidad').getAttribute('aria-controls')).toBe(panel?.id);
+    expect(panel?.getAttribute('aria-labelledby')).toBe(tab('Profitability').id);
+    expect(tab('Profitability').getAttribute('aria-controls')).toBe(panel?.id);
     const profit = fixture.debugElement.query(By.directive(ProfitPage))
       .componentInstance as ProfitPage;
     expect(profit.embedded()).toBe(true);
@@ -206,17 +206,17 @@ describe('LotDialog', () => {
     // showModal deja el foco en el primer botón: el Cerrar mientras carga
     closeButton().focus();
     await flushLot();
-    expect(document.activeElement).toBe(tab('Satélite'));
+    expect(document.activeElement).toBe(tab('Satellite'));
   });
 
   it('cambiar de pestaña reemplaza la dirección: atrás cierra el popup', async () => {
     await open();
     expect(location.path()).toBe('/?lote=1');
     await flushLot();
-    expect(tab('Satélite').getAttribute('aria-selected')).toBe('true');
+    expect(tab('Satellite').getAttribute('aria-selected')).toBe('true');
     expect(dialog().querySelector('app-lot-nasa')).toBeTruthy();
 
-    tab('Fertilización').click();
+    tab('Fertilization').click();
     await fixture.whenStable();
     expect(location.path()).toBe('/?lote=1&seccion=fertilizacion');
     expect(dialog().querySelector('app-lot-nasa')).toBeNull();
@@ -278,9 +278,9 @@ describe('LotDialog', () => {
     link!.click();
     await fixture.whenStable();
     expect(location.path()).toBe('/?lote=1&seccion=practicas');
-    expect(tab('Prácticas').getAttribute('aria-selected')).toBe('true');
+    expect(tab('Practices').getAttribute('aria-selected')).toBe('true');
     // el enlace ya no está: el foco pasa a la pestaña abierta en vez de caer fuera del popup
-    expect(document.activeElement).toBe(tab('Prácticas'));
+    expect(document.activeElement).toBe(tab('Practices'));
   });
 
   it('la declaración de uso del suelo sigue a la vista al volver a Prácticas', async () => {
@@ -289,27 +289,27 @@ describe('LotDialog', () => {
     await flushLot();
     http.expectOne('/api/lots/1/score/').flush(SCORE);
     await fixture.whenStable();
-    button('No cambié')!.click();
+    button('No, it did not change')!.click();
     await fixture.whenStable();
     http.expectOne('/api/lots/1/land-use/').flush(DECLARED);
     await fixture.whenStable();
-    expect(dialog().textContent).toContain('Declarado por vos');
+    expect(dialog().textContent).toContain('Declared by you');
     // el puntaje usa la declaración: se vuelve a pedir al toque y muestra el número nuevo
     http.expectOne('/api/lots/1/score/').flush(SCORE_DECLARED);
     await fixture.whenStable();
     expect(dialog().querySelector('.score .stat__value')?.textContent).toContain('100');
 
     // la huella también la usa: al abrir su pestaña se pide de nuevo
-    tab('Huella').click();
+    tab('Footprint').click();
     await fixture.whenStable();
     expect(http.match((req) => req.url === '/api/lots/1/footprint/').length).toBeGreaterThan(0);
-    tab('Prácticas').click();
+    tab('Practices').click();
     await fixture.whenStable();
     http.expectOne('/api/lots/1/score/').flush(SCORE_DECLARED);
     await fixture.whenStable();
     // la ficha del popup ya la tiene: no vuelve a preguntar
-    expect(dialog().textContent).toContain('Declarado por vos');
-    expect(button('No cambié')).toBeUndefined();
+    expect(dialog().textContent).toContain('Declared by you');
+    expect(button('No, it did not change')).toBeUndefined();
   });
 
   it('después de declarar en la huella, la ficha se vuelve a pedir sin esqueleto', async () => {
@@ -337,7 +337,7 @@ describe('LotDialog', () => {
     await fixture.whenStable();
 
     // la bitácora muestra el rinde nuevo de la campaña
-    tab('Bitácora').click();
+    tab('Field log').click();
     await fixture.whenStable();
     expect(instance(LotLog).lot().campaigns).toEqual([campaign]);
   });
@@ -351,13 +351,13 @@ describe('LotDialog', () => {
     http.expectOne('/api/lots/1/events/').flush(log);
     await fixture.whenStable();
 
-    tab('Bitácora').click();
+    tab('Field log').click();
     await fixture.whenStable();
     http.expectOne('/api/lots/1/events/').flush(log);
     await fixture.whenStable();
     instance(LotLog).reviewed.emit({ ...event, origin: 'DECLARED' });
 
-    tab('Satélite').click();
+    tab('Satellite').click();
     await fixture.whenStable();
     expect(
       instance(LotNasa)
@@ -370,24 +370,22 @@ describe('LotDialog', () => {
     await open();
     await flushLot();
     expect(dialog().querySelector('app-more-menu')).toBeNull();
-    expect(dialog().textContent).not.toContain('solo lectura');
-    tab('Pasaporte').click();
+    expect(dialog().textContent).not.toContain('read-only');
+    tab('Passport').click();
     await fixture.whenStable();
     expect(location.path()).toBe('/?lote=1&seccion=pasaporte');
-    expect(tab('Pasaporte').getAttribute('aria-selected')).toBe('true');
-    expect(button('Compartir pasaporte')).toBeDefined();
+    expect(tab('Passport').getAttribute('aria-selected')).toBe('true');
+    expect(button('Share passport')).toBeDefined();
 
     closeButton().click();
     await settle();
     await open(2);
     await flushLot({ ...LOT, id: 2, is_example: true, owned: false });
-    expect(dialog().querySelector('.example')?.textContent).toContain(
-      'Lote de ejemplo · solo lectura',
-    );
+    expect(dialog().querySelector('.example')?.textContent).toContain('Sample field · read-only');
     expect(dialog().querySelector('app-more-menu')).toBeNull();
-    tab('Pasaporte').click();
+    tab('Passport').click();
     await fixture.whenStable();
-    button('Compartir pasaporte')?.click();
+    button('Share passport')?.click();
     expect(http.expectOne('/api/lots/2/passport/').request.method).toBe('POST');
     // en el popup no hay vuelta a Mi campo: se cierra
     expect(dialog().querySelector('a.back')).toBeNull();

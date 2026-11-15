@@ -33,33 +33,33 @@ describe('LoginInvite', () => {
   it('sin sesión invita a ingresar y vuelve a la misma pantalla', async () => {
     await open('/lotes/5?campania=2026', false);
 
-    expect(el().querySelector('h1')?.textContent?.trim()).toBe('Ingresá para ver este lote');
-    expect(el().textContent).toContain('solo los ve la cuenta que los marcó');
-    const login = link('Ingresar')!;
+    expect(el().querySelector('h1')?.textContent?.trim()).toBe('Log in to see this field');
+    expect(el().textContent).toContain('only the account that added them can see them');
+    const login = link('Log in')!;
     expect(login.classList).toContain('btn--primary');
     const target = TestBed.inject(Router).parseUrl(login.getAttribute('href')!);
     expect(target.root.children['primary'].segments.map((s) => s.path)).toEqual(['ingresar']);
     expect(target.queryParams).toEqual({ volver: '/lotes/5?campania=2026' });
-    expect(link('Ver los lotes de ejemplo')?.getAttribute('href')).toBe('/ejemplos');
-    expect(link('Ir a mi campo')).toBeUndefined();
+    expect(link('See the sample fields')?.getAttribute('href')).toBe('/ejemplos');
+    expect(link('Go to My fields')).toBeUndefined();
   });
 
   it('al pasar a otro lote, la vuelta sigue a la pantalla nueva', async () => {
     await open('/lotes/5', false);
     await harness.navigateByUrl('/lotes/6');
 
-    expect(link('Ingresar')?.getAttribute('href')).toBe('/ingresar?volver=%2Flotes%2F6');
+    expect(link('Log in')?.getAttribute('href')).toBe('/ingresar?volver=%2Flotes%2F6');
   });
 
   it('con sesión dice que no existe o es de otra cuenta y lleva a Mi campo', async () => {
     await open('/lotes/5', true);
 
-    expect(el().querySelector('h1')?.textContent?.trim()).toBe('No encontramos este lote');
-    expect(el().textContent).toContain('No existe o es de otra cuenta.');
-    const field = link('Ir a mi campo')!;
+    expect(el().querySelector('h1')?.textContent?.trim()).toBe("We couldn't find this field");
+    expect(el().textContent).toContain("It doesn't exist or belongs to another account.");
+    const field = link('Go to My fields')!;
     expect(field.getAttribute('href')).toBe('/mapa');
     expect(field.classList).toContain('btn--primary');
-    expect(link('Ver los lotes de ejemplo')?.getAttribute('href')).toBe('/ejemplos');
+    expect(link('See the sample fields')?.getAttribute('href')).toBe('/ejemplos');
     expect(el().querySelector('a[href^="/ingresar"]')).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
 <app-section-card
-  heading="Simulador"
-  subtitle="Simulación: no modifica los datos del lote."
+  heading="Simulator"
+  subtitle="Simulation: it does not change the field’s data."
   [level]="level()"
 >
   <div class="sim">
@@ -11,14 +11,14 @@
           [checked]="coverCrop()"
           (change)="coverCrop.set($any($event.target).checked)"
         />
-        Sumar cultivo de cobertura
+        Add a cover crop
       </label>
       <button type="button" class="btn" [disabled]="loading()" (click)="run()">
-        {{ loading() ? 'Simulando…' : 'Simular' }}
+        {{ loading() ? 'Simulating…' : 'Simulate' }}
       </button>
     </div>
 
-    <p class="visually-hidden" role="status">{{ result() ? 'Simulación lista.' : '' }}</p>
+    <p class="visually-hidden" role="status">{{ result() ? 'Simulation ready.' : '' }}</p>
     @if (error(); as message) {
       <p class="alert alert--error" role="alert">{{ message }}</p>
     }
@@ -26,27 +26,27 @@
     @if (result(); as r) {
       <div class="compare">
         <div class="tile">
-          <p class="tile__label">Huella por tonelada</p>
+          <p class="tile__label">Footprint per tonne</p>
           <dl>
             <div>
-              <dt>Antes</dt>
+              <dt>Before</dt>
               <dd>{{ footprintText(r.before.footprint.total_kg_co2e_per_t) }}</dd>
             </div>
             <div>
-              <dt>Después (hipotético)</dt>
+              <dt>After (hypothetical)</dt>
               <dd>{{ footprintText(r.after.footprint.total_kg_co2e_per_t) }}</dd>
             </div>
           </dl>
         </div>
         <div class="tile">
-          <p class="tile__label">Puntaje provisional</p>
+          <p class="tile__label">Provisional score</p>
           <dl>
             <div>
-              <dt>Antes</dt>
+              <dt>Before</dt>
               <dd>{{ scoreLabel(r.before.score.score) }}</dd>
             </div>
             <div>
-              <dt>Después (hipotético)</dt>
+              <dt>After (hypothetical)</dt>
               <dd>{{ scoreLabel(r.after.score.score) }}</dd>
             </div>
           </dl>
@@ -57,7 +57,7 @@
         <ul class="changes">
           @for (c of r.changed_criteria; track c.key) {
             <li>
-              <strong>{{ c.label }}</strong>
+              <strong>{{ criterionLabel(c) }}</strong>
               <span class="change">
                 <span>{{ status[c.before].icon }} {{ status[c.before].label }}</span>
                 <app-icon name="arrow-right" />
@@ -69,36 +69,36 @@
           }
         </ul>
       } @else {
-        <p class="muted">Con este cambio no se mueve ningún criterio.</p>
+        <p class="muted">With this change, no criterion moves.</p>
       }
     } @else if (!error()) {
-      <p class="placeholder">Tocá <strong>Simular</strong> para ver el antes y el después.</p>
+      <p class="placeholder">Tap <strong>Simulate</strong> to see the before and after.</p>
     }
   </div>
 
   @if (result(); as r) {
-    <app-disclosure footer flat label="Ver todos los criterios y notas">
+    <app-disclosure footer flat label="See all criteria and notes">
       <table class="table compare-table">
         <caption class="visually-hidden">
-          Criterios antes y después de la simulación
+          Criteria before and after the simulation
         </caption>
         <thead>
           <tr>
-            <th scope="col">Criterio</th>
-            <th scope="col">Antes</th>
-            <th scope="col">Después</th>
+            <th scope="col">Criterion</th>
+            <th scope="col">Before</th>
+            <th scope="col">After</th>
           </tr>
         </thead>
         <tbody>
           @for (c of r.after.score.criteria; track c.key; let i = $index) {
             @let before = r.before.score.criteria[i];
             <tr [class.changed]="before.status !== c.status">
-              <th scope="row">{{ c.label }}</th>
+              <th scope="row">{{ criterionLabel(c) }}</th>
               <td>{{ status[before.status].icon }} {{ status[before.status].label }}</td>
               <td>
                 {{ status[c.status].icon }} {{ status[c.status].label }}
                 @if (before.status !== c.status) {
-                  <strong>(cambia)</strong>
+                  <strong>(changes)</strong>
                 }
               </td>
             </tr>

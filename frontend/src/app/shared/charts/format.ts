@@ -1,8 +1,8 @@
 /** texto de un valor que no existe. las gráficas nunca rellenan ni interpolan un faltante */
-export const NO_DATA = 'Sin dato';
+export const NO_DATA = 'No data';
 
 const LOCALE = 'es-AR';
-const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})/;
 
 function isMissing(value: number | null | undefined): value is null | undefined {
@@ -97,7 +97,7 @@ export function formatUncertainty(days: number | null | undefined): string {
   if (isMissing(days) || days <= 0) {
     return '';
   }
-  return `± ${formatNumber(days, 0)} ${days === 1 ? 'día' : 'días'}`;
+  return `± ${formatNumber(days, 0)} ${days === 1 ? 'day' : 'days'}`;
 }
 
 /** fecha con su incertidumbre: "07/09/2026 ± 6 días" (o solo la fecha si no hay incertidumbre) */

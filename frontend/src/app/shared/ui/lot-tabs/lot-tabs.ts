@@ -55,19 +55,19 @@ export interface LotTab {
 /** las pestañas del lote, en el orden de la fila */
 export function lotTabs(lotId: number): LotTab[] {
   return [
-    { key: 'satellite', label: 'Satélite', icon: 'satellite', path: `/lotes/${lotId}` },
-    { key: 'log', label: 'Bitácora', icon: 'calendar', path: `/lotes/${lotId}/bitacora` },
-    { key: 'practices', label: 'Prácticas', icon: 'check', path: `/lotes/${lotId}/practicas` },
-    { key: 'footprint', label: 'Huella', icon: 'footprint', path: `/huella/${lotId}` },
+    { key: 'satellite', label: 'Satellite', icon: 'satellite', path: `/lotes/${lotId}` },
+    { key: 'log', label: 'Field log', icon: 'calendar', path: `/lotes/${lotId}/bitacora` },
+    { key: 'practices', label: 'Practices', icon: 'check', path: `/lotes/${lotId}/practicas` },
+    { key: 'footprint', label: 'Footprint', icon: 'footprint', path: `/huella/${lotId}` },
     {
       key: 'fertilization',
-      label: 'Fertilización',
+      label: 'Fertilization',
       icon: 'leaf',
       path: `/lotes/${lotId}/fertilizacion`,
     },
-    { key: 'profit', label: 'Rentabilidad', icon: 'coins', path: `/lotes/${lotId}/rentabilidad` },
-    { key: 'water', label: 'Cuenca y Caudal', icon: 'water', path: `/lotes/${lotId}/cuenca` },
-    { key: 'passport', label: 'Pasaporte', icon: 'passport', path: `/lotes/${lotId}/pasaporte` },
+    { key: 'profit', label: 'Profitability', icon: 'coins', path: `/lotes/${lotId}/rentabilidad` },
+    { key: 'water', label: 'Watershed', icon: 'water', path: `/lotes/${lotId}/cuenca` },
+    { key: 'passport', label: 'Passport', icon: 'passport', path: `/lotes/${lotId}/pasaporte` },
   ];
 }
 
@@ -139,7 +139,7 @@ function pathOf(url: string): string {
     <div #head class="head">
       @if (!dialog()) {
         <a class="back" [routerLink]="isExample() ? '/ejemplos' : '/mapa'"
-          ><app-icon name="arrow-left" />{{ isExample() ? 'Ejemplos' : 'Mi campo' }}</a
+          ><app-icon name="arrow-left" />{{ isExample() ? 'Examples' : 'My fields' }}</a
         >
       }
       @if (lot(); as l) {
@@ -155,14 +155,14 @@ function pathOf(url: string): string {
             }
             @if (isExample()) {
               <span class="chip chip--accent example"
-                ><app-icon name="eye" /> Lote de ejemplo · solo lectura</span
+                ><app-icon name="eye" /> Sample field · read-only</span
               >
             }
           </div>
           <!-- la guía con imágenes para cargar datos, abierta en el paso de la pestaña -->
           <app-help-button class="help" [step]="active()" />
           @if (renspa(); as renspaText) {
-            <app-more-menu class="more" label="Más opciones del lote">
+            <app-more-menu class="more" label="More field options">
               <!-- lo cargó el productor al marcar el lote: a mano, sin sumarlo al encabezado -->
               <p class="menu-note">
                 RENSPA {{ renspaText }} <app-origin-badge origin="DECLARED" />
@@ -171,7 +171,7 @@ function pathOf(url: string): string {
           }
           @if (dialog()) {
             <button type="button" class="btn btn--ghost btn--icon close" (click)="closed.emit()">
-              <app-icon name="close" /><span class="visually-hidden">Cerrar</span>
+              <app-icon name="close" /><span class="visually-hidden">Close</span>
             </button>
           }
         </div>
@@ -184,7 +184,7 @@ function pathOf(url: string): string {
           #track
           class="track"
           role="tablist"
-          aria-label="Secciones del lote"
+          aria-label="Field sections"
           [class.fade-start]="fadeStart()"
           [class.fade-end]="fadeEnd()"
           (scroll)="syncTrack()"
@@ -213,7 +213,7 @@ function pathOf(url: string): string {
         </div>
       </div>
     } @else {
-      <nav #nav class="nav" aria-label="Secciones del lote">
+      <nav #nav class="nav" aria-label="Field sections">
         <div
           #track
           class="track"

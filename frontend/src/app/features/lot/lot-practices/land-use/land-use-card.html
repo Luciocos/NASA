@@ -1,18 +1,20 @@
-<app-section-card heading="Uso del suelo desde 2020">
+<app-section-card heading="Land use since 2020">
   @if (canDeclare() || current()) {
     @if (asking()) {
       <div class="ask" role="group" [attr.aria-labelledby]="askId">
         <div class="ask__head">
-          <p class="ask__question" [id]="askId">¿Cambió el uso del suelo desde 2020?</p>
-          <app-info-tip label="Qué cuenta como cambio de uso">
-            <p>Por ejemplo, un monte, un pastizal o un bañado que pasó a cultivo.</p>
+          <p class="ask__question" [id]="askId">Has the land use changed since 2020?</p>
+          <app-info-tip label="What counts as a land-use change">
             <p>
-              Tu respuesta queda guardada en el lote como dato declarado y se compara con lo que vio
-              MODIS año por año.
+              For example, native woodland, a grassland or a wetland that was turned into cropland.
             </p>
             <p>
-              El puntaje y la huella la usan, salvo que la bitácora registre un cambio de uso
-              detectado por satélite.
+              Your answer is saved on the field as declared data and compared with what MODIS saw,
+              year by year.
+            </p>
+            <p>
+              The score and the footprint use it, unless the field log records a land-use change
+              detected by satellite.
             </p>
           </app-info-tip>
         </div>
@@ -26,7 +28,7 @@
             (click)="declare(true)"
           >
             <app-icon name="check" />
-            {{ sending() === true ? 'Guardando…' : 'No cambié el uso' }}
+            {{ sending() === true ? 'Saving…' : 'No, it did not change' }}
           </button>
           <button
             type="button"
@@ -36,12 +38,12 @@
             (click)="declare(false)"
           >
             <app-icon name="sync" />
-            {{ sending() === false ? 'Guardando…' : 'Sí, hubo un cambio' }}
+            {{ sending() === false ? 'Saving…' : 'Yes, there was a change' }}
           </button>
         </div>
         @if (changing()) {
           <button type="button" class="btn btn--sm btn--ghost ask__cancel" (click)="cancelChange()">
-            Cancelar
+            Cancel
           </button>
         }
       </div>
@@ -49,10 +51,10 @@
       <div class="declared">
         <app-icon class="declared__icon" [name]="declared.unchanged ? 'check' : 'sync'" />
         <p class="declared__what">
-          {{ declared.unchanged ? 'Sin cambio desde 2020' : 'Hubo un cambio desde 2020' }}
+          {{ declared.unchanged ? 'No change since 2020' : 'Changed since 2020' }}
         </p>
         <p class="declared__meta">
-          <span>{{ mine() ? 'Declarado por vos' : 'Declarado' }} el {{ declaredOn() }}</span>
+          <span>{{ mine() ? 'Declared by you' : 'Declared' }} on {{ declaredOn() }}</span>
           <app-origin-badge origin="DECLARED" />
         </p>
         @if (canDeclare()) {
@@ -62,7 +64,7 @@
             class="btn btn--sm declared__change"
             (click)="startChange()"
           >
-            Cambiar
+            Change
           </button>
         }
       </div>
@@ -70,8 +72,8 @@
 
     @if (failed() !== null) {
       <div class="alert alert--error failure" role="alert">
-        <span>No se pudo guardar tu declaración.</span>
-        <button type="button" class="btn btn--sm" (click)="retryDeclare()">Reintentar</button>
+        <span>Could not save your declaration.</span>
+        <button type="button" class="btn btn--sm" (click)="retryDeclare()">Retry</button>
       </div>
     }
     <p class="visually-hidden" role="status">{{ announcement() }}</p>
@@ -81,7 +83,7 @@
         <app-icon class="line__icon" [name]="line.icon" />
         <p class="line__title">{{ line.title }}</p>
         @if (line.detail) {
-          <app-info-tip label="Más sobre la comparación con MODIS">
+          <app-info-tip label="More about the comparison with MODIS">
             <p>{{ line.detail }}</p>
           </app-info-tip>
         }
@@ -96,12 +98,12 @@
     [attr.aria-busy]="status() === 'loading'"
   >
     <div class="modis__head">
-      <h3 class="modis__title" [id]="modisId">Lo que vio MODIS</h3>
+      <h3 class="modis__title" [id]="modisId">What MODIS saw</h3>
       <!-- el origen es de un dato: mientras carga o sin dato no hay nada que etiquetar -->
       @if (hasData()) {
         <app-origin-badge [origin]="evidence()!.origin" />
       }
-      <app-info-tip class="modis__tip" label="Cómo lo mide MODIS">
+      <app-info-tip class="modis__tip" label="How MODIS measures it">
         @if (reason()) {
           <p>{{ reason() }}</p>
         }
@@ -130,18 +132,18 @@
             <span class="skeleton year-skeleton"></span>
           }
         </div>
-        <p class="note" role="status">MODIS puede tardar un par de minutos.</p>
+        <p class="note" role="status">MODIS can take a couple of minutes.</p>
       }
       @case ('error') {
         <div class="none">
           <app-icon name="minus" />
-          <p><strong>Sin dato</strong> · {{ errorShort() }}</p>
-          <button type="button" class="btn btn--sm" (click)="retryModis()">Reintentar</button>
+          <p><strong>No data</strong> · {{ errorShort() }}</p>
+          <button type="button" class="btn btn--sm" (click)="retryModis()">Retry</button>
         </div>
       }
       @default {
         @if (years().length > 0) {
-          <ol class="years" aria-label="Uso del suelo por año según MODIS">
+          <ol class="years" aria-label="Land use by year according to MODIS">
             @for (year of years(); track year.year) {
               <li
                 class="year"
@@ -153,7 +155,9 @@
                 <span class="year__label">{{ yearLabel(year) }}</span>
                 @if (isDifferent(year)) {
                   <app-icon class="year__flag" name="alert" />
-                  <span class="visually-hidden">, distinto de {{ evidence()?.baselineYear }}</span>
+                  <span class="visually-hidden"
+                    >, different from {{ evidence()?.baselineYear }}</span
+                  >
                 }
               </li>
             }
@@ -162,14 +166,14 @@
         @if (noData()) {
           <div class="none">
             <app-icon name="minus" />
-            <p><strong>Sin dato</strong> · {{ noData() }}</p>
+            <p><strong>No data</strong> · {{ noData() }}</p>
           </div>
         }
         @if (changeLine(); as line) {
           <div class="line" [attr.data-tone]="line.tone">
             <app-icon class="line__icon" [name]="line.icon" />
             <p class="line__title">{{ line.title }}</p>
-            <app-info-tip label="Más sobre lo que vio MODIS">
+            <app-info-tip label="More about what MODIS saw">
               <p>{{ line.detail }}</p>
             </app-info-tip>
           </div>

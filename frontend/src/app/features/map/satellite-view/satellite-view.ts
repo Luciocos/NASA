@@ -44,7 +44,7 @@ const PENDING: L.PathOptions = { color: '#e8eef5', weight: 2, dashArray: '6 5', 
 @Component({
   selector: 'app-satellite-view',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<div #map class="map" role="region" aria-label="Mapa satelital de los lotes"></div>`,
+  template: `<div #map class="map" role="region" aria-label="Satellite map of your fields"></div>`,
   styles: `
     :host {
       position: relative;
@@ -104,15 +104,15 @@ export class SatelliteView {
     );
     // el zoom va abajo a la derecha: arriba a la izquierda queda el selector de vista
     L.control
-      .zoom({ position: 'bottomright', zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' })
+      .zoom({ position: 'bottomright', zoomInTitle: 'Zoom in', zoomOutTitle: 'Zoom out' })
       .addTo(map);
     const satellite = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { maxZoom: 19, attribution: 'Imágenes &copy; Esri, Maxar, Earthstar Geographics' },
+      { maxZoom: 19, attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics' },
     );
     const labels = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-      { maxZoom: 19, attribution: 'Rótulos &copy; Esri' },
+      { maxZoom: 19, attribution: 'Labels &copy; Esri' },
     );
     const streets = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -123,8 +123,8 @@ export class SatelliteView {
     labels.addTo(map);
     L.control
       .layers(
-        { Satelital: satellite, Calles: streets },
-        { Rótulos: labels },
+        { Satellite: satellite, Streets: streets },
+        { Labels: labels },
         { position: 'topright' },
       )
       .addTo(map);
@@ -143,7 +143,7 @@ export class SatelliteView {
     this.polygons.clear();
     for (const lot of lots) {
       const polygon = L.geoJSON(lot.geometry, { style: lot.pending ? PENDING : STYLE })
-        .bindTooltip(lot.pending ? `${lot.name} · sin sincronizar` : lot.name, { sticky: true })
+        .bindTooltip(lot.pending ? `${lot.name} · not synced` : lot.name, { sticky: true })
         .on('click', (event: L.LeafletMouseEvent) => {
           L.DomEvent.stopPropagation(event);
           this.lotSelect.emit(lot.id);

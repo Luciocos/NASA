@@ -48,7 +48,7 @@ export class SlideTrack {
     if (!total) return '';
     const from = this.first() + 1;
     const to = this.last() + 1;
-    return from === to ? `${from} de ${total}` : `${from} a ${to} de ${total}`;
+    return from === to ? `${from} of ${total}` : `${from}–${to} of ${total}`;
   });
 
   private frame = 0;

@@ -19,7 +19,7 @@
   <span class="label">
     {{ connectivity.label() }}
     @if (savedAt(); as date) {
-      <span class="since">del {{ date }}</span>
+      <span class="since">from {{ date }}</span>
     }
   </span>
 </p>
@@ -38,38 +38,38 @@
         d="M10 13.4V4.2M6.4 7.6L10 4l3.6 3.6M4 13.2v1.6A1.2 1.2 0 0 0 5.2 16h9.6a1.2 1.2 0 0 0 1.2-1.2v-1.6"
       />
     </svg>
-    <span role="status">{{ count }} {{ count === 1 ? 'lote' : 'lotes' }} por sincronizar</span>
+    <span role="status">{{ count }} {{ count === 1 ? 'field' : 'fields' }} waiting to sync</span>
     <button type="button" class="sync" [disabled]="!canSync()" (click)="sync()">
-      {{ outbox.syncing() ? 'Sincronizando…' : 'Sincronizar ahora' }}
+      {{ outbox.syncing() ? 'Syncing…' : 'Sync now' }}
     </button>
   </div>
   @if (outbox.unsaved()) {
     <p class="hint" role="alert">
-      No se pudieron guardar en este dispositivo: no cierres la pestaña hasta que se sincronicen.
+      Couldn't save them on this device: don't close this tab until they sync.
     </p>
   } @else if (connectivity.backend() !== 'up') {
-    <p class="hint">Se suben solos cuando vuelva la conexión.</p>
+    <p class="hint">They'll upload automatically once you're back online.</p>
   }
 }
 
 @if (rejected().length > 0) {
-  <ul class="rejected" aria-label="Lotes que no se pudieron subir">
+  <ul class="rejected" aria-label="Fields that couldn't be uploaded">
     @for (item of rejected(); track item.localId) {
-      @let name = item.body.name || 'Lote sin nombre';
+      @let name = item.body.name || 'Unnamed field';
       <li>
         <svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
           <path d="M10 3l7.6 13.4H2.4zM10 8.2v3.6M10 14.2h.01" />
         </svg>
         <p role="alert">
-          <strong>{{ name }}</strong> no se subió: {{ item.error }}
+          <strong>{{ name }}</strong> wasn't uploaded: {{ item.error }}
         </p>
         <button
           type="button"
           class="ghost"
-          [attr.aria-label]="'Descartar ' + name"
+          [attr.aria-label]="'Discard ' + name"
           (click)="discard(item)"
         >
-          Descartar
+          Discard
         </button>
       </li>
     }

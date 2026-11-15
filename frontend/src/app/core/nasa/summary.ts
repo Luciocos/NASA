@@ -159,14 +159,14 @@ export function zonesByTerciles(grid: NdviGrid): NdviZones {
       min: values.length ? Math.min(...values) : null,
       max: values.length ? Math.max(...values) : null,
       zones: [],
-      note: 'Hacen falta al menos 3 píxeles de 250 m válidos dentro del lote para separar ambientes.',
+      note: 'At least 3 valid 250 m pixels inside the field are needed to split it into zones.',
     };
   }
   const min = Math.min(...values);
   const max = Math.max(...values);
   const range = max - min;
   if (range <= 0) {
-    return { ...base, min, max, zones: [], note: 'El NDVI es parejo en todo el lote.' };
+    return { ...base, min, max, zones: [], note: 'NDVI is even across the whole field.' };
   }
   const cut1 = min + range / 3;
   const cut2 = min + (2 * range) / 3;

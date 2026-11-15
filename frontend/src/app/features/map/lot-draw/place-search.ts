@@ -61,7 +61,7 @@ export class PlaceSearch {
     if (cached) return cached;
     if (this.window?.navigator.onLine === false) {
       throw new PlaceSearchError(
-        'Sin conexión no podemos buscar lugares. Mové el mapa a mano o usá tu ubicación.',
+        "We can't search for places offline. Move the map by hand or use your location.",
       );
     }
     const wait = this.lastAt + MIN_INTERVAL_MS - Date.now();
@@ -74,14 +74,16 @@ export class PlaceSearch {
       response = await globalThis.fetch(url, { credentials: 'omit' });
     } catch {
       throw new PlaceSearchError(
-        'No pudimos conectar con el buscador. Revisá la conexión o mové el mapa a mano.',
+        "We couldn't reach the place search. Check your connection or move the map by hand.",
       );
     }
     if (response.status === 429) {
-      throw new PlaceSearchError('El buscador está ocupado. Probá de nuevo en unos segundos.');
+      throw new PlaceSearchError('The place search is busy. Try again in a few seconds.');
     }
     if (!response.ok) {
-      throw new PlaceSearchError('El buscador no respondió. Probá de nuevo o mové el mapa a mano.');
+      throw new PlaceSearchError(
+        "The place search didn't respond. Try again or move the map by hand.",
+      );
     }
     const rows = (await response.json()) as unknown;
     const places = Array.isArray(rows)
@@ -100,7 +102,7 @@ function toPlace(row: NominatimRow): Place | null {
     .split(',')
     .map((part) => part.trim())
     .filter((part) => part && part !== 'Argentina' && !/^[A-Z]?\d{4}[A-Z]{0,3}$/.test(part));
-  const name = row.name?.trim() || parts[0] || 'Lugar sin nombre';
+  const name = row.name?.trim() || parts[0] || 'Unnamed place';
   const detail = parts.filter((part) => part !== name).join(', ');
   const box = (row.boundingbox ?? []).map(Number);
   const bounds: Place['bounds'] =
@@ -124,50 +126,44 @@ function toPlace(row: NominatimRow): Place | null {
   imports: [Icon],
   host: { '(keydown.escape)': 'close()' },
   template: `
-    <form class="bar" role="search" aria-label="Buscar un lugar" (submit)="submit($event)">
+    <form class="bar" role="search" aria-label="Search for a place" (submit)="submit($event)">
       <label class="query">
-        <span class="visually-hidden">Localidad, paraje o ruta</span>
+        <span class="visually-hidden">Town, rural area or road</span>
         <app-icon name="search" />
         <input
           type="search"
           name="q"
           autocomplete="off"
           enterkeyhint="search"
-          placeholder="Buscá tu localidad"
+          placeholder="Search for your town"
           [value]="query()"
           (input)="query.set($any($event.target).value)"
         />
       </label>
       <button type="submit" class="btn" [disabled]="busy() || query().trim() === ''">
-        {{ busy() ? 'Buscando…' : 'Buscar' }}
+        {{ busy() ? 'Searching…' : 'Search' }}
       </button>
       <button
         type="button"
         class="btn locate"
         [disabled]="locating()"
-        [attr.aria-label]="locating() ? 'Buscando tu ubicación' : 'Usar mi ubicación'"
+        [attr.aria-label]="locating() ? 'Finding your location' : 'Use my location'"
         (click)="locate()"
       >
         <app-icon name="locate" />
-        <span class="locate__text">{{ locating() ? 'Ubicando…' : 'Usar mi ubicación' }}</span>
+        <span class="locate__text">{{ locating() ? 'Locating…' : 'Use my location' }}</span>
       </button>
     </form>
 
     @if (panel(); as view) {
-      <div
-        class="results"
-        role="region"
-        aria-label="Resultados de la búsqueda"
-        animate.enter="enter-rise"
-      >
+      <div class="results" role="region" aria-label="Search results" animate.enter="enter-rise">
         @switch (view) {
           @case ('error') {
             <p class="message" role="alert">{{ error() }}</p>
           }
           @case ('empty') {
             <p class="message">
-              No encontramos «{{ searched() }}». Probá con la localidad más cercana o mové el mapa a
-              mano.
+              We couldn't find “{{ searched() }}”. Try the nearest town or move the map by hand.
             </p>
           }
           @case ('places') {
@@ -191,13 +187,13 @@ function toPlace(row: NominatimRow): Place | null {
         <footer>
           @if (view !== 'error') {
             <span class="attribution">
-              Lugares:
+              Places:
               <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener"
-                >© colaboradores de OpenStreetMap</a
+                >© OpenStreetMap contributors</a
               >
             </span>
           }
-          <button type="button" class="btn btn--ghost btn--sm" (click)="close()">Cerrar</button>
+          <button type="button" class="btn btn--ghost btn--sm" (click)="close()">Close</button>
         </footer>
       </div>
     }
@@ -368,20 +364,20 @@ export class PlaceSearchBox {
     this.error.set(null);
     this.places.set(null);
     this.searched.set(text);
-    this.announcement.set('Buscando…');
+    this.announcement.set('Searching…');
     try {
       const places = await this.search.search(text);
       this.places.set(places);
       this.announcement.set(
         places.length === 0
-          ? 'No encontramos ese lugar'
-          : `${places.length} ${places.length === 1 ? 'lugar encontrado' : 'lugares encontrados'}`,
+          ? "We couldn't find that place"
+          : `${places.length} ${places.length === 1 ? 'place found' : 'places found'}`,
       );
     } catch (err) {
       this.error.set(
         err instanceof PlaceSearchError
           ? err.message
-          : 'No pudimos buscar ese lugar. Probá de nuevo.',
+          : "We couldn't search for that place. Try again.",
       );
       this.announcement.set('');
     } finally {
@@ -391,7 +387,7 @@ export class PlaceSearchBox {
 
   protected pick(place: Place): void {
     this.close();
-    this.announcement.set(`Mapa en ${place.name}`);
+    this.announcement.set(`Map moved to ${place.name}`);
     this.place.emit(place);
   }
 
@@ -401,10 +397,10 @@ export class PlaceSearchBox {
     this.close();
     try {
       const spot = await locateOnce(this.window?.navigator.geolocation);
-      this.announcement.set('Mapa en tu ubicación');
+      this.announcement.set('Map moved to your location');
       this.located.emit(spot);
     } catch (err) {
-      this.error.set(err instanceof LocationError ? err.message : 'No pudimos saber dónde estás.');
+      this.error.set(err instanceof LocationError ? err.message : "We couldn't get your location.");
     } finally {
       this.locating.set(false);
     }

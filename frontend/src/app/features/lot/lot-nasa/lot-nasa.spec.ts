@@ -57,14 +57,19 @@ describe('LotNasa', () => {
     fixture.componentRef.setInput('lot', LOT);
     fixture.componentRef.setInput('events', [
       makeEvent({ id: 1, date: '2023-03-02', type_label: 'Cambio de uso del suelo' }),
-      makeEvent({ id: 2, date: lastMonth.toISOString().slice(0, 10), type_label: 'Siembra' }),
+      makeEvent({
+        id: 2,
+        date: lastMonth.toISOString().slice(0, 10),
+        type: 'SOWING',
+        type_label: 'Siembra',
+      }),
     ]);
     await fixture.whenStable();
 
     // con los últimos 12 meses, un evento de 2023 estiraría el eje y achicaría la serie
     const chart = fixture.debugElement.query(By.directive(SeriesChart))
       .componentInstance as SeriesChart;
-    expect(chart.markers().map((marker) => marker.label)).toEqual(['Siembra']);
+    expect(chart.markers().map((marker) => marker.label)).toEqual(['Sowing']);
   });
 
   it('sin red avisa que lo pendiente se consulta al volver, y al volver reintenta', async () => {
@@ -76,14 +81,14 @@ describe('LotNasa', () => {
     const retry = vi.spyOn(TestBed.inject(LotSatellite), 'retry');
     const text = () => (fixture.nativeElement as HTMLElement).textContent ?? '';
 
-    expect(text()).toContain('Sin conexión: se consulta cuando vuelva la red');
-    expect(text()).not.toContain('Consultando MODIS');
+    expect(text()).toContain('Offline: it will be queried when the connection returns');
+    expect(text()).not.toContain('Querying MODIS');
     expect(text()).not.toContain('Cargando el historial');
 
     online.set(true);
     await settle(fixture);
     expect(retry).toHaveBeenCalledWith({ id: LOT.id, geometry: LOT.geometry });
-    expect(text()).toContain('Consultando MODIS');
+    expect(text()).toContain('Querying MODIS');
   });
 
   it('si falla la consulta al catálogo lo avisa y ofrece reintentar, sin mostrar cero escenas', async () => {
@@ -91,13 +96,13 @@ describe('LotNasa', () => {
     const element = fixture.nativeElement as HTMLElement;
     const text = element.textContent ?? '';
 
-    expect(text).toContain('La consulta al catálogo falló. Sin conexión y sin una copia guardada');
-    expect(text).not.toContain('Sin pasadas en el catálogo');
-    expect(text).not.toContain('Sin imágenes en el catálogo');
+    expect(text).toContain('The catalog query failed.');
+    expect(text).not.toContain('No passes in the catalog');
+    expect(text).not.toContain('No images in the catalog');
     expect(text).not.toContain('imágenes HLS en el catálogo');
     // una sola invitación a reintentar, a la vista; el detalle dice qué falló
     const retries = [...element.querySelectorAll('button')].filter(
-      (button) => button.textContent?.trim() === 'Reintentar',
+      (button) => button.textContent?.trim() === 'Try again',
     );
     expect(retries.length).toBe(1);
     expect(retries[0].closest('app-disclosure')).toBeNull();
@@ -111,25 +116,25 @@ describe('LotNasa', () => {
     const kpis = [...element.querySelectorAll('app-kpi-card')];
     expect(kpis.length).toBe(3);
     // sin dato no inventa un cero: lo dice con su motivo
-    expect(kpis.every((kpi) => kpi.textContent?.includes('Sin dato'))).toBe(true);
+    expect(kpis.every((kpi) => kpi.textContent?.includes('No data'))).toBe(true);
     const track = element.querySelector('#sat-cards');
     expect(element.querySelector('app-series-chart')?.closest('#sat-cards')).toBeNull();
     // nada plegado ni párrafos a la vista: las explicaciones van detrás de un (i)
     expect(element.querySelectorAll('app-disclosure').length).toBe(0);
     expect(
-      element.querySelector('app-section-card button[aria-label="De dónde salen estos datos"]'),
+      element.querySelector('app-section-card button[aria-label="Where this data comes from"]'),
     ).toBeTruthy();
 
     // un carrusel con nombre, y cada tarjeta dice cuál es y cuántas hay
-    const carousel = element.querySelector('section[aria-roledescription="carrusel"]');
+    const carousel = element.querySelector('section[aria-roledescription="carousel"]');
     const titleId = carousel?.getAttribute('aria-labelledby') ?? '';
-    expect(element.querySelector(`#${titleId}`)?.textContent).toBe('Más datos');
+    expect(element.querySelector(`#${titleId}`)?.textContent).toBe('More data');
     const slides = [...(track?.children ?? [])];
     expect(slides.map((slide) => slide.getAttribute('aria-label'))).toEqual(
-      SATELLITE_SLIDES.map((title, index) => `${index + 1} de 6: ${title}`),
+      SATELLITE_SLIDES.map((title, index) => `${index + 1} of 6: ${title}`),
     );
     expect(slides.every((slide) => slide.getAttribute('role') === 'group')).toBe(true);
-    expect(slides.every((slide) => slide.getAttribute('aria-roledescription') === 'tarjeta')).toBe(
+    expect(slides.every((slide) => slide.getAttribute('aria-roledescription') === 'card')).toBe(
       true,
     );
     expect(slides[0].querySelector('app-column-chart')).toBeTruthy();
@@ -137,7 +142,7 @@ describe('LotNasa', () => {
       [...slides[5].querySelectorAll('.options button')].map((button) =>
         button.textContent?.trim(),
       ),
-    ).toEqual(['Historial desde 2020', 'Actualizar']);
+    ).toEqual(['History since 2020', 'Refresh']);
   });
 
   it('en el celular "Más datos" va plegado: la pestaña entra en una pantalla', async () => {
@@ -157,14 +162,14 @@ describe('LotNasa', () => {
       expect(element.querySelectorAll('app-kpi-card').length).toBe(3);
       expect(element.querySelector('app-series-chart')?.closest('app-disclosure')).toBeNull();
       const fold = element.querySelector('app-disclosure.more')!;
-      expect(fold.querySelector('summary')?.textContent).toContain('Más datos');
+      expect(fold.querySelector('summary')?.textContent).toContain('More data');
       expect(fold.querySelector('details')?.open).toBe(false);
       // adentro, las mismas seis tarjetas con nombre
       const region = fold.querySelector('[role="region"]');
-      expect(region?.getAttribute('aria-label')).toBe('Más datos');
-      expect(region?.getAttribute('aria-roledescription')).toBe('carrusel');
+      expect(region?.getAttribute('aria-label')).toBe('More data');
+      expect(region?.getAttribute('aria-roledescription')).toBe('carousel');
       expect(region?.querySelector('#sat-cards')?.children.length).toBe(SATELLITE_SLIDES.length);
-      expect(element.querySelector('section[aria-roledescription="carrusel"]')).toBeNull();
+      expect(element.querySelector('section[aria-roledescription="carousel"]')).toBeNull();
     } finally {
       window.matchMedia = original;
     }
@@ -197,15 +202,15 @@ describe('LotNasa', () => {
       [...element.querySelectorAll<HTMLButtonElement>('.more__step')].find((button) =>
         button.textContent?.includes(name),
       )!;
-    expect(count()).toBe('1 a 2 de 6');
-    expect(step('Tarjeta anterior').getAttribute('aria-disabled')).toBe('true');
-    expect(step('Tarjeta siguiente').getAttribute('aria-controls')).toBe('sat-cards');
+    expect(count()).toBe('1–2 of 6');
+    expect(step('Previous card').getAttribute('aria-disabled')).toBe('true');
+    expect(step('Next card').getAttribute('aria-controls')).toBe('sat-cards');
 
-    step('Tarjeta siguiente').click();
+    step('Next card').click();
     await settle(fixture);
     expect(moves).toEqual([316]);
-    expect(count()).toBe('2 a 3 de 6');
-    expect(step('Tarjeta anterior').getAttribute('aria-disabled')).toBeNull();
+    expect(count()).toBe('2–3 of 6');
+    expect(step('Previous card').getAttribute('aria-disabled')).toBeNull();
   });
 
   it('muestra la lluvia y la humedad en lenguaje llano, con su origen', async () => {
@@ -238,10 +243,10 @@ describe('LotNasa', () => {
 
     expect(rain.textContent).toContain('45');
     expect(rain.textContent).toContain('mm');
-    expect(rain.textContent).toContain('Hasta el 14/11');
-    expect(rain.textContent).toContain('Estimado');
+    expect(rain.textContent).toContain('Up to 14/11');
+    expect(rain.textContent?.toLowerCase()).toContain('estimat');
     expect(soil.textContent).toContain('62');
-    expect(soil.textContent).toContain('Raíces · 100 es saturado');
+    expect(soil.textContent).toContain('Root zone · 100 is saturated');
   });
 
   it('marca el mes en curso de la lluvia como parcial', async () => {
@@ -272,11 +277,11 @@ describe('LotNasa', () => {
 
     const chart = fixture.debugElement.query(By.directive(ColumnChart))
       .componentInstance as ColumnChart;
-    expect(chart.items().map((item) => item.label)).toEqual(['oct 26', 'nov 26*']);
-    expect(chart.items()[1].note).toBe('mes en curso: hasta el 10/11');
+    expect(chart.items().map((item) => item.label)).toEqual(['Oct 26', 'Nov 26*']);
+    expect(chart.items()[1].note).toBe('current month: up to 10/11');
     expect(chart.items()[0].note).toBeUndefined();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      '* nov 26: suma hasta el 10/11',
+      '* Nov 26: total up to 10/11',
     );
   });
 
@@ -341,8 +346,8 @@ describe('LotNasa', () => {
 
     it('con una parte del verdor lo dice corto, sin la jerga del servicio, y el motivo en la ayuda', async () => {
       const element = await render(loaded([OBS], `${OFFLINE} Faltan 2 de 3 tandas.`));
-      expect(element.textContent).toContain('Faltan algunas fechas del verdor');
-      expect(tip(element, 'Por qué faltan fechas')).toContain(OFFLINE);
+      expect(element.textContent).toContain('Some greenness dates are missing');
+      expect(tip(element, 'Why dates are missing')).toContain(OFFLINE);
       expect(element.textContent).not.toContain('tandas');
     });
 
@@ -354,7 +359,7 @@ describe('LotNasa', () => {
         ),
       );
       const kpi = element.querySelector('app-kpi-card')?.textContent ?? '';
-      expect(kpi).toContain('Sin dato');
+      expect(kpi).toContain('No data');
       expect(kpi).toContain('Sin respuesta del servicio de la NASA');
       expect(kpi).not.toContain('Probá de nuevo');
       expect(element.textContent).not.toContain('tandas');
@@ -362,19 +367,19 @@ describe('LotNasa', () => {
 
     it('las fuentes dicen, en su ayuda, cada cuánto llegan y qué limita a cada una', async () => {
       const element = await render(loaded([OBS], null));
-      const sources = tip(element, 'Detalle de las fuentes');
-      expect(sources).toContain('publicado unas 2 o 3 semanas después');
-      expect(sources).toContain('puede mezclar lotes vecinos, caminos o montes');
-      expect(sources).toContain('Las escenas provisionales pueden cambiar cuando se validen');
+      const sources = tip(element, 'Source details');
+      expect(sources).toContain('published about 2 or 3 weeks later');
+      expect(sources).toContain('can mix in neighboring fields, roads or woodland');
+      expect(sources).toContain('Provisional scenes may change once they are validated');
     });
 
     it('en un ejemplo las ayudas no le hablan al visitante como si fuera el dueño', async () => {
       const element = await render(loaded([OBS], null), { ...LOT, is_example: true, owned: false });
-      const landUse = tip(element, 'Cómo se lee');
-      expect(landUse).toContain('que cubren este lote');
-      expect(landUse).toContain('En Prácticas se ve año por año.');
-      expect(landUse).not.toContain('lo que declarás');
-      expect(tip(element, 'Detalle de las fuentes')).not.toContain('tu lote');
+      const landUse = tip(element, 'How to read it');
+      expect(landUse).toContain('that cover this field');
+      expect(landUse).toContain('Practices shows it year by year.');
+      expect(landUse).not.toContain('what you declare');
+      expect(tip(element, 'Source details')).not.toContain('your field');
     });
   });
 });

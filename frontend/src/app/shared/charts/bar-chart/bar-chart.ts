@@ -340,7 +340,7 @@ export class BarChart {
   /** texto alternativo: encabeza el aria-label, antes del resumen de los datos */
   readonly description = input<string>();
   /** texto del estado vacío */
-  readonly emptyText = input('Sin datos para mostrar');
+  readonly emptyText = input('No data to show');
 
   protected readonly uid = nextChartId('bars');
   private readonly width = injectHostWidth();
@@ -369,9 +369,9 @@ export class BarChart {
         `${line.label}: ${line.symmetric ? '±' : ''}${formatValue(line.value, unit, decimals)}`,
     );
     const summary =
-      `Gráfico de barras con ${items.length} ${items.length === 1 ? 'valor' : 'valores'}. ` +
+      `Bar chart with ${items.length} ${items.length === 1 ? 'value' : 'values'}. ` +
       `${bars.join('; ')}.` +
-      (references.length ? ` Líneas de referencia: ${references.join('; ')}.` : '');
+      (references.length ? ` Reference lines: ${references.join('; ')}.` : '');
     return chartLabel(this.description(), summary);
   });
 
@@ -383,13 +383,13 @@ export class BarChart {
     const cells = (label: string, value: string, note = '') =>
       withNotes ? [label, value, note] : [label, value];
     return {
-      caption: this.title() ?? 'Datos del gráfico de barras',
-      columns: cells('Categoría', unit ? `Valor (${unit})` : 'Valor', 'Nota'),
+      caption: this.title() ?? 'Bar chart data',
+      columns: cells('Category', unit ? `Value (${unit})` : 'Value', 'Note'),
       rows: [
         ...items.map((item) => cells(item.label, formatNumber(item.value, decimals), item.note)),
         ...this.thresholds().map((line) =>
           cells(
-            `${line.label} (línea de referencia)`,
+            `${line.label} (reference line)`,
             `${line.symmetric ? '±' : ''}${formatNumber(line.value, decimals)}`,
           ),
         ),

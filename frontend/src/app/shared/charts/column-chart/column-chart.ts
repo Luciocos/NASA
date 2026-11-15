@@ -192,7 +192,7 @@ export class ColumnChart {
   readonly highlight = input<number>();
   readonly title = input<string>();
   readonly description = input<string>();
-  readonly emptyText = input('Sin datos para mostrar');
+  readonly emptyText = input('No data to show');
 
   protected readonly uid = nextChartId('cols');
   private readonly width = injectHostWidth();
@@ -221,18 +221,20 @@ export class ColumnChart {
       const min = valued.reduce((best, item) =>
         (item.value as number) < (best.value as number) ? item : best,
       );
-      detail = `máximo ${formatValue(max.value, unit, decimals)} en ${max.label}, mínimo ${formatValue(min.value, unit, decimals)} en ${min.label}`;
+      detail = `maximum ${formatValue(max.value, unit, decimals)} in ${max.label}, minimum ${formatValue(min.value, unit, decimals)} in ${min.label}`;
     } else {
-      detail = `${NO_DATA} en todas`;
+      detail = `${NO_DATA} in any column`;
     }
     const highlighted = this.highlight();
     const target = highlighted !== undefined ? items[highlighted] : undefined;
     const summary =
-      `Gráfico de columnas con ${countLabel(items.length, 'valor', 'valores')}. ${detail}.` +
+      `Column chart with ${countLabel(items.length, 'value', 'values')}. ${detail}.` +
       (missing && items.length <= MAX_LISTED
-        ? ` ${countLabel(missing, 'columna', 'columnas')} sin dato.`
+        ? ` ${countLabel(missing, 'column', 'columns')} with no data.`
         : '') +
-      (target ? ` Destacado: ${target.label}, ${formatValue(target.value, unit, decimals)}.` : '');
+      (target
+        ? ` Highlighted: ${target.label}, ${formatValue(target.value, unit, decimals)}.`
+        : '');
     return chartLabel(this.description(), summary);
   });
 
@@ -242,8 +244,8 @@ export class ColumnChart {
     const decimals = this.decimals();
     const withNotes = items.some((item) => !!item.note);
     return {
-      caption: this.title() ?? 'Datos del gráfico de columnas',
-      columns: ['Período', unit ? `Valor (${unit})` : 'Valor', ...(withNotes ? ['Nota'] : [])],
+      caption: this.title() ?? 'Column chart data',
+      columns: ['Period', unit ? `Value (${unit})` : 'Value', ...(withNotes ? ['Note'] : [])],
       rows: items.map((item) => [
         item.label,
         formatNumber(item.value, decimals),

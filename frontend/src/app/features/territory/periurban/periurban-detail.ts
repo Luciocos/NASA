@@ -14,11 +14,11 @@ import { PeriurbanDetails } from './periurban.types';
     @if (details(); as d) {
       @if (d.locality) {
         <p class="line">
-          Localidad más cercana: <strong>{{ d.locality }}</strong>
+          Nearest town: <strong>{{ d.locality }}</strong>
           @if (d.distance_to_urban_m !== undefined) {
-            · distancia al área urbana:
+            · distance to the urban area:
             <strong>{{
-              d.distance_to_urban_m === 0 ? 'lindante' : fmt(d.distance_to_urban_m, 0) + ' m'
+              d.distance_to_urban_m === 0 ? 'adjacent' : fmt(d.distance_to_urban_m, 0) + ' m'
             }}</strong>
           }
         </p>
@@ -27,13 +27,13 @@ import { PeriurbanDetails } from './periurban.types';
       @if (d.bands?.length) {
         <table class="bands">
           <caption class="sr-only">
-            Superficie del lote dentro de cada franja de exclusión
+            Field area inside each exclusion buffer
           </caption>
           <thead>
             <tr>
-              <th scope="col">Franja</th>
-              <th scope="col">Radio</th>
-              <th scope="col">Superficie del lote</th>
+              <th scope="col">Buffer</th>
+              <th scope="col">Radius</th>
+              <th scope="col">Field area</th>
             </tr>
           </thead>
           <tbody>
@@ -50,7 +50,7 @@ import { PeriurbanDetails } from './periurban.types';
                       >{{ fmt(band.overlap_ha, 1) }} ha ({{ fmt(band.overlap_pct, 1) }} %)</strong
                     >
                   } @else {
-                    Ninguna
+                    None
                   }
                 </td>
               </tr>
@@ -58,29 +58,31 @@ import { PeriurbanDetails } from './periurban.types';
           </tbody>
         </table>
         <p class="note">
-          Las franjas restringen la aplicación de fitosanitarios de clase toxicológica A y B.
+          The buffers restrict spraying of pesticides in toxicological classes A and B.
         </p>
       }
 
       @if (d.geometry) {
         <app-periurban-map class="map" [lotGeometry]="lot().geometry" [zones]="d.geometry" />
-        <ul class="legend" aria-label="Referencias del mapa">
-          <li><span class="swatch" data-band="lot" aria-hidden="true"></span>Lote (borde azul)</li>
+        <ul class="legend" aria-label="Map legend">
           <li>
-            <span class="swatch" data-band="urban" aria-hidden="true"></span>Área urbana aproximada
+            <span class="swatch" data-band="lot" aria-hidden="true"></span>Field (blue outline)
+          </li>
+          <li>
+            <span class="swatch" data-band="urban" aria-hidden="true"></span>Approximate urban area
           </li>
           @if (d.terrestrial_buffer_m) {
             <li>
-              <span class="swatch" data-band="terrestrial" aria-hidden="true"></span>Franja
-              terrestre ({{ fmt(d.terrestrial_buffer_m, 0) }} m, punteado corto)
+              <span class="swatch" data-band="terrestrial" aria-hidden="true"></span>Ground buffer
+              ({{ fmt(d.terrestrial_buffer_m, 0) }} m, dotted)
             </li>
           }
           @if (d.aerial_buffer_m) {
             <li>
-              <span class="swatch" data-band="aerial" aria-hidden="true"></span>Franja aérea ({{
+              <span class="swatch" data-band="aerial" aria-hidden="true"></span>Aerial buffer ({{
                 fmt(d.aerial_buffer_m, 0)
               }}
-              m, guiones)
+              m, dashed)
             </li>
           }
         </ul>
@@ -88,7 +90,7 @@ import { PeriurbanDetails } from './periurban.types';
 
       @if (d.norm; as n) {
         <details class="norm">
-          <summary>Qué dice la norma</summary>
+          <summary>What the regulation says</summary>
           <p>
             <a [href]="n.url" target="_blank" rel="noopener">{{ n.name }}</a>
           </p>
@@ -97,7 +99,7 @@ import { PeriurbanDetails } from './periurban.types';
             <li>{{ n.article_aerial }}</li>
           </ul>
           @if (!n.municipal_ordinance) {
-            <p>No se encontró una ordenanza municipal propia: se usa el marco provincial.</p>
+            <p>No specific municipal ordinance was found: the provincial framework applies.</p>
           }
           @if (d.urban_boundary_note) {
             <p>{{ d.urban_boundary_note }}</p>
@@ -203,7 +205,7 @@ export class PeriurbanDetail {
   );
 
   protected fmt(value: number, digits: number): string {
-    return value.toLocaleString('es-AR', {
+    return value.toLocaleString('en-US', {
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
     });

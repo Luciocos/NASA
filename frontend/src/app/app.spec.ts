@@ -65,8 +65,8 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
 
     const nav = compiled.querySelector('.topbar .nav')?.textContent ?? '';
-    expect(nav).toContain('Mi campo');
-    expect(nav).toContain('Marcar lote');
+    expect(nav).toContain('My fields');
+    expect(nav).toContain('Add field');
     expect(compiled.querySelector('.tabbar')).not.toBeNull();
     expect(compiled.querySelector('a[href^="/ingresar"]')).toBeNull();
     expect(fixture.nativeElement.classList).toContain('has-tabbar');
@@ -82,7 +82,7 @@ describe('App', () => {
     expect(compiled.querySelector('.topbar .nav')).toBeNull();
     expect(compiled.querySelector('.tabbar')).toBeNull();
     expect(compiled.querySelector('app-connection-status')).toBeNull();
-    expect(compiled.querySelector('.topbar__login')?.textContent?.trim()).toBe('Ingresar');
+    expect(compiled.querySelector('.topbar__login')?.textContent?.trim()).toBe('Log in');
     expect(compiled.querySelector('.brand')?.getAttribute('href')).toBe('/');
     expect(fixture.nativeElement.classList).not.toContain('has-tabbar');
   });
@@ -132,7 +132,7 @@ describe('App', () => {
 
     const alert = compiled.querySelector('[role="alert"]');
     expect(alert?.textContent).toContain(
-      'No se pudo abrir esa pantalla. Si estás sin conexión, probá de nuevo cuando vuelva la red.',
+      "Couldn't open that screen. If you're offline, try again when you're back online.",
     );
 
     alert?.querySelector('button')?.click();

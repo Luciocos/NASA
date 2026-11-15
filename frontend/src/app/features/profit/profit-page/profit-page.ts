@@ -164,17 +164,19 @@ export class ProfitPage {
   protected readonly yieldNote = computed(() => {
     const huella = this.huellaYield();
     if (this.inputs().yieldTHa !== null) {
-      return huella === null ? 'Lo cargaste vos' : `Lo cargaste vos · huella: ${this.tons(huella)}`;
+      return huella === null
+        ? 'Entered by you'
+        : `Entered by you · footprint: ${this.tons(huella)}`;
     }
     const fp = this.footprint();
     if (huella !== null && fp) {
-      if (fp.yield.reference) return 'Referencia regional, no de tu lote';
-      return fp.yield.origin === 'DECLARED' ? 'De tu declaración en la huella' : '';
+      if (fp.yield.reference) return 'Regional reference, not from your field';
+      return fp.yield.origin === 'DECLARED' ? 'From what you declared in Footprint' : '';
     }
-    if (!fp) return 'Sin dato de la huella: cargalo vos';
+    if (!fp) return 'No footprint data: enter it yourself';
     return fp.campaign
-      ? `Sin rinde declarado en ${fp.campaign.label}: cargalo vos`
-      : 'Sin campañas todavía: cargalo vos';
+      ? `No yield declared for ${fp.campaign.label}: enter it yourself`
+      : 'No seasons yet: enter it yourself';
   });
   /** fuente del rinde de referencia, solo cuando se usa */
   protected readonly yieldReference = computed(() =>
@@ -194,7 +196,7 @@ export class ProfitPage {
     const loaded = COST_COUNT - this.pendingCosts();
     const direct = this.result().directUsdHa;
     const total = direct > 0 ? ` · ${formatUsd(direct)}/ha` : '';
-    return `${loaded} de ${COST_COUNT} cargados${total}`;
+    return `${loaded} of ${COST_COUNT} entered${total}`;
   });
 
   /** número del margen para la tarjeta grande: sin "US$", que va como unidad */
@@ -204,22 +206,22 @@ export class ProfitPage {
   /** por qué todavía no hay margen */
   protected readonly missingReason = computed(() => {
     const missing = this.result().missing;
-    if (missing.length === 2) return 'Faltan el precio del grano y el rinde.';
-    if (missing.includes('precio')) return 'Falta el precio del grano.';
-    return missing.includes('rinde') ? 'Falta el rinde.' : null;
+    if (missing.length === 2) return 'Grain price and yield are missing.';
+    if (missing.includes('precio')) return 'Grain price is missing.';
+    return missing.includes('rinde') ? 'Yield is missing.' : null;
   });
   /** qué incluye el margen, en una línea */
   protected readonly marginCaption = computed(() => {
     const pending = this.pendingCosts();
-    if (pending === COST_COUNT) return 'Todavía sin costos: es lo que entra por hectárea.';
+    if (pending === COST_COUNT) return 'No costs yet: this is the income per hectare.';
     if (pending > 0) {
       return pending === 1
-        ? 'Falta 1 costo por cargar: el margen real es menor.'
-        : `Faltan ${pending} costos por cargar: el margen real es menor.`;
+        ? '1 cost still to enter: the real margin is lower.'
+        : `${pending} costs still to enter: the real margin is lower.`;
     }
     return this.negative()
-      ? 'Con todos tus costos, este lote pierde plata.'
-      : 'Lo que queda después de todos tus costos.';
+      ? 'With all your costs, this field loses money.'
+      : 'What is left after all your costs.';
   });
   /**
    * el margen usa precio y costos declarados; si el rinde es de referencia o el precio es el
@@ -237,35 +239,33 @@ export class ProfitPage {
   protected readonly marginSource = computed(() => {
     const reference = this.yieldOrigin() === 'ESTIMATED';
     const rofex = this.priceOrigin() === 'ESTIMATED';
-    const price = this.suggestion()?.simulated_market
-      ? 'precio de prueba de Rofex'
-      : 'precio de Rofex';
-    if (reference && rofex) return `Con rinde de referencia y ${price}`;
-    if (reference) return 'Con el rinde de referencia';
-    return rofex ? `Con el ${price}` : 'Con tus datos';
+    const price = this.suggestion()?.simulated_market ? 'Rofex test price' : 'Rofex price';
+    if (reference && rofex) return `With the reference yield and the ${price}`;
+    if (reference) return 'With the reference yield';
+    return rofex ? `With the ${price}` : 'With your data';
   });
 
   /** cascada del margen por hectárea con los conceptos cargados (los vacíos no se dibujan) */
   protected readonly waterfall = computed<WaterfallStep[]>(() => {
     const r = this.result();
     if (r.grossUsdHa === null || r.marginUsdHa === null) return [];
-    const steps: WaterfallStep[] = [{ label: 'Ingreso bruto', value: r.grossUsdHa, kind: 'total' }];
+    const steps: WaterfallStep[] = [{ label: 'Gross income', value: r.grossUsdHa, kind: 'total' }];
     if (r.commercialUsdHa) {
-      steps.push({ label: 'Flete y comercialización', value: -r.commercialUsdHa, kind: 'delta' });
+      steps.push({ label: 'Freight and marketing', value: -r.commercialUsdHa, kind: 'delta' });
     }
     for (const key of COST_KEYS) {
       const cost = this.inputs().costs[key];
       if (cost) steps.push({ label: COST_LABELS[key], value: -cost, kind: 'delta' });
     }
-    steps.push({ label: 'Margen bruto', value: r.marginUsdHa, kind: 'total' });
+    steps.push({ label: 'Gross margin', value: r.marginUsdHa, kind: 'total' });
     return steps;
   });
   protected readonly breakdown = computed(() => {
     const r = this.result();
     const area = this.area();
     const rows: { label: string; perHa: number | null; sign: 1 | -1 }[] = [
-      { label: 'Ingreso bruto', perHa: r.grossUsdHa, sign: 1 },
-      { label: 'Flete y comercialización', perHa: r.commercialUsdHa, sign: -1 },
+      { label: 'Gross income', perHa: r.grossUsdHa, sign: 1 },
+      { label: 'Freight and marketing', perHa: r.commercialUsdHa, sign: -1 },
       ...COST_KEYS.map((key) => ({
         label: COST_LABELS[key],
         perHa: this.inputs().costs[key],
@@ -295,7 +295,7 @@ export class ProfitPage {
     effect((onCleanup) => {
       const id = this.lotId();
       if (!Number.isInteger(id)) {
-        this.error.set('El identificador del lote no es válido.');
+        this.error.set('The field ID is not valid.');
         return;
       }
       // el popup ya tiene la ficha: se usa esa (la superficie no cambia)
@@ -308,7 +308,7 @@ export class ProfitPage {
         next: (lot) => this.lot.set(lot),
         error: (err: { status?: number }) => {
           if (err.status === 404) this.notFound.set(true);
-          else this.error.set('No se pudo cargar el lote. Revisá la conexión.');
+          else this.error.set('Could not load the field. Check your connection.');
         },
       });
       onCleanup(() => sub.unsubscribe());
@@ -395,8 +395,8 @@ export class ProfitPage {
           const detail = (err.error as { detail?: string } | null)?.detail;
           this.suggestionError.set(
             err.status === 0
-              ? 'No hay conexión con el servidor.'
-              : (detail ?? 'No se pudo traer el precio de Rofex.'),
+              ? 'No connection to the server.'
+              : (detail ?? 'Could not get the Rofex price.'),
           );
         },
       });
@@ -417,13 +417,13 @@ export class ProfitPage {
   }
 
   protected suggestionKind(kind: SuggestedPrice['kind']): string {
-    return kind === 'settlement' ? 'ajuste' : kind === 'last' ? 'último operado' : 'cierre';
+    return kind === 'settlement' ? 'settlement' : kind === 'last' ? 'last traded' : 'close';
   }
 
   protected suggestionDate(date: string | null): string {
     if (!date) return '';
     const [y, m, d] = date.split('-');
-    return ` del ${d}/${m}/${y}`;
+    return ` on ${d}/${m}/${y}`;
   }
 
   /** la fecha del dato para la línea a la vista: " · 13/11/2026", o nada si no vino */
@@ -447,18 +447,18 @@ export class ProfitPage {
   }
 
   protected percent(step: number): string {
-    return step === 0 ? 'Actual' : `${step > 0 ? '+' : ''}${Math.round(step * 100)} %`;
+    return step === 0 ? 'Current' : `${step > 0 ? '+' : ''}${Math.round(step * 100)} %`;
   }
 
   protected number(value: number | null, digits = 2): string {
     return value === null
-      ? 'Sin dato'
+      ? 'No data'
       : value.toLocaleString('es-AR', { maximumFractionDigits: digits });
   }
 
-  /** "3,4 t/ha", o "Sin dato" sin la unidad */
+  /** "3,4 t/ha", o "No data" sin la unidad */
   protected tons(value: number | null): string {
-    return value === null ? 'Sin dato' : `${this.number(value)} t/ha`;
+    return value === null ? 'No data' : `${this.number(value)} t/ha`;
   }
 
   private type(key: FieldKey, raw: string, inputs: ProfitInputs): void {
