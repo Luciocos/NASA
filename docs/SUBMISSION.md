@@ -218,7 +218,7 @@ The existing walkthrough video on the landing page cannot be used as is: it woul
 **SI rules**
 
 - [ ] Every SI-generated image or video in the deck, the video and the app carries a visible watermark.
-- [ ] No SI-generated content uses or modifies NASA branding or design elements. The app icon (`frontend/public/lotestigo-mark-*.png`, `icon-*.png`, `assets/lotestigo.png`) shows a blue field with stars and a red swoosh, which resembles the NASA insignia. If it was SI-generated, replace it or confirm with the Local Lead.
+- [x] No SI-generated content uses or modifies NASA branding or design elements. The app icon (`frontend/public/lotestigo-mark-*.png`, `icon-*.png`, `favicon*`, `apple-touch-icon.png`, `assets/lotestigo.png`) was replaced on November 15 by a flat geometric mark drawn with code (`assets/draw-logo.py`), with no stars or swoosh, and the landing video was updated to show it.
 - [ ] SI-assisted code acknowledged in the README (done: "Use of SI tools").
 
 **Links**

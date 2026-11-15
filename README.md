@@ -189,6 +189,7 @@ Según las reglas del NASA Space Apps Challenge 2026 sobre herramientas de Super
 
 - **Código y documentación:** parte del código, de las pruebas y de la documentación de este repositorio se escribió con la asistencia de Claude Code (Anthropic), un asistente de programación basado en un modelo de lenguaje, y fue revisada por el equipo. Las instrucciones que se le dieron están en [CLAUDE.md](CLAUDE.md).
 - **Datos:** ningún dato satelital, evento, imagen de evidencia, factor de emisión ni métrica fue generado con SI. Salen de las fuentes citadas arriba.
+- **Logo:** es un dibujo geométrico plano (tres capas apiladas) que genera el script [assets/draw-logo.py](assets/draw-logo.py), escrito con asistencia de SI. No usa elementos de la marca de la NASA.
 - **Idea y método:** la idea del proyecto, la elección de las fuentes y el método de detección los definió el equipo.
 
 ## Licencia
