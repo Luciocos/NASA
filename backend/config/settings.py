@@ -45,8 +45,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     # Apps por funcionalidad (ver docs/EQUIPO.md)
     'core',
+    'accounts',
     'lots',
     'events',
     'carbon',
@@ -142,11 +144,15 @@ MEDIA_ROOT = REPO_DIR / 'data'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# Django REST Framework. Sin autenticación en el MVP.
+# Django REST Framework. Autenticación por token: encabezado "Authorization: Token <key>".
+# Toda vista exige token salvo que declare AllowAny (health, auth, ejemplos, lectura de lotes
+# y pasaporte público). Quién ve o edita cada lote lo decide core/access.py.
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [],
-    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
-    'UNAUTHENTICATED_USER': None,
+    'DEFAULT_AUTHENTICATION_CLASSES': ['core.authentication.TokenAuthentication'],
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
+    'EXCEPTION_HANDLER': 'core.exceptions.exception_handler',
+    # Límite de intentos de registro e ingreso, por IP (accounts/views.py)
+    'DEFAULT_THROTTLE_RATES': {'auth': '20/min'},
 }
 
 

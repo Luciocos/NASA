@@ -15,6 +15,7 @@ import {
 import { provideServiceWorker } from '@angular/service-worker';
 
 import { routes } from './app.routes';
+import { authInterceptor } from './core/auth/auth.interceptor';
 import { apiCacheInterceptor } from './core/offline/api-cache.interceptor';
 import { provideOffline } from './core/offline/provide-offline';
 
@@ -35,7 +36,9 @@ export const appConfig: ApplicationConfig = {
       }),
       withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' }),
     ),
-    provideHttpClient(withInterceptors([apiCacheInterceptor])),
+    // primero el token: la copia sin conexión ve el pedido ya firmado, y un 401 del backend (que
+    // la copia nunca tapa) vuelve hasta authInterceptor, que cierra la sesión
+    provideHttpClient(withInterceptors([authInterceptor, apiCacheInterceptor])),
     provideOffline(),
     // el service worker solo va en el build de producción: con ng serve no hay ngsw-worker.js
     provideServiceWorker('ngsw-worker.js', {

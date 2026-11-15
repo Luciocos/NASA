@@ -1,8 +1,11 @@
 import { Service, inject } from '@angular/core';
 
+import { AuthSession, scopedKey } from '../auth/auth-session';
 import { OFFLINE_STORAGE } from './storage';
 
-const PREFIX = 'lotestigo:cache:v1:';
+// cada copia va a nombre de quien la pidió: lotestigo:<u<id> | anon>:cache:v1:<url>
+const ENTRY_NAME = 'cache:v1:';
+const ENTRY_KEY = /^lotestigo:[^:]+:cache:v1:/;
 
 /** tope de respuestas guardadas: al pasarlo se borran las más viejas */
 export const API_CACHE_MAX_ENTRIES = 200;
@@ -20,20 +23,29 @@ export interface CachedResponse<T = unknown> {
 /**
  * copia local de las respuestas GET del backend, para mostrarlas cuando no hay conexión
  * la llena y la lee `apiCacheInterceptor`: las pantallas no necesitan usarla, les alcanza con `Api`
- * nunca tira: si el almacenamiento falta o está lleno, simplemente no guarda
+ *
+ * cada copia queda a nombre de quien la pidió (`u<id>`, o `anon` sin sesión, que solo recibe
+ * respuestas públicas): nadie lee las de otro usuario y al salir se borran las suyas
+ * (`AuthSession.end`). nunca tira: si el almacenamiento falta o está lleno, simplemente no guarda
  */
 @Service()
 export class ApiCacheStore {
   private readonly storage = inject(OFFLINE_STORAGE);
+  private readonly session = inject(AuthSession);
 
-  /** cantidad de respuestas guardadas */
+  /** a nombre de quién se lee y se guarda ahora: el usuario que ingresó o `anon` */
+  scope(): string {
+    return this.session.scope();
+  }
+
+  /** cantidad de respuestas guardadas en el dispositivo, de todos sus usuarios */
   get size(): number {
     return this.keys().length;
   }
 
   /** la copia guardada de una url (con sus parámetros), o null si no hay */
-  get<T = unknown>(url: string): CachedResponse<T> | null {
-    const key = PREFIX + url;
+  get<T = unknown>(url: string, scope: string = this.scope()): CachedResponse<T> | null {
+    const key = entryKey(scope, url);
     try {
       const raw = this.storage.getItem(key);
       if (raw === null) return null;
@@ -47,8 +59,13 @@ export class ApiCacheStore {
   }
 
   /** guarda la respuesta de una url. devuelve false si no se pudo guardar */
-  set(url: string, body: unknown, savedAt: Date = new Date()): boolean {
-    const key = PREFIX + url;
+  set(
+    url: string,
+    body: unknown,
+    savedAt: Date = new Date(),
+    scope: string = this.scope(),
+  ): boolean {
+    const key = entryKey(scope, url);
     let value: string;
     try {
       // la fecha va primero para poder leerla sin interpretar todo el cuerpo
@@ -57,27 +74,29 @@ export class ApiCacheStore {
       return false;
     }
     // almacenamiento lleno: se borra lo más viejo y se prueba una sola vez más
-    if (!this.write(key, value) && !(this.makeRoom(url) && this.write(key, value))) return false;
+    if (!this.write(key, value) && !(this.makeRoom(url, scope) && this.write(key, value))) {
+      return false;
+    }
     this.trim(key);
     return true;
   }
 
   /** borra la copia de una url */
-  delete(url: string): void {
-    this.remove(PREFIX + url);
+  delete(url: string, scope: string = this.scope()): void {
+    this.remove(entryKey(scope, url));
   }
 
-  /** borra todas las copias */
+  /** borra todas las copias, de todos los usuarios del dispositivo */
   clear(): void {
     for (const key of this.keys()) this.remove(key);
   }
 
   /**
-   * libera espacio borrando la mitad más vieja de las copias (sin tocar la de `keepUrl`)
-   * devuelve false si no había nada para borrar
+   * libera espacio borrando la mitad más vieja de las copias, de cualquier usuario (sin tocar
+   * la de `keepUrl` a nombre de `scope`). devuelve false si no había nada para borrar
    */
-  makeRoom(keepUrl?: string): boolean {
-    const candidates = this.oldestFirst(keepUrl === undefined ? null : PREFIX + keepUrl);
+  makeRoom(keepUrl?: string, scope: string = this.scope()): boolean {
+    const candidates = this.oldestFirst(keepUrl === undefined ? null : entryKey(scope, keepUrl));
     const victims = candidates.slice(0, Math.ceil(candidates.length / 2));
     for (const key of victims) this.remove(key);
     return victims.length > 0;
@@ -98,7 +117,7 @@ export class ApiCacheStore {
     try {
       for (let index = 0; index < this.storage.length; index++) {
         const key = this.storage.key(index);
-        if (key?.startsWith(PREFIX)) found.push(key);
+        if (key && ENTRY_KEY.test(key)) found.push(key);
       }
     } catch {
       // sin almacenamiento no hay copias
@@ -141,6 +160,10 @@ export class ApiCacheStore {
       // nada que hacer: el almacenamiento no está disponible
     }
   }
+}
+
+function entryKey(scope: string, url: string): string {
+  return scopedKey(scope, ENTRY_NAME + url);
 }
 
 function isEntry(value: unknown): value is { t: number; b: unknown } {

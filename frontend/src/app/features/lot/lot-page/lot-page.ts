@@ -22,7 +22,6 @@ import { LotHero } from '../lot-hero/lot-hero';
 import { LotNasa } from '../lot-nasa/lot-nasa';
 import { EventTimelineChart, TimelineEvent } from '../../../shared/charts';
 import { LotTabs } from '../../../shared/ui/lot-tabs/lot-tabs';
-import { DemoAccount } from '../../../core/account/demo-account';
 
 /** Ficha del lote con su bitácora (CLAUDE.md, sección 11, pantallas 2 y 3). */
 @Component({
@@ -53,8 +52,8 @@ export class LotPage {
   protected readonly log = signal<EventLog | null>(null);
   /** bitácora completa, sin filtros: la usan el encabezado y las gráficas */
   protected readonly allEvents = signal<EventLogItem[]>([]);
-  private readonly account = inject(DemoAccount);
-  protected readonly owned = computed(() => this.account.owns(this.lotId()));
+  /** el backend dice si el lote es del usuario que ingresó (los de ejemplo no son de nadie) */
+  protected readonly owned = computed(() => this.lot()?.owned === true);
   protected readonly timelineEvents = computed<TimelineEvent[]>(() =>
     this.allEvents().map((event) => ({
       id: event.id,

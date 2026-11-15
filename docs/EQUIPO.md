@@ -13,6 +13,7 @@ Esto ya está en `main`, así que nadie depende de que otro lo termine:
 - **Cuatro lotes reales** en `data/demo/lote1.json` a `lote4.json`, generados por el pipeline con NISAR y HLS (el lote simulado de desarrollo ya se borró). Detalle del método y resultados en `pipeline/README.md`.
 - **Tipos de TypeScript** de esos modelos en `frontend/src/app/core/models.ts`.
 - **Componentes compartidos** `origin-badge` y `simulated-notice`.
+- **Cuentas y lotes privados:** `backend/accounts/` (alta, ingreso y salida con token de DRF) y `backend/core/access.py`, que decide quién ve y quién edita cada lote. Cada lote nuevo es de quien lo marca; los lotes del pipeline quedan como ejemplos públicos de solo lectura (`public_example`).
 
 Para tener los lotes en la base:
 
@@ -74,7 +75,7 @@ Son pocos. Se avisan en el chat del equipo antes de tocar y van en un commit apa
 |---|---|
 | Contrato de importación (CLAUDE.md, sección 8) | Dev A, con aviso a Dev B |
 | Campos de un modelo ya creado | El dueño de la app, con aviso al resto |
-| `backend/core/`, `backend/config/` | Entre los tres |
+| `backend/core/`, `backend/config/`, `backend/accounts/` | Entre los tres |
 | `frontend/src/app/core/` y `shared/` | Entre los tres |
 | Factores de emisión y pesos del puntaje | Dev C propone, el equipo valida la fuente |
 

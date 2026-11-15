@@ -2,9 +2,11 @@ import datetime
 import uuid
 
 import pytest
+from django.contrib.auth.models import User
 from django.test import Client
 from django.utils import timezone
 
+from core.access import EXAMPLE_READ_ONLY
 from events.models import Event
 from lots.models import Campaign, Lot
 from passports.models import Passport
@@ -19,8 +21,10 @@ SQUARE = {
 
 
 @pytest.fixture
-def lot() -> Lot:
-    lot = Lot.objects.create(name='Lote de prueba', locality='Casilda', geometry=SQUARE)
+def lot(owner: User) -> Lot:
+    lot = Lot.objects.create(
+        name='Lote de prueba', locality='Casilda', geometry=SQUARE, owner=owner
+    )
     campaign = Campaign.objects.create(lot=lot, label='2025/26', crop='SOY', crop_origin='DECLARED')
     Event.objects.create(
         lot=lot,
@@ -35,8 +39,8 @@ def lot() -> Lot:
 
 
 @pytest.mark.django_db
-def test_genera_pasaporte_con_ruta_publica(client: Client, lot: Lot) -> None:
-    response = client.post(f'/api/lots/{lot.pk}/passport/')
+def test_genera_pasaporte_con_ruta_publica(owner_client: Client, lot: Lot) -> None:
+    response = owner_client.post(f'/api/lots/{lot.pk}/passport/')
     assert response.status_code == 201
     data = response.json()
     passport = Passport.objects.get()
@@ -46,8 +50,8 @@ def test_genera_pasaporte_con_ruta_publica(client: Client, lot: Lot) -> None:
 
 
 @pytest.mark.django_db
-def test_genera_pasaporte_con_vencimiento(client: Client, lot: Lot) -> None:
-    response = client.post(
+def test_genera_pasaporte_con_vencimiento(owner_client: Client, lot: Lot) -> None:
+    response = owner_client.post(
         f'/api/lots/{lot.pk}/passport/', {'expires_in_days': 30}, content_type='application/json'
     )
     assert response.status_code == 201
@@ -55,8 +59,8 @@ def test_genera_pasaporte_con_vencimiento(client: Client, lot: Lot) -> None:
 
 
 @pytest.mark.django_db
-def test_vencimiento_invalido_400(client: Client, lot: Lot) -> None:
-    response = client.post(
+def test_vencimiento_invalido_400(owner_client: Client, lot: Lot) -> None:
+    response = owner_client.post(
         f'/api/lots/{lot.pk}/passport/', {'expires_in_days': 0}, content_type='application/json'
     )
     assert response.status_code == 400
@@ -64,8 +68,8 @@ def test_vencimiento_invalido_400(client: Client, lot: Lot) -> None:
 
 
 @pytest.mark.django_db
-def test_pasaporte_de_lote_inexistente_404(client: Client) -> None:
-    assert client.post('/api/lots/999999/passport/').status_code == 404
+def test_pasaporte_de_lote_inexistente_404(owner_client: Client) -> None:
+    assert owner_client.post('/api/lots/999999/passport/').status_code == 404
 
 
 @pytest.mark.django_db
@@ -76,6 +80,11 @@ def test_vista_publica(client: Client, lot: Lot) -> None:
     data = response.json()
     assert data['lot']['name'] == 'Lote de prueba'
     assert data['lot']['event_count'] == 1
+    # El enlace es público, pero no muestra quién es el dueño
+    assert data['lot']['owned'] is False
+    assert data['lot']['is_example'] is False
+    assert 'owner' not in data['lot']
+    assert 'ana@example.com' not in str(data)
     assert [c['label'] for c in data['lot']['campaigns']] == ['2025/26']
     [event] = data['events']
     assert event['type_label'] == 'Cultivo de cobertura'
@@ -110,3 +119,23 @@ def test_pasaporte_vigente_con_vencimiento_futuro(client: Client, lot: Lot) -> N
         lot=lot, expires_at=timezone.now() + datetime.timedelta(days=1)
     )
     assert client.get(f'/api/passports/{passport.token}/').status_code == 200
+
+
+@pytest.mark.django_db
+def test_solo_el_duenio_genera_el_pasaporte(
+    client: Client, stranger_client: Client, lot: Lot
+) -> None:
+    foreign = stranger_client.post(f'/api/lots/{lot.pk}/passport/')
+    assert foreign.status_code == 404
+    assert foreign.json() == stranger_client.post('/api/lots/999999/passport/').json()
+    assert client.post(f'/api/lots/{lot.pk}/passport/').status_code == 401
+    assert not Passport.objects.exists()
+
+
+@pytest.mark.django_db
+def test_pasaporte_de_un_ejemplo_da_403(owner_client: Client) -> None:
+    example = Lot.objects.create(name='Lote de ejemplo', geometry=SQUARE, public_example=True)
+    response = owner_client.post(f'/api/lots/{example.pk}/passport/')
+    assert response.status_code == 403
+    assert response.json() == {'detail': EXAMPLE_READ_ONLY}
+    assert not Passport.objects.exists()

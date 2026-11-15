@@ -62,6 +62,11 @@ export const ICON_PATHS = {
     'M7 8V3.5h10V8M6 17H4.5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1h15a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H18M7 13.5h10v7H7z',
   play: 'M7 4.5v15l12-7.5z',
   pause: 'M8.5 5v14M15.5 5v14',
+  /* tres puntos del menú "Más": anillos chicos que con el trazo se ven llenos */
+  more: 'M4 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M10.5 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M17 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0',
+  search: 'M4 11a7 7 0 1 0 14 0a7 7 0 1 0-14 0M21 21l-5-5',
+  sort: 'M7 4v16M3.5 16.5 7 20l3.5-3.5M17 20V4M13.5 7.5 17 4l3.5 3.5',
+  user: 'M8 8a4 4 0 1 0 8 0a4 4 0 1 0-8 0M4.5 20.5a7.5 7.5 0 0 1 15 0',
 } as const satisfies Record<string, string>;
 
 /** nombres válidos para el input name de app-icon */

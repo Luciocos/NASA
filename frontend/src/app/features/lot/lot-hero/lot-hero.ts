@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 
 import { countByOrigin, formatHectares, lastEvent, latestCampaign } from '../../../core/insights';
 import { buildIsoScene } from '../../../core/lot-scene';
-import { isExampleLot } from '../../../core/account/examples';
 import { EventLogItem, LotDetail, ORIGIN_LABELS, Origin } from '../../../core/models';
 import { EventGlyph } from '../../../shared/iso/event-glyph';
 import { IsoScene } from '../../../shared/iso/iso-scene';
@@ -202,7 +201,7 @@ export class LotHero {
   protected readonly kicker = computed(() =>
     this.owned()
       ? 'Tu lote'
-      : isExampleLot(this.lot())
+      : this.lot().is_example
         ? 'Lote de ejemplo de la zona'
         : 'Lote compartido',
   );

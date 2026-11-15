@@ -2,13 +2,16 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { AuthSession } from '../auth/auth-session';
+import { TEST_TOKEN, TEST_USER } from '../auth/testing';
 import { LotCreate, LotDetail } from '../models';
 import { ApiCacheStore } from './api-cache-store';
 import { Connectivity } from './connectivity';
 import { LotOutbox, LotSaveResult, PendingLot } from './lot-outbox';
 import { KeyValueStorage, MemoryStorage, OFFLINE_STORAGE } from './storage';
 
-const STORAGE_KEY = 'lotestigo:outbox:v1';
+// la cola de la usuaria de prueba (id 7): cada usuario tiene la suya
+const STORAGE_KEY = 'lotestigo:u7:outbox:v1';
 const UPLOAD = { method: 'POST', url: '/api/lots/' };
 const CREATED = { status: 201, statusText: 'Created' };
 const HEALTHY = { status: 'ok', database: 'ok' };
@@ -77,6 +80,8 @@ describe('LotOutbox', () => {
     TestBed.configureTestingModule({
       providers: [provideHttpClientTesting(), { provide: OFFLINE_STORAGE, useValue: storage }],
     });
+    // la cola es de quien ingresó: cada prueba arranca con la sesión de TEST_USER abierta
+    TestBed.inject(AuthSession).start({ token: TEST_TOKEN, user: TEST_USER });
     outbox = TestBed.inject(LotOutbox);
     http = TestBed.inject(HttpTestingController);
     connectivity = TestBed.inject(Connectivity);

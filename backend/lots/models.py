@@ -1,5 +1,6 @@
 """Modelos Lot y Campaign. Ver CLAUDE.md, sección 7."""
 
+from django.conf import settings
 from django.db import models
 
 from core.geo import polygon_area_ha
@@ -23,6 +24,17 @@ class Lot(models.Model):
     # Se calcula a partir de geometry al guardar
     area_ha = models.FloatField(editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    # Productor dueño del lote: solo él lo ve y lo edita (core/access.py).
+    # Los ejemplos públicos no tienen dueño.
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='lots',
+    )
+    # Lotes del pipeline (import_events): cualquiera los ve, nadie los edita
+    public_example = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['name']

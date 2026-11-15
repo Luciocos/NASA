@@ -124,6 +124,7 @@ interface Pointer {
     canvas:focus-visible {
       box-shadow: inset 0 0 0 3px var(--accent, #f2a43a);
     }
+    /* brújula y escala en vidrio claro: lo único oscuro sobre la maqueta es su barra (.hud) */
     .iso-scene__chrome {
       position: absolute;
       right: 0.75rem;
@@ -131,32 +132,37 @@ interface Pointer {
       z-index: 2;
       display: flex;
       align-items: flex-end;
-      gap: 0.6rem;
+      gap: 0.5rem;
       pointer-events: none;
-      color: var(--night-ink, #e8eef5);
+      color: var(--ink-2, #3b4a41);
       font: 600 0.72rem/1 var(--font-sans, system-ui);
+    }
+    .iso-scene__compass,
+    .iso-scene__scale {
+      background: rgb(255 255 255 / 88%);
+      box-shadow:
+        0 0 0 1px rgb(21 33 26 / 8%),
+        var(--shadow-1);
     }
     .iso-scene__compass {
       display: grid;
       place-items: center;
-      width: 2.75rem;
-      height: 2.75rem;
+      width: 2.5rem;
+      height: 2.5rem;
       border-radius: 50%;
-      background: rgb(11 22 34 / 78%);
-      box-shadow: var(--shadow-2);
     }
     .iso-scene__compass svg {
-      width: 2.1rem;
-      height: 2.1rem;
+      width: 1.9rem;
+      height: 1.9rem;
       overflow: visible;
-      fill: #8aa0b6;
+      fill: #a3aea6;
       transition: transform var(--dur-2, 220ms) var(--ease-out, ease-out);
     }
     .iso-scene__compass .n {
-      fill: var(--accent, #f2a43a);
+      fill: var(--accent-strong, #d98512);
     }
     .iso-scene__compass text {
-      fill: var(--night-ink, #e8eef5);
+      fill: var(--ink, #15211a);
       font: 700 6px var(--font-sans, system-ui);
       dominant-baseline: auto;
     }
@@ -164,9 +170,7 @@ interface Pointer {
       display: grid;
       gap: 0.25rem;
       padding: 0.4rem 0.55rem;
-      border-radius: 6px;
-      background: rgb(11 22 34 / 78%);
-      box-shadow: var(--shadow-2);
+      border-radius: var(--radius-sm, 8px);
     }
     .iso-scene__scale i {
       display: block;

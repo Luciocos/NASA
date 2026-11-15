@@ -22,9 +22,9 @@ El productor no carga planillas: marca su lote en el mapa y confirma o corrige l
 
 ### Cómo se usa
 
-1. **Inicio:** la página de inicio presenta el proyecto. "Probar demo" abre una cuenta free que vive en el navegador (sin mail ni contraseña: el backend no tiene usuarios) y recuerda los lotes que marca quien la usa.
-2. **Mi campo:** los lotes de la cuenta y los lotes de ejemplo de la zona en una maqueta isométrica interactiva (motor propio en canvas, sin dependencias). Cada bloque ilustra el último evento registrado y se puede pintar con el NDVI actual de MODIS. También hay vista satelital.
-3. **Marcar un lote:** se pintan hectáreas sobre la imagen satelital (grilla de 1 ha o 1/4 ha que se puede girar para alinearla con los alambrados) o se traza el perímetro. Sin conexión, el lote queda en el dispositivo y se sube solo cuando vuelve la red.
+1. **Inicio:** la página de inicio presenta el proyecto e invita a crear una cuenta gratis (mail y contraseña) o a ingresar. Los lotes de cada productor son privados: solo los ve y los edita quien los marcó. Los lotes de ejemplo de la NASA se ven sin cuenta en `/ejemplos`.
+2. **Mi campo:** los lotes de la cuenta en una maqueta isométrica interactiva (motor propio en canvas, sin dependencias). Cada bloque ilustra el último evento registrado y se puede pintar con el NDVI actual de MODIS. También hay vista satelital. Sin lotes, ofrece usar la ubicación del dispositivo para encontrar el campo; si no se comparte, se busca en el mapa satelital.
+3. **Marcar un lote:** se traza el perímetro sobre la imagen satelital tocando las esquinas. En opciones avanzadas se pueden pintar hectáreas (grilla de 1 ha o 1/4 ha que se puede girar para alinearla con los alambrados) o ajustar los vértices. Sin conexión, el lote queda en el dispositivo y se sube solo cuando vuelve la red.
 4. **Ficha del lote:** la bitácora con su evidencia y, consultados en vivo para el polígono, el NDVI de MODIS, la lluvia y la humedad de NASA POWER, las pasadas de NISAR y HLS y la cobertura del suelo por año.
 5. **Huella, fertilización y rentabilidad:** la huella con el origen de cada dato, los ambientes del lote por NDVI con una planilla de dosis variable de nitrógeno, y el margen bruto con el área y el rinde del lote y el precio y los costos que declara el productor.
 
@@ -95,7 +95,7 @@ Las credenciales (Earthdata, base de datos) van solo en un archivo `.env`, que n
 
 ## Despliegue
 
-La demo está publicada en **https://lotestigo.1mj0t4h.workers.dev**. No pide login: la ve cualquiera que tenga el enlace, y no aparece en buscadores.
+La demo está publicada en **https://lotestigo.1mj0t4h.workers.dev** y no aparece en buscadores. La página de inicio y los lotes de ejemplo se ven sin cuenta; para marcar lotes propios hay que crear una.
 
 Corre en Cloudflare Workers (`wrangler.jsonc` y `worker/index.js`):
 
@@ -157,8 +157,8 @@ gh workflow run deploy.yml -R Luciocos/NASA
 Monorepo separado por funcionalidad:
 
 ```
-backend/     Django: core, lots, events, carbon, passports
-frontend/    Angular: features map, lot, footprint, passport
+backend/     Django: core, accounts, lots, events, carbon, passports
+frontend/    Angular: features landing, auth, map, examples, lot, footprint, fertilization, profit, passport
 pipeline/    Notebooks y scripts de teledetección (offline)
 data/        Lotes de demostración e imágenes de evidencia
 docs/        Reparto del trabajo en el equipo

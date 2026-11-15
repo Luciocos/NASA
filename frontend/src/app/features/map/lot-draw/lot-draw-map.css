@@ -1,0 +1,204 @@
+/* lo que flota sobre el mapa del alta de lote: la indicación, las correcciones, los cursores
+   y las piezas que leaflet crea en el DOM (esquinas, etiqueta de hectáreas y el punto azul) */
+
+.map-wrap {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: #1b2f44;
+  box-shadow: var(--shadow-2);
+}
+
+/* el mapa ocupa casi todo el alto de la pantalla: es la protagonista */
+.map {
+  height: max(26rem, calc(100vh - 17rem));
+  height: max(26rem, calc(100dvh - 17rem));
+  cursor: crosshair;
+}
+
+/* con pincel o borrador un dedo pinta: el navegador no puede quedarse con el gesto */
+.map:is(.is-brush, .is-eraser) {
+  touch-action: none;
+}
+
+.map.is-brush {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M21 3 11 13l1.6 1.6L22 4.6zM10 14c-2 0-3 1.3-3.3 3-.2 1.3-1.2 2.2-3 2.5 3.2 1.5 7.1.7 7.8-2.3z' fill='%23fff' stroke='%23123' stroke-width='1.5'/%3E%3C/svg%3E")
+      3 21,
+    crosshair;
+}
+
+.map.is-eraser {
+  cursor: cell;
+}
+
+.map.is-hand {
+  cursor: grab;
+}
+
+.map.is-hand:active {
+  cursor: grabbing;
+}
+
+/* la indicación: una sola línea arriba del mapa que cambia con cada paso */
+.hint {
+  --icon-size: 1.1rem;
+  position: absolute;
+  top: var(--space-3);
+  left: 50%;
+  z-index: var(--z-hud);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  padding: var(--space-2) var(--space-4) var(--space-2) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-3);
+  color: var(--ink);
+  font-weight: 700;
+  translate: -50% 0;
+  pointer-events: none;
+}
+
+.hint app-icon {
+  flex: none;
+  color: var(--field-700);
+}
+
+.hint.is-ok {
+  background: var(--field-700);
+  color: #fff;
+}
+
+.hint.is-ok app-icon {
+  color: #fff;
+}
+
+.hint.is-warn {
+  background: var(--warn-bg);
+  box-shadow:
+    inset 0 0 0 1.5px var(--warn),
+    var(--shadow-3);
+  color: var(--warn);
+}
+
+.hint.is-warn app-icon {
+  color: var(--warn);
+}
+
+/* al pintar, la indicación baja debajo de la barra de herramientas */
+.map-wrap.is-paint .hint {
+  top: 5rem;
+}
+
+/* las dos correcciones del trazado, abajo a la izquierda (el zoom queda a la derecha) */
+.tools {
+  position: absolute;
+  bottom: var(--space-3);
+  left: var(--space-3);
+  z-index: var(--z-hud);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  max-width: calc(100% - 5rem);
+}
+
+.tools .btn {
+  min-height: var(--tap);
+  box-shadow: var(--shadow-2);
+}
+
+.tools .btn:disabled {
+  opacity: 0.7;
+}
+
+@media (max-width: 40rem) {
+  .map {
+    height: max(22rem, calc(100dvh - 22rem));
+  }
+
+  .hint {
+    max-width: calc(100% - 1.5rem);
+    font-size: var(--text-sm);
+  }
+
+  /* en el celular se acerca con los dedos: sin los botones de zoom, las dos correcciones
+     entran en una fila arriba de la atribución */
+  .tools {
+    bottom: 2.6rem;
+    left: var(--space-2);
+    max-width: calc(100% - 1rem);
+  }
+
+  :host ::ng-deep .leaflet-control-zoom {
+    display: none;
+  }
+}
+
+/* esquinas: viven afuera del componente porque leaflet las crea en el DOM. el área de toque
+   es de 32 px y el punto visible más chico */
+:host ::ng-deep .vertex {
+  display: grid;
+  place-items: center;
+  cursor: grab;
+}
+
+:host ::ng-deep .vertex span {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid #ffd166;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 45%);
+  color: #15211a;
+  font: 800 11px/1 var(--font-sans);
+}
+
+:host ::ng-deep .vertex--selected span {
+  border-color: #fff;
+  background: var(--accent-strong);
+  box-shadow:
+    0 0 0 4px rgb(242 164 58 / 45%),
+    0 1px 4px rgb(0 0 0 / 45%);
+  color: #fff;
+}
+
+/* etiqueta flotante de hectáreas en el centro de lo marcado */
+:host ::ng-deep .area-tag {
+  pointer-events: none;
+}
+
+:host ::ng-deep .area-tag span {
+  position: absolute;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 35%);
+  color: #15211a;
+  font: 800 14px/1.2 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  translate: -50% -50%;
+}
+
+:host ::ng-deep .area-tag span:empty {
+  display: none;
+}
+
+/* el punto azul de "Usar mi ubicación" */
+:host ::ng-deep .me-dot span {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #2f7de1;
+  box-shadow:
+    0 0 0 6px rgb(47 125 225 / 25%),
+    0 1px 4px rgb(0 0 0 / 40%);
+}

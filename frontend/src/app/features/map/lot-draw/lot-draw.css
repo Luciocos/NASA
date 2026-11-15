@@ -3,134 +3,133 @@
   gap: var(--space-4);
 }
 
-.head > * {
-  margin: 0 0 var(--space-2);
-}
-
-.back {
-  --icon-size: 1rem;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: var(--text-sm);
-}
-
-.modes {
-  justify-self: start;
+p {
+  margin: 0;
 }
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 23rem;
+  grid-template-columns: minmax(0, 1fr) 22rem;
   gap: var(--space-5);
   align-items: start;
 }
 
-@media (max-width: 60rem) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
+.work {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+/* el panel: nombre y hectáreas arriba, lo opcional plegado y guardar siempre a la vista */
+.panel {
+  position: sticky;
+  top: calc(var(--topbar-h) + var(--space-4));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  min-width: 0;
+  max-height: calc(100vh - var(--topbar-h) - var(--space-6));
+  max-height: calc(100dvh - var(--topbar-h) - var(--space-6));
+  padding: var(--space-5) var(--space-5) 0;
+  overflow-y: auto;
   border: 1px solid var(--line);
-  border-bottom: 0;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  background: var(--paper-2);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  overscroll-behavior: contain;
 }
 
-.count {
+.draft {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-2);
+}
+
+.draft__buttons {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.field input {
+  font-size: var(--text-md);
+}
+
+.area {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0 var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--field-50);
+}
+
+.area__label {
+  grid-column: 1 / -1;
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.area__value {
+  color: var(--field-800);
+  font-size: var(--text-3xl);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.area.is-empty .area__value {
+  color: var(--ink-3);
+}
+
+/* la revisión del lote: tilde o alerta (no solo color) y una línea de texto */
+.checks {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checks li {
+  --icon-size: 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-1) var(--space-2);
+  color: var(--warn);
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 
-.map-wrap {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-2);
+.checks li > span {
+  flex: 1 1 12rem;
 }
 
-.map-wrap.is-trace {
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+.checks li app-icon {
+  flex: none;
+  margin-top: 0.1rem;
 }
 
-.map {
-  height: max(28rem, 70vh);
-  cursor: crosshair;
+.checks li.is-ok {
+  color: var(--ink-2);
 }
 
-/* con pincel o borrador un dedo pinta: el navegador no puede quedarse con el gesto */
-.map:is(.is-brush, .is-eraser) {
-  touch-action: none;
+.checks li.is-ok app-icon {
+  color: var(--ok);
 }
 
-.map.is-brush {
-  cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M21 3 11 13l1.6 1.6L22 4.6zM10 14c-2 0-3 1.3-3.3 3-.2 1.3-1.2 2.2-3 2.5 3.2 1.5 7.1.7 7.8-2.3z' fill='%23fff' stroke='%23123' stroke-width='1.5'/%3E%3C/svg%3E")
-      3 21,
-    crosshair;
+.checks .btn {
+  margin-left: calc(1.1rem + var(--space-2));
 }
 
-.map.is-eraser {
-  cursor: cell;
-}
-
-.map.is-hand {
-  cursor: grab;
-}
-
-.map.is-hand:active {
-  cursor: grabbing;
-}
-
-.hint {
-  position: absolute;
-  bottom: var(--space-3);
-  left: 50%;
-  z-index: var(--z-hud);
-  width: max-content;
-  max-width: min(36rem, calc(100% - 2rem));
-  margin: 0;
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-pill);
-  background: var(--night-glass);
-  color: var(--night-ink);
-  font-size: var(--text-sm);
-  text-align: center;
-  translate: -50% 0;
-  pointer-events: none;
-}
-
-@media (pointer: coarse) {
-  .fine {
-    display: none;
-  }
-}
-
-@media (pointer: fine) {
-  .coarse {
-    display: none;
-  }
-}
-
-.map-wrap:not(.is-trace) .hint {
-  top: 5.25rem;
-  bottom: auto;
-}
-
-.side {
-  --gap: var(--space-3);
+.more,
+.advanced {
+  display: grid;
+  gap: var(--space-3);
 }
 
 .pair {
@@ -139,51 +138,60 @@
   gap: var(--space-3);
 }
 
-.status {
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--paper-2);
-}
-
-.stats {
+/* los dos modos se reparten el ancho del panel */
+.advanced .seg {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
-  font-size: var(--text-xl);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
 }
 
-.status p {
-  margin: var(--space-2) 0 0;
+.advanced .seg button {
+  min-width: 0;
+  white-space: normal;
 }
 
-.vertex-list summary {
-  font-weight: 600;
-  cursor: pointer;
+.fine {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
-.vertex-list ol {
+.fine legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.fine ol {
+  display: grid;
+  gap: var(--space-1);
   max-height: 14rem;
-  margin: var(--space-2) 0 0;
+  margin: 0;
   padding: 0;
   overflow-y: auto;
   list-style: none;
 }
 
-.vertex-list li {
+.fine li {
   display: grid;
-  grid-template-columns: 2rem 1fr 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: var(--space-2);
   align-items: end;
   padding: var(--space-1);
   border-radius: var(--radius-sm);
 }
 
-.vertex-list li.is-selected {
-  background: var(--warn-bg);
+.fine li.is-selected {
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent-strong);
 }
 
 .coord {
   display: grid;
+  min-width: 0;
+  color: var(--ink-3);
   font-size: var(--text-xs);
 }
 
@@ -196,38 +204,77 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* guardar queda a la vista mientras se pinta: la fila y sus avisos se pegan abajo */
+/* guardar se pega abajo del panel mientras se desplaza */
 .actions {
-  --gap: var(--space-2);
   position: sticky;
   bottom: 0;
-  padding-block: var(--space-3);
+  z-index: 1;
+  display: grid;
+  gap: var(--space-2);
+  margin: 0 calc(-1 * var(--space-5));
+  padding: var(--space-3) var(--space-5) var(--space-4);
   border-top: 1px solid var(--line);
   background: var(--surface);
 }
 
-.buttons {
-  --gap: var(--space-2);
-  justify-content: flex-end;
+.actions__area {
+  font-weight: 600;
+  opacity: 0.85;
 }
 
-/* vértices numerados: viven afuera del componente porque leaflet los crea en el DOM */
-:host ::ng-deep .vertex {
+.privacy {
+  --icon-size: 1rem;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  background: var(--field-700);
-  box-shadow: var(--shadow-2);
-  color: #fff;
-  font: 700 12px var(--font-sans);
-  cursor: grab;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-top: calc(-1 * var(--space-3));
+  padding-bottom: var(--space-4);
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  line-height: 1.4;
 }
 
-:host ::ng-deep .vertex--selected {
-  background: var(--warn);
-  box-shadow:
-    0 0 0 4px var(--straw-200),
-    var(--shadow-2);
+.privacy app-icon {
+  flex: none;
+}
+
+@media (max-width: 64rem) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panel {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* en el celular guardar queda fijo abajo, arriba de la barra de pestañas */
+@media (max-width: 40rem) {
+  :host {
+    gap: var(--space-3);
+    padding-bottom: 6rem;
+  }
+
+  .panel {
+    padding: var(--space-4) var(--space-4) 0;
+  }
+
+  .actions {
+    position: fixed;
+    inset: auto 0 var(--app-bottom-inset, 0px);
+    z-index: var(--z-topbar);
+    margin: 0;
+    padding: var(--space-3) var(--page-pad, var(--space-4));
+    box-shadow: 0 -10px 24px -18px rgb(21 33 26 / 40%);
+  }
+
+  .privacy {
+    margin-top: 0;
+  }
+
+  .pair {
+    grid-template-columns: 1fr;
+  }
 }

@@ -1,15 +1,18 @@
-"""Vistas de la bitácora de eventos. Ver CLAUDE.md, sección 10."""
+"""Vistas de la bitácora de eventos. Ver CLAUDE.md, sección 10.
 
-from django.shortcuts import get_object_or_404
+Los permisos por lote viven en core/access.py.
+"""
+
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.access import check_owner, get_visible_lot, not_found
 from core.origin import Origin
 from events.models import Event, EventType, Sensor
 from events.serializers import EventReviewSerializer, EventSerializer
-from lots.models import Lot
 
 EMPTY_LOG_MESSAGE = (
     'Este lote todavía no tiene eventos registrados. Los eventos se cargan a partir '
@@ -33,10 +36,14 @@ class LotEventList(APIView):
     Respuesta: {"lot", "count", "message", "events"}. message es null cuando hay
     eventos, y explica el motivo cuando la lista está vacía (sin eventos o sin
     coincidencias). Nunca se generan eventos de relleno.
+
+    Lo ve el dueño del lote, o cualquiera si es un ejemplo público. Si no, 404.
     """
 
+    permission_classes = [AllowAny]
+
     def get(self, request: Request, lot_id: int) -> Response:
-        lot = get_object_or_404(Lot, pk=lot_id)
+        lot = get_visible_lot(request, lot_id)
         events = Event.objects.filter(lot=lot).select_related('campaign')
         has_any = events.exists()
 
@@ -92,11 +99,15 @@ class EventReview(APIView):
     - is_simulated nunca cambia: un evento simulado sigue siéndolo aunque se corrija.
     - Cualquier otro campo en el cuerpo devuelve 400.
 
+    Solo el dueño del lote: exige token, un ejemplo público da 403 y un lote ajeno, 404.
     Responde el evento actualizado con el mismo formato que la bitácora.
     """
 
     def patch(self, request: Request, pk: int) -> Response:
-        event = get_object_or_404(Event.objects.select_related('campaign'), pk=pk)
+        event = Event.objects.select_related('campaign', 'lot').filter(pk=pk).first()
+        if event is None:
+            raise not_found()
+        check_owner(request, event.lot)
         review = EventReviewSerializer(data=request.data)
         review.is_valid(raise_exception=True)
         changes = dict(review.validated_data)

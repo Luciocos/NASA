@@ -80,10 +80,11 @@ export class PaintLayer extends L.Layer {
   private frame = 0;
   private animating = false;
   private topLeft: L.LatLng | null = null;
+  // relleno claro y borde marcado, los mismos del perímetro trazado (tokens --draw-*)
   private colors: Colors = {
-    fill: '#3f9b5a',
-    edge: '#d8f0dc',
-    outline: '#f2c14e',
+    fill: '#f4f9d6',
+    edge: '#ffffff',
+    outline: '#ffd166',
     erase: '#d64545',
   };
 
@@ -264,13 +265,14 @@ export class PaintLayer extends L.Layer {
       if (popping.size > 0 && popping.has(`${i},${j}`)) return;
       quad(path, p, i, j, 1);
     });
-    ctx.globalAlpha = 0.42;
+    ctx.globalAlpha = 0.34;
     ctx.fillStyle = this.colors.fill;
     ctx.fill(path);
     ctx.globalAlpha = 1;
+    // las divisiones entre recuadros, apenas: lo que se lee es la forma entera y su borde
     if (cellPx >= 6) {
       ctx.strokeStyle = this.colors.edge;
-      ctx.globalAlpha = 0.55;
+      ctx.globalAlpha = 0.28;
       ctx.lineWidth = 1;
       ctx.stroke(path);
       ctx.globalAlpha = 1;
@@ -292,11 +294,11 @@ export class PaintLayer extends L.Layer {
       path.closePath();
     }
     ctx.lineJoin = 'round';
-    ctx.strokeStyle = 'rgb(0 0 0 / 45%)';
-    ctx.lineWidth = 4.5;
+    ctx.strokeStyle = 'rgb(11 22 34 / 50%)';
+    ctx.lineWidth = 7;
     ctx.stroke(path);
     ctx.strokeStyle = this.colors.outline;
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 3;
     ctx.stroke(path);
   }
 
@@ -341,11 +343,9 @@ export class PaintLayer extends L.Layer {
       ctx.setLineDash([]);
       return;
     }
-    ctx.globalAlpha = 0.25;
-    ctx.fillStyle = '#ffffff';
-    ctx.fill(path);
-    ctx.globalAlpha = 1;
-    ctx.strokeStyle = '#ffffff';
+    // el recuadro bajo el cursor es solo un contorno tenue: no se confunde con lo pintado
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgb(255 255 255 / 70%)';
     ctx.stroke(path);
   }
 }
@@ -404,9 +404,9 @@ function readColors(element: HTMLElement, fallback: Colors): Colors {
   const style = getComputedStyle(element);
   const token = (name: string, value: string) => style.getPropertyValue(name).trim() || value;
   return {
-    fill: token('--field-500', fallback.fill),
-    edge: token('--field-100', fallback.edge),
-    outline: token('--straw-500', fallback.outline),
+    fill: token('--draw-fill', fallback.fill),
+    edge: fallback.edge,
+    outline: token('--draw-line', fallback.outline),
     erase: token('--danger', fallback.erase),
   };
 }

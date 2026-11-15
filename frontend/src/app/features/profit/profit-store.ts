@@ -1,19 +1,24 @@
 import { Service, inject } from '@angular/core';
 
+import { AuthSession } from '../../core/auth/auth-session';
 import { OFFLINE_STORAGE } from '../../core/offline/storage';
 import { COST_KEYS, ProfitInputs, emptyProfitInputs } from './profit-calc';
 
-const STORAGE_KEY = 'lotestigo:profit:v1';
+// a nombre del usuario: lotestigo:u<id>:profit:v1 (se borra al salir)
+const STORAGE_NAME = 'profit:v1';
 
 type Stored = Record<string, ProfitInputs>;
 
 /**
  * precios y costos que declara el productor, por lote y campaña. el backend no tiene dónde
- * guardarlos todavía: quedan en este dispositivo
+ * guardarlos todavía: quedan en este dispositivo, a nombre de quien ingresó. sin sesión viven
+ * solo mientras la pestaña esté abierta
  */
 @Service()
 export class ProfitStore {
   private readonly storage = inject(OFFLINE_STORAGE);
+  private readonly session = inject(AuthSession);
+  private unsaved: Stored = {};
 
   load(lotId: number, campaign: string): ProfitInputs {
     const saved = this.read()[key(lotId, campaign)];
@@ -21,18 +26,24 @@ export class ProfitStore {
   }
 
   save(lotId: number, campaign: string, inputs: ProfitInputs): void {
-    const all = this.read();
+    const storageKey = this.session.userKey(STORAGE_NAME);
+    const all = this.read(storageKey);
     all[key(lotId, campaign)] = inputs;
+    if (storageKey === null) {
+      this.unsaved = all;
+      return;
+    }
     try {
-      this.storage.setItem(STORAGE_KEY, JSON.stringify(all));
+      this.storage.setItem(storageKey, JSON.stringify(all));
     } catch {
       // sin lugar en el dispositivo: el cálculo sigue andando mientras la pestaña esté abierta
     }
   }
 
-  private read(): Stored {
+  private read(storageKey = this.session.userKey(STORAGE_NAME)): Stored {
+    if (storageKey === null) return { ...this.unsaved };
     try {
-      const value = JSON.parse(this.storage.getItem(STORAGE_KEY) ?? '{}') as unknown;
+      const value = JSON.parse(this.storage.getItem(storageKey) ?? '{}') as unknown;
       return value && typeof value === 'object' ? (value as Stored) : {};
     } catch {
       return {};

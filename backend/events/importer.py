@@ -112,15 +112,17 @@ def validate(data: Any) -> list[str]:
 def import_lot(data: Any, *, replace: bool = False) -> Lot:
     """Valida y carga un lote con sus campañas y eventos.
 
-    Si ya existe un lote con el mismo nombre, falla salvo que `replace` sea True.
-    Con `replace`, se borra el lote anterior completo, incluidas las correcciones del usuario.
+    Lo importado es un ejemplo público, sin dueño y de solo lectura (core/access.py).
+    Si ya existe un ejemplo con el mismo nombre, falla salvo que `replace` sea True.
+    Con `replace`, se borra el ejemplo anterior completo. Los lotes de los productores
+    nunca se tocan, aunque tengan el mismo nombre.
     """
     errors = validate(data)
     if errors:
         raise ImportValidationError(errors)
 
     lot_data = data['lot']
-    existing = Lot.objects.filter(name=lot_data['name'])
+    existing = Lot.objects.filter(name=lot_data['name'], public_example=True)
     if existing.exists():
         if not replace:
             raise LotAlreadyExistsError(lot_data['name'])
@@ -132,6 +134,7 @@ def import_lot(data: Any, *, replace: bool = False) -> Lot:
         locality=lot_data.get('locality') or '',
         province=lot_data.get('province') or '',
         geometry=lot_data['geometry'],
+        public_example=True,
     )
 
     campaigns: dict[str, Campaign] = {}

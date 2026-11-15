@@ -14,7 +14,7 @@ const SAVED_AT_FORMAT = new Intl.DateTimeFormat('es-AR', {
  * estado de la conexión para el encabezado: un chip con ícono y texto, los lotes que esperan
  * para subirse (con "Sincronizar ahora") y los que el backend rechazó (con "Descartar")
  *
- * está pensado para ir sobre el cromo oscuro (--night-900). no tiene inputs: lee `Connectivity`
+ * está pensado para la barra superior clara del marco. no tiene inputs: lee `Connectivity`
  * y `LotOutbox`
  */
 @Component({

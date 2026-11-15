@@ -7,6 +7,7 @@ inyectan factores ficticios con monkeypatch.
 import datetime
 
 import pytest
+from django.contrib.auth.models import User
 from django.test import Client
 
 from carbon import views
@@ -26,8 +27,8 @@ SQUARE = {
 
 
 @pytest.fixture
-def lot() -> Lot:
-    lot = Lot.objects.create(name='Lote de prueba', geometry=SQUARE)
+def lot(owner: User) -> Lot:
+    lot = Lot.objects.create(name='Lote de prueba', geometry=SQUARE, owner=owner)
     Campaign.objects.create(lot=lot, label='2024/25', crop='CORN', crop_origin='VERIFIED')
     Campaign.objects.create(lot=lot, label='2025/26', crop='SOY', crop_origin='DECLARED')
     Event.objects.create(
@@ -42,8 +43,8 @@ def lot() -> Lot:
 
 
 @pytest.mark.django_db
-def test_huella_sin_factores_responde_sin_dato(client: Client, lot: Lot) -> None:
-    response = client.get(f'/api/lots/{lot.pk}/footprint/')
+def test_huella_sin_factores_responde_sin_dato(owner_client: Client, lot: Lot) -> None:
+    response = owner_client.get(f'/api/lots/{lot.pk}/footprint/')
     assert response.status_code == 200
     data = response.json()
     assert data['campaign']['label'] == '2025/26'
@@ -56,16 +57,16 @@ def test_huella_sin_factores_responde_sin_dato(client: Client, lot: Lot) -> None
 
 
 @pytest.mark.django_db
-def test_huella_por_etiqueta_o_id(client: Client, lot: Lot) -> None:
+def test_huella_por_etiqueta_o_id(owner_client: Client, lot: Lot) -> None:
     older = lot.campaigns.get(label='2024/25')
-    by_label = client.get(f'/api/lots/{lot.pk}/footprint/', {'campaign': '2024/25'}).json()
-    by_id = client.get(f'/api/lots/{lot.pk}/footprint/', {'campaign': older.pk}).json()
+    by_label = owner_client.get(f'/api/lots/{lot.pk}/footprint/', {'campaign': '2024/25'}).json()
+    by_id = owner_client.get(f'/api/lots/{lot.pk}/footprint/', {'campaign': older.pk}).json()
     assert by_label['campaign']['id'] == by_id['campaign']['id'] == older.pk
 
 
 @pytest.mark.django_db
-def test_huella_campania_inexistente_404(client: Client, lot: Lot) -> None:
-    response = client.get(f'/api/lots/{lot.pk}/footprint/', {'campaign': '1999/00'})
+def test_huella_campania_inexistente_404(owner_client: Client, lot: Lot) -> None:
+    response = owner_client.get(f'/api/lots/{lot.pk}/footprint/', {'campaign': '1999/00'})
     assert response.status_code == 404
 
 
@@ -78,7 +79,7 @@ def test_lote_inexistente_404(client: Client) -> None:
 
 @pytest.mark.django_db
 def test_huella_con_factores_inyectados(
-    client: Client, lot: Lot, fake_factors, monkeypatch
+    owner_client: Client, lot: Lot, fake_factors, monkeypatch
 ) -> None:
     monkeypatch.setattr(views, 'load_factors', lambda: fake_factors)
     campaign = lot.campaigns.get(label='2025/26')
@@ -96,24 +97,24 @@ def test_huella_con_factores_inyectados(
         InputRecord.objects.create(
             campaign=campaign, category=category, quantity=quantity, unit=unit, origin='DECLARED'
         )
-    data = client.get(f'/api/lots/{lot.pk}/footprint/').json()
+    data = owner_client.get(f'/api/lots/{lot.pk}/footprint/').json()
     assert data['complete'] is True
     assert data['total_kg_co2e_per_t'] == pytest.approx(150 / 4)
 
 
 @pytest.mark.django_db
-def test_puntaje_con_pesos_nulos(client: Client, lot: Lot, monkeypatch) -> None:
+def test_puntaje_con_pesos_nulos(owner_client: Client, lot: Lot, monkeypatch) -> None:
     monkeypatch.setattr(views, 'load_weights', lambda: dict.fromkeys(WEIGHT_KEYS))
-    data = client.get(f'/api/lots/{lot.pk}/score/').json()
+    data = owner_client.get(f'/api/lots/{lot.pk}/score/').json()
     assert data['score'] is None
     assert 'pesos pendientes de definir por el equipo' in data['message']
     assert {c['key']: c['status'] for c in data['criteria']}['rotation'] == 'cumple'
 
 
 @pytest.mark.django_db
-def test_simulador_no_persiste_nada(client: Client, lot: Lot) -> None:
+def test_simulador_no_persiste_nada(owner_client: Client, lot: Lot) -> None:
     counts = (Event.objects.count(), InputRecord.objects.count(), Campaign.objects.count())
-    response = client.post(
+    response = owner_client.post(
         f'/api/lots/{lot.pk}/simulate/', {'cover_crop': True}, content_type='application/json'
     )
     assert response.status_code == 200
@@ -127,9 +128,39 @@ def test_simulador_no_persiste_nada(client: Client, lot: Lot) -> None:
 
 
 @pytest.mark.django_db
-def test_simulador_cuerpo_invalido_400(client: Client, lot: Lot) -> None:
-    response = client.post(
+def test_simulador_cuerpo_invalido_400(owner_client: Client, lot: Lot) -> None:
+    response = owner_client.post(
         f'/api/lots/{lot.pk}/simulate/', {'cover_crop': 'si'}, content_type='application/json'
     )
     assert response.status_code == 400
     assert 'cover_crop' in response.json()
+
+
+def read_all(client: Client, lot_id: int) -> list[int]:
+    """Huella, puntaje y simulador: las tres lecturas de un lote."""
+    return [
+        client.get(f'/api/lots/{lot_id}/footprint/').status_code,
+        client.get(f'/api/lots/{lot_id}/score/').status_code,
+        client.post(
+            f'/api/lots/{lot_id}/simulate/', {'cover_crop': True}, 'application/json'
+        ).status_code,
+    ]
+
+
+@pytest.mark.django_db
+def test_lote_ajeno_da_404_en_huella_puntaje_y_simulador(
+    client: Client, stranger_client: Client, lot: Lot
+) -> None:
+    assert read_all(stranger_client, lot.pk) == [404, 404, 404]
+    assert read_all(client, lot.pk) == [404, 404, 404]
+    foreign = stranger_client.get(f'/api/lots/{lot.pk}/footprint/').json()
+    assert foreign == stranger_client.get('/api/lots/999999/footprint/').json()
+
+
+@pytest.mark.django_db
+def test_ejemplo_publico_se_lee_y_simula_sin_cuenta(client: Client) -> None:
+    example = Lot.objects.create(name='Lote de ejemplo', geometry=SQUARE, public_example=True)
+    Campaign.objects.create(lot=example, label='2025/26', crop='SOY', crop_origin='VERIFIED')
+    counts = (Event.objects.count(), InputRecord.objects.count(), Campaign.objects.count())
+    assert read_all(client, example.pk) == [200, 200, 200]
+    assert counts == (Event.objects.count(), InputRecord.objects.count(), Campaign.objects.count())

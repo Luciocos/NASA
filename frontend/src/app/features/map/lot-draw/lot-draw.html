@@ -1,86 +1,61 @@
-<header class="head">
-  <a routerLink="/mapa" class="back"><app-icon name="arrow-left" /> Volver al mapa</a>
-  <h1>Marcar un lote</h1>
-  <p class="muted">
-    Pintá las hectáreas de tu lote o trazá su perímetro sobre la imagen satelital. Con eso alcanza:
-    no hace falta cargar planillas.
-  </p>
-</header>
-
-<div class="seg modes" role="group" aria-label="Cómo marcar el lote">
-  <button type="button" [attr.aria-pressed]="mode() === 'paint'" (click)="setMode('paint')">
-    <app-icon name="brush" /> Pintar hectáreas
-  </button>
-  <button type="button" [attr.aria-pressed]="mode() === 'trace'" (click)="setMode('trace')">
-    <app-icon name="vertices" /> Trazar perímetro
-  </button>
-</div>
+<app-page-header
+  heading="Marcá tu lote"
+  subtitle="Con el perímetro alcanza para ver lo que observan los satélites de la NASA en tu campo."
+/>
 
 <div class="layout">
-  <section
-    class="map-area"
-    [attr.aria-label]="mode() === 'paint' ? 'Pintado de hectáreas' : 'Dibujo del perímetro'"
-  >
-    @if (mode() === 'trace') {
-      <div class="toolbar">
-        <span class="count" aria-live="polite">
-          {{ points().length }} {{ points().length === 1 ? 'vértice' : 'vértices' }}
-          @if (selected() !== null) {
-            <span class="chip chip--warn">
-              Vértice {{ selected()! + 1 }} seleccionado
-              <button type="button" class="btn btn--sm btn--ghost" (click)="deselect()">
-                Deseleccionar
-              </button>
-            </span>
-          }
-        </span>
-        <span class="cluster">
-          <button
-            type="button"
-            class="btn btn--sm"
-            (click)="undo()"
-            [disabled]="!canUndo()"
-            title="Ctrl+Z"
-          >
-            <app-icon name="undo" /> Deshacer
-          </button>
-          <button
-            type="button"
-            class="btn btn--sm"
-            (click)="redo()"
-            [disabled]="!canRedo()"
-            title="Ctrl+Y"
-          >
-            <app-icon name="redo" /> Rehacer
-          </button>
-          <button
-            type="button"
-            class="btn btn--sm btn--danger"
-            (click)="clear()"
-            [disabled]="points().length === 0"
-          >
-            Limpiar
-          </button>
-        </span>
-      </div>
-    }
+  <section class="work" aria-label="Mapa para marcar el lote">
+    <app-place-search (place)="goToPlace($event)" (located)="goToSpot($event)" />
 
-    <div class="map-wrap" [class.is-trace]="mode() === 'trace'">
+    <div class="map-wrap" [class.is-paint]="mode() === 'paint'">
       <div
         #map
         class="map"
         [class.is-brush]="mode() === 'paint' && activeTool() === 'brush'"
         [class.is-eraser]="mode() === 'paint' && activeTool() === 'eraser'"
         [class.is-hand]="mode() === 'paint' && activeTool() === 'hand'"
-        aria-label="Mapa satelital"
+        role="region"
+        aria-label="Mapa satelital: tocá las esquinas de tu lote"
       ></div>
 
-      @if (mode() === 'paint') {
+      @let tip = hint();
+      <p
+        class="hint"
+        [class.is-ok]="tip.tone === 'ok'"
+        [class.is-warn]="tip.tone === 'warn'"
+        aria-live="polite"
+      >
+        <app-icon [name]="tip.tone === 'ok' ? 'check' : tip.tone === 'warn' ? 'alert' : 'pin'" />
+        <span>{{ tip.text }}</span>
+      </p>
+
+      @if (mode() === 'trace') {
+        <div class="tools" role="toolbar" aria-label="Corregir el perímetro">
+          <button
+            type="button"
+            class="btn btn--sm"
+            [disabled]="!canUndo()"
+            title="Deshacer (Ctrl o Cmd + Z)"
+            aria-keyshortcuts="Control+Z Meta+Z"
+            (click)="undo()"
+          >
+            <app-icon name="undo" /> Deshacer
+          </button>
+          <button
+            type="button"
+            class="btn btn--sm"
+            [disabled]="points().length === 0"
+            (click)="clear()"
+          >
+            <app-icon name="trash" /> Empezar de nuevo
+          </button>
+        </div>
+        <app-draw-tutorial />
+      } @else {
         @let state = paintState();
         <app-paint-hud
           [tool]="activeTool()"
           [canUndo]="state.canUndo"
-          [canRedo]="state.canRedo"
           [hasCells]="state.cells > 0"
           [cellSize]="state.cellSize"
           [rotation]="state.rotation"
@@ -89,171 +64,24 @@
           (zoomIn)="zoomToPaint()"
           (toolChange)="setTool($event)"
           (undo)="undo()"
-          (redo)="redo()"
           (clear)="clear()"
           (cellSizeChange)="setCellSize($event)"
           (rotationInput)="previewRotation($event)"
           (rotationCommit)="commitRotation()"
           (align)="alignGrid()"
         />
-        <app-paint-tutorial />
       }
-
-      <p class="hint" aria-live="polite">
-        @if (mapNotice(); as message) {
-          {{ message }}
-        } @else if (mode() === 'paint') {
-          @switch (activeTool()) {
-            @case ('eraser') {
-              Arrastrá para borrar recuadros · <kbd class="kbd">B</kbd> vuelve al pincel
-            }
-            @case ('hand') {
-              Arrastrá para mover el mapa · <kbd class="kbd">B</kbd> pincel
-            }
-            @default {
-              <span class="fine">
-                Arrastrá para pintar · Rueda: zoom · <kbd class="kbd">Espacio</kbd> mover el mapa
-              </span>
-              <span class="coarse">Un dedo pinta · Dos dedos mueven y hacen zoom</span>
-            }
-          }
-        } @else if (points().length === 0) {
-          Hacé clic en el mapa para marcar las esquinas del lote.
-        } @else if (selected() !== null) {
-          El próximo clic inserta un vértice al lado del {{ selected()! + 1 }}.
-        } @else {
-          Clic: agrega al final · Clic en un vértice: insertar a su lado · Arrastrar: mover · Clic
-          derecho: borrar
-        }
-      </p>
     </div>
   </section>
 
-  <form class="card side stack" (submit)="$event.preventDefault(); save()">
+  <form class="panel" aria-labelledby="lot-panel-title" (submit)="$event.preventDefault(); save()">
+    <h2 id="lot-panel-title" class="visually-hidden">Datos del lote</h2>
+
     @if (draftRestored() && hasDraft()) {
-      <p class="alert alert--info" role="status">
-        Retomamos el borrador que dejaste en este dispositivo.
-      </p>
-    }
-
-    <label class="field">
-      Nombre del lote
-      <input
-        required
-        [value]="name()"
-        (input)="name.set($any($event.target).value)"
-        placeholder="Por ejemplo, Lote 5 La Esperanza"
-      />
-    </label>
-    <div class="pair">
-      <label class="field">
-        Localidad
-        <input [value]="locality()" (input)="locality.set($any($event.target).value)" />
-      </label>
-      <label class="field">
-        Provincia
-        <input [value]="province()" (input)="province.set($any($event.target).value)" />
-      </label>
-    </div>
-    <label class="field">
-      <span>RENSPA <span class="muted">(opcional)</span></span>
-      <input [value]="renspa()" (input)="renspa.set($any($event.target).value)" />
-    </label>
-
-    @if (mode() === 'paint') {
-      @let state = paintState();
-      <app-paint-score
-        [areaHa]="state.areaHa"
-        [perimeterM]="state.perimeterM"
-        [regions]="state.regions"
-        [cells]="state.cells"
-        [cellSize]="state.cellSize"
-        (keepLargest)="keepLargest()"
-      />
-    } @else {
-      <div class="status">
-        <div class="stats">
-          <div class="stat">
-            <span class="stat__label">Vértices</span>
-            <strong>{{ points().length }}</strong>
-          </div>
-          <div class="stat">
-            <span class="stat__label">Superficie aprox.</span>
-            <strong>{{ missing() === 0 ? formatArea(area()) : '—' }}</strong>
-          </div>
-        </div>
-        @if (missing() > 0) {
-          <p class="muted small">
-            Marcá {{ missing() }} {{ missing() === 1 ? 'vértice más' : 'vértices más' }} para cerrar
-            el área (mínimo {{ minVertices }}).
-          </p>
-        } @else {
-          <p class="alert alert--ok"><app-icon name="check" /> Perímetro listo para guardar.</p>
-        }
-      </div>
-
-      @if (points().length > 0) {
-        <details class="vertex-list" open>
-          <summary>Ajuste fino de coordenadas</summary>
-          <ol>
-            @for (point of points(); track $index; let i = $index) {
-              <li [class.is-selected]="i === selected()">
-                <button
-                  type="button"
-                  class="btn btn--sm btn--icon"
-                  (click)="selectVertex(i)"
-                  [attr.aria-pressed]="i === selected()"
-                  [attr.aria-label]="'Seleccionar vértice ' + (i + 1)"
-                >
-                  {{ i + 1 }}
-                </button>
-                <label class="coord">
-                  <span>Lat</span>
-                  <input
-                    inputmode="decimal"
-                    [value]="formatCoord(point[0])"
-                    (change)="editCoordinate(i, 0, $any($event.target).value)"
-                  />
-                </label>
-                <label class="coord">
-                  <span>Lon</span>
-                  <input
-                    inputmode="decimal"
-                    [value]="formatCoord(point[1])"
-                    (change)="editCoordinate(i, 1, $any($event.target).value)"
-                  />
-                </label>
-                <button
-                  type="button"
-                  class="btn btn--sm btn--ghost"
-                  (click)="removeVertex(i)"
-                  [attr.aria-label]="'Borrar vértice ' + (i + 1)"
-                >
-                  Borrar
-                </button>
-              </li>
-            }
-          </ol>
-        </details>
-      }
-    }
-
-    <p class="small muted">
-      Al guardar, el lote queda sin eventos. La detección satelital se corre aparte con el pipeline
-      de NISAR y HLS; nunca se generan eventos automáticos.
-    </p>
-
-    <div class="stack actions">
-      @if (error(); as message) {
-        <p class="alert alert--error" role="alert">{{ message }}</p>
-      }
-      @if (notice(); as message) {
-        <p class="alert alert--ok" role="status" animate.enter="enter-pop">{{ message }}</p>
-      }
-      <div class="cluster buttons">
-        @if (hasDraft()) {
-          @if (confirmDiscard()) {
-            <span class="small">¿Borramos lo marcado y el formulario?</span>
+      <div class="alert alert--info draft" role="status">
+        @if (confirmDiscard()) {
+          <p>¿Borramos lo marcado y los datos?</p>
+          <span class="draft__buttons">
             <button type="button" class="btn btn--sm btn--danger" (click)="discardDraft()">
               Sí, descartar
             </button>
@@ -264,17 +92,185 @@
             >
               No
             </button>
-          } @else {
-            <button type="button" class="btn btn--sm btn--ghost" (click)="confirmDiscard.set(true)">
-              Descartar borrador
+          </span>
+        } @else {
+          <p>Retomamos el lote que dejaste a medias en este dispositivo.</p>
+          <button type="button" class="btn btn--sm btn--ghost" (click)="confirmDiscard.set(true)">
+            Descartar
+          </button>
+        }
+      </div>
+    }
+
+    <label class="field">
+      <span>Nombre del lote</span>
+      <input
+        name="name"
+        autocomplete="off"
+        [value]="name()"
+        [placeholder]="suggestedName()"
+        (input)="name.set($any($event.target).value)"
+      />
+      @if (name().trim() === '') {
+        <span class="field__hint"
+          >Si no le ponés nombre, se guarda como «{{ suggestedName() }}».</span
+        >
+      }
+    </label>
+
+    <div class="area" [class.is-empty]="shownArea() === null">
+      <span class="area__label">Superficie aproximada</span>
+      <p class="area__value" aria-live="polite">
+        @if (shownArea(); as hectares) {
+          {{ formatArea(hectares) }}
+        } @else {
+          <span aria-hidden="true">— ha</span>
+          <span class="visually-hidden">todavía sin forma</span>
+        }
+      </p>
+      <app-origin-badge origin="DECLARED" />
+    </div>
+
+    <ul class="checks" aria-label="Revisión del lote">
+      @for (check of checks(); track check.id) {
+        <li [class.is-ok]="check.ok">
+          <app-icon [name]="check.ok ? 'check' : 'alert'" />
+          <span>
+            <span class="visually-hidden">{{ check.ok ? 'Listo:' : 'Falta:' }}</span>
+            {{ check.text }}
+          </span>
+          @if (check.action) {
+            <button type="button" class="btn btn--sm" (click)="runCheck(check.id)">
+              {{ check.action }}
             </button>
           }
-        }
-        <a routerLink="/mapa" class="btn">Cancelar</a>
-        <button type="submit" class="btn btn--primary" [disabled]="!canSave()">
-          <app-icon name="save" /> {{ saving() ? 'Guardando…' : 'Guardar lote' }}
-        </button>
+        </li>
+      }
+    </ul>
+    @if (mode() === 'paint' && paintState().cells > 0) {
+      @let state = paintState();
+      <p class="small muted">
+        Perímetro {{ formatPerimeter(state.perimeterM) }} · {{ state.cells }}
+        {{ state.cells === 1 ? 'recuadro' : 'recuadros' }} de
+        {{ state.cellSize === 100 ? '1 ha' : '¼ ha' }}
+      </p>
+    }
+
+    <app-disclosure label="Más datos (opcional)" hint="Localidad, provincia y RENSPA">
+      <div class="more">
+        <div class="pair">
+          <label class="field">
+            Localidad
+            <input
+              name="locality"
+              [value]="locality()"
+              (input)="locality.set($any($event.target).value)"
+            />
+          </label>
+          <label class="field">
+            Provincia
+            <input
+              name="province"
+              [value]="province()"
+              (input)="province.set($any($event.target).value)"
+            />
+          </label>
+        </div>
+        <label class="field">
+          RENSPA
+          <input name="renspa" [value]="renspa()" (input)="renspa.set($any($event.target).value)" />
+        </label>
       </div>
+    </app-disclosure>
+
+    <app-disclosure
+      label="Opciones avanzadas"
+      hint="Pintar hectáreas y ajuste fino"
+      [(open)]="advancedOpen"
+    >
+      <div class="advanced">
+        <div class="seg" role="group" aria-label="Cómo marcar el lote">
+          <button type="button" [attr.aria-pressed]="mode() === 'trace'" (click)="setMode('trace')">
+            <app-icon name="vertices" /> Trazar perímetro
+          </button>
+          <button type="button" [attr.aria-pressed]="mode() === 'paint'" (click)="setMode('paint')">
+            <app-icon name="brush" /> Pintar hectáreas
+          </button>
+        </div>
+        <p class="small muted">
+          @if (mode() === 'paint') {
+            Pintás recuadros de 1 ha o ¼ ha sobre una grilla que podés girar para seguir los
+            alambrados.
+          } @else {
+            Pintar sirve si te resulta más fácil que marcar las esquinas.
+          }
+        </p>
+
+        @if (mode() === 'trace' && points().length > 0) {
+          <fieldset class="fine">
+            <legend>Ajuste fino de coordenadas</legend>
+            <ol>
+              @for (point of points(); track $index; let i = $index) {
+                <li [class.is-selected]="i === selected()">
+                  <button
+                    type="button"
+                    class="btn btn--sm btn--icon"
+                    (click)="selectVertex(i)"
+                    [attr.aria-pressed]="i === selected()"
+                    [attr.aria-label]="'Insertar después de la esquina ' + (i + 1)"
+                  >
+                    {{ i + 1 }}
+                  </button>
+                  <label class="coord">
+                    <span>Lat</span>
+                    <input
+                      inputmode="decimal"
+                      [value]="formatCoord(point[0])"
+                      (change)="editCoordinate(i, 0, $any($event.target).value)"
+                    />
+                  </label>
+                  <label class="coord">
+                    <span>Lon</span>
+                    <input
+                      inputmode="decimal"
+                      [value]="formatCoord(point[1])"
+                      (change)="editCoordinate(i, 1, $any($event.target).value)"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    class="btn btn--sm btn--ghost btn--icon"
+                    (click)="removeVertex(i)"
+                    [attr.aria-label]="'Borrar la esquina ' + (i + 1)"
+                  >
+                    <app-icon name="close" />
+                  </button>
+                </li>
+              }
+            </ol>
+          </fieldset>
+        }
+      </div>
+    </app-disclosure>
+
+    <div class="actions">
+      @if (error(); as message) {
+        <p class="alert alert--error" role="alert">{{ message }}</p>
+      }
+      @if (notice(); as message) {
+        <p class="alert alert--ok" role="status" animate.enter="enter-pop">{{ message }}</p>
+      }
+      <button type="submit" class="btn btn--primary btn--block btn--lg" [disabled]="!canSave()">
+        <app-icon name="save" />
+        {{ saving() ? 'Guardando…' : 'Guardar lote' }}
+        @if (shownArea(); as hectares) {
+          <span class="actions__area">· {{ formatArea(hectares) }}</span>
+        }
+      </button>
     </div>
+    <p class="privacy">
+      <app-icon name="eye" /> Tus lotes son privados: solo vos los ves, salvo que compartas su
+      pasaporte.
+    </p>
   </form>
 </div>

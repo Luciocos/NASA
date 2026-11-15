@@ -21,13 +21,16 @@ import {
   NdviZoneLevel,
   zonesByTerciles,
 } from '../../core/nasa';
+import { AuthSession } from '../../core/auth/auth-session';
 import { OFFLINE_STORAGE } from '../../core/offline/storage';
 import { OriginBadge } from '../../shared/origin-badge/origin-badge';
 import { LotTabs } from '../../shared/ui/lot-tabs/lot-tabs';
 import { formatDate } from '../lot/labels';
 import { ZONE_STYLE, ZonesMap } from './zones-map';
 
-const STORAGE_KEY = 'lotestigo:fertilization:v1';
+// las dosis van a nombre del usuario: lotestigo:u<id>:fertilization:v1 (se borran al salir).
+// sin sesión no se guardan: la planilla vive mientras la pantalla esté abierta
+const STORAGE_NAME = 'fertilization:v1';
 const LEVELS: NdviZoneLevel[] = ['alto', 'medio', 'bajo'];
 
 /**
@@ -46,6 +49,7 @@ export class FertilizationPage {
   private readonly api = inject(Api);
   private readonly satellite = inject(LotSatellite);
   private readonly storage = inject(OFFLINE_STORAGE);
+  private readonly session = inject(AuthSession);
 
   protected readonly lotId = toSignal(
     inject(ActivatedRoute).paramMap.pipe(map((params) => Number(params.get('id')))),
@@ -162,8 +166,10 @@ export class FertilizationPage {
 
   private loadDoses(lotId: number): Record<NdviZoneLevel, number | null> {
     const empty = { alto: null, medio: null, bajo: null };
+    const storageKey = this.session.userKey(STORAGE_NAME);
+    if (storageKey === null) return empty;
     try {
-      const all = JSON.parse(this.storage.getItem(STORAGE_KEY) ?? '{}') as Record<
+      const all = JSON.parse(this.storage.getItem(storageKey) ?? '{}') as Record<
         string,
         Record<NdviZoneLevel, number | null>
       >;
@@ -177,10 +183,12 @@ export class FertilizationPage {
   }
 
   private saveDoses(lotId: number, doses: Record<NdviZoneLevel, number | null>): void {
+    const storageKey = this.session.userKey(STORAGE_NAME);
+    if (storageKey === null) return;
     try {
-      const all = JSON.parse(this.storage.getItem(STORAGE_KEY) ?? '{}') as Record<string, unknown>;
+      const all = JSON.parse(this.storage.getItem(storageKey) ?? '{}') as Record<string, unknown>;
       all[String(lotId)] = doses;
-      this.storage.setItem(STORAGE_KEY, JSON.stringify(all));
+      this.storage.setItem(storageKey, JSON.stringify(all));
     } catch {
       // sin almacenamiento la planilla sigue andando mientras la pestaña esté abierta
     }

@@ -2,26 +2,33 @@
  * tokens de diseño de lotestigo: color, tipografía, espacios, profundidad y movimiento
  * todo componente toma sus valores de acá. no hay fuentes ni recursos externos: la
  * interfaz se ve igual sin conexión
+ *
+ * tema claro y aireado: fondo gris verdoso muy suave, tarjetas blancas con borde sutil,
+ * radios grandes y sombras suaves. lo oscuro (--night-*) queda solo para la barra de
+ * controles que flota sobre la maqueta (.hud)
  */
 :root {
   color-scheme: light;
 
-  /* tinta y superficies */
-  --ink: #16241b;
-  --ink-2: #3a4a3f;
-  --ink-3: #56645a; /* texto secundario: contraste AA sobre --paper y --surface */
-  --paper: #f5f2e9;
-  --paper-2: #ece7d8;
-  --surface: #ffffff;
-  --line: #d8d2c0;
-  --line-strong: #b0a88f;
+  /* tinta y superficies. --ink-3 cumple AA sobre --paper, --paper-2, --surface y --surface-2 */
+  --ink: #15211a;
+  --ink-2: #3b4a41;
+  --ink-3: #5a6a5f;
+  --paper: #f4f6f3; /* fondo de la página */
+  --paper-2: #e9ede7; /* rellenos suaves: control segmentado, carga, hover */
+  --surface: #ffffff; /* tarjetas */
+  --surface-2: #f8faf7; /* bloques dentro de una tarjeta */
+  --line: #e2e7df; /* borde de tarjetas y separadores */
+  --line-strong: #c9d1c6;
 
-  /* campo */
+  /* campo. --field-700 es el único verde de acción */
   --field-900: #12401f;
+  --field-800: #155a2f; /* hover y texto verde sobre fondo claro */
   --field-700: #1b6e3a; /* acción principal */
   --field-500: #3d9a4f;
   --field-300: #8fcf7c;
   --field-100: #e3f3dc;
+  --field-50: #f1f7ee;
   --soil-700: #6b4429;
   --soil-500: #96633f;
   --soil-300: #c9a27c;
@@ -32,16 +39,25 @@
   --fire-600: #c8432a;
   --fire-200: #f6c7b9;
 
-  /* espacio: cromo oscuro del mapa isométrico y de sus controles */
+  /* ámbar: selección y destacado */
+  --accent: #f2a43a;
+  --accent-strong: #d98512;
+  --accent-line: #b86e0a; /* borde de lo elegido sobre fondo claro: 3:1 o más */
+  --accent-soft: #fff4e0; /* fondo de lo elegido o destacado */
+  --accent-ink: #4a2c00;
+
+  /* dibujo sobre la imagen satelital (alta de lote): borde marcado y relleno claro, iguales
+     al trazar el perímetro y al pintar hectáreas */
+  --draw-line: #ffd166;
+  --draw-fill: #f4f9d6;
+
+  /* noche: solo el cromo oscuro de la maqueta (.hud) y los avisos flotantes */
   --night-900: #0b1622;
   --night-800: #12202f;
   --night-700: #1b2f44;
   --night-600: #2a4563;
   --night-ink: #e8eef5;
   --night-ink-2: #a9b8c8;
-  --accent: #f2a43a; /* selección y foco dentro del mapa */
-  --accent-strong: #d98512;
-  --accent-ink: #4a2c00;
 
   /* origen del dato: mismos colores que origin-badge. nunca es la única señal */
   --origin-verified: #1b6e3a;
@@ -72,6 +88,7 @@
   --text-xl: 1.375rem;
   --text-2xl: 1.75rem;
   --text-3xl: 2.25rem;
+  --text-kpi: clamp(1.5rem, 1.2rem + 1vw, 2rem); /* valor grande de un indicador */
   --leading-tight: 1.15;
   --leading-normal: 1.5;
 
@@ -85,17 +102,24 @@
   --space-7: 3rem;
   --space-8: 4rem;
 
-  /* radios */
-  --radius-sm: 6px;
-  --radius-md: 10px;
+  /* radios: tarjetas en --radius-lg, botones y campos en --radius-md */
+  --radius-sm: 8px;
+  --radius-md: 12px;
   --radius-lg: 16px;
+  --radius-xl: 20px;
   --radius-pill: 999px;
 
-  /* profundidad: sombras en capas, de menor a mayor altura */
-  --shadow-1: 0 1px 2px rgb(22 36 27 / 8%), 0 1px 1px rgb(22 36 27 / 6%);
-  --shadow-2: 0 2px 4px rgb(22 36 27 / 8%), 0 6px 14px rgb(22 36 27 / 10%);
-  --shadow-3: 0 4px 8px rgb(22 36 27 / 10%), 0 18px 36px rgb(22 36 27 / 16%);
-  --shadow-hud: 0 8px 24px rgb(3 10 18 / 45%), 0 0 0 1px rgb(255 255 255 / 6%) inset;
+  /* profundidad: sombras suaves en capas, de menor a mayor altura */
+  --shadow-1: 0 1px 2px rgb(21 33 26 / 5%), 0 1px 3px rgb(21 33 26 / 4%);
+  --shadow-2: 0 1px 2px rgb(21 33 26 / 5%), 0 8px 24px -6px rgb(21 33 26 / 12%);
+  --shadow-3: 0 4px 10px -2px rgb(21 33 26 / 8%), 0 22px 48px -10px rgb(21 33 26 / 22%);
+  --shadow-hud: 0 8px 24px rgb(3 10 18 / 35%), 0 0 0 1px rgb(255 255 255 / 6%) inset;
+
+  /* marco de la app */
+  --page-max: 75rem; /* ancho máximo del contenido en escritorio */
+  --tap: 2.75rem; /* objetivo táctil mínimo: 44 px */
+  --topbar-h: 4rem;
+  --tabbar-h: 4rem; /* barra de pestañas fija abajo en el celular */
 
   /* movimiento: solo se animan transform y opacity */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -114,8 +138,8 @@
   --z-toast: 1300;
 
   /* agregados por las primitivas de ui.css y motion.css */
-  --line-control: #8a8370; /* borde de campos y botones: contraste 3:1 sobre --surface y --paper */
-  --link: var(--field-700);
+  --line-control: #828e85; /* borde de campos y botones: 3:1 o más sobre --surface y --paper */
+  --link: var(--field-800);
   --night-glass: rgb(11 22 34 / 88%); /* cromo translúcido de .hud sobre el mapa */
   --ease-in: cubic-bezier(0.4, 0, 1, 1); /* salidas */
 }

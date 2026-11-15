@@ -31,8 +31,14 @@ export class Api {
 
   // Lotes y bitácora (Dev B).
 
+  /** Los lotes del usuario que ingresó. Sin sesión el backend responde 401. */
   lots(): Observable<LotSummary[]> {
     return this.http.get<LotSummary[]>('/api/lots/');
+  }
+
+  /** Los lotes de ejemplo de la NASA, públicos y de solo lectura. */
+  exampleLots(): Observable<LotSummary[]> {
+    return this.http.get<LotSummary[]>('/api/examples/');
   }
 
   lot(id: number): Observable<LotDetail> {

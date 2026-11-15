@@ -97,7 +97,8 @@ lotestigo/
   backend/
     manage.py
     config/            # settings, urls
-    core/              # enum Origin, health (compartido)
+    core/              # enum Origin, health, reglas de acceso (compartido)
+    accounts/          # alta, ingreso y salida con token de DRF
     lots/              # Lot, Campaign
     events/            # Event, importador
     carbon/            # InputRecord, factores, cálculo, simulador, puntaje
@@ -106,11 +107,16 @@ lotestigo/
     Dockerfile         # imagen del backend para Railway (se construye desde la raíz)
   frontend/
     src/app/
-      core/            # servicios HTTP, modelos, interceptores
+      core/            # servicios HTTP, modelos, interceptores, sesión
       features/
-        map/           # selección de lote
+        landing/       # página de inicio pública
+        auth/          # ingresar y crear cuenta
+        map/           # mi campo y alta de lote
+        examples/      # lotes de ejemplo públicos
         lot/           # ficha, bitácora, comparación radar vs óptico
         footprint/     # huella y simulador
+        fertilization/ # ambientes por NDVI y dosis variable
+        profit/        # margen bruto
         passport/      # vista pública
       shared/          # componentes reutilizables, etiquetas de confianza
   pipeline/            # notebooks y scripts de teledetección (offline)
@@ -126,6 +132,8 @@ lotestigo/
 - `geometry` (GeoJSON Polygon, EPSG:4326)
 - `area_ha` (calculada)
 - `created_at`
+- `owner` (FK al usuario, opcional): el productor que lo marcó. Solo él lo ve y lo edita
+- `public_example` (bool): lote del pipeline que cualquiera ve y nadie edita. No tiene dueño
 
 **Campaign**
 - `lot` (FK), `label` (por ejemplo "2025/26"), `crop` (SOY, CORN, WHEAT, OTHER)
@@ -211,20 +219,26 @@ Reglas obligatorias:
 
 ## 10. API REST
 
-Prefijo `/api/`. JSON. Sin autenticación en el MVP.
+Prefijo `/api/`. JSON. Autenticación por token de DRF (`Authorization: Token <key>`): sin token, las rutas que lo piden dan 401; un lote ajeno da 404, igual que uno inexistente; escribir en un lote de ejemplo da 403. Las reglas de acceso viven en `backend/core/access.py`.
 
-| Método | Ruta | Descripción |
-|---|---|---|
-| GET | `/lots/` | Lista de lotes con geometría |
-| POST | `/lots/` | Alta de lote a partir de un polígono |
-| GET | `/lots/{id}/` | Ficha del lote con campañas |
-| GET | `/lots/{id}/events/` | Bitácora. Filtros: `type`, `campaign`, `sensor` |
-| PATCH | `/events/{id}/` | El usuario confirma o corrige un evento |
-| GET | `/lots/{id}/footprint/?campaign=` | Huella con desglose y orígenes |
-| POST | `/lots/{id}/simulate/` | Simulador |
-| GET | `/lots/{id}/score/` | Puntaje de sustentabilidad |
-| POST | `/lots/{id}/passport/` | Genera enlace público |
-| GET | `/passports/{token}/` | Vista pública de solo lectura |
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| POST | `/auth/register/` | Pública | Alta de cuenta con `name` (opcional), `email` y `password`. Devuelve `token` y `user` |
+| POST | `/auth/login/` | Pública | Ingreso con `email` y `password`. Devuelve `token` y `user`. Límite de intentos por IP |
+| POST | `/auth/logout/` | Token | Salida: borra el token |
+| GET | `/auth/me/` | Token | Datos de la cuenta: `id`, `email`, `name` |
+| GET | `/lots/` | Token | Lotes del usuario con geometría. Cada lote suma `is_example` y `owned`, nunca quién es el dueño |
+| POST | `/lots/` | Token | Alta de lote a partir de un polígono, con el usuario como dueño |
+| GET | `/examples/` | Pública | Lotes de ejemplo del pipeline, con el mismo formato que la lista |
+| GET | `/lots/{id}/` | Dueño o ejemplo | Ficha del lote con campañas |
+| GET | `/lots/{id}/events/` | Dueño o ejemplo | Bitácora. Filtros: `type`, `campaign`, `sensor` |
+| PATCH | `/events/{id}/` | Dueño | El usuario confirma o corrige un evento |
+| GET | `/lots/{id}/footprint/?campaign=` | Dueño o ejemplo | Huella con desglose y orígenes |
+| POST | `/lots/{id}/simulate/` | Dueño o ejemplo | Simulador (no guarda nada) |
+| GET | `/lots/{id}/score/` | Dueño o ejemplo | Puntaje de sustentabilidad |
+| POST | `/lots/{id}/declaration/` | Dueño | El productor declara rendimiento e insumos |
+| POST | `/lots/{id}/passport/` | Dueño | Genera enlace público |
+| GET | `/passports/{token}/` | Pública | Vista pública de solo lectura |
 
 Un lote creado por POST sin eventos importados devuelve bitácora vacía con un mensaje claro. No generar eventos falsos automáticamente.
 
@@ -232,11 +246,11 @@ Un lote creado por POST sin eventos importados devuelve bitácora vacía con un 
 
 Idioma de la interfaz: español de Argentina. Diseño sobrio, legible en notebook y proyector.
 
-Hay una página de inicio pública con "Probar demo", que abre una cuenta demo gratuita guardada en el navegador (no hay usuarios en el backend: ver sección 17). Las pantallas de la app abren esa cuenta si hace falta.
+Hay una página de inicio pública que invita a crear una cuenta gratis o a ingresar. Mi campo y el alta de lotes piden haber ingresado, y cada productor ve solo sus lotes. Los lotes de ejemplo del pipeline se ven sin cuenta en `/ejemplos`. Sin lotes, Mi campo ofrece usar la ubicación del dispositivo para encontrar el campo; si no se comparte, se busca en el mapa satelital.
 
 Pantallas, en orden de prioridad:
 
-1. **Mapa:** lotes de demostración sobre un mapa base. Clic en un lote abre su ficha.
+1. **Mapa:** los lotes del productor sobre un mapa base. Clic en un lote abre su ficha.
 2. **Ficha del lote:** datos básicos y bitácora como línea de tiempo. Cada evento muestra tipo, fecha, sensor, etiqueta de origen y miniatura de evidencia.
 3. **Comparación radar contra óptico:** para un evento, las dos imágenes lado a lado o con deslizador. Es la pantalla central de la demo.
 4. **Huella:** valor por tonelada, desglose por componente y etiqueta de origen por dato.
@@ -326,7 +340,7 @@ Si el tiempo no alcanza, se recortan los pasos 8 y 7, en ese orden. Los pasos 1 
 
 ## 17. Fuera de alcance
 
-- Autenticación, usuarios y permisos.
+- Roles, recuperación de contraseña e ingreso con cuentas de terceros. La autenticación con mail y contraseña y los lotes privados por productor entraron al alcance por pedido del equipo (ver sección 10).
 - Integración real con VISEC, SENASA o sistemas de AFA.
 - Procesamiento SAR en línea.
 - Módulos de fitosanitarios, nutrientes, agua y logística (son hoja de ruta, no MVP).

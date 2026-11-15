@@ -13,10 +13,13 @@
     <a href="#como-funciona">Cómo funciona</a>
     <a href="#datos">Datos de la NASA</a>
     <a href="#origen">Cada dato con su origen</a>
+    <a routerLink="/ejemplos">Lotes de ejemplo</a>
   </nav>
-  <button type="button" class="cta cta--sm" (click)="startDemo()">
-    {{ hasAccount() ? 'Volver a mi campo' : 'Probar demo' }}
-  </button>
+  @if (loggedIn()) {
+    <a class="cta cta--sm" routerLink="/mapa">Ir a mi campo</a>
+  } @else {
+    <a class="cta cta--sm" routerLink="/registrarse">Crear cuenta gratis</a>
+  }
 </header>
 
 <section class="hero" aria-labelledby="hero-title">
@@ -33,14 +36,18 @@
       mostrás la trazabilidad de tu campo, sin cargar planillas.
     </p>
     <div class="hero__actions" animate.enter="enter-rise" style="--i: 3">
-      <button type="button" class="cta" (click)="startDemo()">
-        {{ hasAccount() ? 'Volver a mi campo' : 'Probar demo' }}
-        <app-icon name="arrow-right" />
-      </button>
-      <a class="ghost" href="#como-funciona">Cómo funciona</a>
+      @if (loggedIn()) {
+        <a class="cta" routerLink="/mapa">Ir a mi campo <app-icon name="arrow-right" /></a>
+        <a class="ghost" href="#como-funciona">Cómo funciona</a>
+      } @else {
+        <a class="cta" routerLink="/registrarse">
+          Crear cuenta gratis <app-icon name="arrow-right" />
+        </a>
+        <a class="ghost" routerLink="/ingresar">Ya tengo cuenta</a>
+      }
     </div>
     <ul class="perks" animate.enter="enter-rise" style="--i: 4">
-      <li><app-icon name="check" /> Cuenta free, sin mail ni contraseña</li>
+      <li><app-icon name="check" /> Cuenta gratis: tus lotes son privados</li>
       <li><app-icon name="cloud-off" /> Funciona sin conexión</li>
       <li><app-icon name="satellite" /> Datos de tu polígono, en vivo</li>
     </ul>
@@ -140,11 +147,14 @@
 
 <section class="final" aria-labelledby="final-title">
   <h2 id="final-title">Probá con tu lote</h2>
-  <p>Abrí la cuenta demo gratuita, marcá tus hectáreas y mirá lo que ve el satélite.</p>
-  <button type="button" class="cta" (click)="startDemo()">
-    {{ hasAccount() ? 'Volver a mi campo' : 'Probar demo' }}
-    <app-icon name="arrow-right" />
-  </button>
+  <p>Creá tu cuenta gratis, marcá tu lote y mirá lo que ve el satélite.</p>
+  @if (loggedIn()) {
+    <a class="cta" routerLink="/mapa">Ir a mi campo <app-icon name="arrow-right" /></a>
+  } @else {
+    <a class="cta" routerLink="/registrarse">
+      Crear cuenta gratis <app-icon name="arrow-right" />
+    </a>
+  }
 </section>
 
 <footer class="foot">

@@ -14,5 +14,7 @@
   html {
     background: var(--paper);
     text-size-adjust: 100%;
+    /* el ancla o el foco no quedan tapados por la barra superior fija */
+    scroll-padding-top: calc(var(--topbar-h) + var(--space-3));
   }
 }

@@ -1,0 +1,96 @@
+<app-page-header
+  heading="Lotes de ejemplo"
+  subtitle="Lotes reales de Casilda, Santa Fe, procesados con el radar NISAR de la NASA. Son de solo lectura."
+>
+  <a
+    actions
+    class="btn btn--primary"
+    [routerLink]="auth.loggedIn() ? '/mapa/nuevo' : '/registrarse'"
+  >
+    @if (auth.loggedIn()) {
+      <app-icon name="plus" /> Marcar mi lote
+    } @else {
+      Crear cuenta gratis
+    }
+  </a>
+</app-page-header>
+
+@switch (state().status) {
+  @case ('loading') {
+    <ul class="examples" aria-busy="true" aria-label="Cargando los lotes de ejemplo">
+      @for (item of placeholders; track item) {
+        <li class="card example" aria-hidden="true">
+          <span class="skeleton example__skeleton-title"></span>
+          <span class="skeleton"></span>
+          <span class="skeleton example__skeleton-line"></span>
+        </li>
+      }
+    </ul>
+  }
+  @case ('error') {
+    <div class="empty" role="status">
+      <app-icon name="cloud-off" />
+      <p><strong>No pudimos cargar los lotes de ejemplo.</strong></p>
+      <p class="small">Revisá la conexión y probá de nuevo.</p>
+      <button type="button" class="btn" (click)="retry()">Reintentar</button>
+    </div>
+  }
+  @default {
+    @if (cards().length === 0) {
+      <div class="empty" role="status">
+        <app-icon name="map" />
+        <p>Todavía no hay lotes de ejemplo cargados.</p>
+      </div>
+    } @else {
+      <ul class="examples">
+        @for (card of cards(); track card.id; let i = $index) {
+          <li class="card card--interactive example" animate.enter="enter-rise" [style.--i]="i">
+            <div class="example__head">
+              @if (card.outline; as path) {
+                <svg
+                  class="example__shape"
+                  [attr.viewBox]="box"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path [attr.d]="path" />
+                </svg>
+              }
+              <div class="example__title">
+                <h2>
+                  <a [routerLink]="['/lotes', card.id]">{{ card.name }}</a>
+                </h2>
+                <p class="muted small">
+                  {{ card.place }} · <span class="num">{{ card.area }}</span>
+                </p>
+              </div>
+            </div>
+
+            @if (card.last; as last) {
+              <div class="example__last">
+                <app-event-glyph [type]="last.type" />
+                <p>
+                  <span class="muted small">Último evento</span>
+                  <strong>{{ last.type_label }}</strong>
+                  <span class="small">{{ card.lastDate }} · {{ last.sensor_label }}</span>
+                </p>
+                <app-origin-badge class="example__origin" [origin]="last.origin" />
+              </div>
+              @if (last.is_simulated) {
+                <app-simulated-notice />
+              }
+            } @else {
+              <p class="example__last example__last--empty muted small">
+                Todavía no hay eventos en su bitácora.
+              </p>
+            }
+
+            <span class="example__cta" aria-hidden="true">
+              Ver su historia <app-icon name="arrow-right" />
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  }
+}

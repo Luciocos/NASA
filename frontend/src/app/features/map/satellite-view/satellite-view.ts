@@ -28,7 +28,9 @@ export function satelliteLotOf(lot: LotSummary): SatelliteLot {
   return { id: String(lot.id), name: lot.name, geometry: lot.geometry };
 }
 
-const DEFAULT_CENTER: L.LatLngTuple = [-33.05, -61.2];
+// sin lotes todavía, una vista amplia de la región pampeana: la vista se ajusta a los lotes
+const DEFAULT_CENTER: L.LatLngTuple = [-34.5, -61.25];
+const DEFAULT_ZOOM = 6;
 const STYLE: L.PathOptions = {
   color: '#f3e3ae',
   weight: 2,
@@ -90,7 +92,7 @@ export class SatelliteView {
   private init(): void {
     const map = L.map(this.mapElement().nativeElement, { zoomControl: false }).setView(
       DEFAULT_CENTER,
-      12,
+      DEFAULT_ZOOM,
     );
     // el zoom va abajo a la derecha: arriba a la izquierda queda el selector de vista
     L.control

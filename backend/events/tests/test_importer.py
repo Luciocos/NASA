@@ -1,6 +1,7 @@
 import copy
 
 import pytest
+from django.contrib.auth.models import User
 
 from events.importer import (
     ImportValidationError,
@@ -96,3 +97,26 @@ def test_import_repetido_no_duplica_salvo_replace() -> None:
     import_lot(VALID, replace=True)
 
     assert Lot.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_lo_importado_es_un_ejemplo_publico_sin_duenio() -> None:
+    lot = import_lot(VALID)
+
+    assert lot.public_example is True
+    assert lot.owner is None
+
+
+@pytest.mark.django_db
+def test_import_no_toca_el_lote_de_un_productor_con_el_mismo_nombre(owner: User) -> None:
+    own = Lot.objects.create(
+        name=VALID['lot']['name'], geometry=VALID['lot']['geometry'], owner=owner
+    )
+
+    import_lot(VALID)
+    import_lot(VALID, replace=True)
+
+    own.refresh_from_db()
+    assert own.owner == owner
+    assert own.public_example is False
+    assert Lot.objects.filter(public_example=True).count() == 1

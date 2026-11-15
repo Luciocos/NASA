@@ -2,7 +2,7 @@
 
 @if (!isLanding()) {
   <header class="topbar">
-    <a routerLink="/mapa" class="brand">
+    <a [routerLink]="loggedIn() ? '/mapa' : '/'" class="brand">
       <svg class="logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
         <path class="logo-top" d="M16 7l13 7-13 7-13-7z" />
         <path class="logo-left" d="M3 14l13 7v8L3 22z" />
@@ -14,21 +14,28 @@
       LoTestigo
     </a>
 
-    <nav class="nav" aria-label="Principal">
-      <a
-        routerLink="/mapa"
-        routerLinkActive="is-active"
-        [routerLinkActiveOptions]="{ exact: true }"
-        ariaCurrentWhenActive="page"
-        >Mi campo</a
-      >
-      <a routerLink="/mapa/nuevo" routerLinkActive="is-active" ariaCurrentWhenActive="page"
-        >Marcar lote</a
-      >
-    </nav>
+    @if (loggedIn()) {
+      <!-- en el celular esta navegación y la cuenta bajan a la barra de pestañas -->
+      <nav class="nav" aria-label="Principal">
+        <a
+          routerLink="/mapa"
+          [class.is-active]="section() === 'field'"
+          [attr.aria-current]="path() === '/mapa' ? 'page' : null"
+          ><app-icon name="map" /> Mi campo</a
+        >
+        <a
+          routerLink="/mapa/nuevo"
+          [class.is-active]="section() === 'draw'"
+          [attr.aria-current]="section() === 'draw' ? 'page' : null"
+          ><app-icon name="plus" /> Marcar lote</a
+        >
+      </nav>
 
-    <app-connection-status />
-    <app-account-chip />
+      <app-connection-status />
+      <app-account-chip class="topbar__account" />
+    } @else if (path() !== '/ingresar') {
+      <a routerLink="/ingresar" class="btn topbar__login">Ingresar</a>
+    }
   </header>
 }
 
@@ -38,6 +45,28 @@
 
 @if (!isLanding()) {
   <footer class="footer">Prueba de concepto. Usa datos abiertos de la NASA.</footer>
+}
+
+@if (!isLanding() && loggedIn()) {
+  <nav class="tabbar" aria-label="Principal">
+    <a
+      routerLink="/mapa"
+      [class.is-active]="section() === 'field'"
+      [attr.aria-current]="path() === '/mapa' ? 'page' : null"
+    >
+      <span class="tabbar__icon"><app-icon name="map" /></span>
+      <span>Mi campo</span>
+    </a>
+    <a
+      routerLink="/mapa/nuevo"
+      [class.is-active]="section() === 'draw'"
+      [attr.aria-current]="section() === 'draw' ? 'page' : null"
+    >
+      <span class="tabbar__icon"><app-icon name="plus" /></span>
+      <span>Marcar lote</span>
+    </a>
+    <app-account-chip variant="tab" />
+  </nav>
 }
 
 @if (navigationFailed()) {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 
 import { Icon } from '../../../shared/ui/icon/icon';
 import { MAX_ROTATION_DEG, MIN_ROTATION_DEG, PaintCellSize } from './paint-session';
@@ -16,12 +16,15 @@ interface ToolButton {
 const TOOLS: readonly ToolButton[] = [
   { tool: 'brush', label: 'Pincel', icon: 'brush', key: 'B' },
   { tool: 'eraser', label: 'Borrador', icon: 'eraser', key: 'E' },
-  { tool: 'hand', label: 'Mano', icon: 'hand', key: 'H' },
+  { tool: 'hand', label: 'Mover', icon: 'hand', key: 'H' },
 ];
 
+let nextId = 0;
+
 /**
- * barras flotantes del modo pintar: herramientas arriba, tamaño y giro de la grilla abajo
- * no guarda estado: muestra lo que recibe y avisa cada acción
+ * barra compacta del modo pintar: pincel, borrador y mover, deshacer y empezar de nuevo. el
+ * tamaño y el giro de la grilla se piden con "Grilla" y aparecen abajo. rehacer queda en el
+ * teclado (Ctrl o Cmd + Y). no guarda estado del lote: muestra lo que recibe y avisa cada acción
  */
 @Component({
   selector: 'app-paint-hud',
@@ -52,18 +55,19 @@ const TOOLS: readonly ToolButton[] = [
       >
         <app-icon name="undo" />Deshacer
       </button>
+      <button type="button" class="hud__btn" [disabled]="!hasCells()" (click)="clear.emit()">
+        <app-icon name="trash" />De nuevo
+      </button>
+      <span class="hud__sep" aria-hidden="true"></span>
       <button
         type="button"
         class="hud__btn"
-        [disabled]="!canRedo()"
-        title="Rehacer (Ctrl o Cmd + Y)"
-        aria-keyshortcuts="Control+Y Meta+Y"
-        (click)="redo.emit()"
+        [attr.aria-expanded]="tuneOpen()"
+        [attr.aria-controls]="tuneId"
+        title="Tamaño y giro de la grilla"
+        (click)="tuneOpen.set(!tuneOpen())"
       >
-        <app-icon name="redo" />Rehacer
-      </button>
-      <button type="button" class="hud__btn" [disabled]="!hasCells()" (click)="clear.emit()">
-        <app-icon name="trash" />Limpiar
+        <app-icon name="grid" />Grilla
       </button>
     </div>
 
@@ -76,7 +80,13 @@ const TOOLS: readonly ToolButton[] = [
       </div>
     }
 
-    <div class="hud tune" role="group" aria-label="Grilla de recuadros">
+    <div
+      class="hud tune"
+      role="group"
+      aria-label="Grilla de recuadros"
+      [id]="tuneId"
+      [hidden]="!tuneOpen()"
+    >
       <div class="seg" role="group" aria-label="Tamaño del recuadro">
         <button
           type="button"
@@ -138,6 +148,15 @@ const TOOLS: readonly ToolButton[] = [
       pointer-events: auto;
       max-width: calc(100% - 3.5rem);
     }
+    .tools .hud__btn {
+      min-width: 3.5rem;
+      min-height: 3rem;
+      padding-inline: var(--space-1);
+    }
+    .tools .hud__btn[aria-expanded='true'] {
+      background: var(--night-700);
+      color: var(--ink);
+    }
     .gate {
       display: grid;
       align-self: center;
@@ -159,6 +178,9 @@ const TOOLS: readonly ToolButton[] = [
       gap: var(--space-2);
       padding: var(--space-2);
     }
+    .tune[hidden] {
+      display: none;
+    }
     .turn {
       display: inline-flex;
       align-items: center;
@@ -176,10 +198,14 @@ const TOOLS: readonly ToolButton[] = [
       text-align: right;
     }
     @media (max-width: 40rem) {
+      .hud,
+      .gate {
+        max-width: 100%;
+      }
       .tools .hud__btn {
-        min-width: 3rem;
-        padding-inline: var(--space-1);
-        font-size: 0.625rem;
+        min-width: 2.9rem;
+        font-size: 0.5625rem;
+        letter-spacing: 0.02em;
       }
     }
   `,
@@ -187,7 +213,6 @@ const TOOLS: readonly ToolButton[] = [
 export class PaintHud {
   readonly tool = input.required<PaintTool>();
   readonly canUndo = input(false);
-  readonly canRedo = input(false);
   readonly hasCells = input(false);
   readonly cellSize = input.required<PaintCellSize>();
   readonly rotation = input(0);
@@ -197,7 +222,6 @@ export class PaintHud {
 
   readonly toolChange = output<PaintTool>();
   readonly undo = output();
-  readonly redo = output();
   readonly clear = output();
   readonly cellSizeChange = output<PaintCellSize>();
   /** el control de giro se está moviendo: vista previa */
@@ -207,6 +231,9 @@ export class PaintHud {
   readonly align = output();
   readonly zoomIn = output();
 
+  /** tamaño y giro de la grilla, a pedido */
+  protected readonly tuneOpen = signal(false);
+  protected readonly tuneId = `paint-tune-${nextId++}`;
   protected readonly tools = TOOLS;
   protected readonly minRotation = MIN_ROTATION_DEG;
   protected readonly maxRotation = MAX_ROTATION_DEG;

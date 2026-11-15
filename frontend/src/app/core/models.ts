@@ -79,12 +79,27 @@ export interface Health {
   database: string;
 }
 
+/** Usuario de /api/auth/: el mail (en minúsculas) es su usuario y name es opcional. */
+export interface AuthUser {
+  id: number;
+  email: string;
+  name: string;
+}
+
 // Respuestas de la API de lotes y bitácora (Dev B). Ver CLAUDE.md, sección 10.
 // Extienden los tipos de arriba sin cambiarlos.
 
-/** Elemento de GET /api/lots/. */
+/**
+ * Elemento de GET /api/lots/ (los lotes del usuario) y de GET /api/examples/ (los de ejemplo).
+ * El backend manda siempre is_example y owned; son opcionales en el tipo para que un lote
+ * armado sin ellos cuente como ajeno y no de ejemplo.
+ */
 export interface LotSummary extends Lot {
   event_count: number;
+  /** Lote de ejemplo público de la NASA (Casilda): de solo lectura para todos. */
+  is_example?: boolean;
+  /** El lote es del usuario que hizo el pedido. */
+  owned?: boolean;
 }
 
 export interface CampaignDetail extends Campaign {

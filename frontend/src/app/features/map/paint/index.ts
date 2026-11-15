@@ -8,7 +8,6 @@ export { PaintHud } from './paint-hud';
 export type { PaintTool } from './paint-hud';
 export { PaintPointer } from './paint-pointer';
 export type { PaintPointerHandlers } from './paint-pointer';
-export { PaintScore } from './paint-score';
 export {
   MAX_ROTATION_DEG,
   MIN_ROTATION_DEG,
@@ -18,4 +17,3 @@ export {
   longestSideDeg,
 } from './paint-session';
 export type { PaintCellSize, PaintSnapshot } from './paint-session';
-export { PAINT_TUTORIAL_KEY, PaintTutorial } from './paint-tutorial';

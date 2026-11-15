@@ -1,10 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { map } from 'rxjs';
+import { RouterLink } from '@angular/router';
 
-import { DemoAccount } from '../../core/account/demo-account';
-import { isExampleLot } from '../../core/account/examples';
 import { Api } from '../../core/api';
+import { AuthService } from '../../core/auth/auth.service';
 import { buildIsoScene, overviewsSignal } from '../../core/lot-scene';
 import { formatDate } from '../lot/labels';
 import { OriginBadge } from '../../shared/origin-badge/origin-badge';
@@ -72,7 +70,10 @@ const SOURCES: Source[] = [
   },
 ];
 
-/** página de inicio pública. "Probar demo" abre la cuenta demo gratuita y lleva al campo */
+/**
+ * página de inicio pública: "Crear cuenta gratis" lleva a /registrarse y "Ya tengo cuenta" a
+ * /ingresar; con la sesión abierta, "Ir a mi campo". la maqueta muestra los lotes de ejemplo
+ */
 @Component({
   selector: 'app-landing-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -81,19 +82,12 @@ const SOURCES: Source[] = [
   styleUrl: './landing-page.css',
 })
 export class LandingPage {
-  private readonly router = inject(Router);
-  private readonly account = inject(DemoAccount);
-
   protected readonly steps = STEPS;
   protected readonly sources = SOURCES;
-  protected readonly hasAccount = this.account.active;
+  protected readonly loggedIn = inject(AuthService).loggedIn;
 
-  // los lotes de ejemplo de la zona, con su último dato satelital real
-  private readonly overviews = overviewsSignal(
-    inject(Api)
-      .lots()
-      .pipe(map((lots) => lots.filter(isExampleLot))),
-  );
+  // los lotes de ejemplo de la zona (públicos), con su último dato satelital real
+  private readonly overviews = overviewsSignal(inject(Api).exampleLots());
   protected readonly scene = computed(() => buildIsoScene(this.overviews() ?? []).lots);
   /** la etiqueta de la maqueta nombra los lotes que dibuja de verdad */
   protected readonly sceneLabel = computed(() => {
@@ -113,9 +107,4 @@ export class LandingPage {
       })),
   );
   protected readonly loadingScene = computed(() => this.overviews() === undefined);
-
-  protected startDemo(): void {
-    this.account.start();
-    void this.router.navigateByUrl('/mapa');
-  }
 }

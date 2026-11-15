@@ -3,11 +3,14 @@
 POST /api/lots/{id}/passport/
     Crea un pasaporte con token UUID. Cuerpo opcional: {"expires_in_days": 30}.
     Responde 201 con el token y la ruta pública del frontend (/pasaporte/<token>).
+    Solo el dueño del lote: exige token, un ejemplo público da 403 y un lote ajeno, 404
+    (core/access.py).
 
 GET /api/passports/{token}/
     Vista pública: lote, campañas, bitácora, resumen de huella y puntaje, fecha de
     generación y descargo. Token inexistente: 404. Pasaporte vencido (expires_at en el
-    pasado): 410 Gone, para distinguirlo de un enlace mal copiado.
+    pasado): 410 Gone, para distinguirlo de un enlace mal copiado. No muestra quién es el
+    dueño: el enlace lo comparte el productor.
 """
 
 import datetime
@@ -16,6 +19,7 @@ from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -25,6 +29,7 @@ from carbon.data import load_lot_data
 from carbon.footprint import DISCLAIMER, compute_footprint
 from carbon.reference import with_references
 from carbon.score import compute_score
+from core.access import get_owned_lot
 from events.serializers import EventSerializer
 from lots.models import Lot
 from lots.serializers import LotDetailSerializer
@@ -40,7 +45,7 @@ def public_path(passport: Passport) -> str:
 
 class LotPassportCreate(APIView):
     def post(self, request: Request, lot_id: int) -> Response:
-        lot = get_object_or_404(Lot, pk=lot_id)
+        lot = get_owned_lot(request, lot_id)
         days = request.data.get('expires_in_days') if isinstance(request.data, dict) else None
         expires_at = None
         if days is not None:
@@ -64,6 +69,8 @@ class LotPassportCreate(APIView):
 
 
 class PassportPublic(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request: Request, token: str) -> Response:
         passport = get_object_or_404(Passport.objects.select_related('lot'), token=token)
         if passport.expires_at is not None and passport.expires_at <= timezone.now():
@@ -84,7 +91,7 @@ class PassportPublic(APIView):
                 'generated_at': timezone.now(),
                 'created_at': passport.created_at,
                 'expires_at': passport.expires_at,
-                'lot': LotDetailSerializer(lot).data,
+                'lot': LotDetailSerializer(lot, context={'request': request}).data,
                 'events': EventSerializer(events, many=True).data,
                 'footprint': footprint,
                 'score': score,

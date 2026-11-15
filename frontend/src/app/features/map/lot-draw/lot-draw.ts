@@ -1,5 +1,6 @@
 import {
   Component,
+  DOCUMENT,
   DestroyRef,
   ElementRef,
   afterNextRender,
@@ -10,10 +11,9 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import * as L from 'leaflet';
 
-import { DemoAccount } from '../../../core/account/demo-account';
 import { Api } from '../../../core/api';
 import {
   createLocalFrame,
@@ -24,28 +24,49 @@ import { LotSummary, PolygonGeometry } from '../../../core/models';
 import { describeBackendError } from '../../../core/offline/http-errors';
 import { LotOutbox } from '../../../core/offline/lot-outbox';
 import { OFFLINE_STORAGE } from '../../../core/offline/storage';
+import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
+import { Disclosure } from '../../../shared/ui/disclosure/disclosure';
 import { Icon } from '../../../shared/ui/icon/icon';
-import { areaHa, toPolygonGeometry } from '../geo';
+import { PageHeader } from '../../../shared/ui/page-header/page-header';
+import { areaHa, ringCentroid, ringSelfIntersects, toPolygonGeometry } from '../geo';
 import { Cell, lineCells, vertexLatLng } from '../grid';
+import { Spot, spotFromParams } from '../my-location';
 import {
   PAINT_MIN_ZOOM,
   PaintCellSize,
   PaintHud,
   PaintLayer,
   PaintPointer,
-  PaintScore,
   PaintSession,
   PaintSnapshot,
   PaintTool,
-  PaintTutorial,
   gridAngleFor,
   longestSideDeg,
 } from '../paint';
 import { LatLng, MIN_VERTICES, PolygonEditor } from '../polygon-editor';
+import { DrawTutorial } from './draw-tutorial';
+import { Place, PlaceSearchBox } from './place-search';
 
-const DEFAULT_CENTER: [number, number] = [-33.05, -61.2];
-const DEFAULT_ZOOM = 15;
-const STROKE = '#1b6e3a';
+/** vista amplia de la región pampeana: sin ubicación ni lotes, el mapa arranca acá */
+export const REGION_BOUNDS: L.LatLngBoundsLiteral = [
+  [-39, -65],
+  [-30, -57.5],
+];
+const REGION_CENTER: [number, number] = [-34.5, -61.25];
+const REGION_ZOOM = 6;
+/** zoom de campo: con una ubicación el mapa arranca así de cerca */
+export const FIELD_ZOOM = 15;
+/** más lejos que esto un toque no marca una esquina: el lote saldría gigante */
+export const TRACE_MIN_ZOOM = 12;
+/** superficie razonable para un lote, en hectáreas */
+export const MIN_LOT_HA = 0.5;
+export const MAX_LOT_HA = 20_000;
+
+// colores del dibujo sobre la imagen satelital (tokens --draw-*): relleno claro y borde marcado
+// con un halo oscuro que lo separa de cualquier imagen
+const DRAW_LINE = '#ffd166';
+const DRAW_FILL = '#f4f9d6';
+const DRAW_HALO = '#0b1622';
 const EXISTING_STYLE: L.PathOptions = {
   color: '#ffffff',
   weight: 2,
@@ -82,22 +103,39 @@ export interface LotDraft {
   savedAt: string;
 }
 
+/** una condición del lote para poder guardarlo, con su texto en lenguaje llano */
+export interface DrawCheck {
+  id: string;
+  ok: boolean;
+  text: string;
+  /** botón que lo resuelve, si hay uno */
+  action?: string;
+}
+
+/** la indicación que flota sobre el mapa */
+interface MapHint {
+  text: string;
+  tone: 'info' | 'ok' | 'warn';
+}
+
 /**
  * alta de un lote sobre imagen satelital (CLAUDE.md, sección 2: "un polígono alcanza para
- * obtener un resultado"), con dos modos:
+ * obtener un resultado"). de entrada se traza el perímetro: cada toque en el mapa suma una
+ * esquina, arrastrarla la mueve y "Deshacer" o "Empezar de nuevo" corrigen. una sola indicación
+ * arriba del mapa dice qué hacer y, al cerrar la forma, una lista corta revisa que esté cerrada,
+ * sin cruces y con una superficie razonable
  *
- * - pintar hectáreas (por defecto): se pintan recuadros de 1 ha o ¼ ha arrastrando sobre una
- *   grilla que se puede girar para seguir los alambrados
- * - trazar perímetro: clic en el mapa agrega un vértice; clic en un vértice lo selecciona y el
- *   próximo clic inserta a su lado; arrastrar mueve y clic derecho borra
+ * arriba del mapa hay un buscador de lugares (OpenStreetMap) y "Usar mi ubicación". con lat y
+ * lng en la dirección el mapa arranca ahí; si no, en la región pampeana
  *
- * cada modo conserva lo suyo al cambiar. lo marcado y el formulario quedan como borrador en el
- * dispositivo hasta guardar o descartarlo
+ * pintar hectáreas sobre una grilla y el ajuste fino de coordenadas quedan en "Opciones
+ * avanzadas". cada modo conserva lo suyo al cambiar. lo marcado y el formulario quedan como
+ * borrador en el dispositivo hasta guardar o descartarlo. el dueño del lote lo asigna el backend
  */
 @Component({
-  imports: [RouterLink, Icon, PaintHud, PaintScore, PaintTutorial],
+  imports: [Icon, PageHeader, Disclosure, OriginBadge, PaintHud, DrawTutorial, PlaceSearchBox],
   selector: 'app-lot-draw',
-  styleUrl: './lot-draw.css',
+  styleUrls: ['./lot-draw.css', './lot-draw-map.css'],
   templateUrl: './lot-draw.html',
   host: {
     '(document:keydown)': 'onKeydown($event)',
@@ -108,12 +146,19 @@ export interface LotDraft {
 export class LotDraw {
   private readonly api = inject(Api);
   private readonly outbox = inject(LotOutbox);
-  private readonly account = inject(DemoAccount);
   private readonly router = inject(Router);
   private readonly storage = inject(OFFLINE_STORAGE);
+  private readonly view = inject(DOCUMENT).defaultView;
   private readonly mapElement = viewChild.required<ElementRef<HTMLElement>>('map');
 
+  private readonly query = inject(ActivatedRoute).snapshot.queryParamMap;
+
   private readonly draft = readDraft(this.storage);
+  /** ubicación que llegó en la dirección (?lat=..&lng=..) desde Mi campo */
+  private readonly startSpot = spotFromParams(this.query.get('lat'), this.query.get('lng'));
+  private readonly coarse = this.view?.matchMedia?.('(pointer: coarse)').matches ?? false;
+  private readonly reducedMotion =
+    this.view?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
   // --- trazar perímetro
   private editor = new PolygonEditor(this.draft?.points ?? []);
@@ -123,13 +168,14 @@ export class LotDraw {
   protected readonly points = computed(() => (this.revision(), [...this.editor.points]));
   protected readonly selected = computed(() => (this.revision(), this.editor.selected));
   protected readonly canUndo = computed(() => (this.revision(), this.editor.canUndo));
-  protected readonly canRedo = computed(() => (this.revision(), this.editor.canRedo));
   protected readonly missing = computed(() => (this.revision(), this.editor.missingVertices));
   protected readonly area = computed(() => areaHa(this.points()));
-  protected readonly minVertices = MIN_VERTICES;
+  private readonly crosses = computed(() => ringSelfIntersects(this.points()));
 
   // --- pintar hectáreas
-  private paint = PaintSession.restore(this.draft?.paint) ?? new PaintSession(DEFAULT_CENTER);
+  private paint =
+    PaintSession.restore(this.draft?.paint) ??
+    new PaintSession(this.startSpot ? [this.startSpot.lat, this.startSpot.lng] : REGION_CENTER);
   private readonly paintRevision = signal(0);
   protected readonly paintState = computed(() => {
     this.paintRevision();
@@ -146,14 +192,16 @@ export class LotDraw {
     };
   });
 
-  protected readonly mode = signal<DrawMode>(this.draft?.mode ?? 'paint');
+  protected readonly mode = signal<DrawMode>(this.draft?.mode ?? 'trace');
+  /** "Opciones avanzadas" abierto: lo está siempre mientras se pinta */
+  protected readonly advancedOpen = signal(this.mode() === 'paint');
   protected readonly tool = signal<PaintTool>('brush');
   /** barra espaciadora apretada: mano mientras dure */
   protected readonly spaceHand = signal(false);
   protected readonly activeTool = computed<PaintTool>(() =>
     this.spaceHand() ? 'hand' : this.tool(),
   );
-  protected readonly zoom = signal(DEFAULT_ZOOM);
+  protected readonly zoom = signal(this.startSpot ? FIELD_ZOOM : REGION_ZOOM);
   protected readonly minPaintZoom = PAINT_MIN_ZOOM;
   protected readonly mapNotice = signal<string | null>(null);
   private readonly lots = signal<LotSummary[]>([]);
@@ -167,9 +215,40 @@ export class LotDraw {
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly notice = signal<string | null>(null);
-  protected readonly canSave = computed(() => {
-    if (this.saving() || this.name().trim() === '') return false;
-    return this.mode() === 'paint' ? this.paintState().regions === 1 : this.missing() === 0;
+
+  /** nombre que se usa si la persona no escribe uno: "Lote 3", sin repetir los suyos */
+  protected readonly suggestedName = computed(() => {
+    const names = [
+      ...this.lots().map((lot) => lot.name),
+      ...this.outbox.pending().map((item) => item.body.name),
+    ];
+    const taken = new Set(names.map((name) => name.trim().toLocaleLowerCase('es-AR')));
+    let n = names.length + 1;
+    while (taken.has(`lote ${n}`)) n++;
+    return `Lote ${n}`;
+  });
+
+  /** lo que falta o lo que está mal para poder guardar, según el modo */
+  protected readonly checks = computed<readonly DrawCheck[]>(() =>
+    this.mode() === 'paint' ? this.paintChecks() : this.traceChecks(),
+  );
+  protected readonly ready = computed(
+    () => this.checks().length > 0 && this.checks().every((check) => check.ok),
+  );
+  protected readonly canSave = computed(() => !this.saving() && this.ready());
+  /** superficie marcada hasta ahora, o null si todavía no hay forma */
+  protected readonly shownArea = computed(() => {
+    if (this.mode() === 'paint') {
+      const state = this.paintState();
+      return state.cells > 0 ? state.areaHa : null;
+    }
+    return this.points().length >= MIN_VERTICES ? this.area() : null;
+  });
+
+  protected readonly hint = computed<MapHint>(() => {
+    const notice = this.mapNotice();
+    if (notice) return { text: notice, tone: 'info' };
+    return this.mode() === 'paint' ? this.paintHint() : this.traceHint();
   });
 
   // --- borrador
@@ -185,7 +264,10 @@ export class LotDraw {
   private map: L.Map | null = null;
   private readonly mapReady = signal(false);
   private polygon: L.Polygon | null = null;
+  private halo: L.Polygon | null = null;
   private vertices: L.LayerGroup | null = null;
+  private areaTag: L.Marker | null = null;
+  private me: L.Marker | null = null;
   private paintLayer: PaintLayer | null = null;
   private pointer: PaintPointer | null = null;
   private dragging = false;
@@ -227,9 +309,16 @@ export class LotDraw {
   // --- acciones comunes
 
   protected setMode(mode: DrawMode): void {
+    if (mode === this.mode()) return;
     this.pointer?.finish();
     this.mode.set(mode);
     this.error.set(null);
+    if (mode === 'paint') this.advancedOpen.set(true);
+    // en el celular el mapa queda arriba del panel: se lo trae a la vista para empezar
+    this.mapElement().nativeElement.scrollIntoView?.({
+      block: 'nearest',
+      behavior: this.reducedMotion ? 'auto' : 'smooth',
+    });
   }
 
   protected undo(): void {
@@ -250,7 +339,9 @@ export class LotDraw {
     this.changed();
   }
 
+  /** "Empezar de nuevo": borra lo marcado en el modo actual (se puede deshacer) */
   protected clear(): void {
+    this.pointer?.finish();
     if (this.mode() === 'paint') {
       if (this.paint.clear()) this.paintChanged();
       return;
@@ -259,12 +350,31 @@ export class LotDraw {
     this.changed();
   }
 
-  // --- trazar perímetro
-
-  protected deselect(): void {
-    this.editor.deselect();
-    this.changed();
+  protected runCheck(id: string): void {
+    if (id === 'regions') this.keepLargest();
   }
+
+  // --- buscar el campo
+
+  protected goToPlace(place: Place): void {
+    const map = this.map;
+    if (!map) return;
+    const options = { maxZoom: FIELD_ZOOM, padding: [40, 40] as L.PointTuple };
+    if (place.bounds) {
+      if (this.reducedMotion) map.fitBounds(place.bounds, options);
+      else map.flyToBounds(place.bounds, { ...options, duration: 0.8 });
+    } else {
+      this.moveTo([place.lat, place.lng], 14);
+    }
+  }
+
+  protected goToSpot(spot: Spot): void {
+    this.showMe(spot);
+    this.moveTo([spot.lat, spot.lng], FIELD_ZOOM);
+    this.flashMap('Te ubicamos en el mapa: buscá tu lote cerca del punto azul');
+  }
+
+  // --- trazar perímetro
 
   protected selectVertex(index: number): void {
     this.editor.toggleSelect(index);
@@ -319,9 +429,7 @@ export class LotDraw {
     const target = this.alignmentTarget();
     const side = target && longestSideDeg(target.ring);
     if (!target || side === null) {
-      this.flashMap(
-        'No hay un lote cerca para alinear: acercate a uno o trazá un lado en «Trazar perímetro»',
-      );
+      this.flashMap('No hay un lote cerca para alinear: acercate a uno o trazá su perímetro');
       return;
     }
     const angle = gridAngleFor(side);
@@ -348,7 +456,14 @@ export class LotDraw {
       }
       return;
     }
-    if (this.mode() !== 'paint' || event.altKey) return;
+    if (this.mode() === 'trace') {
+      if (key === 'escape' && this.editor.selected !== null) {
+        this.editor.deselect();
+        this.changed();
+      }
+      return;
+    }
+    if (event.altKey) return;
     if (key === 'b') this.setTool('brush');
     else if (key === 'e') this.setTool('eraser');
     else if (key === 'h') this.setTool('hand');
@@ -372,7 +487,7 @@ export class LotDraw {
     this.draftRestored.set(false);
     this.pointer?.finish();
     const center = this.map?.getCenter();
-    this.paint = new PaintSession(center ? [center.lat, center.lng] : DEFAULT_CENTER);
+    this.paint = new PaintSession(center ? [center.lat, center.lng] : REGION_CENTER);
     this.editor = new PolygonEditor();
     this.name.set('');
     this.locality.set('');
@@ -399,7 +514,7 @@ export class LotDraw {
     this.error.set(null);
     this.outbox
       .createOrQueue({
-        name: this.name().trim(),
+        name: this.name().trim() || this.suggestedName(),
         locality: this.locality().trim(),
         province: this.province().trim(),
         renspa: this.renspa().trim() || null,
@@ -410,11 +525,9 @@ export class LotDraw {
           this.finished = true;
           this.removeDraft();
           if (result.kind === 'created') {
-            this.account.addLot(result.lot.id);
             this.notice.set(`Listo: guardamos «${result.lot.name}». Abrimos su ficha…`);
             this.navigateLater(['/lotes', result.lot.id], CREATED_NOTICE_MS);
           } else {
-            // la cola lo suma a la cuenta demo cuando lo sube
             this.notice.set(
               'Guardamos el lote en este dispositivo: se sube solo cuando vuelva la conexión',
             );
@@ -429,11 +542,113 @@ export class LotDraw {
   }
 
   protected formatArea(hectares: number): string {
-    return `${hectares.toLocaleString('es-AR', { maximumFractionDigits: 1 })} ha`;
+    return formatHa(hectares);
+  }
+
+  protected formatPerimeter(meters: number): string {
+    return meters >= 1000
+      ? `${(meters / 1000).toLocaleString('es-AR', { maximumFractionDigits: 2 })} km`
+      : `${Math.round(meters).toLocaleString('es-AR')} m`;
   }
 
   protected formatCoord(value: number): string {
     return value.toFixed(6);
+  }
+
+  // --- textos
+
+  private traceChecks(): DrawCheck[] {
+    const count = this.points().length;
+    if (count < MIN_VERTICES) {
+      const missing = this.missing();
+      return [
+        {
+          id: 'closed',
+          ok: false,
+          text: `Tocá ${missing} ${missing === 1 ? 'esquina más' : 'esquinas más'} para cerrar la forma`,
+        },
+      ];
+    }
+    const area = this.area();
+    const crosses = this.crosses();
+    const size = formatHa(area);
+    return [
+      { id: 'closed', ok: true, text: `Forma cerrada: ${count} esquinas` },
+      {
+        id: 'crossing',
+        ok: !crosses,
+        text: crosses ? 'Los lados se cruzan: mové una esquina o deshacé' : 'Sin cruces',
+      },
+      area < MIN_LOT_HA
+        ? { id: 'area', ok: false, text: `Muy chico para un lote: ${size} (mínimo ½ ha)` }
+        : area > MAX_LOT_HA
+          ? { id: 'area', ok: false, text: `Demasiado grande para un lote: ${size}` }
+          : { id: 'area', ok: true, text: `Superficie: ${size}` },
+    ];
+  }
+
+  private paintChecks(): DrawCheck[] {
+    const state = this.paintState();
+    if (state.cells === 0) {
+      return [{ id: 'cells', ok: false, text: 'Pintá al menos un recuadro' }];
+    }
+    return [
+      state.regions > 1
+        ? {
+            id: 'regions',
+            ok: false,
+            text: `Tus recuadros forman ${state.regions} sectores separados: unilos o borrá uno`,
+            action: 'Quedarme con el sector más grande',
+          }
+        : { id: 'regions', ok: true, text: 'Un solo sector' },
+      { id: 'area', ok: true, text: `Superficie: ${formatHa(state.areaHa)}` },
+    ];
+  }
+
+  private traceHint(): MapHint {
+    const count = this.points().length;
+    if (count === 0) {
+      return this.zoom() < TRACE_MIN_ZOOM
+        ? { text: 'Buscá tu campo arriba o acercate al mapa', tone: 'info' }
+        : { text: 'Tocá las esquinas de tu lote', tone: 'info' };
+    }
+    const selected = this.selected();
+    if (selected !== null) {
+      return {
+        text: `Tocá el mapa para sumar una esquina después de la ${selected + 1}`,
+        tone: 'info',
+      };
+    }
+    if (count < MIN_VERTICES) {
+      const missing = this.missing();
+      return {
+        text: `Bien: tocá ${missing} ${missing === 1 ? 'esquina más' : 'esquinas más'}`,
+        tone: 'info',
+      };
+    }
+    const problem = this.checks().find((check) => !check.ok);
+    return problem
+      ? { text: problem.text, tone: 'warn' }
+      : { text: 'Listo: ya podés guardar', tone: 'ok' };
+  }
+
+  private paintHint(): MapHint {
+    const tool = this.activeTool();
+    if (tool === 'eraser') return { text: 'Arrastrá para borrar recuadros', tone: 'info' };
+    if (tool === 'hand') return { text: 'Arrastrá para mover el mapa', tone: 'info' };
+    const state = this.paintState();
+    if (state.cells === 0) {
+      return {
+        text: this.coarse
+          ? 'Pintá con un dedo · dos dedos mueven el mapa'
+          : 'Arrastrá para pintar · Espacio: mover el mapa',
+        tone: 'info',
+      };
+    }
+    const problem = this.checks().find((check) => !check.ok);
+    return problem
+      ? { text: problem.text, tone: 'warn' }
+      : { text: 'Listo: ya podés guardar', tone: 'ok' };
   }
 
   // --- mapa
@@ -444,38 +659,44 @@ export class LotDraw {
       boxZoom: false,
       zoomControl: false,
     });
-    const satellite = L.tileLayer(
+    L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      {
-        maxZoom: 19,
-        attribution: 'Imágenes &copy; Esri, Maxar, Earthstar Geographics',
-      },
-    );
-    const labels = L.tileLayer(
+      { maxZoom: 19, attribution: 'Imágenes &copy; Esri, Maxar, Earthstar Geographics' },
+    ).addTo(map);
+    // los rótulos ayudan a reconocer pueblos y rutas sobre la imagen
+    L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
       { maxZoom: 19, attribution: 'Rótulos &copy; Esri' },
-    );
-    const streets = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    });
-    satellite.addTo(map);
-    labels.addTo(map);
-    L.control
-      .layers(
-        { Satelital: satellite, Calles: streets },
-        { 'Rótulos y localidades': labels },
-        { position: 'topright' },
-      )
-      .addTo(map);
+    ).addTo(map);
     L.control
       .zoom({ position: 'bottomright', zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' })
       .addTo(map);
-    map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    this.startView(map);
 
-    this.polygon = L.polygon([], { color: STROKE, weight: 3, fillOpacity: 0.3 });
+    const style = getComputedStyle(map.getContainer());
+    const token = (name: string, fallback: string) =>
+      style.getPropertyValue(name).trim() || fallback;
+    this.halo = L.polygon([], {
+      color: DRAW_HALO,
+      opacity: 0.45,
+      weight: 7,
+      fill: false,
+      interactive: false,
+    });
+    this.polygon = L.polygon([], {
+      color: token('--draw-line', DRAW_LINE),
+      weight: 3,
+      fillColor: token('--draw-fill', DRAW_FILL),
+      fillOpacity: 0.32,
+      interactive: false,
+    });
     this.vertices = L.layerGroup();
+    this.areaTag = L.marker([0, 0], {
+      icon: L.divIcon({ className: 'area-tag', html: '<span></span>', iconSize: [0, 0] }),
+      interactive: false,
+      keyboard: false,
+      zIndexOffset: 500,
+    });
     this.paintLayer = new PaintLayer();
     this.paintLayer.setScene(this.paint.grid, this.paint.cells);
     this.pointer = new PaintPointer(map, {
@@ -491,6 +712,10 @@ export class LotDraw {
     });
     map.on('click', (e: L.LeafletMouseEvent) => {
       if (this.dragging || this.mode() !== 'trace') return;
+      if (map.getZoom() < TRACE_MIN_ZOOM) {
+        this.flashMap('Acercate más a tu campo para marcar sus esquinas');
+        return;
+      }
       this.editor.add([e.latlng.lat, e.latlng.lng]);
       this.changed();
     });
@@ -498,12 +723,23 @@ export class LotDraw {
     map.on('moveend', () => this.reanchorGrid(map));
     this.map = map;
     this.fitDraft(map);
+    if (this.startSpot) this.showMe(this.startSpot);
     this.render();
     this.mapReady.set(true);
     this.showExistingLots(map);
   }
 
-  /** Muestra los lotes ya cargados como referencia (punteados, no clickeables). */
+  // con lat y lng en la dirección, zoom de campo ahí; si no, toda la región pampeana
+  private startView(map: L.Map): void {
+    const spot = this.startSpot;
+    if (spot) map.setView([spot.lat, spot.lng], FIELD_ZOOM);
+    // sin tamaño todavía (por ejemplo en las pruebas) fitBounds calcula un zoom inválido
+    else if (map.getSize().x > 0) map.fitBounds(REGION_BOUNDS);
+    else map.setView(REGION_CENTER, REGION_ZOOM);
+    this.zoom.set(map.getZoom());
+  }
+
+  /** Muestra los lotes del productor como referencia (punteados, no clickeables). */
   private showExistingLots(map: L.Map): void {
     this.api.lots().subscribe({
       next: (lots: LotSummary[]) => {
@@ -517,8 +753,9 @@ export class LotDraw {
           ),
         ).addTo(map);
         layer.bringToBack();
-        if (!this.hasDraft()) {
-          map.fitBounds(layer.getBounds(), { padding: [60, 60], maxZoom: DEFAULT_ZOOM });
+        // sin borrador ni ubicación, el lote nuevo seguramente está cerca de los otros
+        if (!this.hasDraft() && !this.startSpot && map.getSize().x > 0) {
+          map.fitBounds(layer.getBounds(), { padding: [60, 60], maxZoom: FIELD_ZOOM });
         }
       },
       // Sin backend igual se puede dibujar: los lotes existentes son solo referencia
@@ -528,8 +765,9 @@ export class LotDraw {
 
   private applyMode(mode: DrawMode, tool: PaintTool): void {
     const map = this.map;
-    if (!map || !this.paintLayer || !this.polygon || !this.vertices) return;
+    if (!map || !this.paintLayer || !this.polygon || !this.halo || !this.vertices) return;
     if (mode === 'paint') {
+      this.halo.remove();
       this.polygon.remove();
       this.vertices.remove();
       if (!map.hasLayer(this.paintLayer)) this.paintLayer.addTo(map);
@@ -539,10 +777,31 @@ export class LotDraw {
     } else {
       this.pointer?.setEnabled(false);
       this.paintLayer.remove();
+      this.halo.addTo(map);
       this.polygon.addTo(map);
       this.vertices.addTo(map);
       map.dragging.enable();
     }
+    this.updateAreaTag();
+  }
+
+  private moveTo(center: L.LatLngTuple, zoom: number): void {
+    if (!this.map) return;
+    if (this.reducedMotion) this.map.setView(center, zoom);
+    else this.map.flyTo(center, zoom, { duration: 0.8 });
+  }
+
+  // punto azul donde está el productor: no se guarda, solo orienta
+  private showMe(spot: Spot): void {
+    const map = this.map;
+    if (!map) return;
+    this.me ??= L.marker([spot.lat, spot.lng], {
+      icon: L.divIcon({ className: 'me-dot', html: '<span></span>', iconSize: [18, 18] }),
+      interactive: false,
+      keyboard: false,
+      zIndexOffset: -1000,
+    });
+    this.me.setLatLng([spot.lat, spot.lng]).addTo(map);
   }
 
   private startStroke(latlng: L.LatLng): void {
@@ -621,23 +880,60 @@ export class LotDraw {
     return { ring, label: `«${best.lot.name}»` };
   }
 
-  // con un borrador, el mapa arranca sobre lo que se había marcado
-  private fitDraft(map: L.Map): void {
+  // esquinas de la caja de lo pintado, en [lat, lng]
+  private paintBox(): L.LatLngTuple[] | null {
     const box = this.paint.cells.bounds();
-    const latlngs: L.LatLngTuple[] = box
+    return box
       ? [
           vertexLatLng(this.paint.grid, [box.minI, box.minJ]),
           vertexLatLng(this.paint.grid, [box.maxI + 1, box.minJ]),
           vertexLatLng(this.paint.grid, [box.maxI + 1, box.maxJ + 1]),
           vertexLatLng(this.paint.grid, [box.minI, box.maxJ + 1]),
         ]
-      : this.editor.points.map((p) => [...p] as L.LatLngTuple);
+      : null;
+  }
+
+  // con un borrador, el mapa arranca sobre lo que se había marcado
+  private fitDraft(map: L.Map): void {
+    const latlngs: L.LatLngTuple[] =
+      this.mode() === 'paint' || this.editor.points.length === 0
+        ? (this.paintBox() ?? this.editor.points.map((p) => [...p] as L.LatLngTuple))
+        : this.editor.points.map((p) => [...p] as L.LatLngTuple);
     if (latlngs.length === 0) return;
     const bounds = L.latLngBounds(latlngs);
-    // sin tamaño todavía (por ejemplo en las pruebas) fitBounds calcula un zoom inválido
     if (map.getSize().x > 0) map.fitBounds(bounds, { padding: [60, 60], maxZoom: 17 });
     else map.setView(bounds.getCenter(), 16);
     this.zoom.set(map.getZoom());
+  }
+
+  // etiqueta flotante con las hectáreas, en el centro de lo marcado
+  private updateAreaTag(): void {
+    const map = this.map;
+    const tag = this.areaTag;
+    if (!map || !tag) return;
+    let at: LatLng | null = null;
+    let text = '';
+    if (this.mode() === 'trace') {
+      const points = this.editor.points;
+      if (points.length >= MIN_VERTICES) {
+        at = ringCentroid(points);
+        text = formatHa(areaHa(points));
+      }
+    } else {
+      const box = this.paintBox();
+      if (box) {
+        at = ringCentroid(box.map(([lat, lng]) => [lat, lng] as LatLng));
+        text = formatHa(this.paint.areaHa());
+      }
+    }
+    if (!at) {
+      tag.remove();
+      return;
+    }
+    tag.setLatLng(at);
+    if (!map.hasLayer(tag)) tag.addTo(map);
+    const label = tag.getElement()?.querySelector('span');
+    if (label) label.textContent = text;
   }
 
   private flashMap(message: string): void {
@@ -653,6 +949,7 @@ export class LotDraw {
   private paintChanged(): void {
     this.paintRevision.update((n) => n + 1);
     this.paintLayer?.setScene(this.paint.grid, this.paint.cells);
+    if (this.mode() === 'paint') this.updateAreaTag();
   }
 
   private changed(): void {
@@ -703,23 +1000,31 @@ export class LotDraw {
   }
 
   private render(): void {
-    if (!this.polygon || !this.vertices) return;
+    if (!this.polygon || !this.halo || !this.vertices) return;
     const points = this.editor.points;
-    this.polygon.setLatLngs(points.map((p) => [...p] as L.LatLngTuple));
+    const latlngs = points.map((p) => [...p] as L.LatLngTuple);
+    this.polygon.setLatLngs(latlngs);
+    this.halo.setLatLngs(latlngs);
     this.vertices.clearLayers();
     points.forEach((point, index) => {
       const marker = L.marker(point, {
         draggable: true,
         icon: vertexIcon(index, index === this.editor.selected),
         keyboard: false,
+        zIndexOffset: 1000,
       })
-        .bindTooltip(
-          index === this.editor.selected
-            ? `Vértice ${index + 1} seleccionado: el próximo clic inserta a su lado`
-            : `Vértice ${index + 1}: clic para seleccionar, arrastrar para mover, clic derecho para borrar`,
-          { direction: 'top', offset: [0, -14] },
-        )
-        .on('click', () => this.selectVertex(index))
+        .on('click', () => {
+          // tocar la primera esquina para "cerrar" no cambia nada: la forma ya se cierra sola
+          if (
+            index === 0 &&
+            this.editor.points.length >= MIN_VERTICES &&
+            this.selected() === null
+          ) {
+            this.flashMap('La forma ya está cerrada: podés guardar o seguir sumando esquinas');
+            return;
+          }
+          this.selectVertex(index);
+        })
         .on('contextmenu', (e: L.LeafletMouseEvent) => {
           e.originalEvent.preventDefault();
           this.removeVertex(index);
@@ -730,6 +1035,7 @@ export class LotDraw {
           const { lat, lng } = marker.getLatLng();
           live[index] = [lat, lng];
           this.polygon?.setLatLngs(live);
+          this.halo?.setLatLngs(live);
         })
         .on('dragend', () => {
           const { lat, lng } = marker.getLatLng();
@@ -740,6 +1046,7 @@ export class LotDraw {
         });
       marker.addTo(this.vertices!);
     });
+    this.updateAreaTag();
   }
 }
 
@@ -747,9 +1054,13 @@ function vertexIcon(index: number, selected: boolean): L.DivIcon {
   return L.divIcon({
     className: selected ? 'vertex vertex--selected' : 'vertex',
     html: `<span>${index + 1}</span>`,
-    iconSize: [26, 26],
-    iconAnchor: [13, 13],
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
   });
+}
+
+function formatHa(hectares: number): string {
+  return `${hectares.toLocaleString('es-AR', { maximumFractionDigits: 1 })} ha`;
 }
 
 function describeSaveError(err: unknown): string {
@@ -791,7 +1102,7 @@ function readDraft(storage: Pick<Storage, 'getItem'>): LotDraft | null {
       : [];
     return {
       v: 1,
-      mode: draft.mode === 'trace' ? 'trace' : 'paint',
+      mode: draft.mode === 'paint' ? 'paint' : 'trace',
       paint: draft.paint as PaintSnapshot,
       points,
       name: text(draft.name),

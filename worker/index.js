@@ -1,5 +1,5 @@
 // publica el build de angular y reenvía /api y /media al backend de django, igual que proxy.conf.json con ng serve
-// no tiene login: la app la ve cualquiera que tenga el link
+// no tiene login propio: las cuentas las maneja django, y el encabezado Authorization se reenvía tal cual
 
 // django y postgres corren en railway: API_ORIGIN (vars de wrangler.jsonc) es la dirección https del backend
 // si el backend no responde, /api devuelve 502 y el encabezado de la app muestra "Sin conexión con el servidor"

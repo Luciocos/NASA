@@ -9,6 +9,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { Api } from '../api';
+import { AuthSession } from '../auth/auth-session';
+import { TEST_TOKEN, TEST_USER } from '../auth/testing';
 import { SAVED_COPY_HEADER, apiCacheInterceptor } from './api-cache.interceptor';
 import { ApiCacheStore } from './api-cache-store';
 import { Connectivity } from './connectivity';
@@ -175,5 +177,42 @@ describe('apiCacheInterceptor', () => {
 
     expect(store.get('/api/lots/')?.body).toEqual(LOTS);
     expect(store.get('/api/lots/')?.savedAt.getTime()).toBeGreaterThan(SAVED_AT.getTime());
+  });
+
+  describe('copias por usuario', () => {
+    it('guarda los ejemplos públicos y los sirve sin conexión', () => {
+      api.exampleLots().subscribe();
+      http.expectOne('/api/examples/').flush(LOTS);
+
+      let received: unknown;
+      api.exampleLots().subscribe((lots) => (received = lots));
+      failRequest('/api/examples/', 0);
+
+      expect(received).toEqual(LOTS);
+    });
+
+    it('sin conexión sirve solo la copia de quien ingresó, nunca la de otro', () => {
+      store.set('/api/lots/', LOTS, SAVED_AT, 'u8');
+      TestBed.inject(AuthSession).start({ token: TEST_TOKEN, user: TEST_USER });
+
+      let error: unknown;
+      api.lots().subscribe({ error: (value: unknown) => (error = value) });
+      failRequest('/api/lots/', 0);
+
+      expect(error).toBeInstanceOf(HttpErrorResponse);
+    });
+
+    it('si la sesión cambia mientras viaja la respuesta, no la guarda a nombre de nadie', () => {
+      const session = TestBed.inject(AuthSession);
+      session.start({ token: TEST_TOKEN, user: TEST_USER });
+      api.lots().subscribe();
+      session.end();
+
+      http.expectOne('/api/lots/').flush(LOTS);
+
+      expect(store.get('/api/lots/', 'u7')).toBeNull();
+      expect(store.get('/api/lots/')).toBeNull();
+      expect(store.size).toBe(0);
+    });
   });
 });

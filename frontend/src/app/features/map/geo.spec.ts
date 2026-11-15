@@ -1,4 +1,4 @@
-import { areaHa, toPolygonGeometry } from './geo';
+import { areaHa, ringCentroid, ringSelfIntersects, toPolygonGeometry } from './geo';
 import { LatLng } from './polygon-editor';
 
 // Cuadrado armado para la prueba: 0,009 grados de lado cerca de Casilda (unos 1 km x 0,84 km).
@@ -29,5 +29,25 @@ describe('geo', () => {
     expect(ring[0]).toEqual([-61.2, -33.05]);
     expect(ring.length).toBe(SQUARE.length + 1);
     expect(ring[ring.length - 1]).toEqual(ring[0]);
+  });
+
+  it('detecta un perímetro que se cruza a sí mismo', () => {
+    expect(ringSelfIntersects(SQUARE)).toBe(false);
+    // las mismas esquinas en otro orden forman un moño: dos lados se cortan
+    const bowtie: LatLng[] = [SQUARE[0], SQUARE[2], SQUARE[1], SQUARE[3]];
+    expect(ringSelfIntersects(bowtie)).toBe(true);
+    // una esquina que vuelve sobre el lado anterior también cruza
+    const spike: LatLng[] = [...SQUARE, [-33.041, -61.195]];
+    expect(ringSelfIntersects(spike)).toBe(true);
+    // una esquina en medio de un lado recto no cruza
+    const straight: LatLng[] = [SQUARE[0], [-33.05, -61.195], ...SQUARE.slice(1)];
+    expect(ringSelfIntersects(straight)).toBe(false);
+  });
+
+  it('ubica el centro del polígono para la etiqueta de hectáreas', () => {
+    const [lat, lng] = ringCentroid(SQUARE)!;
+    expect(lat).toBeCloseTo(-33.0455, 6);
+    expect(lng).toBeCloseTo(-61.1955, 6);
+    expect(ringCentroid([])).toBeNull();
   });
 });

@@ -20,7 +20,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--replace',
             action='store_true',
-            help='Reemplaza el lote si ya existe (borra también las correcciones del usuario).',
+            help='Reemplaza el lote de ejemplo si ya existe. Nunca toca los lotes de productores.',
         )
 
     def handle(self, *args, **options) -> None:

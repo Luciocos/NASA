@@ -1,295 +1,222 @@
-<header class="head">
-  <div class="head__title">
-    <p class="kicker">
-      <span class="plan">Free</span> {{ account.session()?.name ?? 'Cuenta demo' }}
-    </p>
-    <h1>Mi campo</h1>
-    <p class="lead">
-      Tus lotes y los lotes de ejemplo de la zona, con el último dato satelital de cada uno. Tocá un
-      lote para ver su resumen; doble clic o Enter abren su ficha.
-    </p>
-  </div>
-  <dl class="score">
-    <div>
-      <dt>Tus lotes</dt>
-      <dd>{{ lots() === null ? '—' : mine().length }}</dd>
-    </div>
-    <div>
-      <dt>Tus hectáreas</dt>
-      <dd>{{ lots() === null ? '—' : formatHectares(totalHa()) }}</dd>
-    </div>
-    <div>
-      <dt>De ejemplo</dt>
-      <dd>{{ lots() === null ? '—' : examples().length }}</dd>
-    </div>
-  </dl>
-  <a routerLink="/mapa/nuevo" class="btn btn--primary"><app-icon name="plus" /> Marcar lote</a>
-</header>
+@if (empty()) {
+  <section class="welcome" aria-labelledby="welcome-title" animate.enter="enter-rise">
+    <span class="iso-tile welcome__art" aria-hidden="true"></span>
+    <app-page-header
+      heading="Marcá tu primer lote"
+      headingId="welcome-title"
+      subtitle="Con el perímetro alcanza para ver lo que observan los satélites de la NASA en tu campo."
+    />
 
-@if (error(); as message) {
-  <p class="alert alert--error" role="alert">
-    {{ message }}
-    <button type="button" class="btn btn--sm" (click)="reload()">Reintentar</button>
-  </p>
-}
-
-<div class="layout">
-  <section class="stage" aria-label="Vista de los lotes">
-    <div class="seg stage__mode" role="group" aria-label="Tipo de vista">
-      <button
-        type="button"
-        [attr.aria-pressed]="view() === 'maqueta'"
-        (click)="view.set('maqueta')"
-      >
-        Maqueta 3D
-      </button>
-      <button
-        type="button"
-        [attr.aria-pressed]="view() === 'satelital'"
-        (click)="view.set('satelital')"
-      >
-        Satelital
-      </button>
-    </div>
-
-    @if (view() === 'maqueta') {
-      <app-iso-scene
-        class="scene"
-        [lots]="isoLots()"
-        [selectedId]="selectedId()"
-        [showGrid]="showGrid()"
-        [ambient]="true"
-        ariaLabel="Maqueta isométrica de tus lotes y de los lotes de ejemplo"
-        (lotSelect)="select($event)"
-        (lotOpen)="open($event)"
-      >
-        <nav class="hud stage__hud" aria-label="Controles de la maqueta">
-          <button type="button" class="hud__btn" (click)="zoom(1 / 1.4)">
-            <app-icon name="zoom-out" /><span>Alejar</span>
-          </button>
-          <button type="button" class="hud__btn" (click)="zoom(1.4)">
-            <app-icon name="zoom-in" /><span>Acercar</span>
-          </button>
-          <button type="button" class="hud__btn" (click)="fit()">
-            <app-icon name="fit" /><span>Todo</span>
-          </button>
-          <button type="button" class="hud__btn" (click)="rotate()">
-            <app-icon name="rotate" /><span>Girar</span>
-          </button>
-          <span class="hud__sep" aria-hidden="true"></span>
-          <button
-            type="button"
-            class="hud__btn"
-            [attr.aria-pressed]="layer() === 'ndvi'"
-            (click)="layer.set(layer() === 'ndvi' ? 'estado' : 'ndvi')"
-          >
-            <app-icon name="leaf" /><span>NDVI</span>
-          </button>
-          <button
-            type="button"
-            class="hud__btn"
-            [attr.aria-pressed]="showGrid()"
-            (click)="showGrid.set(!showGrid())"
-          >
-            <app-icon name="grid" /><span>Hectáreas</span>
-          </button>
-          <a class="hud__btn" routerLink="/mapa/nuevo">
-            <app-icon name="brush" /><span>Marcar</span>
-          </a>
-        </nav>
-      </app-iso-scene>
-    } @else {
-      <app-satellite-view
-        class="scene"
-        [lots]="satelliteLots()"
-        [selectedId]="selectedId()"
-        (lotSelect)="select($event)"
-        (lotOpen)="open($event)"
-      />
-    }
-    @if (layer() === 'ndvi' && view() === 'maqueta') {
-      <div class="ndvi-legend" role="note">
-        <strong>NDVI actual (MODIS, 250 m)</strong>
-        @if (ndvi()?.status === 'loading' || (ndvi()?.status === 'partial' && !ndvi()?.error)) {
-          <span>Consultando a la NASA… puede tardar un minuto la primera vez.</span>
-        } @else if (ndvi()?.error; as reason) {
-          <span
-            >Sin NDVI para {{ ndvi()?.status === 'partial' ? 'algunos lotes' : 'los lotes' }}:
-            {{ reason }}
-            <button type="button" class="btn btn--sm" (click)="retryNdvi()">Reintentar</button>
-          </span>
-        }
-        <span class="ndvi-legend__bar" [style.background]="ndviGradient" aria-hidden="true"></span>
-        <span class="ndvi-legend__scale"><span>0 suelo</span><span>0,85 cultivo denso</span></span>
-        <span class="small">Rayado: sin dato (nubes o sin compuesto publicado).</span>
+    <div class="locate card card--raised" role="group" aria-labelledby="locate-title">
+      <h2 id="locate-title">¿Usamos tu ubicación para encontrar tu campo más rápido?</h2>
+      <p class="locate__note"><app-icon name="eye" /> No la guardamos.</p>
+      <div class="locate__actions">
+        <button
+          type="button"
+          class="btn btn--primary btn--lg"
+          [disabled]="locating()"
+          (click)="useLocation()"
+        >
+          <app-icon name="locate" />
+          {{ locating() ? 'Buscando tu ubicación…' : 'Usar mi ubicación' }}
+        </button>
+        <a class="btn btn--lg" routerLink="/mapa/nuevo">
+          <app-icon name="search" /> Buscar en el mapa
+        </a>
       </div>
-    }
-    @if (view() === 'maqueta') {
-      <p class="stage__note small muted">
-        La textura de cada bloque ilustra el último evento registrado del lote; no es una foto de
-        hoy. El globo indica el tipo de evento y su borde, el origen del dato.
+      @if (locationError(); as message) {
+        <p class="alert alert--warn" role="alert">{{ message }}</p>
+      }
+    </div>
+
+    <a class="example-link" routerLink="/ejemplos">
+      Ver un lote de ejemplo <app-icon name="arrow-right" />
+    </a>
+  </section>
+} @else {
+  <app-page-header heading="Mi campo" subtitle="Tus lotes y lo que ven los satélites de la NASA.">
+    <a actions class="btn btn--primary" routerLink="/mapa/nuevo">
+      <app-icon name="plus" /> Marcar lote
+    </a>
+    @if (lots(); as list) {
+      <p class="totals">
+        <span
+          ><strong>{{ list.length }}</strong> {{ list.length === 1 ? 'lote' : 'lotes' }}</span
+        >
+        <span
+          ><strong>{{ formatHectares(totalHa()) }}</strong> en total</span
+        >
+        @if (outbox.pending().length > 0) {
+          <span class="chip chip--warn">{{ outbox.pending().length }} sin sincronizar</span>
+        }
       </p>
     }
-  </section>
+  </app-page-header>
 
-  <aside class="side" aria-label="Lotes">
-    @if (selected(); as item) {
-      <article class="inspect card card--raised" animate.enter="enter-pop">
-        <header class="inspect__head">
-          <h2>{{ item.lot.name }}</h2>
-          <button type="button" class="btn btn--icon btn--sm" (click)="select(null)">
-            <app-icon name="close" /><span class="visually-hidden">Cerrar resumen</span>
+  @if (error(); as message) {
+    <p class="alert alert--error" role="alert">
+      {{ message }}
+      <button type="button" class="btn btn--sm" (click)="reload()">Reintentar</button>
+    </p>
+  }
+
+  @if (lots() === null && !error()) {
+    <div class="layout" aria-busy="true">
+      <p class="skeleton stage-placeholder" aria-hidden="true"></p>
+      <p class="skeleton side-placeholder" aria-hidden="true"></p>
+      <p class="visually-hidden">Cargando tus lotes…</p>
+    </div>
+  } @else if (listed().length > 0) {
+    <div class="layout">
+      <app-section-card
+        class="stage"
+        heading="Vista del campo"
+        [subtitle]="
+          view() === 'maqueta'
+            ? 'Tocá un lote para ver su resumen. Cada textura ilustra su último evento.'
+            : 'Imagen satelital de referencia (Esri). Tocá un lote para ver su resumen.'
+        "
+        flush
+      >
+        <div actions class="seg" role="group" aria-label="Tipo de vista">
+          <button
+            type="button"
+            [attr.aria-pressed]="view() === 'maqueta'"
+            (click)="view.set('maqueta')"
+          >
+            Maqueta
           </button>
-        </header>
-        <p class="muted small">
-          {{ item.lot.locality || 'Sin localidad' }} · {{ formatHectares(item.lot.area_ha) }}
-          @if (!account.owns(item.lot.id)) {
-            · Lote de ejemplo
-          }
-        </p>
-        @if (latestCampaign(item.campaigns ?? []); as campaign) {
-          <p class="row">
-            <span>Campaña {{ campaign.label }}: {{ campaign.crop_label }}</span>
-            <app-origin-badge [origin]="campaign.crop_origin" />
-          </p>
+          <button
+            type="button"
+            [attr.aria-pressed]="view() === 'satelital'"
+            (click)="view.set('satelital')"
+          >
+            Satélite
+          </button>
+        </div>
+
+        @if (view() === 'maqueta') {
+          <app-iso-scene
+            class="scene"
+            [lots]="isoLots()"
+            [selectedId]="selectedId()"
+            [showGrid]="showGrid()"
+            [ambient]="true"
+            ariaLabel="Maqueta isométrica de tus lotes"
+            (lotSelect)="select($event)"
+            (lotOpen)="open($event)"
+          >
+            <nav class="hud stage__hud" aria-label="Controles de la maqueta">
+              <button type="button" class="hud__btn" (click)="zoom(1 / 1.4)">
+                <app-icon name="zoom-out" /><span>Alejar</span>
+              </button>
+              <button type="button" class="hud__btn" (click)="zoom(1.4)">
+                <app-icon name="zoom-in" /><span>Acercar</span>
+              </button>
+              <button type="button" class="hud__btn" (click)="rotate()">
+                <app-icon name="rotate" /><span>Girar</span>
+              </button>
+              <span class="hud__sep" aria-hidden="true"></span>
+              <button
+                type="button"
+                class="hud__btn"
+                [attr.aria-pressed]="layer() === 'ndvi'"
+                (click)="layer.set(layer() === 'ndvi' ? 'estado' : 'ndvi')"
+              >
+                <app-icon name="leaf" /><span>NDVI</span>
+              </button>
+              <app-more-menu
+                label="Más opciones de la maqueta"
+                text="Más"
+                triggerClass="hud__btn"
+                align="start"
+              >
+                <button type="button" class="menu-item" (click)="fit()">
+                  <app-icon name="fit" /> Ver todos los lotes
+                </button>
+                <button
+                  type="button"
+                  class="menu-item"
+                  [attr.aria-pressed]="showGrid()"
+                  (click)="showGrid.set(!showGrid())"
+                >
+                  <app-icon name="grid" /> Grilla de hectáreas
+                </button>
+              </app-more-menu>
+            </nav>
+          </app-iso-scene>
         } @else {
-          <p class="row muted">Sin campañas registradas</p>
+          <app-satellite-view
+            class="scene"
+            [lots]="satelliteLots()"
+            [selectedId]="selectedId()"
+            (lotSelect)="select($event)"
+            (lotOpen)="open($event)"
+          />
         }
-        @if (item.last; as event) {
-          <div class="last">
-            <app-event-glyph [type]="event.type" />
-            <div>
-              <strong>{{ event.type_label }}</strong>
-              <span class="small muted">
-                {{ formatDate(event.date) }} · {{ event.sensor_label }}
+
+        @if (layer() === 'ndvi' && view() === 'maqueta') {
+          <div class="ndvi-legend" role="note">
+            <strong>Verdor actual (NDVI de MODIS, 250 m)</strong>
+            @if (ndvi()?.status === 'loading' || (ndvi()?.status === 'partial' && !ndvi()?.error)) {
+              <span>Consultando a la NASA… puede tardar un minuto la primera vez.</span>
+            } @else if (ndvi()?.error; as reason) {
+              <span
+                >Sin NDVI para {{ ndvi()?.status === 'partial' ? 'algunos lotes' : 'los lotes' }}:
+                {{ reason }}
+                <button type="button" class="btn btn--sm" (click)="retryNdvi()">Reintentar</button>
               </span>
-            </div>
-            <app-origin-badge [origin]="event.origin" />
-          </div>
-          @if (event.is_simulated) {
-            <app-simulated-notice />
-          }
-        } @else {
-          <p class="muted small">
-            Todavía no hay eventos detectados para este lote. Los datos de la NASA de su polígono se
-            consultan en vivo en la ficha.
-          </p>
-        }
-        @if (selectedNdvi(); as obs) {
-          <p class="row">
+            }
             <span
-              >NDVI {{ obs.mean === null ? 'sin dato' : obs.mean.toLocaleString('es-AR') }} ·
-              compuesto del {{ formatDate(obs.date) }}</span
+              class="ndvi-legend__bar"
+              [style.background]="ndviGradient"
+              aria-hidden="true"
+            ></span>
+            <span class="ndvi-legend__scale"
+              ><span>0 suelo</span><span>0,85 cultivo denso</span></span
             >
-          </p>
+            <span class="small">Rayado: sin dato (nubes o sin compuesto publicado).</span>
+          </div>
         }
-        <div class="cluster">
-          <a class="btn btn--primary btn--sm" [routerLink]="['/lotes', item.lot.id]">Ver ficha</a>
-          <a class="btn btn--sm" [routerLink]="['/huella', item.lot.id]">Huella</a>
-        </div>
-      </article>
-    } @else if (selectedPending(); as pending) {
-      <article class="inspect card card--raised" animate.enter="enter-pop">
-        <h2>{{ pending.body.name }}</h2>
-        <p class="chip chip--warn">Sin sincronizar</p>
-        <p class="small">
-          Está guardado en este dispositivo y se sube solo cuando vuelva la conexión.
-          @if (pending.rejected) {
-            El servidor lo rechazó: {{ pending.error }}
-          }
-        </p>
-      </article>
-    }
 
-    <section aria-labelledby="mine-title">
-      <h2 id="mine-title" class="side__title">Tus lotes</h2>
-      @if (lots() === null && !error()) {
-        <p class="skeleton line" aria-hidden="true"></p>
-        <p class="visually-hidden">Cargando lotes…</p>
-      } @else if (lots() === null && outbox.pending().length === 0) {
-        <p class="small muted">Aparecen acá cuando se puedan cargar.</p>
-      } @else if (mine().length === 0 && outbox.pending().length === 0) {
-        <div class="empty first">
-          <span class="iso-tile" aria-hidden="true"></span>
-          <p>Todavía no marcaste lotes. Pintá tus hectáreas y mirá lo que ve el satélite.</p>
-          <a routerLink="/mapa/nuevo" class="btn btn--primary btn--sm">Marcar mi primer lote</a>
-        </div>
-      } @else {
-        <ul class="list">
-          @for (item of mine(); track item.lot.id; let i = $index) {
-            <li animate.enter="enter-rise" [style.--i]="i">
-              <button
-                type="button"
-                class="lot"
-                [class.is-selected]="selectedId() === '' + item.lot.id"
-                [attr.aria-pressed]="selectedId() === '' + item.lot.id"
-                (click)="select('' + item.lot.id)"
-              >
-                <span class="lot__glyph">
-                  @if (item.last; as event) {
-                    <app-event-glyph [type]="event.type" />
-                  } @else {
-                    <app-event-glyph type="NO_DATA" />
-                  }
-                </span>
-                <span class="lot__text">
-                  <strong>{{ item.lot.name }}</strong>
-                  <span>{{ formatHectares(item.lot.area_ha) }} · {{ eventCount(item) }}</span>
-                </span>
-              </button>
-            </li>
-          }
-          @for (pending of outbox.pending(); track pending.localId) {
-            <li>
-              <button
-                type="button"
-                class="lot lot--pending"
-                (click)="select('pendiente:' + pending.localId)"
-              >
-                <span class="lot__glyph"><app-event-glyph type="PENDING" /></span>
-                <span class="lot__text">
-                  <strong>{{ pending.body.name }}</strong>
-                  <span>{{
-                    pending.rejected ? 'Rechazado por el servidor' : 'Sin sincronizar'
-                  }}</span>
-                </span>
-              </button>
-            </li>
-          }
-        </ul>
-      }
-    </section>
+        <app-disclosure footer label="Cómo leer la maqueta" icon="info" flat>
+          <app-maqueta-legend />
+        </app-disclosure>
+      </app-section-card>
 
-    @if (examples().length > 0) {
-      <section aria-labelledby="examples-title">
-        <h2 id="examples-title" class="side__title">Lotes de ejemplo de la zona</h2>
-        <p class="small muted">Procesados con radar NISAR e imágenes HLS en Casilda, Santa Fe.</p>
-        <ul class="list">
-          @for (item of examples(); track item.lot.id; let i = $index) {
-            <li animate.enter="enter-rise" [style.--i]="i">
-              <button
-                type="button"
-                class="lot"
-                [class.is-selected]="selectedId() === '' + item.lot.id"
-                [attr.aria-pressed]="selectedId() === '' + item.lot.id"
-                (click)="select('' + item.lot.id)"
-              >
-                <span class="lot__glyph">
-                  @if (item.last; as event) {
-                    <app-event-glyph [type]="event.type" />
-                  } @else {
-                    <app-event-glyph type="NO_DATA" />
-                  }
-                </span>
-                <span class="lot__text">
-                  <strong>{{ item.lot.name }}</strong>
-                  <span>{{ formatHectares(item.lot.area_ha) }} · {{ eventCount(item) }}</span>
-                </span>
+      <div class="side">
+        @if (selected(); as item) {
+          <app-lot-summary
+            animate.enter="enter-pop"
+            [overview]="item"
+            [ndvi]="selectedNdvi()"
+            (closed)="select(null)"
+          />
+        } @else if (selectedPending(); as pending) {
+          <article class="pending card card--raised" animate.enter="enter-pop">
+            <header>
+              <h2>{{ pending.body.name }}</h2>
+              <button type="button" class="btn btn--ghost btn--icon btn--sm" (click)="select(null)">
+                <app-icon name="close" /><span class="visually-hidden">Cerrar resumen</span>
               </button>
-            </li>
-          }
-        </ul>
-      </section>
-    }
-  </aside>
-</div>
+            </header>
+            <p
+              class="chip"
+              [class.chip--warn]="!pending.rejected"
+              [class.chip--danger]="pending.rejected"
+            >
+              {{ pending.rejected ? 'Rechazado' : 'Sin sincronizar' }}
+            </p>
+            <p class="small">
+              Está guardado en este dispositivo y se sube solo cuando vuelva la conexión.
+              @if (pending.rejected) {
+                El servidor lo rechazó: {{ pending.error }}
+              }
+            </p>
+          </article>
+        }
+        <app-lot-list [lots]="listed()" [selectedId]="selectedId()" (lotSelect)="select($event)" />
+      </div>
+    </div>
+  }
+}

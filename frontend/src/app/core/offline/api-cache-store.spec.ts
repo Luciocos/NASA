@@ -3,7 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { API_CACHE_MAX_ENTRIES, ApiCacheStore } from './api-cache-store';
 import { KeyValueStorage, MemoryStorage, OFFLINE_STORAGE } from './storage';
 
-const PREFIX = 'lotestigo:cache:v1:';
+// sin sesión las copias van a nombre de "anon"
+const PREFIX = 'lotestigo:anon:cache:v1:';
 
 /** almacenamiento que se llena: tira QuotaExceededError al pasar cierta cantidad de caracteres */
 class QuotaStorage extends MemoryStorage {
@@ -184,5 +185,18 @@ describe('ApiCacheStore', () => {
     expect(store.get('/api/lots/2/')).toBeNull();
     expect(store.get('/api/lots/3/')).toBeNull();
     expect(store.get('/api/lots/4/')?.body).toBe(4);
+  });
+
+  it('cada usuario lee solo sus copias, y las públicas quedan aparte', () => {
+    const { store, storage } = setup();
+    store.set('/api/lots/', ['de u1'], new Date(), 'u1');
+    store.set('/api/examples/', ['ejemplos'], new Date());
+
+    expect(store.get('/api/lots/', 'u1')?.body).toEqual(['de u1']);
+    expect(store.get('/api/lots/', 'u2')).toBeNull();
+    expect(store.get('/api/lots/')).toBeNull();
+    expect(store.get('/api/examples/')?.body).toEqual(['ejemplos']);
+    expect(storage.getItem('lotestigo:u1:cache:v1:/api/lots/')).not.toBeNull();
+    expect(store.size).toBe(2);
   });
 });

@@ -1,16 +1,28 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { DOCUMENT, DestroyRef, Service, effect, inject, signal, untracked } from '@angular/core';
+import {
+  DOCUMENT,
+  DestroyRef,
+  Service,
+  computed,
+  effect,
+  inject,
+  linkedSignal,
+  signal,
+  untracked,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, catchError, firstValueFrom, map, of, throwError, timeout } from 'rxjs';
 
 import { Api } from '../api';
+import { AuthSession } from '../auth/auth-session';
 import { LotCreate, LotDetail } from '../models';
 import { ApiCacheStore } from './api-cache-store';
 import { Connectivity } from './connectivity';
 import { describeBackendError, isConnectivityError } from './http-errors';
 import { OFFLINE_STORAGE } from './storage';
 
-const STORAGE_KEY = 'lotestigo:outbox:v1';
+// cada usuario tiene su cola: lotestigo:u<id>:outbox:v1 (se borra al salir)
+const QUEUE_NAME = 'outbox:v1';
 const LOCK_NAME = 'lotestigo:outbox:sync';
 
 // con señal mala un alta puede quedar colgada minutos: pasado este tiempo va a la cola
@@ -49,6 +61,8 @@ export interface SyncedLot {
  * se sube sola cuando el backend responde (al iniciar la app y cada vez que vuelve la conexión)
  * y también a mano con `sync()`. un rechazo del backend no se pierde: queda en `pending` con
  * `rejected` y su `error` hasta que se corrige (`discard` + `createOrQueue`) o se descarta
+ *
+ * la cola es del usuario que ingresó: al entrar otro se lee la suya, y sin sesión no hay cola
  */
 @Service()
 export class LotOutbox {
@@ -58,11 +72,24 @@ export class LotOutbox {
   private readonly storage = inject(OFFLINE_STORAGE);
   private readonly destroyRef = inject(DestroyRef);
   private readonly view = inject(DOCUMENT).defaultView;
+  private readonly session = inject(AuthSession);
 
-  private readonly pendingState = signal<PendingLot[]>(this.read() ?? []);
+  /** dónde se guarda la cola del usuario que ingresó; null sin sesión */
+  private readonly queueKey = computed(() => this.session.userKey(QUEUE_NAME));
+
+  // las tres se vuelven a armar cuando cambia el usuario: cada uno ve solo lo suyo
+  private readonly pendingState = linkedSignal<PendingLot[]>(
+    () => this.read(this.queueKey()) ?? [],
+  );
   private readonly syncingState = signal(false);
-  private readonly lastSyncedState = signal<SyncedLot[]>([]);
-  private readonly unsavedState = signal(this.storage.volatile === true);
+  private readonly lastSyncedState = linkedSignal<string | null, SyncedLot[]>({
+    source: this.queueKey,
+    computation: () => [],
+  });
+  private readonly unsavedState = linkedSignal<string | null, boolean>({
+    source: this.queueKey,
+    computation: () => this.storage.volatile === true,
+  });
 
   /** la cola en orden de llegada. incluye los rechazados */
   readonly pending = this.pendingState.asReadonly();
@@ -81,7 +108,8 @@ export class LotOutbox {
 
   private running: Promise<void> | null = null;
   private destroyed = false;
-  private writeFailed = false;
+  /** la cola cuya última escritura falló: en memoria está su única copia completa */
+  private failedKey: string | null = null;
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
   private retryDelay = RETRY_FIRST_MS;
   private retryNotBefore = 0;
@@ -89,7 +117,7 @@ export class LotOutbox {
   constructor() {
     // otra pestaña cambió la cola
     const onStorage = (event: StorageEvent): void => {
-      if (event.key === STORAGE_KEY || event.key === null) this.refresh();
+      if (event.key === null || event.key === this.queueKey()) this.refresh();
     };
     this.view?.addEventListener('storage', onStorage);
     this.destroyRef.onDestroy(() => {
@@ -246,26 +274,33 @@ export class LotOutbox {
 
   private commit(queue: PendingLot[]): void {
     this.pendingState.set(queue);
-    let saved = this.write(queue);
+    const key = this.queueKey();
+    if (key === null) {
+      // sin sesión no hay dónde guardarla: vive solo mientras la pestaña esté abierta
+      this.unsavedState.set(queue.length > 0);
+      return;
+    }
+    let saved = this.write(key, queue);
     // lo que marcó el productor vale más que las copias del backend, que se vuelven a bajar
-    while (!saved && this.cache.makeRoom()) saved = this.write(queue);
-    this.writeFailed = !saved;
+    while (!saved && this.cache.makeRoom()) saved = this.write(key, queue);
+    this.failedKey = saved ? null : key;
     this.unsavedState.set(!saved || this.storage.volatile === true);
   }
 
-  private write(queue: PendingLot[]): boolean {
+  private write(key: string, queue: PendingLot[]): boolean {
     try {
-      if (queue.length === 0) this.storage.removeItem(STORAGE_KEY);
-      else this.storage.setItem(STORAGE_KEY, JSON.stringify(queue));
+      if (queue.length === 0) this.storage.removeItem(key);
+      else this.storage.setItem(key, JSON.stringify(queue));
       return true;
     } catch {
       return false;
     }
   }
 
-  private read(): PendingLot[] | null {
+  private read(key: string | null): PendingLot[] | null {
+    if (key === null) return [];
     try {
-      const raw = this.storage.getItem(STORAGE_KEY);
+      const raw = this.storage.getItem(key);
       const stored: unknown = raw === null ? [] : JSON.parse(raw);
       return Array.isArray(stored) ? stored.filter(isPendingLot) : [];
     } catch {
@@ -275,9 +310,10 @@ export class LotOutbox {
 
   /** toma lo que haya guardado otra pestaña */
   private refresh(): void {
+    const key = this.queueKey();
     // si la última escritura falló, lo que hay en memoria es lo único completo
-    if (this.writeFailed) return;
-    const stored = this.read();
+    if (key !== null && key === this.failedKey) return;
+    const stored = this.read(key);
     if (stored && JSON.stringify(stored) !== JSON.stringify(this.pendingState())) {
       this.pendingState.set(stored);
     }

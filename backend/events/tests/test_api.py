@@ -1,8 +1,10 @@
 import datetime
 
 import pytest
+from django.contrib.auth.models import User
 from django.test import Client
 
+from core.access import EXAMPLE_READ_ONLY
 from events.models import Event
 from events.views import EMPTY_LOG_MESSAGE, NO_MATCH_MESSAGE
 from lots.models import Campaign, Lot
@@ -23,8 +25,21 @@ SQUARE = {
 
 
 @pytest.fixture
-def lot() -> Lot:
-    return Lot.objects.create(name='Lote de prueba', geometry=SQUARE)
+def lot(owner: User) -> Lot:
+    return Lot.objects.create(name='Lote de prueba', geometry=SQUARE, owner=owner)
+
+
+@pytest.fixture
+def example_event(db) -> Event:
+    example = Lot.objects.create(name='Lote de ejemplo', geometry=SQUARE, public_example=True)
+    return Event.objects.create(
+        lot=example,
+        type='SOWING',
+        date=datetime.date(2025, 11, 5),
+        sensor='MANUAL',
+        origin='ESTIMATED',
+        is_simulated=True,
+    )
 
 
 @pytest.fixture
@@ -69,9 +84,9 @@ def events_url(lot: Lot, query: str = '') -> str:
 
 @pytest.mark.django_db
 def test_bitacora_ordenada_por_fecha_con_etiquetas_y_urls(
-    client: Client, lot: Lot, events: list[Event]
+    owner_client: Client, lot: Lot, events: list[Event]
 ) -> None:
-    response = client.get(events_url(lot))
+    response = owner_client.get(events_url(lot))
     assert response.status_code == 200
     data = response.json()
     assert data['lot'] == lot.pk
@@ -90,8 +105,8 @@ def test_bitacora_ordenada_por_fecha_con_etiquetas_y_urls(
 
 
 @pytest.mark.django_db
-def test_lote_sin_eventos_devuelve_lista_vacia_con_mensaje(client: Client, lot: Lot) -> None:
-    response = client.get(events_url(lot))
+def test_lote_sin_eventos_devuelve_lista_vacia_con_mensaje(owner_client: Client, lot: Lot) -> None:
+    response = owner_client.get(events_url(lot))
     assert response.status_code == 200
     assert response.json() == {
         'lot': lot.pk,
@@ -103,8 +118,8 @@ def test_lote_sin_eventos_devuelve_lista_vacia_con_mensaje(client: Client, lot: 
 
 
 @pytest.mark.django_db
-def test_lote_inexistente_da_404(client: Client) -> None:
-    assert client.get('/api/lots/999999/events/').status_code == 404
+def test_lote_inexistente_da_404(owner_client: Client) -> None:
+    assert owner_client.get('/api/lots/999999/events/').status_code == 404
 
 
 @pytest.mark.django_db
@@ -118,32 +133,32 @@ def test_lote_inexistente_da_404(client: Client) -> None:
     ],
 )
 def test_filtros(
-    client: Client, lot: Lot, events: list[Event], query: str, expected_types: list[str]
+    owner_client: Client, lot: Lot, events: list[Event], query: str, expected_types: list[str]
 ) -> None:
-    data = client.get(events_url(lot, query)).json()
+    data = owner_client.get(events_url(lot, query)).json()
     assert [event['type'] for event in data['events']] == expected_types
 
 
 @pytest.mark.django_db
 def test_filtro_por_id_de_campania(
-    client: Client, lot: Lot, campaigns: dict[str, Campaign], events: list[Event]
+    owner_client: Client, lot: Lot, campaigns: dict[str, Campaign], events: list[Event]
 ) -> None:
-    data = client.get(events_url(lot, f'?campaign={campaigns["2025/26"].pk}')).json()
+    data = owner_client.get(events_url(lot, f'?campaign={campaigns["2025/26"].pk}')).json()
     assert [event['type'] for event in data['events']] == ['TILLAGE']
 
 
 @pytest.mark.django_db
 def test_filtro_sin_coincidencias_explica_el_motivo(
-    client: Client, lot: Lot, events: list[Event]
+    owner_client: Client, lot: Lot, events: list[Event]
 ) -> None:
-    data = client.get(events_url(lot, '?type=BURN')).json()
+    data = owner_client.get(events_url(lot, '?type=BURN')).json()
     assert data['events'] == []
     assert data['message'] == NO_MATCH_MESSAGE
 
 
 @pytest.mark.django_db
-def test_filtro_invalido_da_400(client: Client, lot: Lot, events: list[Event]) -> None:
-    response = client.get(events_url(lot, '?type=RAIN&sensor=RADAR'))
+def test_filtro_invalido_da_400(owner_client: Client, lot: Lot, events: list[Event]) -> None:
+    response = owner_client.get(events_url(lot, '?type=RAIN&sensor=RADAR'))
     assert response.status_code == 400
     assert set(response.json()) == {'type', 'sensor'}
 
@@ -155,10 +170,10 @@ def patch(client: Client, event: Event, body: dict) -> dict:
 
 @pytest.mark.django_db
 def test_correccion_pasa_a_declarado_y_conserva_la_deteccion(
-    client: Client, events: list[Event]
+    owner_client: Client, events: list[Event]
 ) -> None:
     tillage = events[0]
-    result = patch(client, tillage, {'date': '2026-10-20', 'notes': 'Fue una semana después'})
+    result = patch(owner_client, tillage, {'date': '2026-10-20', 'notes': 'Fue una semana después'})
     assert result['status'] == 200
     data = result['data']
     assert data['date'] == '2026-10-20'
@@ -172,22 +187,26 @@ def test_correccion_pasa_a_declarado_y_conserva_la_deteccion(
 
 
 @pytest.mark.django_db
-def test_confirmar_estimado_pasa_a_declarado(client: Client, events: list[Event]) -> None:
-    result = patch(client, events[1], {'confirm': True})
+def test_confirmar_estimado_pasa_a_declarado(owner_client: Client, events: list[Event]) -> None:
+    result = patch(owner_client, events[1], {'confirm': True})
     assert result['status'] == 200
     assert result['data']['origin'] == 'DECLARED'
 
 
 @pytest.mark.django_db
-def test_confirmar_verificado_no_cambia_el_origen(client: Client, events: list[Event]) -> None:
-    result = patch(client, events[0], {'confirm': True})
+def test_confirmar_verificado_no_cambia_el_origen(
+    owner_client: Client, events: list[Event]
+) -> None:
+    result = patch(owner_client, events[0], {'confirm': True})
     assert result['status'] == 200
     assert result['data']['origin'] == 'VERIFIED'
 
 
 @pytest.mark.django_db
-def test_mismo_valor_o_solo_notas_no_cambia_el_origen(client: Client, events: list[Event]) -> None:
-    result = patch(client, events[0], {'type': 'TILLAGE', 'notes': 'Coincide'})
+def test_mismo_valor_o_solo_notas_no_cambia_el_origen(
+    owner_client: Client, events: list[Event]
+) -> None:
+    result = patch(owner_client, events[0], {'type': 'TILLAGE', 'notes': 'Coincide'})
     assert result['data']['origin'] == 'VERIFIED'
     assert result['data']['notes'] == 'Coincide'
 
@@ -203,8 +222,8 @@ def test_mismo_valor_o_solo_notas_no_cambia_el_origen(client: Client, events: li
         {'date_uncertainty_days': -1},
     ],
 )
-def test_patch_invalido_da_400(client: Client, events: list[Event], body: dict) -> None:
-    result = patch(client, events[0], body)
+def test_patch_invalido_da_400(owner_client: Client, events: list[Event], body: dict) -> None:
+    result = patch(owner_client, events[0], body)
     assert result['status'] == 400
     events[0].refresh_from_db()
     assert events[0].origin == 'VERIFIED'
@@ -212,8 +231,51 @@ def test_patch_invalido_da_400(client: Client, events: list[Event], body: dict) 
 
 
 @pytest.mark.django_db
-def test_patch_evento_inexistente_da_404(client: Client) -> None:
-    response = client.patch(
+def test_patch_evento_inexistente_da_404(owner_client: Client) -> None:
+    response = owner_client.patch(
         '/api/events/999999/', {'confirm': True}, content_type='application/json'
     )
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_bitacora_ajena_da_404(
+    client: Client, stranger_client: Client, lot: Lot, events: list[Event]
+) -> None:
+    assert stranger_client.get(events_url(lot)).status_code == 404
+    assert client.get(events_url(lot)).status_code == 404
+
+
+@pytest.mark.django_db
+def test_bitacora_de_un_ejemplo_es_publica(client: Client, example_event: Event) -> None:
+    response = client.get(f'/api/lots/{example_event.lot_id}/events/')
+    assert response.status_code == 200
+    assert response.json()['count'] == 1
+
+
+@pytest.mark.django_db
+def test_corregir_evento_ajeno_da_el_mismo_404_que_uno_inexistente(
+    stranger_client: Client, events: list[Event]
+) -> None:
+    missing = patch(stranger_client, Event(pk=999999), {'confirm': True})
+    foreign = patch(stranger_client, events[1], {'confirm': True})
+    assert foreign == missing
+    assert foreign['status'] == 404
+    events[1].refresh_from_db()
+    assert events[1].origin == 'ESTIMATED'
+
+
+@pytest.mark.django_db
+def test_corregir_evento_de_ejemplo_da_403(owner_client: Client, example_event: Event) -> None:
+    result = patch(owner_client, example_event, {'confirm': True})
+    assert result == {'status': 403, 'data': {'detail': EXAMPLE_READ_ONLY}}
+    assert EXAMPLE_READ_ONLY == 'Los lotes de ejemplo son de solo lectura.'
+    example_event.refresh_from_db()
+    assert example_event.origin == 'ESTIMATED'
+
+
+@pytest.mark.django_db
+def test_corregir_evento_exige_token(client: Client, events: list[Event]) -> None:
+    assert patch(client, events[1], {'confirm': True})['status'] == 401
+    events[1].refresh_from_db()
+    assert events[1].origin == 'ESTIMATED'
