@@ -75,7 +75,7 @@ En un lote de ejemplo se puede mirar todo y usar el Simulador de la Huella, Rent
 - **Abrir antes las pestañas Satélite y Fertilización de cada lote**, en el dispositivo de la demo. La primera consulta a MODIS puede tardar más de un minuto. Después queda la copia guardada.
 - **Fertilización cuenta cada píxel que toca el lote.** Cada píxel mide unas 5,4 ha y pesa por las hectáreas que caen adentro. Hacen falta 3 válidos. Los que tienen menos de la mitad adentro son píxeles mixtos: se pintan más claros y la leyenda dice cuántas hectáreas son ("… ha de píxeles mixtos, menos seguras").
 - **El precio de Rofex solo se ofrece en soja o sin campaña.** En el Lote 3 (maíz) y el Lote 1 ("Otro") no aparece el botón: probarlo en el Lote 2 o el 4. Si el servidor no tiene las credenciales de Matba Rofex, dice "Sin precio de Rofex" y el precio se carga a mano. Si usa el entorno de prueba reMarkets, el precio lleva "Precio de prueba". Probarlo antes en la demo publicada.
-- **Cuenca y Caudal: mostrarla en el Lote 3.** Anda en los cuatro lotes de ejemplo, que caen dentro de la zona procesada. En el repositorio faltan `forcing.json` (lluvia, humedad y evapotranspiración) y `landcover.npz` (cobertura MODIS), y la demo publicada se arma desde el repositorio. Sin ellos, "B · Historial hidrológico" dice "Faltan los datos de lluvia del pipeline (forcing.json).", el grupo de suelo queda B por defecto y toda la cuenca se toma como cultivo. A, C y D andan con el terreno. Abrirla antes en el dispositivo de la demo.
+- **Cuenca y Caudal: mostrarla en el Lote 3.** Anda en los cuatro lotes de ejemplo, que caen dentro de la zona procesada. Los datos del pipeline del Lote 3 (`terrain`, `forcing.json` con lluvia, humedad y evapotranspiración, y `landcover.npz` con la cobertura MODIS) están en `data/hydrology/lote3`. Abrirla antes en el dispositivo de la demo.
 
 ## 3. De dónde salen los datos
 
@@ -93,7 +93,7 @@ Los datos llegan por dos caminos:
 | **NASA POWER** | Un modelo de clima (reanálisis), no un satélite que mira el lote. | Grilla de unos 50 km. Datos diarios. | La lluvia y la humedad del suelo de la zona. | En vivo. | ESTIMADO |
 | **CMR de Earthdata** | El catálogo de datos de la NASA. | No aplica. | Saber qué pasadas de NISAR y qué escenas HLS cruzan el lote, sin bajar las imágenes. | En vivo. | No aplica: es un listado, no una medición del lote. |
 | **GIBS** | Imágenes de la NASA ya pintadas, por fecha. Sirven para mirar, no para medir. | Según la capa. | Hoy, solo la foto satelital del inicio, que se repite en Ingresar y Crear cuenta. | Archivo fijo de la app, armado con teselas de GIBS. | No aplica |
-| **GPM IMERG, SMAP y MODIS MOD16** (NASA) | Lluvia satelital cada media hora, humedad del suelo y evapotranspiración. | IMERG, celdas de 0,1° (unos 10 km). SMAP, 9 km. MOD16, 500 m cada 8 días. | Cuenca y Caudal: las lluvias del historial, la humedad previa y la evapotranspiración, como contexto. | Pipeline (`forcing.json`, que hoy no está en el repositorio). | No aplica: entra a un modelo sin validar. |
+| **GPM IMERG, SMAP y MODIS MOD16** (NASA) | Lluvia satelital cada media hora, humedad del suelo y evapotranspiración. | IMERG, celdas de 0,1° (unos 10 km). SMAP, 9 km. MOD16, 500 m cada 8 días. | Cuenca y Caudal: las lluvias del historial, la humedad previa y la evapotranspiración, como contexto. | Pipeline (`data/hydrology/lote3/forcing.json`). | No aplica: entra a un modelo sin validar. |
 | **Sentinel-1** (ESA) | Un radar en banda C. No es dato NASA. | No aplica. | Respaldo previsto si no hay escenas NISAR de la zona. Hoy no se usa. | No llega. | Se rotula "no es dato NASA". |
 
 ### Detalle por fuente
@@ -435,7 +435,7 @@ Es la séptima pestaña del popup: "De dónde viene el agua que llega al lote, c
 - **Terreno:** el Copernicus DEM GLO-30 (ESA, 30 m). Es un modelo de superficie: incluye árboles, edificios y terraplenes. Se rellenan los bajos (Priority-Flood+ε) y se calcula la dirección de flujo D8, hacia la celda vecina más baja.
 - **Acumulación de flujo:** cuánta superficie drena a cada celda. Los canales y arroyos de OpenStreetMap se "queman" 3 m en el DEM para que el flujo los siga. Es un criterio de modelado, no una profundidad. La cuenca también se calcula sin ellos ("Sin canales OSM").
 - **TWI:** el índice topográfico de humedad, ln(a / tan β) (Beven y Kirkby 1979). Es alto donde el flujo converge y hay poca pendiente.
-- **Lluvia, humedad y cobertura:** NASA GPM IMERG V07 (eventos desde 2020), SMAP L3 (humedad previa, como contexto), MODIS MOD16 (evapotranspiración), MODIS MCD12Q1 (cobertura) y la textura de ISRIC SoilGrids. Van en `forcing.json` y `landcover.npz`, que hoy no están en el repositorio (ver "Antes de la demo").
+- **Lluvia, humedad y cobertura:** NASA GPM IMERG V07 (eventos desde 2020), SMAP L3 (humedad previa, como contexto), MODIS MOD16 (evapotranspiración), MODIS MCD12Q1 (cobertura) y la textura de ISRIC SoilGrids. Van en `data/hydrology/lote3/forcing.json` y `landcover.npz`.
 - **Caudal:** la escorrentía sale del número de curva SCS-CN (USDA NRCS TR-55), según la cobertura y el grupo de suelo. El caudal, del hidrograma unitario SCS (NEH 630, factor de pico 484) con el retardo de Mockus. Los parámetros y su fuente están en `backend/hydrology/parameters.yaml`.
 
 | Sección | Qué muestra |
@@ -704,7 +704,6 @@ En el botón "?" de la barra de la app y del encabezado del popup del lote, que 
 **Cuenca y Caudal**
 
 - Solo está procesada la zona del Lote 3. Fuera de ella, la pestaña muestra un aviso.
-- En el repositorio faltan `forcing.json` y `landcover.npz`: sin ellos no hay historial, el grupo de suelo queda B por defecto y toda la cuenca se toma como cultivo.
 - No hay caudales medidos para validar. El DEM de 30 m tiene un error del orden de los desniveles de la llanura, y los caminos, terraplenes y alcantarillas que no están en OpenStreetMap no están en el modelo.
 - IMERG tiene celdas de unos 10 km y su versión Late es preliminar. El factor de pico 484 probablemente sobreestima el caudal en la llanura.
 
