@@ -123,7 +123,34 @@ npm run deploy
 
 Compila el frontend (`npm ci` y `ng build`) y lo sube con Wrangler.
 
-Cada push a `main` corre `.github/workflows/deploy.yml`, que compila el frontend. Si el repositorio tiene los secrets `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`, además lo publica; sin ellos solo compila.
+### Publicación automática
+
+Cada push a `main` corre `.github/workflows/deploy.yml`, que publica solo:
+
+1. **Backend:** si el push cambió algo en `backend/` o `data/`, lo sube a Railway con `railway up`. Al correr el workflow a mano (Actions → Deploy → Run workflow) se puede elegir publicarlo igual.
+2. **Frontend:** después del backend, compila Angular y lo publica en Cloudflare Workers. Si el backend falló, el frontend no se publica.
+
+Necesita tres secrets en el repositorio (Settings → Secrets and variables → Actions). Sin ellos, el workflow solo compila:
+
+| Secret | Qué es | Dónde se crea |
+|---|---|---|
+| `CLOUDFLARE_API_TOKEN` | Token de API con la plantilla "Edit Cloudflare Workers" | Cloudflare → My Profile → API Tokens |
+| `CLOUDFLARE_ACCOUNT_ID` | Id de la cuenta de Cloudflare donde vive el Worker `lotestigo` | Cloudflare → Workers & Pages (columna derecha) |
+| `RAILWAY_TOKEN` | Token del proyecto `lotestigo`, entorno `production` | Railway → proyecto → Settings → Tokens |
+
+Cargarlos requiere permiso de administrador del repositorio. Con la CLI de GitHub:
+
+```bash
+gh secret set CLOUDFLARE_API_TOKEN -R Luciocos/NASA
+gh secret set CLOUDFLARE_ACCOUNT_ID -R Luciocos/NASA
+gh secret set RAILWAY_TOKEN -R Luciocos/NASA
+```
+
+Después de cargarlos, para publicar lo que ya está en `main` sin esperar al próximo push:
+
+```bash
+gh workflow run deploy.yml -R Luciocos/NASA
+```
 
 ## Estructura
 

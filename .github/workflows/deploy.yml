@@ -1,19 +1,73 @@
-name: Deploy to Cloudflare Workers
+name: Deploy
 
+# cada push a main publica solo: primero el backend en railway (si cambió backend/ o data/) y
+# después el frontend en cloudflare workers. sin los secrets del repo, solo compila
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      backend:
+        description: Publicar también el backend en Railway
+        type: boolean
+        default: true
 
 permissions:
   contents: read
 
+# un deploy de railway cortado a la mitad deja el servicio a medio actualizar: se encolan
 concurrency:
   group: deploy
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  backend:
+    runs-on: ubuntu-latest
+    env:
+      # token de proyecto de railway (proyecto lotestigo, entorno production)
+      HAS_RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Detect backend changes
+        id: changes
+        env:
+          EVENT: ${{ github.event_name }}
+          FORCE: ${{ inputs.backend }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            echo "backend=$FORCE" >> "$GITHUB_OUTPUT"
+          elif ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            # primer push de la rama o historia reescrita: se publica por las dudas
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "$BEFORE" "$AFTER" | grep -qE '^(backend|data)/'; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node
+        if: env.HAS_RAILWAY_TOKEN == 'true' && steps.changes.outputs.backend == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: frontend/.nvmrc
+
+      - name: Deploy backend to Railway
+        if: env.HAS_RAILWAY_TOKEN == 'true' && steps.changes.outputs.backend == 'true'
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: npx --yes @railway/cli@5.71.0 up --service backend --environment production --ci
+
+  frontend:
+    needs: backend
+    # si el backend falló, no se publica un frontend que puede depender de él
+    if: ${{ !cancelled() && needs.backend.result == 'success' }}
     runs-on: ubuntu-latest
     env:
       # sin el token en los secrets del repo, el workflow solo compila el frontend y no publica
