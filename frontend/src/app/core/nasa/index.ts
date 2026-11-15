@@ -35,6 +35,7 @@ export {
   compositeFromIndex,
   compositeIndexAt,
   landCoverWindow,
+  MODIS_CELL_M,
   parseLandCoverSubset,
   parseNdviSubset,
   windowKm,
@@ -68,7 +69,7 @@ export {
   nearestAvailable,
   parseGibsDomain,
 } from './gibs';
-export { isValidPixel, ndviSummary, observeLot, zonesByTerciles } from './summary';
+export { isMixedPixel, isValidPixel, ndviSummary, observeLot, zonesByTerciles } from './summary';
 export { DATA_SOURCES, IGBP_LABELS, NO_DATA_REASONS, type NasaSourceId } from './sources';
 export { createNasaClients, type NasaClients } from './clients';
 export {

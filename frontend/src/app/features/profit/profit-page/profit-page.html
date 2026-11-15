@@ -30,9 +30,7 @@
         >
           @if (marginHa() !== null) {
             <app-origin-badge [origin]="marginOrigin()" />
-            <span class="source">{{
-              marginOrigin() === 'ESTIMATED' ? 'Con el rinde de referencia' : 'Con tus datos'
-            }}</span>
+            <span class="source">{{ marginSource() }}</span>
           }
         </app-kpi-card>
         <app-kpi-card
@@ -77,24 +75,116 @@
             </p>
           }
 
-          <label class="field">
-            <span>Precio del grano <span class="unit">US$/t</span></span>
-            <input
-              type="text"
-              inputmode="decimal"
-              autocomplete="off"
-              [value]="field('price')"
-              (input)="setPrice($any($event.target).value)"
-              placeholder="Sin cargar"
-            />
-            <!-- el origen es del dato: recién con un precio cargado -->
-            <span class="field__hint">
-              @if (inputs().priceUsdT !== null) {
-                <app-origin-badge origin="DECLARED" />
-              }
-              Por tonelada, antes del flete.
-            </span>
-          </label>
+          <div class="price">
+            <label class="field">
+              <span>Precio del grano <span class="unit">US$/t</span></span>
+              <input
+                type="text"
+                inputmode="decimal"
+                autocomplete="off"
+                [value]="field('price')"
+                (input)="setPrice($any($event.target).value)"
+                placeholder="Sin cargar"
+              />
+              <!-- el origen es del dato: recién con un precio cargado (estimado si es el de Rofex) -->
+              <span class="field__hint">
+                @if (inputs().priceUsdT !== null) {
+                  <app-origin-badge [origin]="priceOrigin()" />
+                }
+                Por tonelada, antes del flete.
+              </span>
+            </label>
+
+            <!--
+              precio sugerido de Matba Rofex (backend/market): se pide recién con el botón. a la
+              vista, una línea con la fuente y la fecha; el contrato, el descargo y el aviso
+              completo del entorno de prueba, en el (i). se guarda con el precio: al recargar
+              vuelve con su origen y se puede actualizar
+            -->
+            @if (canSuggestPrice()) {
+              <div class="suggest" aria-live="polite">
+                @if (suggestion(); as s) {
+                  @if (priceOrigin() === 'ESTIMATED') {
+                    <span>Sugerido por Matba Rofex{{ suggestionDay(s.date) }}</span>
+                  } @else {
+                    <span>Rofex: US$ {{ number(s.price_usd_t) }}/t{{ suggestionDay(s.date) }}</span>
+                    <button
+                      type="button"
+                      class="btn btn--ghost btn--sm"
+                      aria-label="Usar el precio sugerido de Rofex"
+                      (click)="useSuggestion(s)"
+                    >
+                      Usar
+                    </button>
+                  }
+                  @if (s.simulated_market) {
+                    <span class="chip chip--warn"><app-icon name="alert" /> Precio de prueba</span>
+                  }
+                  <app-info-tip label="Sobre el precio sugerido">
+                    <p>
+                      <strong>Precio sugerido de mercado:</strong> US$
+                      {{ number(s.price_usd_t) }}/t, {{ suggestionKind(s.kind)
+                      }}{{ suggestionDate(s.date) }} del futuro {{ s.symbol }} en Matba Rofex.
+                    </p>
+                    <p>{{ s.disclaimer }}</p>
+                    @if (s.simulated_market) {
+                      <p>
+                        <strong
+                          >Viene del entorno de prueba reMarkets: no es un precio real de
+                          mercado.</strong
+                        >
+                      </p>
+                    }
+                    <p>Fuente: {{ s.source }}.</p>
+                    @if (suggestionError(); as message) {
+                      <p>No se pudo actualizar: {{ message }}</p>
+                    }
+                  </app-info-tip>
+                  <!-- guardada de otra vez (puede ser de otro día): se puede pedir de nuevo -->
+                  @if (suggestionSaved()) {
+                    <button
+                      type="button"
+                      class="btn btn--ghost btn--sm"
+                      [disabled]="loadingSuggestion()"
+                      (click)="loadSuggestedPrice()"
+                    >
+                      {{
+                        loadingSuggestion()
+                          ? 'Consultando Rofex…'
+                          : suggestionError()
+                            ? 'Reintentar'
+                            : 'Actualizar'
+                      }}
+                    </button>
+                  }
+                } @else if (suggestionError(); as message) {
+                  <span class="suggest__error" role="alert">Sin precio de Rofex</span>
+                  <app-info-tip label="Por qué no hay precio de Rofex">
+                    <p>{{ message }}</p>
+                  </app-info-tip>
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--sm"
+                    [disabled]="loadingSuggestion()"
+                    (click)="loadSuggestedPrice()"
+                  >
+                    {{ loadingSuggestion() ? 'Consultando Rofex…' : 'Reintentar' }}
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--sm suggest__load"
+                    [disabled]="loadingSuggestion()"
+                    (click)="loadSuggestedPrice()"
+                  >
+                    {{
+                      loadingSuggestion() ? 'Consultando Rofex…' : 'Usar precio sugerido de Rofex'
+                    }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
 
           <label class="field">
             <span>Rinde <span class="unit">t/ha</span></span>

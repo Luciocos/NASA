@@ -344,8 +344,9 @@
               Frente al anterior: {{ signed(summary().changeVsPrevious) }} · frente a hace un año:
               {{ signed(summary().changeVsLastYear) }}
             </li>
+            <!-- core/nasa pondera cada píxel por su parte dentro del lote; si ninguno lo toca, usa el más cercano -->
             @if (latest.centroidOnly) {
-              <li>El lote es más chico que un píxel: se usa el del centro.</li>
+              <li>Ningún píxel cae sobre el lote: se usa el más cercano a su centro.</li>
             }
           </ul>
         } @else {

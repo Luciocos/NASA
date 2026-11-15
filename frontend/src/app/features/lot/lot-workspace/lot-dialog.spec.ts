@@ -78,6 +78,21 @@ const DECLARED: LandUseDeclaration = {
   declared_at: '2026-11-15T15:00:00-03:00',
   origin: 'DECLARED',
 };
+// el mismo puntaje después de declarar: el backend toma la declaración (backend/carbon/score.py)
+const SCORE_DECLARED: SustainabilityScore = {
+  ...SCORE,
+  score: 100,
+  criteria: [
+    {
+      ...SCORE.criteria[0],
+      status: 'cumple',
+      status_label: 'Cumple',
+      origin: 'DECLARED',
+      reason: 'El productor declaró que el lote no cambió de uso del suelo desde 2020.',
+    },
+  ],
+  missing_criteria: [],
+};
 
 @Component({
   imports: [LotDialog],
@@ -279,12 +294,18 @@ describe('LotDialog', () => {
     http.expectOne('/api/lots/1/land-use/').flush(DECLARED);
     await fixture.whenStable();
     expect(dialog().textContent).toContain('Declarado por vos');
+    // el puntaje usa la declaración: se vuelve a pedir al toque y muestra el número nuevo
+    http.expectOne('/api/lots/1/score/').flush(SCORE_DECLARED);
+    await fixture.whenStable();
+    expect(dialog().querySelector('.score .stat__value')?.textContent).toContain('100');
 
+    // la huella también la usa: al abrir su pestaña se pide de nuevo
     tab('Huella').click();
     await fixture.whenStable();
+    expect(http.match((req) => req.url === '/api/lots/1/footprint/').length).toBeGreaterThan(0);
     tab('Prácticas').click();
     await fixture.whenStable();
-    http.expectOne('/api/lots/1/score/').flush(SCORE);
+    http.expectOne('/api/lots/1/score/').flush(SCORE_DECLARED);
     await fixture.whenStable();
     // la ficha del popup ya la tiene: no vuelve a preguntar
     expect(dialog().textContent).toContain('Declarado por vos');

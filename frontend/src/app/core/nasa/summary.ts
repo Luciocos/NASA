@@ -1,5 +1,5 @@
 import type { PolygonGeometry } from '../models';
-import { centroid, pointInPolygon, round } from './geo';
+import { CellOverlap, cellOverlap, centroid, geometryKey, round } from './geo';
 import type {
   NdviGrid,
   NdviObservation,
@@ -12,6 +12,15 @@ import type {
 } from './models';
 
 const DAY_MS = 86_400_000;
+
+/**
+ * píxel mixto: más de la mitad del cuadro de 250 m queda fuera del lote, así que su NDVI refleja
+ * sobre todo lo que hay alrededor (el campo vecino, un camino). Es la regla de la mayoría, no un
+ * umbral calibrado
+ */
+export function isMixedPixel(p: NdviPixel): boolean {
+  return p.insideShare !== undefined && p.insideShare < 0.5;
+}
 
 /** píxel usable: con valor y sin nubes ni nieve (0 bueno, 1 marginal) */
 export function isValidPixel(p: NdviPixel): boolean {
@@ -32,26 +41,50 @@ function nearestPixel(pixels: NdviPixel[], [lat, lng]: [number, number]): NdviPi
   return best;
 }
 
+// el recorte de cada píxel con el lote se repite en cada fecha: se guarda por lote y píxel
+const overlapCache = new Map<string, CellOverlap>();
+
+function overlapOf(p: NdviPixel, geometry: PolygonGeometry, lotKey: string): CellOverlap {
+  const key = `${lotKey}#${p.ring.map(([lat, lng]) => `${round(lat, 6)},${round(lng, 6)}`).join(';')}`;
+  let overlap = overlapCache.get(key);
+  if (!overlap) {
+    if (overlapCache.size > 20_000) overlapCache.clear();
+    overlap = cellOverlap(p.ring, geometry);
+    overlapCache.set(key, overlap);
+  }
+  return overlap;
+}
+
 /**
- * NDVI de un lote en una grilla: promedio de los píxeles cuyo centro cae dentro del polígono
- * (respetando huecos); si no cae ninguno, el píxel del centroide con centroidOnly true
+ * NDVI de un lote en una grilla: promedio de los píxeles que tocan el polígono (respetando
+ * huecos), ponderado por las hectáreas de cada píxel que caen dentro del lote. Un píxel que
+ * apenas roza el borde pesa poco. Si ningún píxel toca el lote, el del centroide con
+ * centroidOnly true
  */
 export function observeLot(grid: NdviGrid, geometry: PolygonGeometry): NdviObservation {
-  let candidates = grid.pixels.filter((p) => pointInPolygon(p.center, geometry));
-  const centroidOnly = candidates.length === 0;
+  const lotKey = geometryKey(geometry);
+  const weighted = grid.pixels
+    .map((p) => ({ p, ha: overlapOf(p, geometry, lotKey).areaHa }))
+    .filter((c) => c.ha > 0);
+  const centroidOnly = weighted.length === 0;
+  let candidates = weighted;
   if (centroidOnly) {
     const nearest = nearestPixel(grid.pixels, centroid(geometry));
-    candidates = nearest ? [nearest] : [];
+    candidates = nearest ? [{ p: nearest, ha: 1 }] : [];
   }
-  const valid = candidates.filter(isValidPixel);
-  const values = valid.map((p) => p.value as number);
+  const valid = candidates.filter((c) => isValidPixel(c.p));
+  const values = valid.map((c) => c.p.value as number);
+  const totalHa = valid.reduce((sum, c) => sum + c.ha, 0);
   let quality: NdviQuality;
-  if (valid.length) quality = valid.every((p) => p.reliability === 0) ? 'good' : 'marginal';
-  else quality = candidates.some((p) => p.reliability === 3) ? 'cloudy' : 'no_data';
+  if (valid.length) quality = valid.every((c) => c.p.reliability === 0) ? 'good' : 'marginal';
+  else quality = candidates.some((c) => c.p.reliability === 3) ? 'cloudy' : 'no_data';
   return {
     date: grid.date,
     satellite: grid.satellite,
-    mean: values.length ? round(values.reduce((s, v) => s + v, 0) / values.length, 4) : null,
+    mean:
+      totalHa > 0
+        ? round(valid.reduce((s, c) => s + (c.p.value as number) * c.ha, 0) / totalHa, 4)
+        : null,
     min: values.length ? Math.min(...values) : null,
     max: values.length ? Math.max(...values) : null,
     pixels: candidates.length,
@@ -110,10 +143,14 @@ const ZONE_LABELS: Record<NdviZoneLevel, string> = {
 
 /**
  * ambientes del lote: el rango entre el mínimo y el máximo de los píxeles válidos del lote se parte
- * en tres partes iguales (alto, medio, bajo); no hay umbrales fijos
+ * en tres partes iguales (alto, medio, bajo); no hay umbrales fijos. La parte de cada ambiente es
+ * su superficie dentro del lote sobre la superficie válida, no la cuenta de píxeles
  */
 export function zonesByTerciles(grid: NdviGrid): NdviZones {
   const valid = grid.pixels.filter((p) => p.inside && isValidPixel(p));
+  // peso de cada píxel: sus hectáreas dentro del lote (las grillas sin recorte pesan parejo)
+  const weight = (p: NdviPixel) => p.insideHa ?? 1;
+  const validWeight = valid.reduce((sum, p) => sum + weight(p), 0);
   const values = valid.map((p) => p.value as number);
   const base = { date: grid.date, validPixels: valid.length };
   if (valid.length < 3) {
@@ -147,7 +184,11 @@ export function zonesByTerciles(grid: NdviGrid): NdviZones {
       from: round(bounds[level][0], 4),
       to: round(bounds[level][1], 4),
       pixels,
-      share: round(pixels.length / valid.length, 4),
+      share: round(pixels.reduce((sum, p) => sum + weight(p), 0) / validWeight, 4),
+      mixedShare: round(
+        pixels.filter(isMixedPixel).reduce((sum, p) => sum + weight(p), 0) / validWeight,
+        4,
+      ),
     };
   });
   return { ...base, min, max, zones, note: null };

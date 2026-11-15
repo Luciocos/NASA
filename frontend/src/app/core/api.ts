@@ -18,6 +18,7 @@ import {
   PublicPassport,
   SimulationRequest,
   SimulationResult,
+  SuggestedPrice,
   SustainabilityScore,
 } from './models';
 
@@ -53,6 +54,7 @@ export class Api {
   /**
    * El dueño declara si el lote cambió de uso del suelo desde 2020 (unchanged true: no cambió).
    * Queda como dato DECLARED y pisa la declaración anterior. Un lote de ejemplo responde 403.
+   * El puntaje y la huella la usan si la bitácora no tiene un cambio de uso detectado.
    */
   declareLandUse(lotId: number, unchanged: boolean): Observable<LandUseDeclaration> {
     return this.http.post<LandUseDeclaration>(`/api/lots/${lotId}/land-use/`, { unchanged });
@@ -103,5 +105,14 @@ export class Api {
 
   passport(token: string): Observable<PublicPassport> {
     return this.http.get<PublicPassport>(`/api/passports/${token}/`);
+  }
+
+  // Mercado.
+
+  /** precio sugerido de mercado (Matba Rofex) para el cultivo y la campaña */
+  suggestedPrice(crop: string, campaign: string | null): Observable<SuggestedPrice> {
+    let params = new HttpParams().set('crop', crop);
+    if (campaign) params = params.set('campaign', campaign);
+    return this.http.get<SuggestedPrice>('/api/market/suggested-price/', { params });
   }
 }

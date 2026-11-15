@@ -80,7 +80,7 @@ export function joinList(items: readonly string[]): string {
   return `${items.slice(0, -1).join(', ')} y ${items[items.length - 1]}`;
 }
 
-export type MissingKind = 'yield' | 'inputs' | 'factors' | 'events' | 'other';
+export type MissingKind = 'yield' | 'inputs' | 'factors' | 'landUse' | 'other';
 
 /** Un renglón de "Para calcularla falta", en lenguaje llano. */
 export interface MissingItem {
@@ -98,8 +98,10 @@ export interface MissingItem {
 /**
  * Lo que falta para calcular la huella, agrupado: el rinde y los insumos los carga el
  * productor; los factores de emisión con fuente, el equipo; si hubo cambio de uso del suelo
- * sale de la bitácora satelital. Un componente puede faltar por más de un motivo. En un lote
- * ajeno (un ejemplo) el rinde y los insumos los carga el productor, no quien mira.
+ * desde 2020 sale de la bitácora satelital o, si no tiene ese evento, de lo que declara el
+ * productor en Prácticas (backend/carbon/footprint.py). Un componente puede faltar por más de un
+ * motivo. En un lote ajeno (un ejemplo) el rinde, los insumos y la declaración los carga el
+ * productor, no quien mira.
  */
 export function missingItems(fp: Footprint, own = true): MissingItem[] {
   const items: MissingItem[] = [];
@@ -114,12 +116,13 @@ export function missingItems(fp: Footprint, own = true): MissingItem[] {
   }
   const inputs = new Set<string>();
   const factors = new Set<string>();
-  const events = new Set<string>();
+  let landUse = false;
   const other = new Set<string>();
   for (const c of fp.components) {
     if (c.status !== 'sin_dato') continue;
+    // sin evento de cambio de uso en la bitácora y sin declaración: no se sabe si hubo cambio
     if (c.key === 'land_use_change' && c.activity.detected === null) {
-      events.add(shortLabel(c).toLowerCase());
+      landUse = true;
       continue;
     }
     const noRecords = c.activity.records === 0 && c.activity.quantity === null;
@@ -146,17 +149,17 @@ export function missingItems(fp: Footprint, own = true): MissingItem[] {
       who: 'lo carga el equipo',
     });
   }
-  if (events.size > 0) {
-    // lo que falta son eventos importados a la bitácora: la huella todavía no usa la
-    // declaración de uso del suelo ni lo que vio MODIS
+  if (landUse) {
+    // la huella usa el evento de la bitácora o, si no lo hay, la declaración del productor; lo
+    // que vio MODIS es orientativo y no entra en la cuenta
     items.push({
-      kind: 'events',
-      chip: 'Eventos de la bitácora',
-      title: 'Eventos de la bitácora',
-      detail: `de ${joinList([...events])} desde 2020`,
+      kind: 'landUse',
+      chip: 'Uso del suelo',
+      title: 'Uso del suelo',
+      detail: 'desde 2020',
       who: own
-        ? 'la huella usa los eventos importados a la bitácora; todavía no usa tu declaración ni lo que vio MODIS, que es orientativo'
-        : 'la huella usa los eventos importados a la bitácora; todavía no usa lo que vio MODIS, que es orientativo',
+        ? 'declaralo en la pestaña Prácticas (lo que vio MODIS es orientativo y no entra en la cuenta)'
+        : 'lo declara el productor o lo registra la bitácora (lo que vio MODIS es orientativo y no entra en la cuenta)',
     });
   }
   if (other.size > 0) {
@@ -178,7 +181,8 @@ export function missingItems(fp: Footprint, own = true): MissingItem[] {
  */
 export function shortReason(c: FootprintComponent): string | null {
   if (c.status !== 'sin_dato') return null;
-  if (c.key === 'land_use_change' && c.activity.detected === null) return 'Sin historial satelital';
+  if (c.key === 'land_use_change' && c.activity.detected === null)
+    return 'Sin declaración ni evento';
   const noRecords = c.activity.records === 0 && c.activity.quantity === null;
   const noFactor = c.factor.value === null || c.factor.value === undefined;
   if (noRecords && noFactor) return 'Faltan el dato y el factor';

@@ -257,7 +257,36 @@ def _land_use_component(
             hypothetical=any(e.hypothetical for e in events),
             note=f'Se detectó cambio de uso del suelo desde 2020 ({len(events)} evento/s).',
         )
-    if lot.events:
+    # Sin evento satelital, vale lo que declaró el productor (más fuerte que una ausencia inferida)
+    if lot.land_use_unchanged is not None:
+        changed = not lot.land_use_unchanged
+        activity = {
+            'quantity': 1.0 if changed else 0.0,
+            'unit': 'ha/ha',
+            'origin': Origin.DECLARED,
+            'origins': [Origin.DECLARED],
+            'records': 0,
+            'detected': changed,
+            'reference': None,
+        }
+        problems = []
+        if changed:
+            factor_problem = _factor_problem(factor)
+            problems = [factor_problem] if factor_problem else []
+        return _component_result(
+            component,
+            factor,
+            activity,
+            problems,
+            is_simulated=False,
+            note=(
+                'El productor declaró que el lote cambió de uso del suelo desde 2020.'
+                if changed
+                else 'El productor declaró que el lote no cambió de uso del suelo desde 2020: '
+                'aporte 0 (dato declarado, no observado por satélite).'
+            ),
+        )
+    if lot.has_observed_events:
         activity = {
             'quantity': 0.0,
             'unit': 'ha/ha',

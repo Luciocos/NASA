@@ -53,6 +53,18 @@ describe('ProfitPage', () => {
   let http: HttpTestingController;
   const text = () => (fixture.nativeElement as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
   const page = () => fixture.componentInstance as unknown as PageApi;
+  /** lo que se ve de un bloque: sin el contenido de las ayudas (i) */
+  const visible = (selector: string) => {
+    const node = (fixture.nativeElement as HTMLElement).querySelector(selector);
+    const clone = node?.cloneNode(true) as HTMLElement | undefined;
+    clone?.querySelectorAll('[popover], .visually-hidden').forEach((item) => item.remove());
+    return (clone?.textContent ?? '').replace(/\s+/g, ' ').trim();
+  };
+  /** un botón por su nombre accesible: el aria-label o el texto */
+  const buttonNamed = (name: string) =>
+    Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).find(
+      (b) => (b.getAttribute('aria-label') ?? b.textContent?.trim()) === name,
+    );
   /** los números grandes del margen: por hectárea y del lote */
   const amounts = () =>
     Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.hero .amount')).map((el) =>
@@ -89,6 +101,189 @@ describe('ProfitPage', () => {
     expect(text()).toContain('Sin dato');
     expect(text()).not.toContain('Sin dato t/ha');
     expect(text()).toContain('Faltan el precio del grano y el rinde.');
+  });
+
+  it('carga el precio sugerido de Rofex, lo marca como estimado y avisa si es de prueba', async () => {
+    await setup(3);
+    const button = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('button'),
+    ).find((b) => b.textContent?.includes('Usar precio sugerido de Rofex'));
+    expect(button).toBeDefined();
+    button!.click();
+    http
+      .expectOne(
+        (req) =>
+          req.url === '/api/market/suggested-price/' &&
+          req.params.get('crop') === 'SOY' &&
+          req.params.get('campaign') === '2025/26',
+      )
+      .flush({
+        crop: 'SOY',
+        symbol: 'SOJ.ROS/MAY26',
+        price_usd_t: 300,
+        kind: 'settlement',
+        date: '2026-11-13',
+        environment: 'REMARKET',
+        simulated_market: true,
+        source: 'Matba Rofex',
+        disclaimer: 'Precio sugerido de mercado.',
+      });
+    await fixture.whenStable();
+    expect(amounts()).toEqual(['900', '9.000']);
+    expect(text()).toContain('Precio sugerido de mercado: US$ 300/t, ajuste del 13/11/2026');
+    expect(text()).toContain('SOJ.ROS/MAY26');
+    expect(text()).toContain('no es un precio real de mercado');
+    expect(text()).toContain('Estimado');
+    // a la vista, una línea con la fuente y la fecha, y el aviso de prueba en un chip
+    expect(visible('.suggest')).toBe('Sugerido por Matba Rofex · 13/11/2026 Precio de prueba');
+    // el margen sale de un precio de prueba: también lo dice
+    expect(visible('.hero')).toContain('Con el precio de prueba de Rofex');
+    // si el productor lo cambia, pasa a ser declarado y el sugerido queda a mano con "Usar"
+    page().setPrice('310');
+    await fixture.whenStable();
+    expect(text()).not.toContain('Estimado');
+    expect(visible('.suggest')).toBe('Rofex: US$ 300/t · 13/11/2026 Usar Precio de prueba');
+    buttonNamed('Usar el precio sugerido de Rofex')!.click();
+    await fixture.whenStable();
+    expect(amounts()).toEqual(['900', '9.000']);
+    expect(text()).toContain('Estimado');
+  });
+
+  it('sin credenciales en el servidor muestra el motivo', async () => {
+    await setup(3);
+    (fixture.componentInstance as unknown as { loadSuggestedPrice(): void }).loadSuggestedPrice();
+    http
+      .expectOne((req) => req.url === '/api/market/suggested-price/')
+      .flush(
+        { detail: 'El servidor no tiene configurada la conexión con Matba Rofex.' },
+        { status: 503, statusText: 'Service Unavailable' },
+      );
+    await fixture.whenStable();
+    expect(text()).toContain('no tiene configurada la conexión');
+    // a la vista, el motivo corto; el mensaje del servidor, en el (i)
+    expect(visible('.suggest')).toBe('Sin precio de Rofex Reintentar');
+  });
+
+  it('el precio sugerido de otra campaña no queda rotulando el precio nuevo', async () => {
+    await start();
+    http.expectOne('/api/lots/1/').flush(LOT);
+    const two = {
+      ...footprint(3),
+      available_campaigns: [
+        { id: 4, label: '2024/25' },
+        { id: 5, label: '2025/26' },
+      ],
+    };
+    http.expectOne('/api/lots/1/footprint/').flush(two);
+    await fixture.whenStable();
+    buttonNamed('Usar precio sugerido de Rofex')!.click();
+    http
+      .expectOne((req) => req.url === '/api/market/suggested-price/')
+      .flush({
+        crop: 'SOY',
+        symbol: 'SOJ.ROS/MAY26',
+        price_usd_t: 300,
+        kind: 'last',
+        date: null,
+        environment: 'LIVE',
+        simulated_market: false,
+        source: 'Matba Rofex',
+        disclaimer: 'Precio sugerido de mercado.',
+      });
+    await fixture.whenStable();
+    expect(text()).toContain('Estimado');
+    // un precio del mercado real no se rotula como de prueba
+    expect(visible('.hero')).toContain('Con el precio de Rofex');
+    expect(visible('.hero')).not.toContain('prueba');
+
+    const select = (fixture.nativeElement as HTMLElement).querySelector('select')!;
+    select.value = '4';
+    select.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    http.expectOne('/api/lots/1/footprint/?campaign=4').flush({
+      ...two,
+      campaign: { id: 4, label: '2024/25', crop: 'SOY', crop_origin: 'DECLARED' },
+    });
+    await fixture.whenStable();
+    expect(text()).not.toContain('Estimado');
+    expect(visible('.suggest')).toBe('Usar precio sugerido de Rofex');
+  });
+
+  it('al volver a abrir, el precio de Rofex sigue estimado y con el aviso de prueba', async () => {
+    await setup(3);
+    buttonNamed('Usar precio sugerido de Rofex')!.click();
+    http
+      .expectOne((req) => req.url === '/api/market/suggested-price/')
+      .flush({
+        crop: 'SOY',
+        symbol: 'SOJ.ROS/MAY26',
+        price_usd_t: 300,
+        kind: 'settlement',
+        date: '2026-11-13',
+        environment: 'REMARKET',
+        simulated_market: true,
+        source: 'Matba Rofex',
+        disclaimer: 'Precio sugerido de mercado.',
+      });
+    await fixture.whenStable();
+    expect(text()).toContain('Estimado');
+
+    // la misma pantalla otra vez (por ejemplo, al recargar): lo guardado vuelve con su origen
+    const reopen = async () => {
+      fixture.destroy();
+      fixture = TestBed.createComponent(ProfitPage);
+      await fixture.whenStable();
+      http.expectOne('/api/lots/1/').flush(LOT);
+      http.expectOne('/api/lots/1/footprint/').flush(footprint(3));
+      await fixture.whenStable();
+    };
+    await reopen();
+    expect(amounts()).toEqual(['900', '9.000']);
+    expect(visible('.price .field__hint')).toContain('Estimado');
+    // guardada puede ser de otro día: se ofrece actualizarla
+    expect(visible('.suggest')).toBe(
+      'Sugerido por Matba Rofex · 13/11/2026 Precio de prueba Actualizar',
+    );
+    expect(visible('.hero')).toContain('Con el precio de prueba de Rofex');
+
+    // si no se puede actualizar, queda la que había, con su precio y su origen
+    buttonNamed('Actualizar')!.click();
+    http
+      .expectOne((req) => req.url === '/api/market/suggested-price/')
+      .flush({ detail: 'Rofex tardó demasiado en responder.' }, { status: 502, statusText: 'Bad' });
+    await fixture.whenStable();
+    expect(visible('.suggest')).toBe(
+      'Sugerido por Matba Rofex · 13/11/2026 Precio de prueba Reintentar',
+    );
+    expect(text()).toContain('No se pudo actualizar: Rofex tardó demasiado en responder.');
+    expect(amounts()).toEqual(['900', '9.000']);
+    expect(visible('.price .field__hint')).toContain('Estimado');
+
+    // actualizada: el precio nuevo pasa al campo y ya no hace falta actualizar
+    buttonNamed('Reintentar')!.click();
+    http
+      .expectOne((req) => req.url === '/api/market/suggested-price/')
+      .flush({
+        crop: 'SOY',
+        symbol: 'SOJ.ROS/MAY26',
+        price_usd_t: 320,
+        kind: 'last',
+        date: '2026-11-14',
+        environment: 'LIVE',
+        simulated_market: false,
+        source: 'Matba Rofex',
+        disclaimer: 'Precio sugerido de mercado.',
+      });
+    await fixture.whenStable();
+    expect(visible('.suggest')).toBe('Sugerido por Matba Rofex · 14/11/2026');
+    expect(amounts()).toEqual(['960', '9.600']);
+    expect(visible('.hero')).toContain('Con el precio de Rofex');
+
+    // un precio propio sigue declarado, con el sugerido a mano
+    page().setPrice('310');
+    await reopen();
+    expect(text()).not.toContain('Estimado');
+    expect(visible('.suggest')).toBe('Rofex: US$ 320/t · 14/11/2026 Usar Actualizar');
   });
 
   it('si solo falta el precio, lo dice como motivo del margen', async () => {

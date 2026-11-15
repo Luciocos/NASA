@@ -1,5 +1,7 @@
 """Pruebas del puntaje provisional. Los pesos son ficticios (ver conftest.py)."""
 
+from dataclasses import replace
+
 from carbon.config import parse_weights
 from carbon.score import WEIGHTS_PENDING_MESSAGE, compute_score
 from carbon.tests.conftest import make_campaign, make_event, make_lot
@@ -128,3 +130,25 @@ def test_evento_simulado_marca_el_criterio() -> None:
     result = compute_score(lot, NULL_WEIGHTS)
     assert criteria(result)['winter_cover']['is_simulated'] is True
     assert result['uses_simulated_data'] is True
+
+
+def test_declaracion_de_uso_del_suelo_cuenta_sin_bitacora() -> None:
+    lot = replace(make_lot(two_campaigns(), []), land_use_unchanged=True)
+    result = criteria(compute_score(lot, NULL_WEIGHTS))['no_land_use_change_since_2020']
+    assert result['status'] == 'cumple'
+    assert result['origin'] == 'DECLARED'
+
+    changed = replace(lot, land_use_unchanged=False)
+    result = criteria(compute_score(changed, NULL_WEIGHTS))['no_land_use_change_since_2020']
+    assert result['status'] == 'no_cumple'
+    assert result['origin'] == 'DECLARED'
+
+
+def test_evento_satelital_manda_sobre_la_declaracion_en_el_puntaje() -> None:
+    lot = replace(
+        make_lot(two_campaigns(), [make_event('LAND_USE_CHANGE', '2022-01-01', 'VERIFIED')]),
+        land_use_unchanged=True,
+    )
+    result = criteria(compute_score(lot, NULL_WEIGHTS))['no_land_use_change_since_2020']
+    assert result['status'] == 'no_cumple'
+    assert result['origin'] == 'VERIFIED'

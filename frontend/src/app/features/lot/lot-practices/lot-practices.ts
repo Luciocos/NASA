@@ -35,6 +35,7 @@ import { LotTabChange, lotTabs } from '../../../shared/ui/lot-tabs/lot-tabs';
 import { SectionCard } from '../../../shared/ui/section-card/section-card';
 import { EVENT_TYPE_LABELS, formatDate } from '../labels';
 import { LandUseCard } from './land-use/land-use-card';
+import { TerritorialChecks } from '../../territory/territorial-checks/territorial-checks';
 import { LAND_USE_KEY, formatDay, landUseMatch, modisStatus } from './land-use/land-use';
 import {
   RecommendationLink,
@@ -92,6 +93,7 @@ const CHIP_CLASSES: Record<StatusTone, string> = {
     SimulatedNotice,
     InfoTip,
     LandUseCard,
+    TerritorialChecks,
     Slides,
   ],
   templateUrl: './lot-practices.html',
@@ -194,8 +196,9 @@ export class LotPractices {
       : SCORE_FORMAT.format(score.score);
   });
   /**
-   * por qué no hay número. la práctica declarada ya se ve con su estado en la lista: no se la
-   * cuenta entre las que faltan, aunque el puntaje provisional todavía no la sume
+   * por qué no hay número. el puntaje usa la declaración de uso del suelo; mientras se vuelve a
+   * pedir después de declarar, la práctica declarada no se cuenta entre las que faltan: la lista
+   * ya la muestra con su estado
    */
   protected readonly scoreHint = computed(() => {
     const score = this.score();
@@ -203,11 +206,9 @@ export class LotPractices {
     if (!score.weights_defined) return 'Todavía sin pesos definidos';
     const pending = this.declaration() !== null && score.missing_criteria.includes(LAND_USE_KEY);
     const missing = score.missing_criteria.length - (pending ? 1 : 0);
-    const lacking =
-      missing > 0 ? `Faltan datos de ${missing} ${missing === 1 ? 'práctica' : 'prácticas'}` : '';
-    if (pending)
-      return lacking ? `${lacking} · tu declaración aún no suma` : 'Tu declaración aún no suma';
-    return lacking || 'Sin dato';
+    if (missing > 0)
+      return `Faltan datos de ${missing} ${missing === 1 ? 'práctica' : 'prácticas'}`;
+    return pending ? '' : 'Sin dato';
   });
   protected readonly confidenceText = computed(
     () => CONFIDENCE_TEXT[this.score()?.confidence.level ?? ''] ?? 'sin dato',
@@ -226,7 +227,8 @@ export class LotPractices {
   protected readonly formatDate = formatDate;
 
   constructor() {
-    // por el id: la ficha al día que llega después de declarar no vuelve a pedir el puntaje
+    // por el id: la ficha al día que llega después de declarar no lo pide de nuevo (ya lo pidió
+    // onDeclared, con retry)
     effect((onCleanup) => {
       const id = this.lotId();
       this.refresh();
@@ -250,10 +252,15 @@ export class LotPractices {
     this.attempt.update((value) => value + 1);
   }
 
-  /** la tarjeta de uso del suelo guardó una declaración */
+  /**
+   * la tarjeta de uso del suelo guardó una declaración. el puntaje la usa: se vuelve a pedir (lo
+   * que se ve queda hasta que llega). la huella se pide de nuevo al abrir su pestaña
+   */
   protected onDeclared(declaration: LandUseDeclaration | null): void {
     this.declaration.set(declaration);
-    if (declaration) this.declared.emit(declaration);
+    if (!declaration) return;
+    this.declared.emit(declaration);
+    this.retry();
   }
 
   /** la dirección de la pestaña de un enlace, con la vista si la tiene: /huella/12?vista=simulador */

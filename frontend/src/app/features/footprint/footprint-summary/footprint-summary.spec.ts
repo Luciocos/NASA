@@ -101,7 +101,7 @@ describe('FootprintSummary', () => {
 });
 
 describe('missingItems', () => {
-  it('agrupa lo que falta: rinde, insumos, factores e historial satelital', () => {
+  it('agrupa lo que falta: rinde, insumos, factores y uso del suelo', () => {
     const fp = makeFootprint({
       components: [
         makeComponent({
@@ -140,7 +140,39 @@ describe('missingItems', () => {
       ['yield', 'Rinde', 'de la campaña 2025/26'],
       ['inputs', 'Insumos', 'nitrógeno y gasoil'],
       ['factors', 'Factor de emisión', 'gasoil'],
-      ['events', 'Eventos de la bitácora', 'de cambio de uso del suelo desde 2020'],
+      ['landUse', 'Uso del suelo', 'desde 2020'],
+    ]);
+    // la huella usa la declaración de uso del suelo: en un lote propio se pide declararla
+    const landUse = missingItems(fp).find((item) => item.kind === 'landUse');
+    expect(landUse?.who).toContain('declaralo en la pestaña Prácticas');
+    expect(landUse?.who).not.toContain('todavía no usa');
+    expect(missingItems(fp, false).find((item) => item.kind === 'landUse')?.who).toContain(
+      'lo declara el productor',
+    );
+  });
+
+  it('con el uso del suelo declarado, la huella no lo pide aunque falte el factor', () => {
+    // declaró un cambio de uso: el componente queda sin dato solo por el factor de emisión
+    const fp = makeFootprint({
+      yield: { value: 3.2, unit: 't/ha', origin: 'DECLARED', status: 'calculado', reason: null },
+      components: [
+        makeComponent({
+          key: 'land_use_change',
+          status: 'sin_dato',
+          activity: {
+            quantity: 1,
+            unit: 'ha/ha',
+            origin: 'DECLARED',
+            origins: ['DECLARED'],
+            records: 0,
+            detected: true,
+          },
+          factor: { key: 'land_use_change', value: null },
+        }),
+      ],
+    });
+    expect(missingItems(fp).map((item) => [item.kind, item.detail])).toEqual([
+      ['factors', 'cambio de uso del suelo'],
     ]);
   });
 

@@ -135,6 +135,23 @@ const NEW_LOT = [
   'no_burn',
 ].map((key) => criterion(key, 'sin_dato'));
 
+/**
+ * el lote nuevo después de declarar el uso del suelo: el puntaje toma la declaración con su
+ * origen (backend/carbon/score.py) y el resto sigue sin dato
+ */
+function declaredLot(unchanged: boolean): ScoreCriterion[] {
+  return NEW_LOT.map((c, index) =>
+    index === 0
+      ? criterion(c.key, unchanged ? 'cumple' : 'no_cumple', {
+          origin: 'DECLARED',
+          reason: unchanged
+            ? 'El productor declaró que el lote no cambió de uso del suelo desde 2020.'
+            : 'El productor declaró que el lote cambió de uso del suelo desde 2020.',
+        })
+      : c,
+  );
+}
+
 const squash = (value: string | null | undefined) => (value ?? '').replace(/\s+/g, ' ').trim();
 
 describe('pickRecommendations', () => {
@@ -200,14 +217,18 @@ describe('practiceRows', () => {
     );
   });
 
-  it('con declaración muestra lo declarado y aclara que el puntaje todavía no lo suma', () => {
+  it('con declaración muestra lo declarado y, cuando el puntaje ya la usa, lo dice', () => {
+    // recién declarado, el puntaje que se ve todavía es el de antes: no se dice que la usa
     const [same] = practiceRows([landUse], declared(true), 'match');
     expect(same).toEqual(
       expect.objectContaining({ status: 'cumple', chip: 'Cumple', tone: 'ok', origin: 'DECLARED' }),
     );
-    expect(same.note).toBe(
-      'Lo declaraste el 15/11/2026 y lo respalda lo que vio MODIS. El puntaje provisional todavía no suma tu declaración: ahí figura como «Sin dato».',
+    expect(same.note).toBe('Lo declaraste el 15/11/2026 y lo respalda lo que vio MODIS.');
+    const [counted] = practiceRows(declaredLot(true).slice(0, 1), declared(true), 'match');
+    expect(counted.note).toBe(
+      'Lo declaraste el 15/11/2026 y lo respalda lo que vio MODIS. El puntaje provisional y la huella usan tu declaración.',
     );
+    expect(counted.note).not.toContain('todavía no');
 
     const [review] = practiceRows([landUse], declared(true), 'mismatch');
     expect(review).toEqual(
@@ -226,6 +247,37 @@ describe('practiceRows', () => {
     const [unclear] = practiceRows([landUse], declared(true), 'unconfirmed');
     expect(unclear).toEqual(expect.objectContaining({ chip: 'Cumple', tone: 'ok' }));
     expect(unclear.note).toContain('MODIS no alcanza para confirmarlo');
+  });
+
+  it('si la bitácora registra un cambio de uso, manda ese evento y pide revisar lo declarado', () => {
+    const detected = criterion('no_land_use_change_since_2020', 'no_cumple', {
+      origin: 'VERIFIED',
+      evidence: [
+        {
+          type: 'LAND_USE_CHANGE',
+          date: '2022-03-01',
+          origin: 'VERIFIED',
+          is_simulated: false,
+          hypothetical: false,
+        },
+      ],
+    });
+    const [review] = practiceRows([detected], declared(true), 'match');
+    expect(review).toEqual(
+      expect.objectContaining({
+        status: 'no_cumple',
+        chip: 'Revisar',
+        tone: 'warn',
+        origin: 'VERIFIED',
+        declared: false,
+      }),
+    );
+    expect(review.note).toContain('la bitácora registra un cambio de uso del suelo');
+    expect(review.note).toContain('el puntaje y la huella usan ese evento');
+
+    const [agree] = practiceRows([detected], declared(false), 'declared_change');
+    expect(agree).toEqual(expect.objectContaining({ chip: 'No cumple', origin: 'VERIFIED' }));
+    expect(agree.note).toContain('la bitácora también lo registra');
   });
 
   it('las demás prácticas no cambian con la declaración', () => {
@@ -276,7 +328,13 @@ describe('LotPractices', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    // el panel de chequeos territoriales pide lo suyo; acá no se prueba
+    http
+      .match((req) => req.url.endsWith('/territorial-checks/'))
+      .forEach((req) => req.flush({ lot: 1, disclaimer: '', checks: [] }));
+    http.verify();
+  });
 
   it('destaca hasta tres recomendaciones de una frase y cada práctica con su chip', async () => {
     await render(LOT, score(MIXED, { score: 40, missing_criteria: [] }));
@@ -383,7 +441,7 @@ describe('LotPractices', () => {
   });
 
   it('con una declaración en un lote nuevo, lo declarado sigue a la vista y el resto plegado', async () => {
-    await render({ ...LOT, land_use_declaration: declared(true) }, score(NEW_LOT));
+    await render({ ...LOT, land_use_declaration: declared(true) }, score(declaredLot(true)));
     const shown = [...el().querySelectorAll('.practices li')].filter(
       (row) => !row.closest('app-disclosure'),
     );
@@ -392,20 +450,21 @@ describe('LotPractices', () => {
     expect(squash(el().querySelector('.folded summary')?.textContent)).toContain(
       '4 prácticas sin dato todavía',
     );
-    // el puntaje cuenta las mismas que la lista: la declarada no falta, aunque todavía no sume
+    // el puntaje ya usa la declaración: faltan las mismas que en la lista, sin más aclaraciones
     expect(el().querySelector('.score .stat__hint')?.textContent?.trim()).toBe(
-      'Faltan datos de 4 prácticas · tu declaración aún no suma',
+      'Faltan datos de 4 prácticas',
     );
+    expect(text()).not.toContain('no suma');
   });
 
-  it('si solo faltaba el uso del suelo y está declarado, el puntaje no dice que faltan datos', async () => {
+  it('mientras el puntaje se vuelve a pedir, la práctica declarada no se cuenta como faltante', async () => {
+    // el puntaje que se ve es el de antes de declarar: el uso del suelo figura sin dato
     const criteria = NEW_LOT.map((c, index) =>
       index === 0 ? c : { ...c, status: 'cumple' as const },
     );
     await render({ ...LOT, land_use_declaration: declared(true) }, score(criteria));
-    expect(el().querySelector('.score .stat__hint')?.textContent?.trim()).toBe(
-      'Tu declaración aún no suma',
-    );
+    expect(el().querySelector('.score .stat__hint')?.textContent?.trim()).toBe('');
+    expect(text()).not.toContain('no suma');
   });
 
   it('en un ejemplo es de solo lectura: no invita a declarar y muestra solo lo de MODIS', async () => {
@@ -418,23 +477,52 @@ describe('LotPractices', () => {
 
   it('la fila del uso del suelo no contradice a la tarjeta cuando hay una declaración', async () => {
     const lot = { ...LOT, land_use_declaration: declared(true) };
-    await render(lot, score(NEW_LOT));
+    await render(lot, score(declaredLot(true)));
 
     const row = landUseRow();
     expect(row?.querySelector('.state')?.textContent?.trim()).toBe('Cumple');
     expect(row?.querySelector('app-origin-badge')?.textContent).toContain('Declarado');
     expect(tipOf(row)).toContain('lo respalda lo que vio MODIS');
-    expect(tipOf(row)).toContain('El puntaje provisional todavía no suma tu declaración');
+    expect(tipOf(row)).toContain('El puntaje provisional y la huella usan tu declaración');
     expect(visible()).toContain('Respaldado por lo que vio MODIS');
     // lo declarado ya no se recomienda como si faltara el dato
     const recs = [...el().querySelectorAll('.rec')].map((rec) => rec.textContent ?? '');
     expect(recs.some((rec) => rec.includes('montes'))).toBe(false);
-    expect(text()).toContain('Tu declaración del 15/11/2026 todavía no entra en este cálculo.');
+    // "Cómo se calcula" dice lo que usó el puntaje: la declaración, con su origen
+    const how = squash(el().querySelector('app-disclosure .how')?.textContent);
+    expect(how).toContain(
+      'El productor declaró que el lote no cambió de uso del suelo desde 2020.',
+    );
+    expect(how).not.toContain('todavía no entra');
+  });
+
+  it('si la bitácora registra el cambio de uso, "Cómo se calcula" dice que manda ese evento', async () => {
+    const detected = NEW_LOT.map((c, index) =>
+      index === 0
+        ? criterion(c.key, 'no_cumple', {
+            origin: 'VERIFIED',
+            evidence: [
+              {
+                type: 'LAND_USE_CHANGE',
+                date: '2022-03-01',
+                origin: 'VERIFIED',
+                is_simulated: false,
+                hypothetical: false,
+              },
+            ],
+          })
+        : c,
+    );
+    await render({ ...LOT, land_use_declaration: declared(true) }, score(detected));
+    expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('Revisar');
+    expect(squash(el().querySelector('app-disclosure .how')?.textContent)).toContain(
+      'Tu declaración del 15/11/2026 no cuenta acá: manda el cambio de uso que registra la bitácora.',
+    );
   });
 
   it('si lo declarado no coincide con MODIS, la fila pide revisarlo, igual que la tarjeta', async () => {
     modis.set(MODIS_CHANGED);
-    await render({ ...LOT, land_use_declaration: declared(true) }, score(NEW_LOT));
+    await render({ ...LOT, land_use_declaration: declared(true) }, score(declaredLot(true)));
 
     const state = landUseRow()?.querySelector('.state');
     expect(state?.textContent?.trim()).toBe('Revisar');
@@ -467,7 +555,7 @@ describe('LotPractices', () => {
     expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('Cumple');
   });
 
-  it('al declarar desde la tarjeta, la fila pasa a mostrar lo declarado', async () => {
+  it('al declarar desde la tarjeta, la fila pasa a mostrar lo declarado y el puntaje se pide de nuevo', async () => {
     const emitted: LandUseDeclaration[] = [];
     fixture.componentInstance.declared.subscribe((value) => emitted.push(value));
     await render(LOT, score(NEW_LOT));
@@ -480,9 +568,18 @@ describe('LotPractices', () => {
 
     // el espacio del lote se entera, así la declaración sigue al volver a la pestaña
     expect(emitted).toEqual([declared(false)]);
+    // mientras llega el puntaje nuevo se ve lo declarado
     expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('No cumple');
-    expect(tipOf(landUseRow())).toContain('ahí figura como «Sin dato»');
     expect(visible()).toContain('Con un cambio, la práctica no se cumple');
+
+    // el backend ya usa la declaración: el puntaje se vuelve a pedir y la ayuda lo dice
+    http.expectOne('/api/lots/1/score/').flush(score(declaredLot(false)));
+    await fixture.whenStable();
+    expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('No cumple');
+    expect(tipOf(landUseRow())).toContain('El puntaje provisional y la huella usan tu declaración');
+    expect(el().querySelector('.score .stat__hint')?.textContent?.trim()).toBe(
+      'Faltan datos de 4 prácticas',
+    );
   });
 
   it('sin editable no ofrece declarar aunque el lote sea propio', async () => {

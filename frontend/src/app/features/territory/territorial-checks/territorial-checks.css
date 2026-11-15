@@ -1,0 +1,153 @@
+/* el ancho que manda es el de la tarjeta: angosta al costado de Prácticas, ancha sola */
+:host {
+  display: block;
+  min-width: 0;
+  container: checks / inline-size;
+}
+
+p {
+  margin: 0;
+}
+
+.failure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.loading {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.loading__line {
+  height: 2.75rem;
+  border-radius: var(--radius-md);
+}
+
+/* una fila por chequeo, separadas por una línea fina como las prácticas */
+.checks {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.check + .check {
+  border-top: 1px solid var(--line);
+}
+
+/*
+ * angosta: el nombre arriba y los chips debajo, en todas las filas igual; con lugar, una sola
+ * línea. la flecha siempre a la derecha
+ */
+summary {
+  --icon-size: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'name chevron'
+    'tags chevron';
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-height: var(--tap);
+  padding: var(--space-1) 0;
+  list-style: none;
+  cursor: pointer;
+}
+
+@container checks (min-width: 34rem) {
+  summary {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: 'name tags chevron';
+  }
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.name {
+  grid-area: name;
+  min-width: 0;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+summary:hover .name {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.tags {
+  grid-area: tags;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.act {
+  color: var(--link);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.chevron {
+  grid-area: chevron;
+  color: var(--ink-3);
+  transition: rotate var(--dur-2) var(--ease-out);
+}
+
+details[open] > summary .chevron {
+  rotate: 180deg;
+}
+
+.body {
+  display: grid;
+  gap: var(--space-2);
+  padding: 0 0 var(--space-3);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+.summary strong {
+  color: var(--ink);
+}
+
+.sources {
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+}
+
+/*
+ * la alerta fuerte del OTBN, siempre a la vista: el ícono a la altura del primer renglón y al
+ * lado el texto, que se parte si no entra (con la leyenda de dato simulado, si la lleva)
+ */
+.strong {
+  --icon-size: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  margin: calc(var(--space-1) * -1) 0 var(--space-2);
+  color: var(--danger);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.strong app-icon {
+  flex: none;
+  margin-top: calc((1.45em - var(--icon-size)) / 2);
+}

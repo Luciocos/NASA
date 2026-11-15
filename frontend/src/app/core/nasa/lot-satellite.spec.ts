@@ -48,8 +48,14 @@ function fakeGrid(
   for (let i = -15; i <= 15; i++) {
     for (let j = -15; j <= 15; j++) {
       const center: LatLng = [lat0 + i * 0.002, lng0 + j * 0.002];
+      const h = 0.001;
       pixels.push({
-        ring: [center],
+        ring: [
+          [center[0] + h, center[1] - h],
+          [center[0] + h, center[1] + h],
+          [center[0] - h, center[1] + h],
+          [center[0] - h, center[1] - h],
+        ],
         center,
         value,
         reliability: rel,

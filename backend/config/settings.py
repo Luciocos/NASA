@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     'events',
     'carbon',
     'passports',
+    'territory',
+    'market',
 ]
 
 MIDDLEWARE = [

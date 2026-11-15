@@ -37,7 +37,8 @@
             }
           }
           Ese rango se parte en tres partes iguales: alto, medio y bajo, sin umbrales fijos. La
-          superficie de cada ambiente es aproximada.
+          superficie de cada ambiente suma la parte de cada cuadro que cae dentro del lote: es
+          aproximada.
         </p>
         <p>{{ modis.note }}</p>
         <p>
@@ -64,14 +65,45 @@
               <button type="button" class="btn btn--sm" (click)="retry()">Reintentar</button>
             </div>
           } @else if (state.data; as data) {
-            <p class="source-line">
-              <app-origin-badge [origin]="modis.origin" />
-              <!-- en una línea con su origen: el compuesto de 16 días y el producto, en el (i) -->
-              <span class="source"
-                >MODIS · imagen del {{ formatDate(data.date)
-                }}{{ state.stale ? ' · copia guardada, no se pudo actualizar' : '' }}</span
-              >
-            </p>
+            <!-- la fuente y los píxeles mixtos comparten la línea si entran; si no, bajan -->
+            <div class="map-meta">
+              <p class="source-line">
+                <app-origin-badge [origin]="modis.origin" />
+                <!-- en una línea con su origen: el compuesto de 16 días y el producto, en el (i) -->
+                <span class="source"
+                  >MODIS · imagen del {{ formatDate(data.date)
+                  }}{{ state.stale ? ' · copia guardada, no se pudo actualizar' : '' }}</span
+                >
+              </p>
+              <!-- los píxeles mixtos y el degradado del mapa: una línea; el porqué, en el (i) -->
+              @if (hasZones() && mixedHa() > 0) {
+                <div class="mixed-legend">
+                  <span class="mixed-swatch" aria-hidden="true"></span>
+                  <span>{{ hectares(mixedHa()) }} ha de píxeles mixtos, menos seguras</span>
+                  <app-info-tip label="Qué son los píxeles mixtos">
+                    <p>
+                      Las partes más transparentes salen de <strong>píxeles mixtos</strong>: más de
+                      la mitad del cuadro de 250 m queda fuera del lote, así que su NDVI refleja
+                      sobre todo lo que hay alrededor y su ambiente es menos seguro.
+                    </p>
+                    <ul>
+                      @for (row of rows(); track row.zone.level) {
+                        @if (row.mixedHa > 0) {
+                          <li>
+                            {{ row.zone.label }}: {{ hectares(row.mixedHa) }} ha de píxeles mixtos
+                          </li>
+                        }
+                      }
+                    </ul>
+                    <p>
+                      El paso suave de un color a otro es solo visual: las hectáreas de cada
+                      ambiente salen de cada cuadro. Tocá o pasá el mouse por el mapa para ver qué
+                      parte del cuadro es tuya.
+                    </p>
+                  </app-info-tip>
+                </div>
+              }
+            </div>
             @if (zones(); as z) {
               @if (z.zones.length === 0) {
                 <p class="alert alert--info">
@@ -94,6 +126,7 @@
               unit="ha"
               [caption]="percent(row.zone.share) + ' del lote'"
             >
+              <!-- las hectáreas de píxeles mixtos de cada ambiente, en el (i) de la leyenda -->
               <span class="zone-key">
                 <span
                   [class]="'swatch swatch--' + row.zone.level"

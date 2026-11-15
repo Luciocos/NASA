@@ -358,3 +358,20 @@ export interface PublicPassport {
   disclaimer: string;
   data_notice: string;
 }
+
+/** GET /api/market/suggested-price/: precio sugerido de mercado de Matba Rofex (vía pyRofex) */
+export interface SuggestedPrice {
+  crop: Crop;
+  /** contrato, por ejemplo SOJ.ROS/MAY27 (posición de cosecha de la campaña) */
+  symbol: string;
+  price_usd_t: number;
+  /** ajuste, último operado o cierre */
+  kind: 'settlement' | 'last' | 'close';
+  /** fecha del dato, AAAA-MM-DD */
+  date: string | null;
+  environment: 'LIVE' | 'REMARKET';
+  /** true en reMarkets, el entorno de prueba: el precio es simulado, no de mercado */
+  simulated_market: boolean;
+  source: string;
+  disclaimer: string;
+}

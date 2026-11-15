@@ -1,0 +1,116 @@
+<!--
+  una fila compacta por chequeo (nombre, estado y origen) y el resto plegado en la misma fila: el
+  resumen del backend, el detalle propio de cada chequeo y las fuentes. el aviso de que es un cruce
+  indicativo va en el subtítulo; el descargo completo, en el (i)
+-->
+<app-section-card heading="Chequeos territoriales" subtitle="Cruce indicativo con capas públicas.">
+  <app-info-tip actions label="Sobre los chequeos territoriales">
+    <p>
+      Cruzan el lote con el ordenamiento de bosque nativo de Santa Fe y con las áreas urbanas
+      cercanas, y muestran lo que se declaró sobre Buenas Prácticas.
+    </p>
+    @if (data(); as d) {
+      <p>{{ d.disclaimer }}</p>
+    }
+  </app-info-tip>
+
+  @if (error()) {
+    <div class="failure" role="alert">
+      <span>No se pudieron cargar los chequeos.</span>
+      <button type="button" class="btn btn--sm" (click)="reload()">Reintentar</button>
+    </div>
+  } @else if (data(); as d) {
+    <ul class="checks">
+      @for (check of d.checks; track check.key) {
+        @let look = statusLook(check);
+        @let origin = badgeOrigin(check);
+        <li class="check" [attr.data-status]="check.status">
+          <details (toggle)="onToggle(check.key, $event)">
+            <summary>
+              <span class="name">{{ shortTitle(check) }}</span>
+              <span class="tags">
+                <span class="chip state" [class]="look.chip">
+                  <app-icon [name]="look.icon" /> {{ look.label }}
+                </span>
+                <!-- el origen es de un dato: sin dato no hay nada que etiquetar -->
+                @if (check.status !== 'NO_DATA') {
+                  @if (origin) {
+                    <app-origin-badge [origin]="origin" />
+                  } @else {
+                    <span class="chip layer">{{ originLabels[check.origin] }}</span>
+                  }
+                }
+                @if (invitesDeclaring(check)) {
+                  <span class="act">Declarar</span>
+                }
+              </span>
+              <app-icon class="chevron" name="chevron-down" />
+            </summary>
+            <div class="body">
+              <p class="summary">
+                <strong>{{ check.title }}.</strong> {{ check.summary }}
+              </p>
+              <!-- el detalle se arma al abrir: el mapa de las franjas necesita su lugar a la vista -->
+              @if (isOpen(check.key)) {
+                @switch (check.key) {
+                  @case ('periurban') {
+                    <app-periurban-detail [check]="check" [lot]="lot()" [editable]="editable()" />
+                  }
+                  @case ('otbn') {
+                    <app-otbn-detail [check]="check" [lot]="lot()" [editable]="editable()" />
+                  }
+                  @case ('bpa') {
+                    <app-bpa-detail
+                      [check]="check"
+                      [lot]="lot()"
+                      [editable]="editable()"
+                      (changed)="reload()"
+                    />
+                  }
+                }
+              }
+              @if (check.sources.length) {
+                <p class="sources">
+                  Fuente:
+                  @for (s of check.sources; track s.name; let last = $last) {
+                    @if (s.url) {
+                      <a [href]="s.url" target="_blank" rel="noopener">{{ s.name }}</a>
+                    } @else {
+                      {{ s.name }}
+                    }
+                    @if (s.publisher) {
+                      ({{ s.publisher }}{{ s.date ? ', ' + s.date : '' }})
+                    }
+                    @if (!last) {
+                      ·
+                    }
+                  }
+                </p>
+              }
+            </div>
+          </details>
+          @if (strongAlert(check)) {
+            <!-- la alerta fuerte del OTBN no se pliega: una línea a la vista, el detalle adentro -->
+            <p class="strong" role="alert">
+              <app-icon name="alert" />
+              <!-- el texto y, si sale de un evento simulado, su leyenda, al lado del ícono -->
+              <span>
+                Posible desmonte: revisalo con la autoridad provincial.
+                @if (simulatedAlert(check)) {
+                  <app-simulated-notice />
+                }
+              </span>
+            </p>
+          }
+        </li>
+      }
+    </ul>
+  } @else {
+    <div class="loading" aria-busy="true">
+      <span class="skeleton loading__line"></span>
+      <span class="skeleton loading__line"></span>
+      <span class="skeleton loading__line"></span>
+      <p class="visually-hidden" role="status">Cargando los chequeos territoriales…</p>
+    </div>
+  }
+</app-section-card>

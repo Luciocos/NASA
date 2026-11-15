@@ -1,6 +1,7 @@
 import type { PolygonGeometry } from '../models';
-import type { NdviGrid, NdviObservation, NdviPixel } from './models';
-import { ndviSummary, observeLot, zonesByTerciles } from './summary';
+import { cellOverlap } from './geo';
+import type { LatLng, NdviGrid, NdviObservation, NdviPixel } from './models';
+import { isMixedPixel, ndviSummary, observeLot, zonesByTerciles } from './summary';
 
 /** grilla de 4 x 4 píxeles de 1° con centros en 0.5, 1.5, 2.5 y 3.5 */
 function grid(values: (number | null)[], reliability: number[] = []): NdviGrid {
@@ -51,10 +52,11 @@ const square = (min: number, max: number, hole?: [number, number]): PolygonGeome
 const VALUES = [0.9, 0.9, 0.9, 0.9, 0.2, 0.4, 0.6, 0.9, 0.3, 0.5, 0.7, 0.9, 0.1, 0.8, 0.6, 0.9];
 
 describe('NDVI del lote', () => {
-  it('promedia los píxeles con centro dentro del polígono', () => {
+  it('promedia los píxeles que caen dentro del polígono', () => {
     const obs = observeLot(grid(VALUES), square(0, 3));
     expect(obs).toMatchObject({ pixels: 9, validPixels: 9, quality: 'good', centroidOnly: false });
-    expect(obs.mean).toBeCloseTo(0.4667, 4);
+    // pondera por superficie: celdas de 1° casi iguales cerca del ecuador
+    expect(obs.mean).toBeCloseTo(0.4667, 3);
     expect([obs.min, obs.max]).toEqual([0.1, 0.8]);
   });
 
@@ -69,17 +71,84 @@ describe('NDVI del lote', () => {
     expect(obs.pixels).toBe(8);
     expect(obs.validPixels).toBe(6);
     expect(obs.quality).toBe('marginal');
-    expect(obs.mean).toBeCloseTo((0.2 + 0.4 + 0.6 + 0.3 + 0.7 + 0.6) / 6, 4);
+    expect(obs.mean).toBeCloseTo((0.2 + 0.4 + 0.6 + 0.3 + 0.7 + 0.6) / 6, 3);
   });
 
-  it('sin píxeles adentro usa el del centroide', () => {
+  it('un lote más chico que un píxel toma el píxel que lo contiene', () => {
     const obs = observeLot(grid(VALUES), square(2.2, 2.4));
-    // el centroide (2.3, 2.3) cae en el píxel con centro (2.5, 2.5)
-    expect(obs).toMatchObject({ pixels: 1, validPixels: 1, centroidOnly: true, mean: 0.6 });
+    // el lote cae entero en el píxel con centro (2.5, 2.5)
+    expect(obs).toMatchObject({ pixels: 1, validPixels: 1, centroidOnly: false, mean: 0.6 });
     const cloudy = observeLot(grid(VALUES, Array(16).fill(3)), square(2.2, 2.4));
     expect(cloudy).toMatchObject({ mean: null, quality: 'cloudy', validPixels: 0 });
     const empty = observeLot(grid(Array(16).fill(null), Array(16).fill(-1)), square(0, 3));
     expect(empty.quality).toBe('no_data');
+  });
+
+  it('pondera por la superficie de cada píxel dentro del lote', () => {
+    // lote de lng 0 a 1,1 y lat 1 a 2: casi todo en el píxel (1.5, 0.5) y una tira de 0,1° en
+    // el (1.5, 1.5). Con promedio simple daría (0.3 + 0.5) / 2 = 0.4
+    const lot: PolygonGeometry = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [0, 1],
+          [1.1, 1],
+          [1.1, 2],
+          [0, 2],
+          [0, 1],
+        ],
+      ],
+    };
+    const obs = observeLot(grid(VALUES), lot);
+    expect(obs.pixels).toBe(2);
+    expect(obs.mean).toBeCloseTo((0.3 * 1 + 0.5 * 0.1) / 1.1, 3);
+  });
+
+  it('sin píxeles que toquen el lote usa el del centroide', () => {
+    const outside = observeLot(grid(VALUES), square(10, 11));
+    expect(outside.centroidOnly).toBe(true);
+    expect(outside.pixels).toBe(1);
+  });
+});
+
+describe('cellOverlap', () => {
+  const cell: LatLng[] = [
+    [2, 0],
+    [2, 1],
+    [1, 1],
+    [1, 0],
+  ];
+
+  it('recorta el píxel al lote y da su área', () => {
+    // un lote que solo comparte el borde de abajo (lat 1) no aporta superficie
+    expect(cellOverlap(cell, square(0, 1)).areaHa).toBe(0);
+    const inside = cellOverlap(cell, square(0, 3));
+    const whole = (111.195 * 1000) ** 2 / 10_000; // ~1° x 1° cerca del ecuador, en ha
+    expect(inside.areaHa / whole).toBeGreaterThan(0.99);
+    expect(inside.rings).toHaveLength(1);
+  });
+
+  it('un lote que cubre parte del píxel da solo esa parte', () => {
+    const part = cellOverlap(cell, square(0, 1.25));
+    const whole = cellOverlap(cell, square(0, 3)).areaHa;
+    // lng 0..1 y lat 1..1,25: un cuarto del píxel
+    expect(part.areaHa / whole).toBeCloseTo(0.25, 2);
+    for (const [lat, lng] of part.rings[0]) {
+      expect(lat).toBeLessThanOrEqual(1.25 + 1e-9);
+      expect(lng).toBeLessThanOrEqual(1 + 1e-9);
+    }
+  });
+
+  it('descuenta los huecos del lote', () => {
+    // el hueco lng 1..2, lat 1..2 tapa entero al píxel de esa posición
+    const covered: LatLng[] = [
+      [2, 1],
+      [2, 2],
+      [1, 2],
+      [1, 1],
+    ];
+    expect(cellOverlap(covered, square(0, 3, [1, 2])).areaHa).toBe(0);
+    expect(cellOverlap(cell, square(0, 3, [1, 2])).areaHa).toBeGreaterThan(0);
   });
 });
 
@@ -138,5 +207,35 @@ describe('zonesByTerciles', () => {
   it('avisa cuando no alcanza para separar ambientes', () => {
     expect(zonesByTerciles(grid(Array(16).fill(0.5))).note).toContain('parejo');
     expect(zonesByTerciles(grid(Array(16).fill(null))).zones).toEqual([]);
+  });
+});
+
+describe('píxeles mixtos', () => {
+  it('cuenta aparte la superficie de los píxeles que no caen enteros en el lote', () => {
+    const g = grid(VALUES);
+    // fila de abajo: dos píxeles enteros y uno con solo el 10 % dentro del lote
+    const share = (i: number, insideShare: number, insideHa: number) => {
+      g.pixels[i] = { ...g.pixels[i], inside: true, insideShare, insideHa };
+    };
+    for (const p of g.pixels) Object.assign(p, { inside: false });
+    // NDVI 0,1 a 0,9: cortes en 0,367 y 0,633, así que el 0,6 mixto cae en medio
+    share(12, 1, 10); // 0.1
+    share(15, 1, 10); // 0.9
+    share(14, 0.1, 1); // 0.6
+    const z = zonesByTerciles(g);
+    const byLevel = Object.fromEntries(z.zones.map((zone) => [zone.level, zone]));
+    expect(byLevel['alto'].share).toBeCloseTo(10 / 21, 4);
+    expect(byLevel['alto'].mixedShare).toBe(0);
+    expect(byLevel['medio'].share).toBeCloseTo(1 / 21, 4);
+    expect(byLevel['medio'].mixedShare).toBeCloseTo(1 / 21, 4);
+  });
+
+  it('un píxel entero no es mixto y uno sin recorte tampoco', () => {
+    const base = grid(VALUES).pixels[0];
+    expect(isMixedPixel({ ...base, insideShare: 1 })).toBe(false);
+    expect(isMixedPixel({ ...base, insideShare: 0.4 })).toBe(true);
+    // la mayor parte adentro: no es mixto aunque no esté entero
+    expect(isMixedPixel({ ...base, insideShare: 0.7 })).toBe(false);
+    expect(isMixedPixel(base)).toBe(false);
   });
 });

@@ -171,3 +171,31 @@ p {
     padding: var(--space-2);
   }
 }
+
+/* el precio y, pegada debajo, la línea del precio sugerido de Rofex */
+.price {
+  display: grid;
+  gap: var(--space-1);
+}
+
+/* una línea: el botón, o la fuente y la fecha del sugerido con su (i); se parte si no entra */
+.suggest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-2);
+  min-height: var(--tap);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+/* el botón fantasma alinea su texto con el borde del campo */
+.suggest__load {
+  margin-inline-start: calc(var(--space-3) * -1);
+}
+
+.suggest__error {
+  color: var(--warn);
+  font-weight: 600;
+}

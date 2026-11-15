@@ -119,3 +119,105 @@ export function geometryKey(geometry: PolygonGeometry): string {
     .map((ring) => ring.map(([lng, lat]) => `${round(lng, 5)},${round(lat, 5)}`).join(';'))
     .join('|');
 }
+
+/** parte de un píxel que cae dentro del lote */
+export interface CellOverlap {
+  /** superficie del píxel dentro del lote, en hectáreas (sin los huecos del lote) */
+  areaHa: number;
+  /**
+   * anillos [lat, lng] para dibujar: primero el pedazo del contorno del lote dentro del píxel y
+   * después los pedazos de los huecos. Vacío si el píxel no toca el lote
+   */
+  rings: LatLng[][];
+}
+
+type XY = [number, number];
+
+/** área con signo en m² de un anillo en metros */
+function planarArea(ring: XY[]): number {
+  let sum = 0;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    sum += ring[j][0] * ring[i][1] - ring[i][0] * ring[j][1];
+  }
+  return sum / 2;
+}
+
+/**
+ * recorte de Sutherland-Hodgman de un anillo cualquiera contra un polígono convexo antihorario.
+ * Si el anillo es cóncavo puede dejar bordes de ida y vuelta sobre el contorno del convexo; no
+ * cambian el área ni se ven en el mapa
+ */
+function clipToConvex(subject: XY[], clip: XY[]): XY[] {
+  let output = subject;
+  for (let i = 0; i < clip.length && output.length; i++) {
+    const [ax, ay] = clip[i];
+    const [bx, by] = clip[(i + 1) % clip.length];
+    const side = ([x, y]: XY) => (bx - ax) * (y - ay) - (by - ay) * (x - ax);
+    const cross = (p: XY, q: XY): XY => {
+      const sp = side(p);
+      const t = sp / (sp - side(q));
+      return [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+    };
+    const input = output;
+    output = [];
+    for (let k = 0; k < input.length; k++) {
+      const current = input[k];
+      const previous = input[(k + input.length - 1) % input.length];
+      const inCurrent = side(current) >= 0;
+      const inPrevious = side(previous) >= 0;
+      if (inCurrent) {
+        if (!inPrevious) output.push(cross(previous, current));
+        output.push(current);
+      } else if (inPrevious) {
+        output.push(cross(previous, current));
+      }
+    }
+  }
+  return output;
+}
+
+/** anillo GeoJSON [lng, lat] a metros sinusoidales, sin el punto de cierre repetido */
+function toSinusoidal(ring: number[][]): XY[] {
+  const points = ring.map(([lng, lat]) => latLngToSinusoidal([lat, lng]));
+  const first = points[0];
+  const last = points.at(-1);
+  if (points.length > 1 && first[0] === last![0] && first[1] === last![1]) points.pop();
+  return points;
+}
+
+/**
+ * qué parte del píxel cae dentro del lote. Se calcula en metros de la grilla sinusoidal de MODIS,
+ * que es de área igual: el área sale en hectáreas reales y el píxel ahí es un cuadrilátero convexo
+ */
+export function cellOverlap(cell: LatLng[], geometry: PolygonGeometry): CellOverlap {
+  const empty: CellOverlap = { areaHa: 0, rings: [] };
+  const [outer, ...holes] = geometry.coordinates;
+  if (!outer || outer.length < 3 || cell.length < 3) return empty;
+  let clip = cell.map(latLngToSinusoidal);
+  if (planarArea(clip) < 0) clip = [...clip].reverse();
+
+  const xs = clip.map((p) => p[0]);
+  const ys = clip.map((p) => p[1]);
+  const lot = toSinusoidal(outer);
+  if (
+    Math.max(...lot.map((p) => p[0])) < Math.min(...xs) ||
+    Math.min(...lot.map((p) => p[0])) > Math.max(...xs) ||
+    Math.max(...lot.map((p) => p[1])) < Math.min(...ys) ||
+    Math.min(...lot.map((p) => p[1])) > Math.max(...ys)
+  ) {
+    return empty;
+  }
+
+  const piece = clipToConvex(lot, clip);
+  let areaM2 = Math.abs(planarArea(piece));
+  if (piece.length < 3 || areaM2 < 1) return empty;
+  const holePieces = holes
+    .map((hole) => clipToConvex(toSinusoidal(hole), clip))
+    .filter((h) => h.length >= 3);
+  for (const h of holePieces) areaM2 -= Math.abs(planarArea(h));
+  // menos de 1 m² es resto de redondeo (por ejemplo, un hueco que tapa el píxel entero)
+  if (areaM2 < 1) return empty;
+
+  const toLatLng = (ring: XY[]) => ring.map(([x, y]) => sinusoidalToLatLng(x, y));
+  return { areaHa: areaM2 / 10_000, rings: [piece, ...holePieces].map(toLatLng) };
+}

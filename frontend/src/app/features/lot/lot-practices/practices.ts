@@ -157,7 +157,7 @@ export interface PracticeRow {
   tone: StatusTone;
   origin: Origin | null;
   hypothetical: boolean;
-  /** la fila muestra lo que declaró el productor, que el puntaje provisional todavía no suma */
+  /** la fila muestra lo que declaró el productor (no lo que dice un evento de la bitácora) */
   declared: boolean;
   /** la ayuda (i) de la fila, o null */
   note: string | null;
@@ -170,11 +170,15 @@ const UNDECLARED_REVIEW =
   'El puntaje lo da por cumplido porque la bitácora no tiene un cambio de uso, pero MODIS vio un uso distinto: miralo en «Uso del suelo desde 2020».';
 
 /**
- * las filas de la lista. con una declaración de uso del suelo, su fila muestra lo declarado
- * (DECLARED) para no contradecir a la tarjeta de uso del suelo: "Revisar" si no coincide con
- * MODIS. la ayuda aclara que el puntaje provisional todavía no la suma y qué figura ahí. sin
- * declaración tampoco la contradice: si el puntaje la da por cumplida y MODIS vio un uso
- * distinto (`modis`), la fila pide revisarla
+ * las filas de la lista. el puntaje y la huella usan la declaración de uso del suelo, salvo que
+ * la bitácora registre un cambio de uso detectado, que manda (backend/carbon/score.py)
+ *
+ * con una declaración, su fila muestra lo declarado (DECLARED) para no contradecir a la tarjeta
+ * de uso del suelo: "Revisar" si no coincide con MODIS. la ayuda dice si el puntaje ya la usa
+ * (mientras se vuelve a pedir después de declarar, todavía no). si la bitácora tiene el cambio
+ * detectado, la fila muestra ese evento y pide revisarlo si lo declarado dice otra cosa. sin
+ * declaración tampoco contradice a la tarjeta: si el puntaje la da por cumplida y MODIS vio un
+ * uso distinto (`modis`), la fila pide revisarla
  */
 export function practiceRows(
   criteria: readonly ScoreCriterion[],
@@ -209,9 +213,28 @@ export function practiceRows(
       };
     }
 
+    // el satélite detectó un cambio de uso: el puntaje usa ese evento y no la declaración
+    if (criterion.status === 'no_cumple' && criterion.evidence.length > 0) {
+      const day = formatDay(declaration.declared_at);
+      return declaration.unchanged
+        ? {
+            ...row,
+            chip: 'Revisar',
+            icon: 'alert',
+            tone: 'warn',
+            note: `Declaraste el ${day} que no cambió, pero la bitácora registra un cambio de uso del suelo: el puntaje y la huella usan ese evento. Revisalo en la pestaña Bitácora.`,
+          }
+        : {
+            ...row,
+            note: `Declaraste el ${day} que hubo un cambio de uso del suelo y la bitácora también lo registra: el puntaje y la huella usan ese evento.`,
+          };
+    }
+
     const status: CriterionStatus = declaration.unchanged ? 'cumple' : 'no_cumple';
     const review = declaration.unchanged && match === 'mismatch';
     const said = declaredNote(declaration, match);
+    // recién declarado, el puntaje se vuelve a pedir: hasta que llega no se dice que la usa
+    const counted = criterion.origin === 'DECLARED';
     return {
       ...row,
       status,
@@ -221,7 +244,7 @@ export function practiceRows(
       origin: declaration.origin,
       hypothetical: false,
       declared: true,
-      note: `${said} El puntaje provisional todavía no suma tu declaración: ahí figura como «${statusLabel(criterion)}».`,
+      note: counted ? `${said} El puntaje provisional y la huella usan tu declaración.` : said,
     };
   });
 }

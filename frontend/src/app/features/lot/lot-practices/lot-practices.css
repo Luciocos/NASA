@@ -9,7 +9,10 @@ p {
   margin: 0;
 }
 
-/* una sola columna; con lugar, las prácticas a la izquierda y el uso del suelo al lado */
+/*
+ * una sola columna; con lugar, las prácticas a la izquierda y, al lado, el uso del suelo con los
+ * chequeos territoriales debajo: el lateral se apila y la pestaña no se alarga hacia abajo
+ */
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -20,12 +23,24 @@ p {
 @container practices (min-width: 54rem) {
   .layout {
     grid-template-columns: minmax(0, 1fr) 23rem;
+    /* la segunda fila absorbe lo que sobre de las prácticas: los chequeos quedan pegados arriba */
+    grid-template-rows: auto 1fr;
     gap: var(--space-5);
+  }
+
+  .practices-card {
+    grid-row: 1 / span 2;
+  }
+
+  .land-use,
+  .territory {
+    grid-column: 2;
   }
 }
 
 .practices-card,
-.land-use {
+.land-use,
+.territory {
   min-width: 0;
 }
 

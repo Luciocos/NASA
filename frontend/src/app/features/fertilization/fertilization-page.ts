@@ -141,10 +141,15 @@ export class FertilizationPage {
     const area = this.lot()?.area_ha ?? 0;
     return (this.zones()?.zones ?? []).map((zone) => {
       const ha = zone.share * area;
+      const mixedHa = zone.mixedShare * area;
       const dose = this.doses()[zone.level];
-      return { zone, ha, dose, totalN: dose === null ? null : dose * ha };
+      return { zone, ha, mixedHa, dose, totalN: dose === null ? null : dose * ha };
     });
   });
+  /** hectáreas del lote que salen de píxeles mixtos, en todos los ambientes */
+  protected readonly mixedHa = computed(() =>
+    this.rows().reduce((sum, row) => sum + row.mixedHa, 0),
+  );
   protected readonly dosesHint = computed(() => {
     const rows = this.rows();
     const loaded = rows.filter((row) => row.dose !== null).length;

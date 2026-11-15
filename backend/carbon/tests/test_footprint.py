@@ -187,6 +187,50 @@ def test_lote_sin_eventos_no_sabe_si_hubo_cambio_de_uso(fake_factors) -> None:
     assert result['total_kg_co2e_per_t'] is None
 
 
+def test_declaracion_sin_cambio_de_uso_completa_el_total(fake_factors) -> None:
+    # Lote dibujado por el productor: sin bitácora, pero declaró que no cambió el uso
+    lot = replace(make_lot(events=[]), land_use_unchanged=True)
+    result = compute_footprint(lot, lot.campaigns[0], fake_factors)
+    land_use = by_key(result)['land_use_change']
+    assert land_use['status'] == 'calculado'
+    assert land_use['kg_co2e_per_ha'] == 0
+    assert land_use['activity']['origin'] == 'DECLARED'
+    assert land_use['activity']['detected'] is False
+    assert result['total_kg_co2e_per_t'] == pytest.approx(150 / 4)
+
+
+def test_declaracion_de_cambio_de_uso_suma_con_factor(fake_factors) -> None:
+    lot = replace(make_lot(events=[]), land_use_unchanged=False)
+    result = compute_footprint(lot, lot.campaigns[0], fake_factors)
+    land_use = by_key(result)['land_use_change']
+    assert land_use['activity']['origin'] == 'DECLARED'
+    assert land_use['activity']['detected'] is True
+    assert result['total_kg_co2e_per_t'] == pytest.approx((150 + 1000) / 4)
+
+
+def test_declaracion_de_cambio_de_uso_sin_factor_queda_sin_dato(null_factors) -> None:
+    lot = replace(make_lot(events=[]), land_use_unchanged=False)
+    land_use = by_key(compute_footprint(lot, lot.campaigns[0], null_factors))['land_use_change']
+    assert land_use['status'] == 'sin_dato'
+    assert land_use['activity']['detected'] is True
+
+
+def test_evento_satelital_de_cambio_de_uso_manda_sobre_la_declaracion(fake_factors) -> None:
+    lot = replace(
+        make_lot(events=[make_event('LAND_USE_CHANGE', '2021-03-01', 'VERIFIED')]),
+        land_use_unchanged=True,
+    )
+    land_use = by_key(compute_footprint(lot, lot.campaigns[0], fake_factors))['land_use_change']
+    assert land_use['activity']['origin'] == 'VERIFIED'
+    assert land_use['activity']['detected'] is True
+
+
+def test_declaracion_manda_sobre_la_ausencia_inferida(null_factors) -> None:
+    lot = replace(make_lot(), land_use_unchanged=True)
+    land_use = by_key(compute_footprint(lot, lot.campaigns[0], null_factors))['land_use_change']
+    assert land_use['activity']['origin'] == 'DECLARED'
+
+
 def test_lote_sin_campanias_no_falla(fake_factors) -> None:
     lot = make_lot(campaigns=[], events=[])
     result = compute_footprint(lot, None, fake_factors)

@@ -1,0 +1,56 @@
+# Distancias de exclusión para aplicación de fitosanitarios alrededor de plantas urbanas.
+# Las usa backend/territory/checks/periurban.py. Ver README.md de esta carpeta.
+#
+# Regla: no cargar una distancia sin haberla leído en el documento original. Si no está
+# verificada: distancia_*_m: null y validated: false (el chequeo devuelve NO_DATA).
+
+normas:
+  santa_fe_ley_11273:
+    norma: Ley provincial de Santa Fe N° 11.273 de Productos Fitosanitarios
+    fecha: '1995-09-28'  # sanción, según el texto publicado
+    url: https://santafe.gob.ar/index.php/web/content/download/3686/21012/file/LEY%2011273.pdf
+    publisher: Gobierno de la Provincia de Santa Fe
+    articulo_aereo: >-
+      Art. 33: prohíbe la aplicación aérea de productos de clase toxicológica A y B dentro
+      del radio de 3.000 metros de las plantas urbanas.
+    articulo_terrestre: >-
+      Art. 34: prohíbe la aplicación terrestre de productos de clase toxicológica A y B
+      dentro del radio de 500 metros de las plantas urbanas (clases C y D, conforme a la
+      reglamentación).
+    distancia_terrestre_m: 500
+    distancia_aerea_m: 3000
+    validated: true
+    notas: >-
+      Leído en el PDF del sitio oficial de la provincia (descargado 2026-11-15). La Ley
+      11.354 modifica los arts. 11, 17 y 19, no los 33 y 34. El Decreto 552/97 (arts. 51 a
+      53) reglamenta excepciones y deja la delimitación de la planta urbana a cada
+      municipio o comuna por ordenanza (art. 52). Hay fallos judiciales que fijaron
+      distancias mayores en casos puntuales (por ejemplo, San Jorge/Piamonte); no se
+      aplican acá.
+
+localidades:
+  # name tiene que coincidir con properties.name de urban_areas.geojson.
+  - name: Casilda
+    provincia: Santa Fe
+    norma_ref: santa_fe_ley_11273
+    ordenanza_municipal: null  # no se encontró una ordenanza de Casilda con distancias
+  - name: Chabás
+    provincia: Santa Fe
+    norma_ref: santa_fe_ley_11273
+    ordenanza_municipal: null
+  - name: Fuentes
+    provincia: Santa Fe
+    norma_ref: santa_fe_ley_11273
+    ordenanza_municipal: null
+  - name: Los Molinos
+    provincia: Santa Fe
+    norma_ref: santa_fe_ley_11273
+    ordenanza_municipal: null
+  - name: Pujato
+    provincia: Santa Fe
+    norma_ref: santa_fe_ley_11273
+    ordenanza_municipal: null
+  - name: Sanford
+    provincia: Santa Fe
+    norma_ref: santa_fe_ley_11273
+    ordenanza_municipal: null

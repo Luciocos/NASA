@@ -185,8 +185,12 @@
                   <span class="muted">{{ weightText(criterion.weight, s.max_score) }}</span>
                 </p>
                 <p>{{ criterion.reason }}</p>
-                @if (criterion.key === landUseKey && declaration()) {
-                  <p>Tu declaración del {{ declaredOn() }} todavía no entra en este cálculo.</p>
+                <!-- el puntaje usa la declaración, salvo que la bitácora tenga el cambio detectado -->
+                @if (criterion.key === landUseKey && declaration() && criterion.evidence.length) {
+                  <p>
+                    Tu declaración del {{ declaredOn() }} no cuenta acá: manda el cambio de uso que
+                    registra la bitácora.
+                  </p>
                 }
                 @if (criterion.hypothetical) {
                   <p class="muted">Incluye un supuesto.</p>
@@ -234,4 +238,6 @@
     [declaration]="declaration()"
     (declarationChange)="onDeclared($event)"
   />
+
+  <app-territorial-checks class="territory" [lot]="lot()" [editable]="canEdit()" />
 </div>
