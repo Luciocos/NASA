@@ -165,7 +165,7 @@ describe('WaterPage', () => {
     expect(text()).toContain('45 ha están fuera del lote');
     expect(text()).toContain('sin validar');
     expect(text()).toContain('Estimado');
-    expect(text()).toContain('Configurado para el Lote 3');
+    expect(text()).not.toContain('Configurado para');
   });
 
   it('avisa cuando el lote está fuera de la zona procesada', async () => {
