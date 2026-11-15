@@ -7,7 +7,7 @@ import { provideOfflineTesting } from '../../core/offline/testing';
 import { LandingPage } from './landing-page';
 
 const TITLE =
-  'An ecosystem that empowers farmers and advisors to monitor simplified NASA data, footprints, fertilization and profitability';
+  'An ecosystem to monitor simplified NASA data, footprints, fertilization and profitability';
 
 /** palabras y letras del español: en la landing no tiene que quedar ninguna a la vista */
 const SPANISH =
