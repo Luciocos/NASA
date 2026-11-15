@@ -8,6 +8,7 @@ import { AuthService } from './core/auth/auth.service';
 import { RETURN_PARAM, isAuthScreen, safeReturnUrl } from './core/auth/return-url';
 import { ConnectionStatus } from './core/offline/connection-status/connection-status';
 import { UpdateToast } from './core/offline/update-toast/update-toast';
+import { HelpButton } from './features/help/help-button/help-button';
 import { Icon } from './shared/ui/icon/icon';
 
 /** sección del marco que se marca como activa en la navegación */
@@ -20,7 +21,7 @@ export type AppSection = 'field' | 'draw' | null;
  * la marca e "Ingresar", que después vuelve a la pantalla actual
  */
 @Component({
-  imports: [RouterOutlet, RouterLink, ConnectionStatus, UpdateToast, AccountChip, Icon],
+  imports: [RouterOutlet, RouterLink, ConnectionStatus, UpdateToast, AccountChip, Icon, HelpButton],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',

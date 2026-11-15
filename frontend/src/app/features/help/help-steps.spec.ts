@@ -14,8 +14,13 @@ describe('HELP_STEPS', () => {
       'rentabilidad',
       'pasaporte',
     ]);
+    // la guía sigue el orden de la fila de pestañas; las que no piden cargar nada (como Cuenca y
+    // Caudal, que muestra datos del pipeline) no tienen paso
     const tabs = HELP_STEPS.flatMap((step) => (step.tab ? [step.tab] : []));
-    expect(tabs).toEqual(lotTabs(1).map((tab) => tab.key));
+    const ordered = lotTabs(1)
+      .map((tab) => tab.key)
+      .filter((key) => tabs.includes(key));
+    expect(tabs).toEqual(ordered);
   });
 
   it('cada paso tiene una frase de seis palabras como mucho y una descripción para la imagen', () => {

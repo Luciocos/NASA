@@ -26,6 +26,7 @@ import { LotDetail, LotSummary } from '../../../core/models';
 import { OriginBadge } from '../../origin-badge/origin-badge';
 import { Icon } from '../icon/icon';
 import { IconName } from '../icon/icons';
+import { HelpButton } from '../../../features/help/help-button/help-button';
 import { MoreMenu } from '../more-menu/more-menu';
 
 export type LotTabKey =
@@ -126,7 +127,7 @@ function pathOf(url: string): string {
 @Component({
   selector: 'app-lot-tabs',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Icon, MoreMenu, OriginBadge],
+  imports: [RouterLink, Icon, MoreMenu, OriginBadge, HelpButton],
   host: {
     '[class.is-stuck]': 'stuck()',
     '[class.is-dialog]': 'dialog()',
@@ -156,6 +157,8 @@ function pathOf(url: string): string {
               >
             }
           </div>
+          <!-- la guía con imágenes para cargar datos, abierta en el paso de la pestaña -->
+          <app-help-button class="help" [step]="active()" />
           @if (canShare()) {
             <app-more-menu class="more" label="Más opciones del lote">
               @if (l.renspa) {
@@ -365,9 +368,17 @@ function pathOf(url: string): string {
       flex: none;
       align-self: center;
     }
+    .help {
+      flex: none;
+      margin-left: auto;
+      align-self: center;
+    }
     .more {
       flex: none;
       margin-left: auto;
+    }
+    .help + .more {
+      margin-left: 0;
     }
     .close {
       flex: none;

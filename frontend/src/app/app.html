@@ -33,6 +33,7 @@
       </nav>
 
       <app-connection-status />
+      <app-help-button [step]="section() === 'draw' ? 'marcar' : 'abrir'" />
       <app-account-chip class="topbar__account" />
     } @else if (path() !== '/ingresar') {
       <a routerLink="/ingresar" [queryParams]="loginParams()" class="btn topbar__login">Ingresar</a>
