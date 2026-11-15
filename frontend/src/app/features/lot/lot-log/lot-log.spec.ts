@@ -194,7 +194,21 @@ describe('LotLog', () => {
     expect(row).toContain('Estimado');
     expect(rows()[0].getAttribute('aria-haspopup')).toBe('dialog');
     expect(rows()[0].getAttribute('aria-expanded')).toBe('false');
-    expect(text()).toContain('1 evento · abrilo para ver su evidencia');
+    // sin imagen de evidencia no la promete
+    expect(text()).toContain('1 evento · abrilo para ver el detalle');
+    expect(row).not.toContain('con evidencia');
+  });
+
+  it('marca las filas con imagen de evidencia y recién ahí la promete', async () => {
+    await render([
+      makeEvent({ id: 1, evidence_image_url: '/media/evidence/radar.png' }),
+      makeEvent({ id: 2, date: '2026-08-01' }),
+    ]);
+    const row = (id: number) => rows().find((item) => item.dataset['eventId'] === String(id));
+    expect(row(1)?.querySelector('.row__evidence')).not.toBeNull();
+    expect(squash(row(1)?.textContent)).toContain('con evidencia');
+    expect(row(2)?.querySelector('.row__evidence')).toBeNull();
+    expect(text()).toContain('2 eventos · abrí uno para ver su evidencia');
   });
 
   it('si todos los eventos son simulados lo dice una vez arriba, no en cada fila', async () => {
@@ -400,7 +414,10 @@ describe('LotLog', () => {
   });
 
   it('un lote de ejemplo es de solo lectura aunque llegue editable', async () => {
-    await render([makeEvent()], { lot: EXAMPLE, editable: true });
+    await render([makeEvent({ evidence_optical_image_url: '/media/evidence/hls.png' })], {
+      lot: EXAMPLE,
+      editable: true,
+    });
     expect(text()).toContain('abrilo para ver su evidencia');
     await openRow();
     expect(button('Confirmar')).toBeUndefined();
@@ -409,6 +426,8 @@ describe('LotLog', () => {
 
   it('en un lote propio confirma desde el detalle y la fila muestra el nuevo origen', async () => {
     await render([makeEvent()], { editable: true });
+    const reviewed: EventLogItem[] = [];
+    fixture.componentInstance.reviewed.subscribe((event) => reviewed.push(event));
     expect(text()).toContain('1 evento · abrilo para revisarlo');
     await openRow();
     expect(button('Corregir')).toBeDefined();
@@ -422,6 +441,8 @@ describe('LotLog', () => {
 
     expect(panel()?.textContent).toContain('ahora figura como dato declarado');
     expect(rows()[0].textContent).toContain('Declarado');
+    // el espacio del lote se entera, así las marcas del verdor muestran el evento revisado
+    expect(reviewed.map((event) => event.origin)).toEqual(['DECLARED']);
   });
 
   it('si falla la red, lo dice y deja reintentar', async () => {

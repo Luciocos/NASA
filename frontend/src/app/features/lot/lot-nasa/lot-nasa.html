@@ -25,7 +25,6 @@
       @if (ndviView) {
         <app-origin-badge [origin]="dataSources.modisNdvi.origin" />
       }
-      <span class="source">MODIS Terra</span>
     </app-kpi-card>
 
     @let rainView = rainKpi();
@@ -42,7 +41,6 @@
       @if (rainView) {
         <app-origin-badge [origin]="dataSources.power.origin" />
       }
-      <span class="source">NASA POWER</span>
     </app-kpi-card>
 
     @let soilView = soilKpi();
@@ -59,7 +57,6 @@
       @if (soilView) {
         <app-origin-badge [origin]="dataSources.power.origin" />
       }
-      <span class="source">NASA POWER</span>
     </app-kpi-card>
   </div>
 
@@ -76,10 +73,20 @@
     <div class="chart__notes">
       @if (pending(ndvi())) {
         <p class="note" role="status">
-          {{ offline() ? offlineText : 'Consultando MODIS: ' + percent(ndvi().progress) }}
+          {{
+            offline()
+              ? offlineText
+              : 'Consultando MODIS (' + percent(ndvi().progress) + '): ' + modisWait
+          }}
         </p>
       } @else if (ndvi().error && ndvi().data) {
-        <p class="note">{{ ndvi().error }}</p>
+        <!-- llegó una parte: se dice en pocas palabras y el motivo del servicio va en la ayuda -->
+        <p class="note">
+          Faltan algunas fechas del verdor
+          <app-info-tip label="Por qué faltan fechas">
+            <p>No llegaron todas las fechas del verdor. {{ serviceText(ndvi().error) }}</p>
+          </app-info-tip>
+        </p>
       }
       @if (ndvi().stale) {
         <p class="note">Copia guardada: no se pudo actualizar.</p>
@@ -99,9 +106,33 @@
   }
 </app-section-card>
 
-<section class="more" aria-labelledby="sat-more-title" aria-roledescription="carrusel">
+<!--
+  el detalle en tarjetas deslizables: en la compu, al costado y a la vista; en el celular, plegado
+  en "Más datos" para que la pestaña entre en una pantalla
+-->
+@if (narrow()) {
+  <app-disclosure
+    class="more more--fold"
+    flat
+    label="Más datos"
+    hint="Lluvia, uso del suelo, NISAR"
+    [(open)]="moreOpen"
+  >
+    <div class="more__body" role="region" aria-label="Más datos" aria-roledescription="carrusel">
+      <ng-container [ngTemplateOutlet]="moreCards" />
+    </div>
+  </app-disclosure>
+} @else {
+  <section class="more" aria-labelledby="sat-more-title" aria-roledescription="carrusel">
+    <ng-container [ngTemplateOutlet]="moreCards" />
+  </section>
+}
+
+<ng-template #moreCards>
   <div class="more__head">
-    <h2 id="sat-more-title">Más datos</h2>
+    @if (!narrow()) {
+      <h2 id="sat-more-title">Más datos</h2>
+    }
     <div class="more__nav">
       <p class="more__count" aria-live="polite" aria-atomic="true">{{ slider.position() }}</p>
       @if (!slider.allVisible()) {
@@ -153,7 +184,7 @@
         @if (climate().data) {
           <app-origin-badge [origin]="dataSources.power.origin" />
         }
-        <span class="source">Fuente: NASA POWER (zona de unos 50 km)</span>
+        <span class="source">NASA POWER, zona de 50 km</span>
       </p>
     </article>
 
@@ -167,21 +198,27 @@
         <app-icon name="map" /> {{ slides[1] }}
         @if (landUse().data; as evidence) {
           <app-info-tip label="Cómo se lee">
-            <p>{{ evidence.reason }}</p>
+            <p>{{ forLot(evidence.reason, mine()) }}</p>
             <p>
-              Cobertura del suelo de MODIS en píxeles de unos 460 m: es orientativa. En Prácticas la
-              comparás con lo que declarás.
+              Cobertura del suelo de MODIS en píxeles de unos 460 m: es orientativa.
+              {{
+                mine()
+                  ? 'En Prácticas la comparás con lo que declarás.'
+                  : 'En Prácticas se ve año por año.'
+              }}
             </p>
           </app-info-tip>
         }
       </h3>
       @if (landUse().data; as evidence) {
-        <p>
-          <span class="chip {{ landUseVerdicts[evidence.verdict].tone }}">
-            <app-icon [name]="evidence.verdict === 'possible_change' ? 'alert' : 'check'" />
-            {{ landUseVerdicts[evidence.verdict].text }}
-          </span>
-        </p>
+        @if (landUseChip(); as verdict) {
+          <p>
+            <span class="chip {{ verdict.tone }}">
+              <app-icon [name]="verdict.icon" />
+              {{ verdict.text }}
+            </span>
+          </p>
+        }
         <ul class="years">
           @for (year of evidence.years; track year.year) {
             <li>
@@ -191,7 +228,7 @@
         </ul>
       } @else if (pending(landUse())) {
         <p class="note" role="status">
-          {{ offline() ? offlineText : 'Consultando MODIS…' }}
+          {{ offline() ? offlineText : 'Consultando MODIS: ' + modisWait }}
         </p>
       } @else {
         <p class="note">Sin dato: {{ reason(landUse()) }}</p>
@@ -339,25 +376,35 @@
       aria-roledescription="tarjeta"
       [attr.aria-label]="slideLabel(5)"
     >
-      <h3 class="slide__title"><app-icon name="info" /> {{ slides[5] }}</h3>
-      <div class="options" role="group" aria-label="Opciones de la consulta">
-        @if (!fullHistory()) {
-          <button type="button" class="btn btn--sm" (click)="ndviSince.set('2020-01-01')">
-            Traer el historial desde 2020
-          </button>
-        }
-        <button type="button" class="btn btn--sm" (click)="retry()">Volver a consultar</button>
-      </div>
+      <h3 class="slide__title">
+        <app-icon name="info" /> {{ slides[5] }}
+        <app-info-tip label="Detalle de las fuentes">
+          <ul>
+            @for (source of sources; track source.short) {
+              <li>
+                <strong>{{ source.name }}</strong>: {{ source.product }}. {{ source.resolution }},
+                {{ source.cadence }}. {{ forLot(source.note, mine()) }}
+              </li>
+            }
+          </ul>
+        </app-info-tip>
+      </h3>
       <ul class="sources">
-        @for (source of sources; track source.name + source.product) {
+        @for (source of sources; track source.short) {
           <li>
-            <span
-              ><strong>{{ source.name }}</strong> · {{ source.resolution }}</span
-            >
+            <span>{{ source.short }}</span>
             <app-origin-badge [origin]="source.origin" />
           </li>
         }
       </ul>
+      <div class="options" role="group" aria-label="Opciones de la consulta">
+        @if (!fullHistory()) {
+          <button type="button" class="btn btn--sm" (click)="ndviSince.set('2020-01-01')">
+            Historial desde 2020
+          </button>
+        }
+        <button type="button" class="btn btn--sm btn--ghost" (click)="retry()">Actualizar</button>
+      </div>
     </article>
   </div>
-</section>
+</ng-template>

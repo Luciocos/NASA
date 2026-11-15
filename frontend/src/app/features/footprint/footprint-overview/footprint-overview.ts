@@ -8,7 +8,7 @@ import { KpiCard } from '../../../shared/ui/kpi-card/kpi-card';
 import { SectionCard } from '../../../shared/ui/section-card/section-card';
 import { CardSlides } from '../card-slides/card-slides';
 import { CONFIDENCE_LABELS, formatNumber, shortLabel } from '../format';
-import { HelpTip } from '../help-tip/help-tip';
+import { InfoTip } from '../../../shared/ui/info-tip/info-tip';
 
 /** un componente calculado en "Qué pesa más" */
 interface Weight {
@@ -36,7 +36,7 @@ const TOP = 4;
 @Component({
   selector: 'app-footprint-overview',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CardSlides, HelpTip, Icon, KpiCard, OriginBadge, SectionCard, SimulatedNotice],
+  imports: [CardSlides, InfoTip, Icon, KpiCard, OriginBadge, SectionCard, SimulatedNotice],
   styleUrl: './footprint-overview.css',
   templateUrl: './footprint-overview.html',
 })

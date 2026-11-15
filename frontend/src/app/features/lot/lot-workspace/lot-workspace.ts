@@ -14,12 +14,19 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { Params } from '@angular/router';
+import { Params, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 import { Api } from '../../../core/api';
-import { EventLogItem, LotDetail } from '../../../core/models';
+import { EventLogItem, LandUseDeclaration, LotDetail } from '../../../core/models';
 import { Icon } from '../../../shared/ui/icon/icon';
-import { LotTabKey, LotTabs, lotTabFromPath } from '../../../shared/ui/lot-tabs/lot-tabs';
+import {
+  LotTabChange,
+  LotTabKey,
+  LotTabs,
+  lotTabFromPath,
+  lotTabs,
+} from '../../../shared/ui/lot-tabs/lot-tabs';
 import { FertilizationPage } from '../../fertilization/fertilization-page';
 import { FootprintPage } from '../../footprint/footprint-page/footprint-page';
 import { ProfitPage } from '../../profit/profit-page/profit-page';
@@ -29,11 +36,7 @@ import { LotPractices } from '../lot-practices/lot-practices';
 import { LotLoadError, LotStatus } from './lot-status';
 
 /** otra pestaña pedida desde el popup: la fila de pestañas o un enlace del contenido */
-export interface LotTabChange {
-  tab: LotTabKey;
-  /** consulta del enlace que la pidió (por ejemplo, la vista de la huella) */
-  params?: Params;
-}
+export type { LotTabChange } from '../../../shared/ui/lot-tabs/lot-tabs';
 
 /**
  * el espacio de un lote: su encabezado (nombre, superficie, lugar, la marca de ejemplo y el
@@ -41,10 +44,13 @@ export interface LotTabChange {
  * lote (`mode="dialog"`: el encabezado queda fijo y el contenido se desplaza adentro) y como
  * página en las rutas del lote (`mode="page"`)
  *
- * pide la ficha una sola vez por lote; cada pestaña carga su código y sus datos recién al
- * abrirla. en el popup, un enlace del contenido a otra pestaña de este lote (por ejemplo, de la
- * huella a Prácticas) cambia de pestaña sin salir del popup. un lote que no existe o es de
- * otra cuenta (404) muestra la invitación a ingresar
+ * pide la ficha una vez por lote y se la pasa a cada pestaña, que carga su código y sus datos
+ * recién al abrirla. lo que una pestaña escribe vuelve a la ficha (la declaración de uso del
+ * suelo, el rinde declarado en la huella, un evento revisado), así al volver a otra pestaña no
+ * se ve lo de antes. en el popup, un enlace del contenido a otra pestaña de este lote (por
+ * ejemplo, de la huella a Prácticas) cambia de pestaña sin salir del popup, y el foco pasa a la
+ * pestaña abierta. un lote que no existe o es de otra cuenta (404) muestra la invitación a
+ * ingresar
  *
  * @example
  * <app-lot-workspace mode="dialog" [lotId]="12" tab="footprint" (tabChange)="…" (closed)="…" />
@@ -85,14 +91,20 @@ export interface LotTabChange {
         @switch (tab()) {
           @case ('log') {
             @defer (on immediate) {
-              <app-lot-log [lot]="lot" [editable]="editable()" />
+              <app-lot-log [lot]="lot" [editable]="editable()" (reviewed)="onReviewed($event)" />
             } @placeholder {
               <div class="skeleton tab-skeleton" aria-hidden="true"></div>
             }
           }
           @case ('practices') {
             @defer (on immediate) {
-              <app-lot-practices [lot]="lot" [editable]="editable()" [refresh]="attempt()" />
+              <app-lot-practices
+                [lot]="lot"
+                [editable]="editable()"
+                [refresh]="attempt()"
+                (openTab)="openTab($event)"
+                (declared)="onLandUseDeclared($event)"
+              />
             } @placeholder {
               <div class="skeleton tab-skeleton" aria-hidden="true"></div>
             }
@@ -101,8 +113,10 @@ export interface LotTabChange {
             @defer (on immediate) {
               <app-footprint-page
                 [lotId]="lot.id"
+                [lotDetail]="lot"
                 [embedded]="true"
-                (openTab)="tabChange.emit({ tab: $event })"
+                (openTab)="openTab({ tab: $event })"
+                (declared)="refreshLot()"
               />
             } @placeholder {
               <div class="skeleton tab-skeleton" aria-hidden="true"></div>
@@ -110,14 +124,14 @@ export interface LotTabChange {
           }
           @case ('fertilization') {
             @defer (on immediate) {
-              <app-fertilization-page [id]="lot.id" [embedded]="true" />
+              <app-fertilization-page [id]="lot.id" [lotDetail]="lot" [embedded]="true" />
             } @placeholder {
               <div class="skeleton tab-skeleton" aria-hidden="true"></div>
             }
           }
           @case ('profit') {
             @defer (on immediate) {
-              <app-profit-page [id]="lot.id" [embedded]="true" />
+              <app-profit-page [id]="lot.id" [lotDetail]="lot" [embedded]="true" />
             } @placeholder {
               <div class="skeleton tab-skeleton" aria-hidden="true"></div>
             }
@@ -202,6 +216,7 @@ export interface LotTabChange {
 })
 export class LotWorkspace {
   private readonly api = inject(Api);
+  private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
@@ -230,11 +245,14 @@ export class LotWorkspace {
   /** eventos de la bitácora para marcarlos en el verdor: los pide solo la pestaña Satélite */
   protected readonly events = signal<EventLogItem[]>([]);
   private eventsOf: number | null = null;
+  /** la ficha que se vuelve a pedir sin esqueleto, después de que una pestaña la cambió */
+  private refreshing: Subscription | null = null;
 
   constructor() {
     effect((onCleanup) => {
       const id = this.lotId();
       this.attempt();
+      this.refreshing?.unsubscribe();
       untracked(() => {
         this.lot.set(null);
         this.error.set(null);
@@ -283,14 +301,23 @@ export class LotWorkspace {
       );
     });
 
-    // al cambiar de pestaña en el popup, el contenido nuevo arranca desde arriba
+    // al cambiar de pestaña en el popup, el contenido nuevo arranca desde arriba. si la pidió un
+    // enlace del contenido, ese enlace ya no está y el foco cayó fuera del popup: pasa a la
+    // pestaña abierta, así el lector de pantalla la nombra y Tab sigue por su contenido
     effect(() => {
       this.tab();
       if (!untracked(this.dialog)) return;
       afterNextRender(
         () => {
-          const panel = this.host.nativeElement.querySelector<HTMLElement>('.lot-body');
+          const host = this.host.nativeElement;
+          const panel = host.querySelector<HTMLElement>('.lot-body');
           if (panel) panel.scrollTop = 0;
+          const focused = this.document.activeElement;
+          if (focused && focused !== this.document.body && host.contains(focused)) return;
+          if (!host.closest('dialog[open]')) return;
+          host
+            .querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+            ?.focus({ preventScroll: true });
         },
         { injector: this.injector },
       );
@@ -301,11 +328,54 @@ export class LotWorkspace {
     const host = this.host.nativeElement;
     const onClick = (event: MouseEvent) => this.keepLinkInDialog(event);
     host.addEventListener('click', onClick, true);
-    inject(DestroyRef).onDestroy(() => host.removeEventListener('click', onClick, true));
+    inject(DestroyRef).onDestroy(() => {
+      host.removeEventListener('click', onClick, true);
+      this.refreshing?.unsubscribe();
+    });
   }
 
   protected reload(): void {
     this.attempt.update((value) => value + 1);
+  }
+
+  /** la declaración de uso del suelo recién guardada en Prácticas pasa a la ficha */
+  protected onLandUseDeclared(declaration: LandUseDeclaration): void {
+    this.lot.update((lot) => lot && { ...lot, land_use_declaration: declaration });
+  }
+
+  /**
+   * una pestaña cambió la ficha en el backend (el rinde declarado en la huella cambia las
+   * campañas de la bitácora): se vuelve a pedir sin esqueleto. si falla, queda la que se ve
+   */
+  protected refreshLot(): void {
+    const id = this.lotId();
+    this.refreshing?.unsubscribe();
+    this.refreshing = this.api.lot(id).subscribe({
+      next: (lot) => {
+        if (lot.id === this.lotId()) this.lot.set(lot);
+      },
+      error: () => undefined,
+    });
+  }
+
+  /** un evento confirmado o corregido en la bitácora: las marcas del verdor lo muestran así */
+  protected onReviewed(updated: EventLogItem): void {
+    this.events.update((events) =>
+      events.map((event) => (event.id === updated.id ? updated : event)),
+    );
+  }
+
+  /**
+   * una pestaña pedida desde el contenido (por ejemplo, una recomendación de Prácticas): en el
+   * popup cambia de pestaña sin salir; como página, va a la ruta de esa pestaña
+   */
+  protected openTab(change: LotTabChange): void {
+    if (this.dialog()) {
+      this.tabChange.emit(change);
+      return;
+    }
+    const tab = lotTabs(this.lotId()).find((item) => item.key === change.tab);
+    if (tab) void this.router.navigate([tab.path], { queryParams: change.params });
   }
 
   private keepLinkInDialog(event: MouseEvent): void {

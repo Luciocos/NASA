@@ -1,6 +1,8 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -33,15 +35,35 @@ import {
   SeriesMarker,
 } from '../../../shared/charts';
 import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
+import { Disclosure } from '../../../shared/ui/disclosure/disclosure';
 import { Icon } from '../../../shared/ui/icon/icon';
 import { KpiCard, KpiTrend } from '../../../shared/ui/kpi-card/kpi-card';
 import { SectionCard } from '../../../shared/ui/section-card/section-card';
+import { IconName } from '../../../shared/ui/icon/icons';
 import { formatDate } from '../labels';
-import { InfoTip } from '../lot-workspace/info-tip';
+import {
+  firstSentence,
+  forLot,
+  modisStatus,
+  partialChange,
+} from '../lot-practices/land-use/land-use';
+import { InfoTip } from '../../../shared/ui/info-tip/info-tip';
 import { SlideTrack } from './slide-track';
 
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-const SOURCE_IDS: NasaSourceId[] = ['modisNdvi', 'power', 'nisar', 'hls', 'modisLandUse'];
+/** el celular: el mismo corte en el que el popup ocupa la pantalla entera */
+const NARROW_QUERY = '(max-width: 40rem)';
+/**
+ * cada fuente en pocas palabras para la tarjeta, que entra en una línea con su origen; el nombre
+ * completo, el producto y la resolución van en su ayuda (i)
+ */
+const SOURCE_ROWS: readonly { id: NasaSourceId; short: string }[] = [
+  { id: 'modisNdvi', short: 'MODIS · verdor' },
+  { id: 'power', short: 'NASA POWER · clima' },
+  { id: 'nisar', short: 'NISAR · radar' },
+  { id: 'hls', short: 'HLS · imágenes' },
+  { id: 'modisLandUse', short: 'MODIS · uso del suelo' },
+];
 
 /** las tarjetas deslizables del detalle, en orden: su título es también su nombre accesible */
 export const SATELLITE_SLIDES = [
@@ -53,12 +75,43 @@ export const SATELLITE_SLIDES = [
   'Fuentes y opciones',
 ] as const;
 
-/** cómo quedó el uso del suelo según MODIS, en pocas palabras y con su tono */
-const LAND_USE_VERDICTS: Record<LandUseEvidence['verdict'], { text: string; tone: string }> = {
-  unchanged: { text: 'Sin cambios grandes', tone: 'chip--ok' },
-  possible_change: { text: 'Posible cambio: conviene revisarlo', tone: 'chip--warn' },
-  no_data: { text: 'Sin dato para comparar', tone: '' },
-};
+interface LandUseChip {
+  text: string;
+  tone: string;
+  icon: IconName;
+}
+
+/**
+ * cómo quedó el uso del suelo según MODIS, en pocas palabras y con su tono: lo mismo que dice la
+ * tarjeta de Prácticas. un empate en el año base no alcanza para afirmar un cambio, y un cambio
+ * en parte del lote se dice así
+ */
+function landUseChip(evidence: LandUseEvidence, state: LoadState<LandUseEvidence>): LandUseChip {
+  const status = modisStatus(state);
+  if (status === 'unchanged')
+    return { text: 'Sin cambios grandes', tone: 'chip--ok', icon: 'check' };
+  if (status === 'unclear') {
+    return { text: `Sin un uso dominante en ${evidence.baselineYear}`, tone: '', icon: 'layers' };
+  }
+  if (status === 'possible_change') {
+    return partialChange(evidence)
+      ? { text: 'Posible cambio en parte del lote', tone: 'chip--warn', icon: 'alert' }
+      : { text: 'Posible cambio: conviene revisarlo', tone: 'chip--warn', icon: 'alert' };
+  }
+  return { text: 'Sin dato para comparar', tone: '', icon: 'minus' };
+}
+
+/**
+ * el motivo del servicio sin la cuenta interna de pedidos ("Faltan 2 de 3 tandas."): esa parte
+ * no le dice nada al productor
+ */
+export function serviceText(error: string | null | undefined): string {
+  return (error ?? '')
+    .split(/(?<=\.)\s+/)
+    .filter((sentence) => !/\btandas?\b/i.test(sentence))
+    .join(' ')
+    .trim();
+}
 
 interface KpiView {
   value: string | number;
@@ -75,17 +128,22 @@ interface KpiView {
  * verdor y la humedad, y las fuentes con sus opciones) va en tarjetas deslizables; las
  * explicaciones, detrás de un (i). cada dato con su fuente real y su origen; lo que no llega
  * queda como "Sin dato" con el motivo, y sin conexión sale de la copia guardada en el dispositivo
+ *
+ * en el celular esas tarjetas van plegadas en "Más datos": a la vista quedan los tres números y
+ * el verdor en el tiempo, y la pestaña entra en una pantalla
  */
 @Component({
   selector: 'app-lot-nasa',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    NgTemplateOutlet,
     RouterLink,
     SeriesChart,
     ColumnChart,
     OriginBadge,
     SectionCard,
     KpiCard,
+    Disclosure,
     Icon,
     InfoTip,
     SlideTrack,
@@ -106,7 +164,12 @@ export class LotNasa {
   /** sin red, lo que todavía no llegó (y no tiene copia guardada) espera a que vuelva */
   protected readonly offline = computed(() => !this.connectivity.online());
   protected readonly offlineText = 'Sin conexión: se consulta cuando vuelva la red';
+  /** lo medido: MODIS responde en 40 a 70 s y avisa la demora a los 150 s */
+  protected readonly modisWait = 'puede tardar un par de minutos';
   protected readonly dataSources = DATA_SOURCES;
+  /** pantalla de celular: "Más datos" va plegado (y se abre con un toque) */
+  protected readonly narrow = signal(false);
+  protected readonly moreOpen = signal(false);
 
   /**
    * desde cuándo se pide el NDVI: el servicio de MODIS tarda unos 30 a 60 s por pedido, así que
@@ -123,10 +186,22 @@ export class LotNasa {
   protected readonly scenes = computed(() => this.satellite.scenes(this.ref())());
   /** uso del suelo de los píxeles del lote desde 2020 (MODIS): el mismo pedido que usa Prácticas */
   protected readonly landUse = computed(() => this.satellite.landUse(this.ref())());
-  protected readonly landUseVerdicts = LAND_USE_VERDICTS;
+  protected readonly landUseChip = computed(() => {
+    const state = this.landUse();
+    return state.data ? landUseChip(state.data, state) : null;
+  });
   protected readonly slides = SATELLITE_SLIDES;
 
-  protected readonly sources = SOURCE_IDS.map((id) => DATA_SOURCES[id]);
+  protected readonly sources = SOURCE_ROWS.map((row) => ({
+    ...DATA_SOURCES[row.id],
+    short: row.short,
+  }));
+  /** un lote propio: las ayudas le hablan al dueño ("tu lote"); en un ejemplo, "este lote" */
+  protected readonly mine = computed(
+    () => this.lot().owned === true && this.lot().is_example !== true,
+  );
+  protected readonly forLot = forLot;
+  protected readonly serviceText = serviceText;
 
   protected readonly summary = computed(() => ndviSummary(this.ndvi().data ?? []));
   protected readonly ndviSeries = computed<ChartSeries[]>(() => {
@@ -195,7 +270,7 @@ export class LotNasa {
     if (value === null) return null;
     return {
       value: Math.round(value * 100),
-      caption: `${root ? 'Zona de raíces' : 'Superficie'} · 100 es saturado`,
+      caption: `${root ? 'Raíces' : 'Superficie'} · 100 es saturado`,
     };
   });
 
@@ -216,7 +291,7 @@ export class LotNasa {
       return {
         month,
         note: 'mes en curso: todavía sin dato',
-        aside: `* ${label}: mes en curso, todavía sin dato.`,
+        aside: `* ${label}: todavía sin dato`,
       };
     }
     const until = `${lastRain.slice(8, 10)}/${lastRain.slice(5, 7)}`;
@@ -224,7 +299,7 @@ export class LotNasa {
     return {
       month,
       note: `mes en curso: hasta el ${until}${gaps ? `, ${missingText(gaps)}` : ''}`,
-      aside: `* ${label}: mes en curso, suma hasta el ${until}.`,
+      aside: `* ${label}: suma hasta el ${until}`,
     };
   });
   protected readonly rainColumns = computed<ColumnItem[]>(() => {
@@ -283,6 +358,7 @@ export class LotNasa {
       if (online && !wasOnline) untracked(() => this.satellite.retry(this.ref()));
       wasOnline = online;
     });
+    this.watchWidth();
   }
 
   protected retry(): void {
@@ -299,10 +375,12 @@ export class LotNasa {
     return this.pending(state) && !this.offline();
   }
 
-  /** por qué un indicador quedó sin dato */
+  /** por qué un indicador quedó sin dato, en pocas palabras: la primera oración del motivo */
   protected reason(state: LoadState<unknown>): string {
     if (this.pending(state)) return this.offlineText;
-    return state.error ?? 'El servicio no devolvió datos para este lote.';
+    return (
+      firstSentence(serviceText(state.error)) || 'El servicio no devolvió datos para este lote'
+    );
   }
 
   protected number(value: number | null | undefined, digits = 2): string {
@@ -321,6 +399,16 @@ export class LotNasa {
 
   protected percent(value: number | null): string {
     return value === null ? 'Sin dato' : `${Math.round(value * 100)} %`;
+  }
+
+  /** sigue si la pantalla es de celular (sin matchMedia, como en las pruebas, es la de compu) */
+  private watchWidth(): void {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const query = window.matchMedia(NARROW_QUERY);
+    this.narrow.set(query.matches);
+    const onChange = (change: MediaQueryListEvent) => this.narrow.set(change.matches);
+    query.addEventListener('change', onChange);
+    inject(DestroyRef).onDestroy(() => query.removeEventListener('change', onChange));
   }
 
   /** "2 de 6: Pasadas de NISAR", el nombre de cada tarjeta deslizable */

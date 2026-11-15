@@ -76,7 +76,7 @@ describe('FootprintComponents', () => {
     expect(summary(rows()[0])).toContain('Declarado');
     // el total ya está en la tarjeta de resumen: el desglose no lo repite
     expect(el().textContent).not.toContain('37,5');
-    const help = el().querySelector('app-help-tip');
+    const help = el().querySelector('app-info-tip');
     expect(help?.querySelector('button')?.getAttribute('aria-label')).toBe(
       '¿De dónde sale cada dato?',
     );

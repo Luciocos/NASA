@@ -50,10 +50,10 @@ describe('DeclarationForm', () => {
     expect(label).toContain('kg N/ha');
     const hint = el().querySelector(`#${nitrogen.getAttribute('aria-describedby')}`);
     expect(hint?.textContent).toContain('100 kg de urea son 46 kg de N');
-    expect(hint?.closest('app-help-tip')).not.toBeNull();
+    expect(hint?.closest('app-info-tip')).not.toBeNull();
     // a la vista no quedan párrafos: la explicación también va en la ayuda
     expect(el().querySelector('form p')).toBeNull();
-    expect(el().querySelector('app-help-tip')?.textContent).toContain(
+    expect(el().querySelector('app-info-tip')?.textContent).toContain(
       'Lo que cargues queda como Declarado',
     );
   });

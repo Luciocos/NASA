@@ -87,8 +87,12 @@
               (input)="setPrice($any($event.target).value)"
               placeholder="Sin cargar"
             />
+            <!-- el origen es del dato: recién con un precio cargado -->
             <span class="field__hint">
-              <app-origin-badge origin="DECLARED" /> Por tonelada, antes del flete.
+              @if (inputs().priceUsdT !== null) {
+                <app-origin-badge origin="DECLARED" />
+              }
+              Por tonelada, antes del flete.
             </span>
           </label>
 

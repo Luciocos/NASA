@@ -4,13 +4,13 @@
       <div class="ask" role="group" [attr.aria-labelledby]="askId">
         <div class="ask__head">
           <p class="ask__question" [id]="askId">¿Cambió el uso del suelo desde 2020?</p>
-          <app-practice-tip label="Qué cuenta como cambio de uso">
+          <app-info-tip label="Qué cuenta como cambio de uso">
             <p>Por ejemplo, un monte, un pastizal o un bañado que pasó a cultivo.</p>
             <p>
               Tu respuesta queda guardada en el lote como dato declarado y se compara con lo que vio
               MODIS año por año.
             </p>
-          </app-practice-tip>
+          </app-info-tip>
         </div>
         <div class="ask__options">
           <button
@@ -77,9 +77,9 @@
         <app-icon class="line__icon" [name]="line.icon" />
         <p class="line__title">{{ line.title }}</p>
         @if (line.detail) {
-          <app-practice-tip label="Más sobre la comparación con MODIS">
+          <app-info-tip label="Más sobre la comparación con MODIS">
             <p>{{ line.detail }}</p>
-          </app-practice-tip>
+          </app-info-tip>
         }
       </div>
     }
@@ -93,8 +93,11 @@
   >
     <div class="modis__head">
       <h3 class="modis__title" [id]="modisId">Lo que vio MODIS</h3>
-      <app-origin-badge origin="VERIFIED" />
-      <app-practice-tip class="modis__tip" label="Cómo lo mide MODIS">
+      <!-- el origen es de un dato: mientras carga o sin dato no hay nada que etiquetar -->
+      @if (hasData()) {
+        <app-origin-badge [origin]="evidence()!.origin" />
+      }
+      <app-info-tip class="modis__tip" label="Cómo lo mide MODIS">
         @if (reason()) {
           <p>{{ reason() }}</p>
         }
@@ -113,7 +116,7 @@
         }
         <p>{{ sourceNote() }}</p>
         <p class="help-source">{{ sourceText() }}</p>
-      </app-practice-tip>
+      </app-info-tip>
     </div>
 
     @switch (status()) {
@@ -123,7 +126,7 @@
             <span class="skeleton year-skeleton"></span>
           }
         </div>
-        <p class="note" role="status">MODIS puede tardar hasta un minuto.</p>
+        <p class="note" role="status">MODIS puede tardar un par de minutos.</p>
       }
       @case ('error') {
         <div class="none">
@@ -162,9 +165,9 @@
           <div class="line" [attr.data-tone]="line.tone">
             <app-icon class="line__icon" [name]="line.icon" />
             <p class="line__title">{{ line.title }}</p>
-            <app-practice-tip label="Más sobre lo que vio MODIS">
+            <app-info-tip label="Más sobre lo que vio MODIS">
               <p>{{ line.detail }}</p>
-            </app-practice-tip>
+            </app-info-tip>
           </div>
         }
         <p class="note">{{ note() }}</p>

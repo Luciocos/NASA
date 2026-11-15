@@ -114,3 +114,14 @@ p {
   color: var(--field-800);
   font-weight: 600;
 }
+
+/* en el celular la tarjeta arranca arriba: sin el aire de la compu, el formulario entra entero */
+@media (max-width: 40rem) {
+  :host {
+    padding-block: 0 var(--space-2);
+  }
+
+  .auth__privacy {
+    padding: var(--space-2) var(--space-3);
+  }
+}

@@ -19,14 +19,17 @@ figure {
   min-width: 0;
 }
 
-/* la evidencia entra en el panel sin hacerlo desplazar: como mucho 20rem de alto, centrada */
+/*
+ * la evidencia entra en el panel sin hacerlo desplazar: como mucho 20rem de alto, centrada. el
+ * panel del costado lo baja con --evidence-max-h para que la imagen se vea entera
+ */
 figure img,
 .overlay__base {
   display: block;
   width: auto;
   max-width: 100%;
   height: auto;
-  max-height: 20rem;
+  max-height: var(--evidence-max-h, 20rem);
   margin-inline: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);

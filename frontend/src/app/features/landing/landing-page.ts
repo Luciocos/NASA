@@ -24,17 +24,17 @@ export const LANDING_STEPS: readonly Step[] = [
   {
     icon: 'vertices',
     title: 'Marcá el perímetro de tu lote sobre la imagen satelital',
-    text: 'Tocá sus esquinas en el mapa y listo: no hace falta cargar planillas.',
+    text: 'Tocá sus esquinas en el mapa. Sin planillas.',
   },
   {
     icon: 'satellite',
     title: 'Mirá lo que ve el satélite',
-    text: 'El verdor del cultivo, la lluvia y la humedad del suelo de tu lote, con datos abiertos de la NASA.',
+    text: 'Verdor, lluvia y humedad del suelo, con datos abiertos de la NASA.',
   },
   {
     icon: 'footprint',
     title: 'Conocé tu huella, fertilización y rentabilidad',
-    text: 'Son estimaciones y cada número dice de dónde sale: del satélite, de lo que declaraste o de una referencia.',
+    text: 'Son estimaciones: cada número dice de dónde sale.',
   },
 ];
 
@@ -47,8 +47,7 @@ export const LANDING_IMAGE = {
   src: '/zona-nucleo-landsat-800.webp',
   srcset: '/zona-nucleo-landsat-800.webp 800w, /zona-nucleo-landsat-1200.webp 1200w',
   alt: 'Imagen satelital de los campos de la Zona Núcleo entre Casilda y Rosario, con el río Paraná y sus islas a la derecha',
-  caption:
-    'Campos entre Casilda y Rosario vistos por Landsat el 31/10/2026. Imagen HLS de la NASA, de NASA EOSDIS GIBS.',
+  caption: 'Casilda y Rosario vistos por Landsat el 31/10/2026 (HLS, NASA EOSDIS GIBS).',
   places: [
     { name: 'Casilda', left: 36.6, top: 58.5 },
     { name: 'Rosario', left: 84.7, top: 41.6, labelBefore: true },

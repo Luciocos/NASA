@@ -1,7 +1,7 @@
 @let fp = footprint();
 
 <app-section-card heading="Desglose" subtitle="Tocá una fila para ver su fuente." [level]="level()">
-  <app-help-tip actions label="¿De dónde sale cada dato?">
+  <app-info-tip actions label="¿De dónde sale cada dato?">
     <ul>
       <li><strong>Verificado:</strong> observado por satélite (NISAR, HLS).</li>
       <li><strong>Declarado:</strong> cargado por el productor.</li>
@@ -12,7 +12,7 @@
     </ul>
     <p>Los factores de emisión son constantes publicadas, con su fuente en cada fila.</p>
     <p>La huella por tonelada es la suma de los componentes por hectárea dividida por el rinde.</p>
-  </app-help-tip>
+  </app-info-tip>
 
   <ul class="rows">
     <!-- el rinde primero: divide la suma de los componentes -->

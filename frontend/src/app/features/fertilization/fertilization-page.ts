@@ -10,6 +10,8 @@ import {
   inject,
   input,
   signal,
+  untracked,
+  viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -37,7 +39,7 @@ import { LotTabs } from '../../shared/ui/lot-tabs/lot-tabs';
 import { PageHeader } from '../../shared/ui/page-header/page-header';
 import { SectionCard } from '../../shared/ui/section-card/section-card';
 import { formatDate } from '../lot/labels';
-import { InfoTip } from '../lot/lot-workspace/info-tip';
+import { InfoTip } from '../../shared/ui/info-tip/info-tip';
 import { ZONE_STYLE, ZonesMap } from './zones-map';
 
 // las dosis van a nombre del usuario: lotestigo:u<id>:fertilization:v1 (se borran al salir).
@@ -94,6 +96,8 @@ export class FertilizationPage {
   readonly id = input<number | undefined, unknown>(undefined, { transform: toLotId });
   /** adentro del popup del lote: sin app-lot-tabs ni encabezado propio */
   readonly embedded = input(false, { transform: booleanAttribute });
+  /** la ficha del lote, si quien la muestra ya la tiene (el popup): no se vuelve a pedir */
+  readonly lotDetail = input<LotDetail | null>(null);
 
   private readonly routeId = toSignal(
     inject(ActivatedRoute).paramMap.pipe(map((params) => toLotId(params.get('id')))),
@@ -112,6 +116,7 @@ export class FertilizationPage {
   private readonly drafts = signal<Partial<Record<NdviZoneLevel, string>>>({});
   /** la planilla de dosis está plegada hasta que se pide */
   protected readonly plannerOpen = signal(false);
+  private readonly plannerButton = viewChild<ElementRef<HTMLButtonElement>>('plannerButton');
 
   protected readonly levels = LEVELS;
   protected readonly zoneStyle = ZONE_STYLE;
@@ -186,23 +191,44 @@ export class FertilizationPage {
       }
       this.doses.set(this.loadDoses(id));
       this.drafts.set({});
+      const useLot = (lot: LotDetail) => {
+        this.lot.set(lot);
+        this.gridState.set(this.satellite.ndviGrid({ id: lot.id, geometry: lot.geometry }));
+      };
       const subs = [
-        this.api.lot(id).subscribe({
-          next: (lot) => {
-            this.lot.set(lot);
-            this.gridState.set(this.satellite.ndviGrid({ id: lot.id, geometry: lot.geometry }));
-          },
-          error: (err: { status?: number }) => {
-            if (err.status === 404) this.notFound.set(true);
-            else this.error.set('No se pudo cargar el lote. Revisá la conexión.');
-          },
-        }),
         this.api.footprint(id).subscribe({
           next: (fp) => this.footprint.set(fp),
           error: () => this.footprint.set(null),
         }),
       ];
+      // el popup ya tiene la ficha: se usa esa (la superficie y el polígono no cambian)
+      const given = untracked(this.lotDetail);
+      if (given?.id === id) {
+        untracked(() => useLot(given));
+      } else {
+        subs.push(
+          this.api.lot(id).subscribe({
+            next: useLot,
+            error: (err: { status?: number }) => {
+              if (err.status === 404) this.notFound.set(true);
+              else this.error.set('No se pudo cargar el lote. Revisá la conexión.');
+            },
+          }),
+        );
+      }
       onCleanup(() => subs.forEach((sub) => sub.unsubscribe()));
+    });
+  }
+
+  /**
+   * la persona abre o cierra la planilla con su rótulo. en el popup, cerrada vuelve "Armar dosis"
+   * a su lugar y el foco va ahí, así no se pierde con el rótulo que desaparece
+   */
+  protected togglePlanner(open: boolean): void {
+    this.plannerOpen.set(open);
+    if (open || !this.embedded()) return;
+    afterNextRender(() => this.plannerButton()?.nativeElement.focus(), {
+      injector: this.injector,
     });
   }
 

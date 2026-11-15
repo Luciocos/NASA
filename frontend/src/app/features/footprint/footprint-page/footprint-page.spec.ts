@@ -1,10 +1,12 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Location } from '@angular/common';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 import { LotDetail } from '../../../core/models';
+import { DeclarationForm } from '../declaration-form/declaration-form';
 import { makeComponent, makeFootprint, makeLot } from '../testing';
 import { FootprintPage } from './footprint-page';
 
@@ -71,7 +73,7 @@ describe('FootprintPage', () => {
     await flush();
     expect(text()).toContain('Lote de prueba');
     expect(el().querySelector('app-lot-tabs')).not.toBeNull();
-    expect(text()).toContain('Huella de carbono');
+    expect(text()).toContain('Huella estimada');
     expect(text()).toContain('Todavía no se puede calcular');
     // a la vista: los chips de lo que falta y el aviso de provisional
     expect(text()).toContain('Provisional · prueba de concepto');
@@ -127,7 +129,7 @@ describe('FootprintPage', () => {
     expect(el().querySelector('app-lot-tabs')).toBeNull();
     // el popup titula el lote con un h2: adentro, los títulos bajan a h3
     expect(el().querySelector('app-footprint-summary h3')?.textContent).toContain(
-      'Huella de carbono',
+      'Huella estimada',
     );
     expect(el().querySelector('h2')).toBeNull();
     // ?vista= es la vista interna de la huella también en el popup
@@ -143,6 +145,27 @@ describe('FootprintPage', () => {
       state: { lotDialog: true },
     });
     expect(practicesLink().getAttribute('href')).toBe('/lotes/7/practicas');
+  });
+
+  it('en el popup usa la ficha que ya tiene el popup y le avisa cuando se declara', async () => {
+    await setup({ vista: 'datos' }, { lotId: 7, embedded: true, lotDetail: makeLot({ id: 7 }) });
+    // la ficha no se vuelve a pedir: solo la huella
+    http.expectNone('/api/lots/7/');
+    http.expectOne('/api/lots/7/footprint/').flush({ ...makeFootprint(), lot: 7 });
+    await fixture.whenStable();
+    const declared: unknown[] = [];
+    fixture.componentInstance.declared.subscribe((footprint) => declared.push(footprint));
+
+    const recalculated = { ...makeFootprint(), lot: 7 };
+    const form = fixture.debugElement.query(By.directive(DeclarationForm))
+      .componentInstance as DeclarationForm;
+    form.declared.emit(recalculated);
+    await fixture.whenStable();
+    expect(declared).toEqual([recalculated]);
+    // la huella queda en la campaña declarada
+    for (const request of http.match((r) => r.url === '/api/lots/7/footprint/')) {
+      request.flush(recalculated);
+    }
   });
 
   it('acepta el id como texto, como lo pasa el router al enlazar parámetros', async () => {
@@ -251,6 +274,23 @@ describe('FootprintPage', () => {
     expect(button('Cargar rinde e insumos')).toBeUndefined();
   });
 
+  it('con el rinde ya cargado no repite la vista "Tus datos" con un botón en el resumen', async () => {
+    await setup();
+    const footprint = makeFootprint();
+    await flush(
+      {},
+      { ...footprint, yield: { ...footprint.yield, value: 3.2, origin: 'DECLARED' } },
+    );
+    expect(button('Cargar rinde e insumos')).toBeUndefined();
+    expect(button('Ver tus datos')).toBeUndefined();
+    // en el resumen solo quedan las ayudas (i): ninguna acción
+    expect(el().querySelector('app-footprint-summary button.btn')).toBeNull();
+    // lo declarado se revisa en su vista, a un toque
+    tab('Tus datos').click();
+    await fixture.whenStable();
+    expect(tab('Tus datos').getAttribute('aria-selected')).toBe('true');
+  });
+
   it('en un ejemplo no se cargan datos: ni la acción ni la vista Tus datos', async () => {
     await setup({ vista: 'datos' });
     await flush({ is_example: true, owned: false });
@@ -280,7 +320,7 @@ describe('FootprintPage', () => {
     expect(text()).toContain('No pudimos mostrar este lote en este momento.');
     expect(text().toLowerCase()).not.toContain('backend');
 
-    button('Probar de nuevo')!.click();
+    button('Reintentar')!.click();
     await fixture.whenStable();
     await flush();
     expect(text()).toContain('Todavía no se puede calcular');

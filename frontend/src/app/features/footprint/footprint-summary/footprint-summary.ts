@@ -11,7 +11,7 @@ import {
   missingItems,
   missingSentence,
 } from '../format';
-import { HelpTip } from '../help-tip/help-tip';
+import { InfoTip } from '../../../shared/ui/info-tip/info-tip';
 
 /**
  * resultado de la huella arriba de todo, en una tarjeta chica: el valor por tonelada grande, o
@@ -23,7 +23,7 @@ import { HelpTip } from '../help-tip/help-tip';
 @Component({
   selector: 'app-footprint-summary',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HelpTip, Icon, SimulatedNotice],
+  imports: [InfoTip, Icon, SimulatedNotice],
   host: { '[class.is-missing]': 'footprint().total_kg_co2e_per_t === null' },
   styleUrl: './footprint-summary.css',
   templateUrl: './footprint-summary.html',

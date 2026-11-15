@@ -44,7 +44,7 @@ p {
 }
 
 .views > [role='tab'] {
-  min-height: 2.5rem;
+  min-height: var(--tap);
   padding-inline: var(--space-4);
 }
 

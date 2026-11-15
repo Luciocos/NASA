@@ -172,7 +172,15 @@
                             <span class="row__margin">{{ margin }}</span>
                           }
                         </span>
-                        <span class="row__sensor">{{ sensorShort[event.sensor] }}</span>
+                        <span class="row__sensor"
+                          >{{ sensorShort[event.sensor] }}
+                          @if (hasEvidence(event)) {
+                            <app-icon class="row__evidence" name="image" /><span
+                              class="visually-hidden"
+                              >, con evidencia</span
+                            >
+                          }
+                        </span>
                       </span>
                       <span class="row__origin"><app-origin-badge [origin]="event.origin" /></span>
                       <app-icon class="row__chevron" name="chevron-right" />

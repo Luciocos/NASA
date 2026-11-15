@@ -178,6 +178,32 @@ section {
   }
 }
 
+/*
+ * en una pantalla ancha, de a dos: el mapa con las campañas y la huella con el puntaje; la
+ * bitácora (una tabla) a todo el ancho. menos desplazamiento; al imprimir sigue en una columna
+ */
+@media screen and (min-width: 64rem) {
+  :host {
+    max-width: 72rem;
+  }
+
+  .passport {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .passport > :is(.head, .notice, .simulated, .events, .foot) {
+    grid-column: 1 / -1;
+  }
+
+  /* el mapa toma el alto de su fila, con las campañas al lado */
+  .map {
+    align-self: stretch;
+    height: auto;
+    min-height: 14rem;
+  }
+}
+
 /* en el celular cada fila de tabla es un renglón: el primer dato arriba y el resto en línea */
 @media (max-width: 40rem) {
   :host,

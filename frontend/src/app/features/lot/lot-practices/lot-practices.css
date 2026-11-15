@@ -142,6 +142,13 @@ p {
   }
 }
 
+/* en el celular se desliza con el dedo: los botones sobran y queda "1 de 3" */
+@media (max-width: 40rem) {
+  .nav .btn {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .recs {
     scroll-behavior: auto;
@@ -181,6 +188,26 @@ p {
   font-size: var(--text-sm);
   font-weight: 700;
   line-height: 1.35;
+}
+
+/* el enlace a la pestaña donde se sigue: debajo de la frase, con 44 px de toque */
+.rec__link {
+  --icon-size: 1rem;
+  display: inline-flex;
+  grid-column: 2 / -1;
+  align-items: center;
+  justify-self: start;
+  gap: var(--space-1);
+  min-height: var(--tap);
+  margin-block: calc(var(--space-2) * -1) calc(var(--space-3) * -1);
+  color: var(--link);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.rec__link:hover {
+  text-decoration: underline;
 }
 
 .all-good {

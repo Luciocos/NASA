@@ -289,6 +289,36 @@ describe('cambios en parte del lote', () => {
     ]);
     expect(noBase.verdict).toBe('unchanged');
   });
+
+  it('en un lote chico, un año suelto con otro uso que al siguiente vuelve no alcanza: se dice', () => {
+    // armado para la prueba: 1 de los 3 píxeles se ve como pastizal solo en 2022
+    const blip = input([
+      ...every(2020, 2021, [12, 12, 12]),
+      [2022, [12, 12, 10]],
+      ...every(2023, 2024, [12, 12, 12]),
+    ]);
+    expect(blip.verdict).toBe('unchanged');
+    expect(blip.reason).toBe(
+      'MODIS vio uso agrícola todos los años de 2020 a 2024 en al menos 2 de los 3 píxeles de unos 460 m que cubren tu lote. En 2022 vio otro uso en 1 de los 3 píxeles y al año siguiente ya no: puede ser un error de clasificación.',
+    );
+    // con un solo píxel el año distinto cambia el dominante: no entra en "todos los años"
+    const single = input([[2020, [12]], [2021, [10]], ...every(2022, 2024, [12])]);
+    expect(single.verdict).toBe('unchanged');
+    expect(single.reason).toBe(
+      'MODIS vio uso agrícola todos los años de 2020 a 2024 salvo 2021 en el único píxel de unos 460 m con su centro dentro de tu lote. En 2021 vio otro uso en el píxel del lote y al año siguiente ya no: puede ser un error de clasificación.',
+    );
+  });
+
+  it('en un lote chico, el cambio que sigue sí se marca, también si es del último año', () => {
+    const lasting = input([...every(2020, 2021, [12, 12, 12]), ...every(2022, 2024, [12, 12, 10])]);
+    expect(lasting.verdict).toBe('possible_change');
+    expect(lasting.reason).toContain(
+      'En 2022 MODIS vio vegetación natural en 1 de los 3 píxeles de tu lote, donde en 2020 había visto uso agrícola:',
+    );
+    const last = input([...every(2020, 2023, [12, 12, 12]), [2024, [12, 12, 10]]]);
+    expect(last.verdict).toBe('possible_change');
+    expect(last.reason).toContain('En 2024 MODIS vio vegetación natural en 1 de los 3 píxeles');
+  });
 });
 
 describe('píxeles del lote', () => {

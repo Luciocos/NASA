@@ -16,8 +16,9 @@ export const LAND_USE_BASELINE_YEAR = 2020;
 /**
  * desde esta parte de los píxeles del lote con un uso distinto del que tenía cada uno en el año
  * base, ese año cuenta como posible cambio aunque el uso dominante siga igual: así un desmonte de
- * un tercio del lote no pasa como "sin cambio". menos que eso solo se cuenta en el texto, porque
- * un píxel suelto que cambia un año suele ser un error de clasificación
+ * un tercio del lote no pasa como "sin cambio". menos que eso solo se cuenta en el texto. y solo
+ * cuenta el cambio que sigue (el último año con dato, o dos años seguidos): el que dura un año y
+ * vuelve suele ser un error de clasificación, que en un lote chico ya llega a esta parte
  */
 export const LAND_USE_CHANGED_SHARE = 0.25;
 
@@ -153,18 +154,28 @@ interface PixelChanges {
   to: LandUseGroup[];
 }
 
-/** cada píxel del lote frente a sí mismo en el año base */
-function pixelChanges(base: YearStats, other: YearStats): PixelChanges {
+/**
+ * cada píxel del lote frente a sí mismo en el año base. con `next` (el año siguiente con dato)
+ * solo cuenta el píxel que también ese año tiene un uso distinto del base: el cambio que sigue
+ */
+function pixelChanges(base: YearStats, other: YearStats, next?: YearStats): PixelChanges {
   const changes: PixelChanges = { compared: 0, from: [], to: [] };
   base.groups.forEach((before, i) => {
     const after = other.groups[i] ?? null;
     if (before === null || after === null) return;
     changes.compared++;
     if (after === before) return;
+    const then = next ? (next.groups[i] ?? null) : after;
+    if (then === null || then === before) return;
     changes.from.push(before);
     changes.to.push(after);
   });
   return changes;
+}
+
+/** una parte del lote que alcanza para marcar un posible cambio (LAND_USE_CHANGED_SHARE) */
+function enough({ compared, to }: PixelChanges): boolean {
+  return compared > 0 && to.length / compared >= LAND_USE_CHANGED_SHARE;
 }
 
 /** el grupo que más se repite, o null si empatan o no hay */
@@ -249,7 +260,9 @@ function describeYear({ summary, classCounts, groupCounts }: YearStats): string 
  * desde el año base hasta el último año con dato y ningún año cambió de grupo una cuarta parte de
  * los píxeles (cada uno frente a sí mismo en el año base); possible_change si el dominante cambia
  * (o empata) o si cambia esa parte del lote algún año; no_data si falta el año base, si no hay
- * píxeles con dato o si no hay otro año para comparar
+ * píxeles con dato o si no hay otro año para comparar. un cambio cuenta si sigue: en el último
+ * año con dato o también en el año siguiente con dato. el que dura un año y vuelve queda en el
+ * texto como un posible error de clasificación
  */
 export function landUseEvidence(input: LandUseInput): LandUseEvidence {
   const stats = input.years
@@ -286,14 +299,23 @@ export function landUseEvidence(input: LandUseInput): LandUseEvidence {
     reason = `En ${input.baselineYear} MODIS vio ${describeYear(base)}, así que no se puede confirmar que el uso siguió igual. Conviene revisarlo.`;
   } else {
     const group = base.summary.group;
-    // cada píxel frente a sí mismo en el año base: un cambio en parte del lote no mueve el dominante
-    const changes = later.map((year) => ({ stats: year, ...pixelChanges(base, year) }));
-    const changed = changes.find(
-      ({ stats, compared, to }) =>
-        stats.summary.group !== group ||
-        (compared > 0 && to.length / compared >= LAND_USE_CHANGED_SHARE),
-    );
-    if (changed && changed.stats.summary.group !== group) {
+    // cada píxel frente a sí mismo en el año base: un cambio en parte del lote no mueve el
+    // dominante. cuenta lo que sigue el año siguiente con dato (o es el último): un año suelto
+    // que vuelve suele ser un error de clasificación
+    const changes = later.map((year, i) => {
+      const next = later[i + 1];
+      const seen = pixelChanges(base, year);
+      const otherGroup = year.summary.group !== group;
+      return {
+        stats: year,
+        ...pixelChanges(base, year, next),
+        seen,
+        otherGroup,
+        groupChanged: otherGroup && (!next || next.summary.group !== group),
+      };
+    });
+    const changed = changes.find((change) => change.groupChanged || enough(change));
+    if (changed?.groupChanged) {
       verdict = 'possible_change';
       reason = `En ${input.baselineYear} MODIS vio ${describeYear(base)} y en ${changed.stats.summary.year}, ${describeYear(changed.stats)}: puede ser un cambio de uso del suelo o un error de clasificación. Conviene revisarlo.`;
     } else if (changed) {
@@ -307,9 +329,22 @@ export function landUseEvidence(input: LandUseInput): LandUseEvidence {
           : `un uso distinto del de ${input.baselineYear} en ${part}`;
       reason = `En ${changed.stats.summary.year} MODIS vio ${seen}: puede ser un cambio de uso del suelo en parte del lote o un error de clasificación. Conviene revisarlo.`;
     } else {
-      // algún píxel cambió, pero ningún año en una cuarta parte del lote (LAND_USE_CHANGED_SHARE)
-      const most = Math.max(0, ...changes.map((c) => c.to.length));
-      if (most) {
+      // lo que no alcanzó para marcarlo se dice: un año con otro uso que al siguiente ya no
+      // estaba, o algún píxel que cambió en menos de una cuarta parte del lote
+      const blips = changes.filter((change) => change.otherGroup || enough(change.seen));
+      const most = Math.max(0, ...changes.map((change) => change.seen.to.length));
+      if (blips.length) {
+        const count = blips[0].seen.to.length;
+        const where =
+          blips.length > 1 || !count
+            ? ''
+            : input.pixelCount === 1
+              ? ' en el píxel del lote'
+              : ` en ${count} de los ${input.pixelCount} píxeles`;
+        notes.unshift(
+          `En ${joinList(blips.map((change) => String(change.stats.summary.year)))} vio otro uso${where} y al año siguiente ya no: puede ser un error de clasificación.`,
+        );
+      } else if (most) {
         notes.unshift(
           `Algún año vio otro uso en ${most} de los ${input.pixelCount} píxeles, menos de una cuarta parte del lote: puede ser un error de clasificación.`,
         );
@@ -319,11 +354,16 @@ export function landUseEvidence(input: LandUseInput): LandUseEvidence {
       for (let year = input.baselineYear + 1; year < (lastYear ?? 0); year++) {
         if (!withData.some((s) => s.summary.year === year)) missing.push(year);
       }
+      // un año con otro uso dominante que no siguió no entra en "todos los años"
+      const odd = changes.filter((change) => change.otherGroup).map((change) => change.stats);
+      const except = odd.length ? ` salvo ${joinList(odd.map((s) => String(s.summary.year)))}` : '';
       const span = missing.length
-        ? `todos los años con dato de ${input.baselineYear} a ${lastYear} (sin dato en ${joinList(missing.map(String))})`
-        : `todos los años de ${input.baselineYear} a ${lastYear}`;
+        ? `todos los años con dato de ${input.baselineYear} a ${lastYear}${except} (sin dato en ${joinList(missing.map(String))})`
+        : `todos los años de ${input.baselineYear} a ${lastYear}${except}`;
       // el uso dominante no siempre está en todos los píxeles: se dice en cuántos lo vio
-      const counts = [base, ...later].map((s) => s.groupCounts.get(group) ?? 0);
+      const counts = [base, ...later.filter((s) => !odd.includes(s))].map(
+        (s) => s.groupCounts.get(group) ?? 0,
+      );
       const least = Math.min(...counts);
       const some = counts.every((n) => n === least) ? `${least}` : `al menos ${least}`;
       const where = input.centroidFallback

@@ -312,6 +312,14 @@ p {
   grid-area: sensor;
 }
 
+/* el evento trae imagen de evidencia: un ícono chico al lado del sensor */
+.row__evidence {
+  --icon-size: 1em;
+  margin-left: var(--space-1);
+  color: var(--ink-3);
+  vertical-align: -0.125em;
+}
+
 .row__origin {
   grid-area: origin;
   justify-self: start;
@@ -368,6 +376,12 @@ p {
  */
 .panel--side {
   --sticky-top: var(--log-sticky-top, calc(var(--topbar-h) + var(--space-3)));
+  /*
+   * la imagen de la evidencia se ve entera en lo visible del panel (encabezado, origen, datos y
+   * el control de arriba ocupan unos 23,5rem; lo plegado de abajo puede quedar para desplazar):
+   * en 1440x900 queda de unos 17rem; con más alto, hasta 20rem
+   */
+  --evidence-max-h: clamp(12rem, calc(var(--log-visible-h, 100dvh) - 23.5rem), 20rem);
   position: sticky;
   top: var(--sticky-top);
   max-height: calc(var(--log-visible-h, 100dvh) - var(--sticky-top) - var(--space-3));

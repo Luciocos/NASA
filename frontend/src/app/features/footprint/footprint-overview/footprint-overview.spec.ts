@@ -100,7 +100,7 @@ describe('FootprintOverview', () => {
     expect(text).toContain('Falta el rendimiento de la campaña 2025/26.');
     expect(text).toContain('referencias con fuente');
     // qué significa cada origen y cómo se mide la confianza van en la ayuda (i) de la tarjeta
-    const help = el().querySelector('app-help-tip')!;
+    const help = el().querySelector('app-info-tip')!;
     expect(help.querySelector('button')?.getAttribute('aria-label')).toBe(
       'Qué significa cada origen',
     );
@@ -137,7 +137,7 @@ describe('FootprintOverview', () => {
     const kpi = el().querySelector('app-kpi-card')!;
     expect(kpi.textContent).toContain('7,85');
     expect(kpi.textContent).toContain('Referencia regional');
-    expect(kpi.querySelector('app-help-tip')?.textContent).toContain(
+    expect(kpi.querySelector('app-info-tip')?.textContent).toContain(
       'Fuente: Informe regional de prueba',
     );
   });

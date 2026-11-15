@@ -11,6 +11,7 @@ import {
   effect,
   inject,
   input,
+  output,
   signal,
   viewChild,
 } from '@angular/core';
@@ -121,6 +122,8 @@ export class LotLog {
   readonly lot = input.required<LotDetail>();
   /** true solo en un lote propio: el detalle suma Confirmar y Corregir */
   readonly editable = input(false, { transform: booleanAttribute });
+  /** se confirmó o corrigió un evento: el espacio del lote actualiza las marcas del verdor */
+  readonly reviewed = output<EventLogItem>();
 
   protected readonly uid = `lot-log-${++nextId}`;
   /** un lote de ejemplo es de solo lectura aunque llegue editable por error */
@@ -221,11 +224,16 @@ export class LotLog {
   protected readonly sideOpen = computed(() => this.selected() !== null && this.wide());
   protected readonly sheetOpen = computed(() => this.selected() !== null && !this.wide());
 
-  /** una línea: cuántos eventos hay y qué se puede hacer con ellos */
+  /** una línea: cuántos eventos hay y qué se puede hacer con ellos (la evidencia, si hay) */
   protected readonly subtitle = computed(() => {
-    const count = this.events()?.length ?? 0;
+    const events = this.events() ?? [];
+    const count = events.length;
     if (count === 0) return null;
-    const what = this.canEdit() ? 'revisarlo' : 'ver su evidencia';
+    const what = this.canEdit()
+      ? 'revisarlo'
+      : events.some((event) => this.hasEvidence(event))
+        ? 'ver su evidencia'
+        : 'ver el detalle';
     return count === 1
       ? `1 evento · abrilo para ${what}`
       : `${count} eventos · abrí uno para ${what}`;
@@ -285,6 +293,11 @@ export class LotLog {
     this.campaignFilter.set('');
   }
 
+  /** el evento trae una imagen de evidencia (radar u óptica): la fila lo marca con un ícono */
+  protected hasEvidence(event: EventLogItem): boolean {
+    return !!(event.evidence_image_url || event.evidence_optical_image_url);
+  }
+
   protected countLabel(count: number): string {
     return count === 1 ? '1 evento' : `${count} eventos`;
   }
@@ -310,6 +323,7 @@ export class LotLog {
     this.events.update(
       (events) => events?.map((event) => (event.id === updated.id ? updated : event)) ?? events,
     );
+    this.reviewed.emit(updated);
   }
 
   /**

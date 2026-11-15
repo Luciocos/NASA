@@ -56,6 +56,14 @@ const PENDING: L.PathOptions = { color: '#e8eef5', weight: 2, dashArray: '6 5', 
       inset: 0;
       background: #1b2f44;
     }
+    /* el + y el − de leaflet miden 30 px: con el dedo, 44 px como el resto de los toques */
+    @media (pointer: coarse) {
+      :host ::ng-deep .leaflet-control-zoom a {
+        width: var(--tap);
+        height: var(--tap);
+        line-height: var(--tap);
+      }
+    }
   `,
 })
 export class SatelliteView {

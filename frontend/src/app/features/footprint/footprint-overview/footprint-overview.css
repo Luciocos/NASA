@@ -141,7 +141,3 @@ p {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
-
-app-kpi-card app-help-tip {
-  margin-block: calc(var(--space-2) * -1);
-}

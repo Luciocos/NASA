@@ -159,9 +159,16 @@ describe('LotDraw', () => {
       await fixture.whenStable();
 
       expect(el().textContent).toContain('Listo: guardamos «Lote 1»');
-      await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith(['/lotes', 42]), {
-        timeout: 2500,
-      });
+      await vi.waitFor(
+        () =>
+          expect(navigate).toHaveBeenCalledWith(['/mapa'], {
+            queryParams: { lote: 42, seccion: null, vista: null },
+            replaceUrl: true,
+          }),
+        {
+          timeout: 2500,
+        },
+      );
       expect(storage.getItem(DRAFT_KEY)).toBeNull();
     });
 
@@ -274,9 +281,16 @@ describe('LotDraw', () => {
       expect(ring.length).toBeGreaterThanOrEqual(5);
       expect(ring[0]).toEqual(ring[ring.length - 1]);
       req.flush({ id: 7, name: 'QA pintado' });
-      await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith(['/lotes', 7]), {
-        timeout: 2500,
-      });
+      await vi.waitFor(
+        () =>
+          expect(navigate).toHaveBeenCalledWith(['/mapa'], {
+            queryParams: { lote: 7, seccion: null, vista: null },
+            replaceUrl: true,
+          }),
+        {
+          timeout: 2500,
+        },
+      );
     });
 
     it('con dos sectores separados no deja guardar hasta unirlos', async () => {

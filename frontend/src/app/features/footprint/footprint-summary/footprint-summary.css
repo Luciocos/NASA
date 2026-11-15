@@ -91,10 +91,6 @@ p {
   font-weight: 700;
 }
 
-.chips app-help-tip {
-  margin-block: calc(var(--space-2) * -1);
-}
-
 .actions {
   display: grid;
   justify-items: end;
@@ -110,11 +106,6 @@ p {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-3);
     padding: var(--space-4);
-  }
-
-  /* en el celular el chip dice "Provisional"; "prueba de concepto" queda en la ayuda */
-  .wide-only {
-    display: none;
   }
 
   .value--missing {

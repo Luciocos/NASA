@@ -147,12 +147,16 @@ export function missingItems(fp: Footprint, own = true): MissingItem[] {
     });
   }
   if (events.size > 0) {
+    // lo que falta son eventos importados a la bitácora: la huella todavía no usa la
+    // declaración de uso del suelo ni lo que vio MODIS
     items.push({
       kind: 'events',
-      chip: 'Historial satelital',
-      title: 'Historial satelital',
-      detail: `${joinList([...events])} desde 2020`,
-      who: 'sale de la bitácora del lote',
+      chip: 'Eventos de la bitácora',
+      title: 'Eventos de la bitácora',
+      detail: `de ${joinList([...events])} desde 2020`,
+      who: own
+        ? 'la huella usa los eventos importados a la bitácora; todavía no usa tu declaración ni lo que vio MODIS, que es orientativo'
+        : 'la huella usa los eventos importados a la bitácora; todavía no usa lo que vio MODIS, que es orientativo',
     });
   }
   if (other.size > 0) {

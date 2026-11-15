@@ -89,20 +89,32 @@ describe('MapPage', () => {
     vi.restoreAllMocks();
   });
 
-  it('muestra solo los lotes de la cuenta, con sus totales', async () => {
+  const lotCards = () => [...el().querySelectorAll<HTMLButtonElement>('button.lot__pick')];
+  const hudLinks = () => [...el().querySelectorAll<HTMLAnchorElement>('.stage__lot a.hud__btn')];
+
+  it('sin encabezado de página: la maqueta y "Tus lotes" con la cantidad y las hectáreas', async () => {
     await setup();
     await load([MINE, OTHER]);
 
     const text = el().textContent ?? '';
-    expect(text).toContain('Mi campo');
     expect(text).toContain('Lote de prueba');
     expect(text).toContain('Lote del bajo');
-    expect(el().querySelector('.totals')?.textContent).toContain('2 lotes');
-    expect(el().querySelector('.totals')?.textContent).toContain('34,9 ha');
+    // sin título, bajada ni totales a la vista: el h1 queda solo para el lector de pantalla
+    expect(el().querySelector('app-page-header')).toBeNull();
+    expect(el().querySelector('h1')?.classList).toContain('visually-hidden');
+    expect(text).not.toContain('Tus lotes y lo que ven');
+    expect(el().querySelector('#stage-title')?.classList).toContain('visually-hidden');
+    expect(el().querySelector('app-lot-list .subtitle')?.textContent?.trim()).toBe(
+      '2 lotes · 34,9 ha',
+    );
+    // "Marcar lote" ya está en la barra de arriba y en las pestañas del celular
+    expect(el().querySelector('.btn--primary')).toBeNull();
+    expect(el().querySelector('.seg')?.textContent).toContain('Maqueta');
+    // cómo leer la maqueta, detrás de un (i)
+    expect(el().querySelector('app-info-tip button')?.getAttribute('aria-label')).toBe(
+      'Cómo leer la maqueta',
+    );
     expect(text).not.toContain('Ejemplo');
-    // una sola acción principal: marcar otro lote
-    expect(el().querySelectorAll('.btn--primary').length).toBe(1);
-    expect(el().querySelector('a.btn--primary')?.getAttribute('href')).toBe('/mapa/nuevo');
   });
 
   it('sin lotes da la bienvenida y pregunta si usamos la ubicación, sin maqueta', async () => {
@@ -149,33 +161,147 @@ describe('MapPage', () => {
     expect(el().querySelector('a[href="/mapa/nuevo"]')).toBeTruthy();
   });
 
-  it('tocar un lote de la lista lo elige y lo abre en el popup; el resumen ofrece "Ver lote"', async () => {
+  it('tocar la tarjeta marca el lote sin abrir nada; la lupa lo abre en el popup', async () => {
     await setup();
     await load([MINE]);
+    const router = TestBed.inject(Router);
 
-    const button = [...el().querySelectorAll<HTMLButtonElement>('button.lot')].find((item) =>
-      item.textContent?.includes('Lote de prueba'),
+    const card = lotCards().find((item) => item.textContent?.includes('Lote de prueba'))!;
+    // tarjeta compacta: nombre, hectáreas y una línea de estado, sin párrafos
+    expect(card.querySelector('.line')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+      '24,9 ha · Sin eventos todavía',
     );
-    // una línea por lote: las hectáreas y la localidad, sin párrafos
-    expect(button?.querySelector('.line')?.textContent?.trim()).toBe('24,9 ha · Pueblo de prueba');
-    expect(button?.getAttribute('aria-haspopup')).toBe('dialog');
-    button?.click();
+    expect(card.hasAttribute('aria-haspopup')).toBe(false);
+    card.click();
     await fixture.whenStable();
-    expect(button?.getAttribute('aria-pressed')).toBe('true');
-    expect(TestBed.inject(Router).url).toBe('/?lote=7');
-    expect(el().querySelector('dialog.lot-dialog')?.hasAttribute('open')).toBe(true);
+    expect(card.getAttribute('aria-pressed')).toBe('true');
+    expect(router.url).toBe('/');
+    // nada de recuadro grande con el resumen
+    expect(el().querySelector('app-lot-summary')).toBeNull();
+    expect(el().querySelector('dialog.lot-dialog')?.hasAttribute('open')).toBe(false);
+    const scene = fixture.debugElement.query(By.directive(IsoScene)).componentInstance as IsoScene;
+    expect(scene.selectedId()).toBe('7');
 
-    const summary = el().querySelector('app-lot-summary');
-    const open = summary?.querySelector('a[aria-haspopup="dialog"]');
-    expect(open?.textContent).toContain('Ver lote');
-    expect(open?.getAttribute('href')).toBe('/?lote=7');
-    // nombre, hectáreas y una línea de estado: sin párrafos
-    expect(summary?.querySelector('.where')?.textContent?.trim()).toBe(
-      '24,9 ha · Pueblo de prueba',
+    const lens = el().querySelector<HTMLAnchorElement>('a.lot__open')!;
+    expect(lens.getAttribute('aria-label')).toBe('Ver Lote de prueba');
+    expect(lens.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(lens.getAttribute('href')).toBe('/?lote=7');
+    lens.click();
+    await fixture.whenStable();
+    expect(router.url).toBe('/?lote=7');
+    expect(el().querySelector('dialog.lot-dialog')?.hasAttribute('open')).toBe(true);
+    expect(card.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('tocar de nuevo la tarjeta marcada la desmarca', async () => {
+    await setup();
+    await load([MINE, OTHER]);
+
+    const card = lotCards().find((item) => item.textContent?.includes('Lote del bajo'))!;
+    card.click();
+    await fixture.whenStable();
+    expect(card.getAttribute('aria-pressed')).toBe('true');
+    card.click();
+    await fixture.whenStable();
+    expect(card.getAttribute('aria-pressed')).toBe('false');
+    expect(el().querySelector('.stage__lot')).toBeNull();
+  });
+
+  it('con un lote marcado, la barra de la maqueta suma accesos a las pestañas de su popup', async () => {
+    await setup();
+    await load([MINE, OTHER]);
+    // sin lote elegido no hay accesos (nada de botones apagados)
+    expect(el().querySelector('.stage__lot')).toBeNull();
+
+    // elegirlo en la maqueta lo marca también en la lista
+    const scene = fixture.debugElement.query(By.directive(IsoScene)).componentInstance as IsoScene;
+    scene.lotSelect.emit('8');
+    await fixture.whenStable();
+    const card = lotCards().find((item) => item.textContent?.includes('Lote del bajo'))!;
+    expect(card.getAttribute('aria-pressed')).toBe('true');
+
+    const group = el().querySelector('.stage__lot')!;
+    expect(group.getAttribute('role')).toBe('group');
+    expect(group.getAttribute('aria-label')).toBe('Secciones de Lote del bajo');
+    expect(hudLinks().map((link) => link.textContent?.trim())).toEqual([
+      'Datos',
+      'Huella',
+      'Fertilización',
+      'Rentabilidad',
+    ]);
+    expect(hudLinks().map((link) => link.getAttribute('aria-label'))).toEqual([
+      'Abrir los datos de Lote del bajo',
+      'Abrir la huella de Lote del bajo',
+      'Abrir la fertilización de Lote del bajo',
+      'Abrir la rentabilidad de Lote del bajo',
+    ]);
+    // la misma dirección que usa el popup para abrir en esa pestaña
+    expect(hudLinks().map((link) => link.getAttribute('href'))).toEqual([
+      '/?lote=8',
+      '/?lote=8&seccion=huella',
+      '/?lote=8&seccion=fertilizacion',
+      '/?lote=8&seccion=rentabilidad',
+    ]);
+    // el resto, en "Más"
+    const more = [...el().querySelectorAll<HTMLAnchorElement>('app-more-menu a.menu-item')];
+    expect(
+      more.map((link) => [link.getAttribute('aria-label'), link.getAttribute('href')]),
+    ).toEqual([
+      ['Abrir la bitácora de Lote del bajo', '/?lote=8&seccion=bitacora'],
+      ['Abrir las prácticas de Lote del bajo', '/?lote=8&seccion=practicas'],
+    ]);
+
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    hudLinks()[2].click();
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({
+        queryParams: { lote: 8, seccion: 'fertilizacion', vista: null },
+        state: { lotDialog: true },
+      }),
     );
-    expect(summary?.querySelector('.status')?.textContent).toContain(
-      'Sin eventos detectados todavía',
+  });
+
+  it('un enlace pegado con ?lote= abre el popup y deja ese lote marcado detrás', async () => {
+    await setup();
+    await TestBed.inject(Router).navigateByUrl('/?lote=8&seccion=huella');
+    await load([MINE, OTHER]);
+
+    expect(el().querySelector('dialog.lot-dialog')?.hasAttribute('open')).toBe(true);
+    const card = lotCards().find((item) => item.textContent?.includes('Lote del bajo'))!;
+    expect(card.getAttribute('aria-pressed')).toBe('true');
+    expect(el().querySelector('.stage__lot')?.getAttribute('aria-label')).toBe(
+      'Secciones de Lote del bajo',
     );
+  });
+
+  it('un lote sin sincronizar se marca pero no tiene lupa ni accesos al popup', async () => {
+    const pending: PendingLot = {
+      localId: 'a1',
+      body: { name: 'Lote nuevo', geometry: GEOMETRY },
+      createdAt: '2026-11-15T10:00:00Z',
+      attempts: 1,
+      rejected: true,
+      error: 'El perímetro se cruza.',
+    };
+    const outbox = {
+      pending: signal<PendingLot[]>([pending]),
+      lastSynced: signal<SyncedLot[]>([]),
+    };
+    await setup([{ provide: LotOutbox, useValue: outbox }]);
+    await load([MINE]);
+
+    expect(el().querySelector('app-lot-list .subtitle')?.textContent?.trim()).toBe(
+      '1 lote · 24,9 ha · 1 sin sincronizar',
+    );
+    const card = lotCards().find((item) => item.textContent?.includes('Lote nuevo'))!;
+    expect(card.textContent).toContain('Rechazado');
+    expect(card.textContent).toContain('El perímetro se cruza.');
+    expect(card.closest('li')?.querySelector('a.lot__open')).toBeNull();
+    card.click();
+    await fixture.whenStable();
+    expect(card.getAttribute('aria-pressed')).toBe('true');
+    expect(el().querySelector('.stage__lot')).toBeNull();
   });
 
   it('con más de 6 lotes aparecen la búsqueda y el orden', async () => {
@@ -193,16 +319,39 @@ describe('MapPage', () => {
     search.value = 'esperanza';
     search.dispatchEvent(new Event('input'));
     await fixture.whenStable();
-    expect(el().querySelectorAll('button.lot').length).toBe(1);
+    expect(lotCards().length).toBe(1);
     expect(el().textContent).toContain('Mostrando 1 de 8');
+  });
+
+  it('el orden tiene nombre y pone primero el lote con más hectáreas', async () => {
+    await setup();
+    const many = Array.from({ length: 7 }, (_, i) => ({
+      ...MINE,
+      id: 200 + i,
+      name: `Lote ${i + 1}`,
+      area_ha: i === 4 ? 90 : 10 + i,
+    }));
+    await load(many);
+
+    const select = el().querySelector<HTMLSelectElement>('app-lot-list select')!;
+    expect(select.closest('label')?.textContent).toContain('Ordenar lotes');
+    expect([...select.options].map((option) => option.textContent?.trim())).toEqual([
+      'Nombre',
+      'Hectáreas',
+      'Último dato',
+    ]);
+    select.value = 'area';
+    select.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    expect(lotCards()[0].querySelector('.name')?.textContent).toBe('Lote 5');
   });
 
   it('si la NASA no responde, la capa NDVI lo dice y no raya los lotes como nublados', async () => {
     await setup();
     await load([MINE]);
 
-    const ndviButton = [...el().querySelectorAll<HTMLButtonElement>('.hud__btn')].find((item) =>
-      item.textContent?.includes('NDVI'),
+    const ndviButton = [...el().querySelectorAll<HTMLButtonElement>('button.hud__btn')].find(
+      (item) => item.textContent?.includes('NDVI'),
     );
     ndviButton?.click();
     for (let i = 0; i < 5; i++) {
@@ -211,6 +360,8 @@ describe('MapPage', () => {
     }
 
     expect(el().querySelector('.ndvi-legend')?.textContent).toContain(NO_DATA_REASONS.offline);
+    // sin ningún NDVI no hay dato que etiquetar: la escala no lleva VERIFICADO
+    expect(el().querySelector('.ndvi-legend app-origin-badge')).toBeNull();
     const scene = fixture.debugElement.query(By.directive(IsoScene)).componentInstance as IsoScene;
     expect(scene.lots().some((lot) => lot.hatched)).toBe(false);
   });
@@ -236,7 +387,8 @@ describe('MapPage', () => {
     http.expectOne('/api/lots/').error(new ProgressEvent('error'));
     await fixture.whenStable();
 
-    expect(el().querySelector('.totals')).toBeNull();
+    expect(el().querySelector('app-lot-list')).toBeNull();
+    expect(el().textContent).not.toContain('0 lotes');
     expect(el().textContent).not.toContain('Marcá tu primer lote');
     expect(el().querySelector('[role=alert]')?.textContent).toContain('Reintentar');
   });

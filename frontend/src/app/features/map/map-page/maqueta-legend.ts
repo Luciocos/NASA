@@ -1,29 +1,36 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
+import { EventType } from '../../../core/models';
 import { EventGlyph } from '../../../shared/iso/event-glyph';
 import { IsoGlyph } from '../../../shared/iso/model';
 import { EVENT_TYPES, EVENT_TYPE_LABELS } from '../../lot/labels';
 
+/** rótulos cortos para que la leyenda entre en la ayuda chica sin cortar renglones */
+const SHORT_LABELS: Partial<Record<EventType, string>> = {
+  TILLAGE: 'Remoción',
+  COVER_CROP: 'Cobertura',
+  LAND_USE_CHANGE: 'Cambio de uso',
+};
+
 const GLYPHS: readonly { type: IsoGlyph; label: string }[] = [
-  ...EVENT_TYPES.map((type) => ({ type, label: EVENT_TYPE_LABELS[type] })),
-  { type: 'NO_DATA', label: 'Sin eventos todavía' },
+  ...EVENT_TYPES.map((type) => ({ type, label: SHORT_LABELS[type] ?? EVENT_TYPE_LABELS[type] })),
+  { type: 'NO_DATA', label: 'Sin eventos' },
   { type: 'PENDING', label: 'Sin sincronizar' },
 ];
 
 /**
- * leyenda de la maqueta de Mi campo, para el plegable "Cómo leer la maqueta": qué ilustra la
+ * leyenda de la maqueta de Mi campo, para la ayuda (i) "Cómo leer la maqueta": qué ilustra la
  * textura, qué dice el globo (el mismo glifo que dibuja la maqueta) y qué dice su borde sobre el
- * origen del dato. cada borde se distingue por su forma, no solo por el color
+ * origen del dato. cada borde se distingue por su forma, no solo por el color. los globos van de
+ * a dos columnas y con rótulos cortos, para entrar en la ayuda sin desplazarla
  */
 @Component({
   selector: 'app-maqueta-legend',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [EventGlyph],
   template: `
-    <p>
-      Cada bloque es un lote. Su textura ilustra el último evento registrado: no es una foto de hoy.
-    </p>
-    <p class="title">El globo dice qué pasó en el lote</p>
+    <p>Cada bloque es un lote. Su textura ilustra el último evento: no es una foto de hoy.</p>
+    <p class="title">El globo: qué pasó</p>
     <ul class="glyphs">
       @for (item of glyphs; track item.type) {
         <li>
@@ -31,33 +38,33 @@ const GLYPHS: readonly { type: IsoGlyph; label: string }[] = [
         </li>
       }
     </ul>
-    <p class="title">Su borde dice de dónde sale el dato</p>
+    <p class="title">El borde: de dónde sale el dato</p>
     <ul class="origins">
       <li>
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <circle class="verified" cx="12" cy="12" r="8" />
         </svg>
-        Línea llena: verificado por satélite
+        Llena: verificado por satélite
       </li>
       <li>
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <circle class="declared" cx="12" cy="12" r="9" />
           <circle class="declared" cx="12" cy="12" r="5.5" />
         </svg>
-        Doble línea: declarado por el productor
+        Doble: declarado por el productor
       </li>
       <li>
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <circle class="estimated" cx="12" cy="12" r="8" />
         </svg>
-        Punteada: estimado (valor regional o por defecto)
+        Punteada: estimado (valor de referencia)
       </li>
       <li>
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <circle class="plain" cx="12" cy="12" r="6" />
           <circle class="simulated" cx="12" cy="12" r="10" />
         </svg>
-        Contorno discontinuo: dato simulado para la demostración
+        Discontinua: simulado para la demostración
       </li>
     </ul>
   `,
@@ -70,30 +77,35 @@ const GLYPHS: readonly { type: IsoGlyph; label: string }[] = [
       margin: 0;
     }
     .title {
-      margin-top: var(--space-2);
+      margin-top: var(--space-1);
       color: var(--ink);
       font-weight: 700;
     }
-    ul {
+    /* :host gana a los estilos de lista de la ayuda (i) que la envuelve */
+    :host .glyphs,
+    :host .origins {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(min(13rem, 100%), 1fr));
-      gap: var(--space-2) var(--space-4);
+      gap: var(--space-1) var(--space-3);
       margin: 0;
       padding: 0;
       list-style: none;
+    }
+    .glyphs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     li {
       display: flex;
       align-items: center;
       gap: var(--space-2);
+      min-width: 0;
     }
     .mark {
-      --glyph-size: 1rem;
+      --glyph-size: 0.9rem;
       display: grid;
       flex: none;
       place-items: center;
-      width: 1.75rem;
-      height: 1.75rem;
+      width: 1.5rem;
+      height: 1.5rem;
       border: 1.5px solid var(--line-strong);
       border-radius: 50%;
       background: #fff;
@@ -101,8 +113,8 @@ const GLYPHS: readonly { type: IsoGlyph; label: string }[] = [
     }
     svg {
       flex: none;
-      width: 1.75rem;
-      height: 1.75rem;
+      width: 1.5rem;
+      height: 1.5rem;
       fill: #fff;
       stroke-width: 2;
     }

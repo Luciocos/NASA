@@ -25,9 +25,10 @@ p {
   line-height: 1.35;
 }
 
+/* las dos respuestas lado a lado, también en el celular: si no entran, el texto baja a dos líneas */
 .ask__options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
   gap: var(--space-2);
 }
 

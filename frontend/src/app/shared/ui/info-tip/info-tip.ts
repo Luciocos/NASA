@@ -8,35 +8,42 @@ import {
   viewChild,
 } from '@angular/core';
 
-import { Icon } from '../../../shared/ui/icon/icon';
+import { Icon } from '../icon/icon';
 
 let nextId = 0;
 
 /** margen con el borde de la ventana y separación con el botón, en px */
 const EDGE = 12;
 const GAP = 6;
+/** ancho de la ayuda (22rem), el mismo que dice el CSS */
+const WIDTH = 352;
 
 /**
- * ayuda chica detrás de un botón (i): cómo se calcula, de dónde sale un dato, fuentes largas.
- * no ocupa lugar a la vista y el contenido está siempre en el DOM (lo leen los lectores de
- * pantalla y las pruebas). usa el popover nativo: se abre y se cierra con el botón, con Escape
- * o con un toque afuera, y se cierra solo al desplazar. no atrapa el foco: es una nota, no un
- * diálogo. se ubica debajo del botón (o arriba si no entra), sin salirse de la ventana
+ * botón (i) con una ayuda chica: lo que explica un dato (cómo se calcula, de dónde sale, qué
+ * significa su origen, fuentes largas) sin dejar un párrafo a la vista. el botón mide 44 px para
+ * el dedo y a la vista es un círculo chico del alto de la línea
+ *
+ * usa el popover nativo del navegador: se abre y se cierra con el botón, con Escape o con un
+ * toque afuera, y se cierra solo al desplazar la página, el popup o una pista de tarjetas. vive
+ * en la capa superior, así que ni una tarjeta deslizable ni el popup del lote lo recortan. se
+ * ubica debajo del botón (o arriba si no entra), sin salirse de la ventana. no atrapa el foco: es
+ * una nota, no un diálogo. el contenido está siempre en el DOM (lo leen los lectores de pantalla
+ * y las pruebas) y cada ayuda tiene su propio id
  *
  * @example
- * <app-help-tip label="¿De dónde sale cada dato?">
- *   <p>Verificado: observado por satélite.</p>
- * </app-help-tip>
+ * <app-info-tip label="Cómo se calcula">
+ *   <p>El verdor es el NDVI medio del lote.</p>
+ * </app-info-tip>
  */
 @Component({
-  selector: 'app-help-tip',
+  selector: 'app-info-tip',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [Icon],
   template: `
     <button
       #button
       type="button"
-      class="btn btn--ghost btn--icon trigger"
+      class="tip-trigger"
       [attr.popovertarget]="id"
       [attr.aria-label]="label()"
     >
@@ -60,12 +67,29 @@ const GAP = 6;
       flex: none;
       vertical-align: middle;
     }
-    .trigger {
-      --icon-size: 1.125rem;
+    /* 44 px de toque, pero ocupa en la línea lo que un ícono: no agranda títulos ni filas */
+    .tip-trigger {
+      --icon-size: 1.15rem;
+      display: inline-grid;
+      place-items: center;
+      width: var(--tap);
+      height: var(--tap);
+      margin: calc((1.5rem - var(--tap)) / 2);
+      padding: 0;
+      border: 0;
+      border-radius: var(--radius-pill);
+      background: none;
       color: var(--ink-3);
+      cursor: pointer;
     }
-    .trigger:hover {
+    .tip-trigger:hover,
+    .tip-trigger:has(+ .tip:popover-open) {
+      background: var(--paper-2);
       color: var(--ink);
+    }
+    .tip-trigger:focus-visible {
+      outline: 2px solid var(--focus-ring);
+      outline-offset: -4px;
     }
     .tip {
       position: fixed;
@@ -80,16 +104,21 @@ const GAP = 6;
       background: var(--surface);
       box-shadow: var(--shadow-3);
       color: var(--ink-2);
+      font-family: var(--font-sans);
       font-size: var(--text-sm);
+      font-style: normal;
       font-weight: 400;
-      letter-spacing: 0;
+      letter-spacing: normal;
       line-height: 1.45;
       text-align: left;
       text-transform: none;
       white-space: normal;
     }
+    .tip:popover-open {
+      animation: tip-in var(--dur-2) var(--ease-out);
+    }
     .tip__title {
-      margin: 0 0 var(--space-2);
+      margin: 0 0 var(--space-1);
       color: var(--ink);
       font-weight: 700;
     }
@@ -108,18 +137,25 @@ const GAP = 6;
     .tip__body ::ng-deep strong {
       color: var(--ink);
     }
+    @keyframes tip-in {
+      from {
+        opacity: 0;
+        transform: translateY(-0.25rem);
+      }
+    }
   `,
 })
-export class HelpTip {
-  /** nombre del botón y título de la ayuda: "¿De dónde sale cada dato?" */
+export class InfoTip {
+  /** nombre del botón y título de la ayuda: "Cómo se calcula", "De dónde sale el rinde" */
   readonly label = input.required<string>();
 
-  protected readonly id = `help-tip-${nextId++}`;
+  /** único en la app: las ayudas de una misma pantalla nunca se cruzan */
+  readonly id = `info-tip-${++nextId}`;
 
   private readonly button = viewChild.required<ElementRef<HTMLButtonElement>>('button');
   private readonly panel = viewChild.required<ElementRef<HTMLElement>>('panel');
 
-  /** al desplazar la página (o el popup) la ayuda se cierra: no queda flotando lejos del botón */
+  /** al desplazar la página, el popup o una pista, la ayuda se cierra: no queda flotando lejos */
   private readonly closeOnScroll = (event: Event): void => {
     const panel = this.panel().nativeElement;
     if (event.target instanceof Node && panel.contains(event.target)) return;
@@ -131,12 +167,12 @@ export class HelpTip {
     inject(DestroyRef).onDestroy(() => this.unlisten());
   }
 
-  /** antes de mostrarse: debajo del botón, centrada y sin salirse de la ventana */
+  /** antes de mostrarse: debajo del botón, centrada en él y sin salirse de la ventana */
   protected onBeforeToggle(event: Event): void {
     if ((event as ToggleEvent).newState !== 'open') return;
     const panel = this.panel().nativeElement;
     const rect = this.button().nativeElement.getBoundingClientRect();
-    const width = Math.min(352, window.innerWidth - 2 * EDGE);
+    const width = Math.min(WIDTH, window.innerWidth - 2 * EDGE);
     const left = Math.min(
       Math.max(EDGE, rect.left + rect.width / 2 - width / 2),
       window.innerWidth - EDGE - width,

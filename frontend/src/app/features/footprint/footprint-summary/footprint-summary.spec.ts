@@ -28,7 +28,7 @@ describe('FootprintSummary', () => {
       'Provisional · prueba de concepto',
     ]);
     // quién completa cada cosa, en la ayuda (i) de los chips
-    const [missingHelp, aboutHelp] = [...el().querySelectorAll('app-help-tip')];
+    const [missingHelp, aboutHelp] = [...el().querySelectorAll('app-info-tip')];
     expect(missingHelp.querySelector('button')?.getAttribute('aria-label')).toBe(
       'Qué falta para calcularla',
     );
@@ -63,7 +63,7 @@ describe('FootprintSummary', () => {
     expect(el().classList).not.toContain('is-missing');
     expect(el().querySelector('.value')?.textContent?.trim()).toBe('37,5 kg CO2e/t');
     expect(el().textContent).not.toContain('Falta');
-    expect(el().querySelectorAll('app-help-tip').length).toBe(1);
+    expect(el().querySelectorAll('app-info-tip').length).toBe(1);
     expect(el().textContent).not.toContain('Dato simulado');
   });
 
@@ -71,7 +71,7 @@ describe('FootprintSummary', () => {
     fixture.componentRef.setInput('footprint', makeFootprint());
     fixture.componentRef.setInput('own', false);
     await fixture.whenStable();
-    const help = el().querySelector('app-help-tip')?.textContent ?? '';
+    const help = el().querySelector('app-info-tip')?.textContent ?? '';
     expect(help).toContain('Rinde de la campaña 2025/26: lo carga el productor.');
     expect(help).toContain('Insumos gasoil: los carga el productor.');
     expect(help).not.toContain('vos');
@@ -140,7 +140,7 @@ describe('missingItems', () => {
       ['yield', 'Rinde', 'de la campaña 2025/26'],
       ['inputs', 'Insumos', 'nitrógeno y gasoil'],
       ['factors', 'Factor de emisión', 'gasoil'],
-      ['events', 'Historial satelital', 'cambio de uso del suelo desde 2020'],
+      ['events', 'Eventos de la bitácora', 'de cambio de uso del suelo desde 2020'],
     ]);
   });
 

@@ -211,8 +211,15 @@ h2 {
 }
 
 .data__caption {
-  margin-top: var(--space-2);
+  margin-top: var(--space-1);
   font-weight: 600;
+}
+
+/* el enlace chico se toca con el dedo: 44 px de alto sin agrandar la letra */
+.data__caption a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
 }
 
 .final {

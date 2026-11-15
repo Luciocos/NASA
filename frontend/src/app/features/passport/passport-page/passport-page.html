@@ -21,15 +21,15 @@
 
     <p class="notice" role="note">{{ notice }} Vista pública de solo lectura.</p>
     @if (p.uses_simulated_data) {
-      <p><app-simulated-notice /> Este lote incluye datos simulados.</p>
+      <p class="simulated"><app-simulated-notice /> Este lote incluye datos simulados.</p>
     }
 
     <div #map class="map" role="img" aria-label="Ubicación del lote sobre el mapa"></div>
 
-    <section>
+    <section class="campaigns">
       <h2>Campañas</h2>
       @if (p.lot.campaigns.length === 0) {
-        <p>Este lote todavía no tiene campañas registradas.</p>
+        <p class="muted">Sin campañas todavía.</p>
       } @else {
         <table class="table">
           <thead>
@@ -61,10 +61,10 @@
       }
     </section>
 
-    <section>
+    <section class="events">
       <h2>Bitácora de eventos ({{ p.events.length }})</h2>
       @if (p.events.length === 0) {
-        <p>Este lote todavía no tiene eventos registrados.</p>
+        <p class="muted">Sin eventos todavía.</p>
       } @else {
         <table class="table">
           <thead>
@@ -109,13 +109,13 @@
       }
     </section>
 
-    <section>
+    <section class="footprint">
       <h2>Huella de carbono estimada</h2>
       <app-footprint-breakdown [footprint]="p.footprint" [compact]="true" />
     </section>
 
-    <section>
-      <h2>Puntaje de sustentabilidad (provisional)</h2>
+    <section class="score">
+      <h2>Puntaje de sustentabilidad</h2>
       <app-score-panel [score]="p.score" />
     </section>
 

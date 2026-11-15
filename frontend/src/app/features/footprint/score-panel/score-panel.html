@@ -5,10 +5,12 @@
   @if (s.score !== null) {
     <strong>{{ formatNumber(s.score) }} / {{ s.max_score }}</strong>
   } @else {
-    <strong>sin número</strong>
+    <strong>Sin calcular</strong>
   }
 </p>
-@if (s.message) {
+@if (hint(); as why) {
+  <p class="message">{{ why }}</p>
+} @else if (s.message) {
   <p class="message">{{ s.message }}</p>
 }
 
@@ -20,6 +22,9 @@
       s.criteria.length === 1 ? 'Ver el criterio' : 'Ver los ' + s.criteria.length + ' criterios'
     }}
   </summary>
+  @if (hint() && s.message) {
+    <p class="message">{{ s.message }}</p>
+  }
   <ul class="criteria">
     @for (c of s.criteria; track c.key) {
       <li class="criterion" [class]="'criterion criterion--' + c.status">

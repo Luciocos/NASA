@@ -1,18 +1,25 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  afterRenderEffect,
   booleanAttribute,
   computed,
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 
 import { formatHectares } from '../../../core/insights';
-import { CampaignDetail, EventLogItem } from '../../../core/models';
+import { EventLogItem } from '../../../core/models';
 import { EventGlyph } from '../../../shared/iso/event-glyph';
+import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
+import { SimulatedNotice } from '../../../shared/simulated-notice/simulated-notice';
 import { Icon } from '../../../shared/ui/icon/icon';
 import { SectionCard } from '../../../shared/ui/section-card/section-card';
+import { formatDate } from '../../lot/labels';
+import { LotLink } from '../../lot/lot-workspace/lot-link';
 
 /** un lote en la lista de Mi campo: de la cuenta o guardado solo en el dispositivo */
 export interface ListedLot {
@@ -24,8 +31,8 @@ export interface ListedLot {
   locality: string;
   /** guardado solo en el dispositivo: esperando subirse o rechazado por el servidor */
   pending: 'waiting' | 'rejected' | null;
-  /** última campaña, con su cultivo */
-  crop: CampaignDetail | null;
+  /** por qué lo rechazó el servidor */
+  error: string | null;
   last: EventLogItem | null;
 }
 
@@ -58,27 +65,29 @@ function sortLots(sort: LotSort): (a: ListedLot, b: ListedLot) => number {
   };
 }
 
-/** "3 lotes" o "3 lotes y 1 sin sincronizar" */
+/** "3 lotes · 178,2 ha" o "3 lotes · 178,2 ha · 1 sin sincronizar" */
 function describeCounts(lots: readonly ListedLot[]): string | null {
-  const own = lots.filter((lot) => !lot.pending).length;
-  const pending = lots.length - own;
+  const own = lots.filter((lot) => !lot.pending);
+  const pending = lots.length - own.length;
+  const hectares = own.reduce((sum, lot) => sum + (lot.hectares ?? 0), 0);
   const parts = [
-    own > 0 ? `${own} ${own === 1 ? 'lote' : 'lotes'}` : '',
+    own.length > 0 ? `${own.length} ${own.length === 1 ? 'lote' : 'lotes'}` : '',
+    own.length > 0 ? formatHectares(hectares) : '',
     pending > 0 ? `${pending} sin sincronizar` : '',
   ].filter(Boolean);
-  return parts.length > 0 ? parts.join(' y ') : null;
+  return parts.length > 0 ? parts.join(' · ') : null;
 }
 
 /**
- * lista de lotes de Mi campo: una línea por lote (nombre, y hectáreas con su localidad), con el
- * ícono de su último evento. tocar un lote lo abre (Mi campo decide cómo). con más de 6 lotes
- * aparecen la búsqueda (por nombre o localidad) y el orden; en escritorio la lista se desplaza
- * por dentro
+ * "Tus lotes" en Mi campo: cada lote es una tarjeta compacta con su nombre, sus hectáreas y una
+ * línea de estado (el último evento con su origen, o "Sin eventos todavía"). tocar la tarjeta
+ * marca el lote (en la lista y en la maqueta); la lupa lo abre en el popup. con más de 6 lotes
+ * aparecen la búsqueda (por nombre o localidad) y el orden, y la lista se desplaza por dentro
  */
 @Component({
   selector: 'app-lot-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SectionCard, EventGlyph, Icon],
+  imports: [SectionCard, EventGlyph, OriginBadge, SimulatedNotice, Icon, LotLink],
   template: `
     <app-section-card heading="Tus lotes" [subtitle]="subtitle()">
       @if (tools()) {
@@ -86,19 +95,15 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
           <label class="field search">
             <span class="visually-hidden">Buscar lote por nombre o localidad</span>
             <app-icon name="search" />
-            <input
-              type="search"
-              placeholder="Buscar lote"
-              [value]="query()"
-              (input)="onQuery($event)"
-            />
+            <input type="search" placeholder="Buscar" [value]="query()" (input)="onQuery($event)" />
           </label>
-          <label class="field">
-            <span class="visually-hidden">Ordenar lotes por</span>
+          <label class="field sort">
+            <span class="visually-hidden">Ordenar lotes</span>
+            <app-icon name="sort" />
             <select [value]="sort()" (change)="onSort($event)">
               <option value="name">Nombre</option>
-              <option value="area">Más hectáreas</option>
-              <option value="recent">Dato más reciente</option>
+              <option value="area">Hectáreas</option>
+              <option value="recent">Último dato</option>
             </select>
           </label>
         </div>
@@ -114,16 +119,20 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
           }}
         </p>
       } @else {
-        <ul class="lots" [class.is-long]="tools()">
+        <ul #list class="lots" [class.is-long]="tools()">
           @for (lot of visible(); track lot.id; let i = $index) {
-            <li animate.enter="enter-rise" [style.--i]="i < 8 ? i : 8">
+            <li
+              class="lot"
+              [class.is-selected]="selectedId() === lot.id"
+              [class.is-pending]="lot.pending"
+              [attr.data-lot]="lot.id"
+              animate.enter="enter-rise"
+              [style.--i]="i < 8 ? i : 8"
+            >
               <button
                 type="button"
-                class="lot"
-                [class.is-selected]="selectedId() === lot.id"
-                [class.is-pending]="lot.pending"
+                class="lot__pick"
                 [attr.aria-pressed]="selectedId() === lot.id"
-                [attr.aria-haspopup]="lot.pending ? null : 'dialog'"
                 (click)="lotSelect.emit(lot.id)"
               >
                 <span class="glyph">
@@ -140,16 +149,35 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
                       <span class="chip chip--danger">Rechazado</span>
                     }
                   </span>
-                  @if (lot.pending) {
-                    <span class="line">Guardado en este dispositivo</span>
+                  @if (lot.pending === 'rejected') {
+                    <span class="line reason">{{ lot.error || 'El servidor no lo aceptó' }}</span>
+                  } @else if (lot.pending) {
+                    <span class="line">Se sube cuando vuelva la conexión</span>
                   } @else {
                     <span class="line">
-                      {{ lot.hectares === null ? 'Sin área' : formatHectares(lot.hectares)
-                      }}{{ lot.locality ? ' · ' + lot.locality : '' }}
+                      {{ hectaresOf(lot) }} ·
+                      @if (lot.last; as event) {
+                        {{ event.type_label }} {{ formatDate(event.date) }}
+                        <app-origin-badge [origin]="event.origin" />
+                      } @else {
+                        Sin eventos todavía
+                      }
                     </span>
+                  }
+                  @if (lot.last?.is_simulated) {
+                    <app-simulated-notice class="simulated" />
                   }
                 </span>
               </button>
+              @if (!lot.pending) {
+                <a
+                  class="btn btn--ghost btn--icon lot__open"
+                  [appLotLink]="numberOf(lot)"
+                  [attr.aria-label]="'Ver ' + lot.name"
+                >
+                  <app-icon name="search" />
+                </a>
+              }
             </li>
           }
         </ul>
@@ -165,14 +193,18 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
     }
     .tools {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 10rem);
+      /* el orden mide lo que su opción más larga; la búsqueda se queda con el resto */
+      grid-template-columns: minmax(0, 1fr) auto;
       gap: var(--space-2);
       margin-bottom: var(--space-3);
     }
-    .search {
+    /* la lupa y el ícono de orden dicen qué hace cada control sin un rótulo a la vista */
+    .search,
+    .sort {
       position: relative;
     }
-    .search app-icon {
+    .search app-icon,
+    .sort app-icon {
       --icon-size: 1.1rem;
       position: absolute;
       top: 50%;
@@ -181,7 +213,8 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
       color: var(--ink-3);
       pointer-events: none;
     }
-    .search input {
+    .search input,
+    .sort select {
       padding-left: 2.5rem;
     }
     .lots {
@@ -191,28 +224,22 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
       padding: 0;
       list-style: none;
     }
+    /* tarjeta compacta: lo que se toca para marcar el lote y, a la derecha, la lupa */
     .lot {
       display: flex;
-      align-items: flex-start;
-      gap: var(--space-3);
-      width: 100%;
-      padding: var(--space-3);
+      align-items: center;
+      gap: var(--space-1);
+      padding-right: var(--space-1);
       border: 1px solid var(--line);
       border-radius: var(--radius-md);
       background: var(--surface);
-      color: var(--ink);
-      font: inherit;
-      text-align: left;
-      cursor: pointer;
-      transition: translate var(--dur-1) var(--ease-out);
+      transition: box-shadow var(--dur-1) var(--ease-out);
     }
     .lot:hover {
-      translate: 0 -1px;
       box-shadow: var(--shadow-2);
     }
     /* el elegido: borde, fondo y una franja a la izquierda, además de aria-pressed */
-    .lot.is-selected,
-    .lot.is-selected:hover {
+    .lot.is-selected {
       border-color: var(--accent-line);
       background: var(--accent-soft);
       box-shadow: inset 4px 0 0 var(--accent-strong);
@@ -220,13 +247,33 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
     .lot.is-pending {
       border-style: dashed;
     }
+    .lot__pick {
+      display: flex;
+      flex: 1;
+      align-items: center;
+      gap: var(--space-3);
+      min-width: 0;
+      min-height: var(--tap);
+      padding: var(--space-2) var(--space-1) var(--space-2) var(--space-3);
+      border: 0;
+      border-radius: var(--radius-md);
+      background: none;
+      color: var(--ink);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .lot__open {
+      --icon-size: 1.25rem;
+      flex: none;
+    }
     .glyph {
-      --glyph-size: 1.2rem;
+      --glyph-size: 1.1rem;
       display: grid;
       flex: none;
       place-items: center;
-      width: 2.25rem;
-      height: 2.25rem;
+      width: 2rem;
+      height: 2rem;
       border-radius: 50%;
       background: var(--field-50);
       color: var(--field-800);
@@ -234,13 +281,14 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
     .body {
       display: grid;
       flex: 1;
-      gap: 0.25rem;
+      gap: 0.125rem;
       min-width: 0;
     }
     .top {
       display: flex;
       align-items: center;
       gap: var(--space-2);
+      min-width: 0;
     }
     .name {
       min-width: 0;
@@ -249,37 +297,58 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
       white-space: nowrap;
     }
     .top .chip {
+      flex: none;
       margin-left: auto;
     }
     .line {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.25rem 0.4rem;
       color: var(--ink-3);
       font-size: var(--text-sm);
+      font-variant-numeric: tabular-nums;
+    }
+    .line app-origin-badge {
+      margin-left: 0.25rem;
+      vertical-align: 0.0625rem;
+    }
+    .reason {
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+    }
+    .simulated {
+      font-size: var(--text-xs);
     }
     .none {
       color: var(--ink-3);
       font-size: var(--text-sm);
     }
     .placeholder {
-      height: 4.5rem;
+      height: 3.5rem;
       margin-bottom: var(--space-2);
       border-radius: var(--radius-md);
     }
+    /* en la compu la lista no pasa el alto de la maqueta: se desplaza por dentro */
     @media (min-width: 64.01rem) {
-      .lots.is-long {
-        max-height: min(36rem, 64vh);
+      .lots {
+        max-height: calc(var(--stage-h, 36rem) - 2.5rem);
         margin: -4px;
         padding: 4px;
         overflow-y: auto;
         overscroll-behavior: contain;
       }
+      .lots.is-long {
+        max-height: calc(var(--stage-h, 36rem) - 6rem);
+      }
     }
-    @media (prefers-reduced-motion: reduce) {
-      .lot:hover {
-        translate: none;
+    /* en el celular, con muchos lotes, también: la página no se alarga sin fin */
+    @media (max-width: 64rem) {
+      .lots.is-long {
+        max-height: min(28rem, 60svh);
+        margin: -4px;
+        padding: 4px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
       }
     }
   `,
@@ -290,8 +359,13 @@ export class LotList {
   readonly selectedId = input<string | null>(null);
   /** la lista del backend todavía no llegó */
   readonly loading = input(false, { transform: booleanAttribute });
-  /** tocar un lote lo elige (y Mi campo lo abre) */
+  /**
+   * tocar la tarjeta de un lote (Mi campo lo marca o lo desmarca). la lupa abre el popup por la
+   * dirección (?lote=), y Mi campo marca detrás el lote abierto
+   */
   readonly lotSelect = output<string>();
+
+  private readonly list = viewChild<ElementRef<HTMLElement>>('list');
 
   protected readonly query = signal('');
   protected readonly sort = signal<LotSort>('name');
@@ -311,7 +385,34 @@ export class LotList {
     return shown < total ? `Mostrando ${shown} de ${total}` : describeCounts(this.lots());
   });
 
-  protected readonly formatHectares = formatHectares;
+  protected readonly formatDate = formatDate;
+
+  constructor() {
+    // un lote marcado en la maqueta queda a la vista en la lista, sin mover la página
+    afterRenderEffect(() => {
+      const id = this.selectedId();
+      const list = this.list()?.nativeElement;
+      if (!id || !list || list.scrollHeight <= list.clientHeight) return;
+      const item = [...list.children].find(
+        (child): child is HTMLElement =>
+          child instanceof HTMLElement && child.dataset['lot'] === id,
+      );
+      if (!item) return;
+      const box = list.getBoundingClientRect();
+      const row = item.getBoundingClientRect();
+      if (row.top < box.top) list.scrollTop -= box.top - row.top + 4;
+      else if (row.bottom > box.bottom) list.scrollTop += row.bottom - box.bottom + 4;
+    });
+  }
+
+  /** id del backend: solo los lotes ya sincronizados tienen lupa */
+  protected numberOf(lot: ListedLot): number {
+    return Number(lot.id);
+  }
+
+  protected hectaresOf(lot: ListedLot): string {
+    return lot.hectares === null ? 'Sin área' : formatHectares(lot.hectares);
+  }
 
   protected onQuery(event: Event): void {
     this.query.set((event.target as HTMLInputElement).value);

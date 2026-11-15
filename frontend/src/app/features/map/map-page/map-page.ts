@@ -9,40 +9,72 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Subscription, map } from 'rxjs';
 
 import { Api } from '../../../core/api';
-import { formatHectares, latestCampaign } from '../../../core/insights';
 import { LotOverview, buildIsoScene, loadOverviews } from '../../../core/lot-scene';
 import { LotSummary as Lot } from '../../../core/models';
 import { LotOutbox } from '../../../core/offline/lot-outbox';
 import { LotSatellite } from '../../../core/nasa';
 import { NDVI_LEGEND_GRADIENT, ndviTint } from '../../../shared/iso/ndvi-tint';
 import { IsoScene } from '../../../shared/iso/iso-scene';
-import { Disclosure } from '../../../shared/ui/disclosure/disclosure';
+import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
 import { Icon } from '../../../shared/ui/icon/icon';
+import { IconName } from '../../../shared/ui/icon/icons';
+import { InfoTip } from '../../../shared/ui/info-tip/info-tip';
+import { LotTabKey, lotTabs } from '../../../shared/ui/lot-tabs/lot-tabs';
 import { MoreMenu } from '../../../shared/ui/more-menu/more-menu';
 import { PageHeader } from '../../../shared/ui/page-header/page-header';
-import { SectionCard } from '../../../shared/ui/section-card/section-card';
 import { LotDialog } from '../../lot/lot-workspace/lot-dialog';
-import { openLot } from '../../lot/lot-workspace/lot-link';
+import { LOT_PARAM, LotLink, openLot } from '../../lot/lot-workspace/lot-link';
 import { LocationError, locateOnce, roundCoord } from '../my-location';
 import { SatelliteLot, SatelliteView, satelliteLotOf } from '../satellite-view/satellite-view';
 import { ListedLot, LotList } from './lot-list';
-import { LotSummary } from './lot-summary';
 import { MaquetaLegend } from './maqueta-legend';
 
 type ViewMode = 'maqueta' | 'satelital';
 
+/** acceso directo de la barra de la maqueta a una pestaña del popup del lote elegido */
+export interface LotShortcut {
+  tab: LotTabKey;
+  /** rótulo corto, el mismo de la pestaña ("Datos" abre Satélite) */
+  label: string;
+  icon: IconName;
+  /** comienzo del nombre accesible: "Abrir la huella" + " de lote 2" */
+  action: string;
+}
+
+const TAB_ICONS = new Map(lotTabs(0).map((tab) => [tab.key, tab.icon]));
+
+function shortcut(tab: LotTabKey, label: string, action: string): LotShortcut {
+  return { tab, label, icon: TAB_ICONS.get(tab) ?? 'chart', action };
+}
+
+/** los más usados, a la vista en la barra de la maqueta */
+export const HUD_SHORTCUTS: readonly LotShortcut[] = [
+  shortcut('satellite', 'Datos', 'Abrir los datos'),
+  shortcut('footprint', 'Huella', 'Abrir la huella'),
+  shortcut('fertilization', 'Fertilización', 'Abrir la fertilización'),
+  shortcut('profit', 'Rentabilidad', 'Abrir la rentabilidad'),
+];
+/** el resto, en "Más" */
+export const MORE_SHORTCUTS: readonly LotShortcut[] = [
+  shortcut('log', 'Bitácora', 'Abrir la bitácora'),
+  shortcut('practices', 'Prácticas', 'Abrir las prácticas'),
+];
+
 /**
  * "Mi campo" (CLAUDE.md, sección 11, pantalla 1): solo los lotes del productor (la API devuelve
  * los de su cuenta). sin lotes, una bienvenida que ofrece usar la ubicación para encontrar el
- * campo más rápido o buscarlo en el mapa. con lotes, la maqueta isométrica es la protagonista,
- * con la lista al costado y el resumen del lote elegido con una sola acción: "Ver lote"
+ * campo más rápido o buscarlo en el mapa. con lotes, sin encabezado de página: la maqueta es la
+ * protagonista y al costado (abajo en el celular) va solo la lista compacta de "Tus lotes"
  *
- * "Ver lote", tocar un lote de la lista o abrir uno en la maqueta lo muestran en el popup del
- * lote, encima de Mi campo (/mapa?lote=12&seccion=huella; atrás lo cierra)
+ * tocar un lote en la lista o en la maqueta lo marca en las dos y suma a la barra de la maqueta
+ * accesos directos a las pestañas de su popup. la lupa de la lista, un acceso directo o abrir el
+ * lote en la maqueta lo muestran en el popup, encima de Mi campo (/mapa?lote=12&seccion=huella;
+ * atrás lo cierra)
  */
 @Component({
   selector: 'app-map-page',
@@ -51,14 +83,14 @@ type ViewMode = 'maqueta' | 'satelital';
     RouterLink,
     IsoScene,
     SatelliteView,
+    OriginBadge,
     Icon,
     PageHeader,
-    SectionCard,
-    Disclosure,
+    InfoTip,
     MoreMenu,
     LotList,
-    LotSummary,
     LotDialog,
+    LotLink,
     MaquetaLegend,
   ],
   templateUrl: './map-page.html',
@@ -77,6 +109,8 @@ export class MapPage {
   /** capa de la maqueta: textura del último evento o NDVI actual de MODIS */
   protected readonly layer = signal<'estado' | 'ndvi'>('estado');
   protected readonly ndviGradient = NDVI_LEGEND_GRADIENT;
+  protected readonly shortcuts = HUD_SHORTCUTS;
+  protected readonly moreShortcuts = MORE_SHORTCUTS;
   protected readonly selectedId = signal<string | null>(null);
 
   protected readonly lots = signal<Lot[] | null>(null);
@@ -100,7 +134,7 @@ export class MapPage {
       hectares: item.lot.area_ha,
       locality: item.lot.locality,
       pending: null,
-      crop: latestCampaign(item.campaigns ?? []),
+      error: null,
       last: item.last,
     })),
     ...this.outbox.pending().map((item): ListedLot => ({
@@ -109,15 +143,12 @@ export class MapPage {
       hectares: null,
       locality: item.body.locality ?? '',
       pending: item.rejected ? 'rejected' : 'waiting',
-      crop: null,
+      error: item.rejected ? (item.error ?? null) : null,
       last: null,
     })),
   ]);
   /** la lista llegó y no hay ningún lote: se muestra la bienvenida */
   protected readonly empty = computed(() => this.lots() !== null && this.listed().length === 0);
-  protected readonly totalHa = computed(() =>
-    (this.lots() ?? []).reduce((sum, lot) => sum + lot.area_ha, 0),
-  );
 
   /** NDVI actual de cada lote, solo mientras la capa está activa */
   protected readonly ndvi = computed(() => {
@@ -125,6 +156,10 @@ export class MapPage {
     const refs = (this.lots() ?? []).map((lot) => ({ id: lot.id, geometry: lot.geometry }));
     return refs.length > 0 ? this.satellite.latestNdviForLots(refs)() : null;
   });
+  /** algún lote ya tiene su NDVI: recién ahí la escala lleva el origen (VERIFICADO) */
+  protected readonly hasNdvi = computed(() =>
+    Object.values(this.ndvi()?.data ?? {}).some((obs) => obs?.mean != null),
+  );
   protected readonly isoLots = computed(() => {
     const lots = buildIsoScene(this.overviews(), this.outbox.pending()).lots;
     const ndvi = this.ndvi();
@@ -142,10 +177,6 @@ export class MapPage {
       };
     });
   });
-  protected readonly selectedNdvi = computed(() => {
-    const id = this.selectedId();
-    return id ? (this.ndvi()?.data?.[id] ?? null) : null;
-  });
   protected readonly satelliteLots = computed<SatelliteLot[]>(() => [
     ...(this.lots() ?? []).map(satelliteLotOf),
     ...this.outbox.pending().map((item) => ({
@@ -155,21 +186,29 @@ export class MapPage {
       pending: true,
     })),
   ]);
-  protected readonly selected = computed(() => {
+  /** el lote elegido, si ya tiene ficha: uno sin sincronizar no tiene popup ni accesos */
+  protected readonly selectedLot = computed(() => {
     const id = this.selectedId();
-    return this.overviews().find((item) => String(item.lot.id) === id) ?? null;
-  });
-  protected readonly selectedPending = computed(() => {
-    const id = this.selectedId();
-    return id?.startsWith('pendiente:')
-      ? (this.outbox.pending().find((item) => `pendiente:${item.localId}` === id) ?? null)
-      : null;
+    const lot = (this.lots() ?? []).find((item) => String(item.id) === id);
+    return lot ? { id: lot.id, name: lot.name } : null;
   });
 
-  protected readonly formatHectares = formatHectares;
+  /** el lote abierto en el popup (?lote=12), también si llegó por un enlace pegado */
+  private readonly openedId = toSignal(
+    inject(ActivatedRoute).queryParamMap.pipe(map((params) => params.get(LOT_PARAM))),
+    { initialValue: null },
+  );
 
   constructor() {
     this.reload();
+
+    // el lote del popup queda marcado detrás: al cerrarlo sigue elegido en la maqueta y la lista
+    effect(() => {
+      const id = this.openedId();
+      if (id && (this.lots() ?? []).some((lot) => String(lot.id) === id)) {
+        untracked(() => this.select(id));
+      }
+    });
 
     // trae ficha y bitácora de los lotes, una sola vez por lote
     let loading: Subscription | null = null;
@@ -231,21 +270,22 @@ export class MapPage {
     this.satellite.retry();
   }
 
+  /** marca el lote en la maqueta y en la lista (null: ninguno) */
   protected select(id: string | null): void {
     this.selectedId.set(id);
     if (id && this.view() === 'maqueta') this.scene()?.focusLot(id);
   }
 
+  /** tocar un lote de la lista lo marca; tocarlo de nuevo lo desmarca */
+  protected toggle(id: string): void {
+    this.select(this.selectedId() === id ? null : id);
+  }
+
   /** abre el lote en el popup; uno guardado solo en el dispositivo todavía no tiene ficha */
   protected open(id: string): void {
     if (id.startsWith('pendiente:')) return;
+    this.selectedId.set(id);
     openLot(this.router, Number(id));
-  }
-
-  /** tocar un lote de la lista lo elige (queda marcado detrás) y lo abre en el popup */
-  protected openFromList(id: string): void {
-    this.select(id);
-    this.open(id);
   }
 
   protected zoom(factor: number): void {

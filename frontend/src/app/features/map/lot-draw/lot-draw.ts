@@ -11,7 +11,7 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import * as L from 'leaflet';
 
 import { Api } from '../../../core/api';
@@ -28,6 +28,7 @@ import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
 import { Disclosure } from '../../../shared/ui/disclosure/disclosure';
 import { Icon } from '../../../shared/ui/icon/icon';
 import { PageHeader } from '../../../shared/ui/page-header/page-header';
+import { lotDialogParams } from '../../lot/lot-workspace/lot-link';
 import { areaHa, ringCentroid, ringSelfIntersects, toPolygonGeometry } from '../geo';
 import { Cell, lineCells, vertexLatLng } from '../grid';
 import { Spot, spotFromParams } from '../my-location';
@@ -526,7 +527,12 @@ export class LotDraw {
           this.removeDraft();
           if (result.kind === 'created') {
             this.notice.set(`Listo: guardamos «${result.lot.name}». Abrimos su ficha…`);
-            this.navigateLater(['/lotes', result.lot.id], CREATED_NOTICE_MS);
+            // Mi campo con el lote nuevo abierto en el popup: al cerrarlo queda en Mi campo, y
+            // atrás no vuelve a un trazado vacío
+            this.navigateLater(['/mapa'], CREATED_NOTICE_MS, {
+              queryParams: lotDialogParams(result.lot.id),
+              replaceUrl: true,
+            });
           } else {
             this.notice.set(
               'Guardamos el lote en este dispositivo: se sube solo cuando vuelva la conexión',
@@ -942,8 +948,11 @@ export class LotDraw {
     this.noticeTimer = setTimeout(() => this.mapNotice.set(null), MAP_NOTICE_MS);
   }
 
-  private navigateLater(commands: unknown[], delay: number): void {
-    this.navigateTimer = setTimeout(() => void this.router.navigate(commands), delay);
+  private navigateLater(commands: unknown[], delay: number, extras?: NavigationExtras): void {
+    this.navigateTimer = setTimeout(
+      () => void (extras ? this.router.navigate(commands, extras) : this.router.navigate(commands)),
+      delay,
+    );
   }
 
   private paintChanged(): void {

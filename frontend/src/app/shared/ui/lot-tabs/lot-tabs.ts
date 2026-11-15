@@ -17,18 +17,26 @@ import {
   viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { NavigationEnd, Params, Router, RouterLink } from '@angular/router';
 import { filter, firstValueFrom, map } from 'rxjs';
 
 import { Api } from '../../../core/api';
 import { formatHectares } from '../../../core/insights';
 import { LotDetail, LotSummary } from '../../../core/models';
+import { OriginBadge } from '../../origin-badge/origin-badge';
 import { Icon } from '../icon/icon';
 import { IconName } from '../icon/icons';
 import { MoreMenu } from '../more-menu/more-menu';
 
 export type LotTabKey =
   'satellite' | 'log' | 'practices' | 'footprint' | 'fertilization' | 'profit';
+
+/** otra pestaña del lote pedida desde su contenido: la clave y, si hace falta, la consulta de su vista */
+export interface LotTabChange {
+  tab: LotTabKey;
+  /** la consulta del enlace que la pidió (por ejemplo, la vista de la huella) */
+  params?: Params;
+}
 
 export interface LotTab {
   key: LotTabKey;
@@ -116,7 +124,7 @@ function pathOf(url: string): string {
 @Component({
   selector: 'app-lot-tabs',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Icon, MoreMenu],
+  imports: [RouterLink, Icon, MoreMenu, OriginBadge],
   host: {
     '[class.is-stuck]': 'stuck()',
     '[class.is-dialog]': 'dialog()',
@@ -148,6 +156,12 @@ function pathOf(url: string): string {
           </div>
           @if (canShare()) {
             <app-more-menu class="more" label="Más opciones del lote">
+              @if (l.renspa) {
+                <!-- lo cargó el productor al marcar el lote: a mano, sin sumarlo al encabezado -->
+                <p class="menu-note">
+                  RENSPA {{ l.renspa }} <app-origin-badge origin="DECLARED" />
+                </p>
+              }
               <button
                 type="button"
                 class="menu-item"
@@ -381,6 +395,18 @@ function pathOf(url: string): string {
       color: var(--ink-2);
       font-size: var(--text-sm);
       line-height: 1.4;
+    }
+    .menu-note {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-1) var(--space-2);
+      align-items: center;
+      margin: 0;
+      padding: var(--space-1) var(--space-2) var(--space-2);
+      border-bottom: 1px solid var(--line);
+      color: var(--ink-2);
+      font-size: var(--text-sm);
+      overflow-wrap: anywhere;
     }
     .share__msg app-icon {
       flex: none;
@@ -643,13 +669,30 @@ export class LotTabs {
     afterNextRender(() => {
       const view = this.document.defaultView;
       const host = this.host.nativeElement;
+      const track = this.trackEl().nativeElement;
       const measure = () =>
         this.headHeight.set(this.dialog() ? 0 : this.navEl().nativeElement.offsetTop);
       measure();
       this.syncTrack();
+      // al girar el celular o cambiar el ancho de la ventana (también en el popup), la fila
+      // vuelve a marcar sus bordes y, si cambió de ancho, a centrar la pestaña abierta
+      let width = track.clientWidth;
+      const resize =
+        typeof ResizeObserver === 'undefined'
+          ? null
+          : new ResizeObserver(() => {
+              measure();
+              this.syncTrack();
+              if (track.clientWidth === width) return;
+              width = track.clientWidth;
+              this.revealActive();
+            });
+      resize?.observe(track);
+      destroyRef.onDestroy(() => resize?.disconnect());
       // en el popup no se pega nada: el que se desplaza es el contenido
       if (!view || this.dialog()) return;
 
+      resize?.observe(this.headEl().nativeElement);
       let frame = 0;
       const checkStuck = () => {
         frame = 0;
@@ -660,19 +703,9 @@ export class LotTabs {
         if (!frame) frame = view.requestAnimationFrame(checkStuck);
       };
       view.addEventListener('scroll', onScroll, { passive: true });
-      const resize =
-        typeof ResizeObserver === 'undefined'
-          ? null
-          : new ResizeObserver(() => {
-              measure();
-              this.syncTrack();
-            });
-      resize?.observe(this.headEl().nativeElement);
-      resize?.observe(this.trackEl().nativeElement);
       destroyRef.onDestroy(() => {
         view.removeEventListener('scroll', onScroll);
         if (frame) view.cancelAnimationFrame(frame);
-        resize?.disconnect();
       });
     });
   }

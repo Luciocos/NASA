@@ -40,6 +40,14 @@ export const ZONE_STYLE = {
       border-radius: inherit;
       background: var(--night-900, #1b2f44);
     }
+    /* el + y el − de leaflet miden 30 px: con el dedo, 44 px como el resto de los toques */
+    @media (pointer: coarse) {
+      :host ::ng-deep .leaflet-control-zoom a {
+        width: var(--tap);
+        height: var(--tap);
+        line-height: var(--tap);
+      }
+    }
   `,
 })
 export class ZonesMap {

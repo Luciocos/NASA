@@ -76,13 +76,18 @@
                 <li class="rec" [attr.data-status]="rec.status">
                   <span class="rec__num" aria-hidden="true">{{ i + 1 }}</span>
                   <p class="rec__action">{{ rec.action }}</p>
-                  <app-practice-tip class="rec__tip" [label]="'Por qué: ' + rec.action">
+                  <app-info-tip class="rec__tip" [label]="'Por qué: ' + rec.action">
                     <p>{{ rec.why }}</p>
                     <p>{{ rec.now }}</p>
                     @if (rec.where) {
                       <p>{{ rec.where }}</p>
                     }
-                  </app-practice-tip>
+                  </app-info-tip>
+                  @if (rec.link; as link) {
+                    <a class="rec__link" [href]="linkHref(link)" (click)="openLink($event, link)"
+                      >{{ link.label }} <app-icon name="arrow-right"
+                    /></a>
+                  }
                 </li>
               }
             </ol>
@@ -93,32 +98,55 @@
           </p>
         }
 
-        <h3 class="sub" [id]="listId">Cómo está cada práctica</h3>
-        <ul class="practices" [attr.aria-labelledby]="listId">
-          @for (row of rows(); track row.key) {
-            <li [class.is-declared]="row.declared">
-              <span class="chip state" [class]="chip(row.tone)">
-                <app-icon [name]="row.icon" /> {{ row.chip }}
-              </span>
-              <span class="name">
-                <span>
-                  {{ row.label }}
-                  @if (row.hypothetical) {
-                    <span class="muted">(supuesto)</span>
-                  }
-                </span>
-                @if (row.origin) {
-                  <app-origin-badge [origin]="row.origin" />
+        <ng-template #practiceRow let-row>
+          <li [class.is-declared]="row.declared">
+            <span class="chip state" [class]="chip(row.tone)">
+              <app-icon [name]="row.icon" /> {{ row.chip }}
+            </span>
+            <span class="name">
+              <span>
+                {{ row.label }}
+                @if (row.hypothetical) {
+                  <span class="muted">(supuesto)</span>
                 }
               </span>
-              @if (row.note) {
-                <app-practice-tip label="Tu declaración y el puntaje">
-                  <p>{{ row.note }}</p>
-                </app-practice-tip>
+              @if (row.origin) {
+                <app-origin-badge [origin]="row.origin" />
               }
-            </li>
-          }
-        </ul>
+            </span>
+            @if (row.note) {
+              <app-info-tip [label]="row.noteLabel">
+                <p>{{ row.note }}</p>
+              </app-info-tip>
+            }
+          </li>
+        </ng-template>
+
+        @if (shownRows().length > 0) {
+          <!-- el título va con las prácticas a la vista: si están todas plegadas, la línea plegada ya lo dice -->
+          <h3 class="sub" [id]="listId">Cómo está cada práctica</h3>
+          <ul class="practices" [attr.aria-labelledby]="listId">
+            @for (row of shownRows(); track row.key) {
+              <ng-container *ngTemplateOutlet="practiceRow; context: { $implicit: row }" />
+            }
+          </ul>
+        }
+        @if (foldedRows().length > 0) {
+          <!-- sin labores todavía: un solo "sin dato" en vez de repetirlo en cada práctica -->
+          <app-disclosure
+            class="folded"
+            flat
+            icon="minus"
+            [label]="foldedLabel()"
+            hint="Ver cuáles"
+          >
+            <ul class="practices" [attr.aria-label]="foldedLabel()">
+              @for (row of foldedRows(); track row.key) {
+                <ng-container *ngTemplateOutlet="practiceRow; context: { $implicit: row }" />
+              }
+            </ul>
+          </app-disclosure>
+        }
         @if (simulated()) {
           <app-simulated-notice />
         }
@@ -126,13 +154,7 @@
     }
 
     @if (score(); as s) {
-      <app-disclosure
-        footer
-        flat
-        icon="info"
-        label="Cómo se calcula"
-        hint="Pesos, motivos, confianza y evidencia"
-      >
+      <app-disclosure footer flat icon="info" label="Cómo se calcula" hint="Pesos y evidencia">
         <div class="how">
           <p class="how__lead"><app-icon name="alert" /> {{ s.disclaimer }}</p>
           <p>
@@ -209,6 +231,7 @@
     class="land-use"
     [lot]="lot()"
     [editable]="canEdit()"
-    [(declaration)]="declaration"
+    [declaration]="declaration()"
+    (declarationChange)="onDeclared($event)"
   />
 </div>

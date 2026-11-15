@@ -9,6 +9,7 @@ import {
   inject,
   input,
   linkedSignal,
+  output,
   signal,
   untracked,
 } from '@angular/core';
@@ -94,6 +95,10 @@ export class FootprintPage {
   readonly lotId = input<number | undefined, unknown>(undefined, { transform: toLotId });
   /** adentro del popup del lote: sin app-lot-tabs y sin tocar la URL */
   readonly embedded = input(false, { transform: booleanAttribute });
+  /** la ficha del lote, si quien la muestra ya la tiene (el popup): no se vuelve a pedir */
+  readonly lotDetail = input<LotDetail | null>(null);
+  /** se guardó una declaración: el backend recalculó la huella y cambió la ficha del lote */
+  readonly declared = output<Footprint>();
 
   private readonly tabRequests = new Subject<LotTabKey>();
   /**
@@ -128,7 +133,7 @@ export class FootprintPage {
   protected readonly error = signal<string | null>(null);
   /** El lote no existe o es de otra cuenta (404): se invita a ingresar. */
   protected readonly notFound = signal(false);
-  /** "Probar de nuevo" lo incrementa y vuelven a salir los pedidos */
+  /** "Reintentar" lo incrementa y vuelven a salir los pedidos */
   private readonly attempt = signal(0);
 
   /** en un lote de ejemplo no se declara (el backend responde 403) */
@@ -154,6 +159,7 @@ export class FootprintPage {
     effect((onCleanup) => {
       const id = this.id();
       this.attempt();
+      const given = this.lotDetail();
       // otro lote (el popup puede reusar la pantalla): no queda a la vista el anterior
       if (untracked(this.lot)?.id !== id) this.lot.set(null);
       this.notFound.set(false);
@@ -162,6 +168,10 @@ export class FootprintPage {
         return;
       }
       this.error.set(null);
+      if (given?.id === id) {
+        this.lot.set(given);
+        return;
+      }
       const subscription = this.api.lot(id).subscribe({
         next: (lot) => this.lot.set(lot),
         error: (error: HttpErrorResponse) => {
@@ -200,6 +210,7 @@ export class FootprintPage {
   protected onDeclared(footprint: Footprint): void {
     this.footprint.set(footprint);
     if (footprint.campaign?.id) this.campaign.set(footprint.campaign.id);
+    this.declared.emit(footprint);
   }
 
   protected onCampaign(campaign: number | null): void {

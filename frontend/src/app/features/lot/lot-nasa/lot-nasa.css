@@ -85,6 +85,14 @@ p {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* en el celular, plegado: lo de adentro se ordena igual que en la sección de la compu */
+.more__body {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
 }
 
 .more__count {
@@ -235,19 +243,17 @@ p {
   gap: var(--space-2);
 }
 
+/* una línea por fuente: el nombre corto y su origen; el resto, en el (i) */
+.sources {
+  gap: var(--space-1);
+}
+
 .sources li {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-1) var(--space-2);
-  padding-bottom: var(--space-2);
-  border-bottom: 1px solid var(--line);
-}
-
-.sources li:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
 }
 
 @media (max-width: 64rem) {
@@ -271,13 +277,34 @@ p {
     gap: var(--space-4);
   }
 
+  /*
+   * los tres indicadores en una fila que se desliza con el dedo: el verdor y la lluvia a la
+   * vista y la humedad asomando. ocupan el alto de uno solo, no el de dos filas
+   */
   .kpis {
+    grid-template-columns: none;
+    grid-auto-columns: 44%;
+    grid-auto-flow: column;
     gap: var(--space-3);
+    padding-bottom: var(--space-1);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .kpis::-webkit-scrollbar {
+    display: none;
+  }
+
+  .kpi--lead {
+    grid-column: auto;
   }
 
   /* menos relleno: los tres números entran con menos desplazamiento */
   .kpis .kpi {
     padding: var(--space-3) var(--space-4);
+    scroll-snap-align: start;
   }
 
   /* con el dedo se desliza: los botones sobran y queda la posición */
@@ -307,6 +334,7 @@ p {
   }
 
   .slide {
+    gap: var(--space-2);
     padding: var(--space-4);
   }
 }

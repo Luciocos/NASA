@@ -89,8 +89,9 @@ app-connection-status,
   outline: none;
 }
 
-/* la landing ocupa todo el ancho, sin el margen de las pantallas de la app */
-.content--landing {
+/* la landing ocupa todo el ancho, sin el margen de las pantallas de la app. con las dos clases
+gana también a la regla del celular de .content, que viene después */
+.content.content--landing {
   padding: 0;
 }
 

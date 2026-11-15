@@ -100,7 +100,7 @@ describe('ExamplesPage', () => {
     await flushExamples([LOT, { ...LOT, id: 2, name: 'Lote 2', event_count: 0 }], [EVENT]);
 
     expect(el().querySelector('h1')?.textContent).toContain('Lotes de ejemplo');
-    expect(el().textContent).toContain('con el radar NISAR de la NASA');
+    expect(el().textContent).toContain('vistos por el radar NISAR de la NASA');
     expect(el().textContent).toContain('Solo lectura.');
     const cards = el().querySelectorAll('.example');
     expect(cards).toHaveLength(2);
@@ -110,10 +110,14 @@ describe('ExamplesPage', () => {
     expect(first.querySelector('h2 a')?.getAttribute('aria-haspopup')).toBe('dialog');
     expect(first.textContent).toContain('Casilda, Santa Fe');
     expect(first.textContent).toContain('Remoción de suelo');
-    expect(first.querySelector('app-origin-badge')).not.toBeNull();
+    // el último evento en una sola línea, con su origen al lado
+    expect(first.querySelectorAll('.example__last')).toHaveLength(1);
+    expect(first.querySelector('.example__last app-origin-badge')).not.toBeNull();
     expect(first.textContent).toContain('Dato simulado para la demostración');
     expect(first.querySelector('.example__shape path')?.getAttribute('d')).toMatch(/^M.+Z$/);
-    expect(cards[1].textContent).toContain('Todavía no hay eventos en su bitácora.');
+    expect(cards[1].querySelector('.example__last')?.textContent?.trim()).toBe(
+      'Sin eventos todavía',
+    );
   });
 
   it('sin cuenta invita a crearla; con la sesión abierta, a marcar su lote', async () => {

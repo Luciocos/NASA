@@ -265,8 +265,12 @@ p {
     gap: var(--space-4);
   }
 
+  /*
+   * el lote entra encuadrado igual: un mapa más bajo deja ver los ambientes y "Armar dosis" sin
+   * desplazar casi
+   */
   .zones-map {
-    height: 18rem;
+    height: 13rem;
   }
 
   .zones {
@@ -277,6 +281,12 @@ p {
   .zones app-kpi-card {
     --text-kpi: 1.375rem;
     padding: var(--space-3);
+  }
+
+  /* el rango en una línea: las tres tarjetas quedan del mismo alto, sin un renglón de más */
+  .zone-key {
+    gap: var(--space-1);
+    white-space: nowrap;
   }
 
   .summary {
@@ -306,6 +316,6 @@ p {
   }
 
   :host(.is-embedded) .zones-map {
-    height: clamp(16rem, 40vh, 26rem);
+    height: clamp(14rem, 36vh, 24rem);
   }
 }

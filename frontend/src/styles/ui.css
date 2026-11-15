@@ -644,9 +644,10 @@
     color: var(--ink);
   }
 
+  /* con el dedo, cada opción mide los 44 px de un toque */
   @media (pointer: coarse) {
     .seg > :where(button, label) {
-      min-height: 2.5rem;
+      min-height: var(--tap);
     }
   }
 

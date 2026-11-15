@@ -7,6 +7,7 @@ import {
   inject,
   input,
   signal,
+  untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -17,7 +18,7 @@ import { AuthSession } from '../../../core/auth/auth-session';
 import { formatHectares } from '../../../core/insights';
 import { Footprint, LotDetail, Origin } from '../../../core/models';
 import { WaterfallChart, WaterfallStep } from '../../../shared/charts';
-import { InfoTip } from '../../lot/lot-workspace/info-tip';
+import { InfoTip } from '../../../shared/ui/info-tip/info-tip';
 import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
 import { Disclosure } from '../../../shared/ui/disclosure/disclosure';
 import { KpiCard } from '../../../shared/ui/kpi-card/kpi-card';
@@ -88,6 +89,8 @@ export class ProfitPage {
   readonly id = input<number | undefined, unknown>(undefined, { transform: toLotId });
   /** adentro del popup del lote: sin app-lot-tabs ni encabezado propio */
   readonly embedded = input(false, { transform: booleanAttribute });
+  /** la ficha del lote, si quien la muestra ya la tiene (el popup): no se vuelve a pedir */
+  readonly lotDetail = input<LotDetail | null>(null);
 
   private readonly routeId = toSignal(
     inject(ActivatedRoute).paramMap.pipe(map((params) => toLotId(params.get('id')))),
@@ -247,6 +250,12 @@ export class ProfitPage {
       const id = this.lotId();
       if (!Number.isInteger(id)) {
         this.error.set('El identificador del lote no es válido.');
+        return;
+      }
+      // el popup ya tiene la ficha: se usa esa (la superficie no cambia)
+      const given = untracked(this.lotDetail);
+      if (given?.id === id) {
+        this.lot.set(given);
         return;
       }
       const sub = this.api.lot(id).subscribe({

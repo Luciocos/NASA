@@ -21,7 +21,7 @@ import { DATA_SOURCES, LotSatellite, type LandUseYear } from '../../../../core/n
 import { OriginBadge } from '../../../../shared/origin-badge/origin-badge';
 import { Icon } from '../../../../shared/ui/icon/icon';
 import { SectionCard } from '../../../../shared/ui/section-card/section-card';
-import { PracticeTip } from '../practice-tip/practice-tip';
+import { InfoTip } from '../../../../shared/ui/info-tip/info-tip';
 import {
   differentYears,
   firstSentence,
@@ -51,7 +51,7 @@ let nextId = 0;
 @Component({
   selector: 'app-land-use-card',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SectionCard, Icon, OriginBadge, PracticeTip],
+  imports: [SectionCard, Icon, OriginBadge, InfoTip],
   templateUrl: './land-use-card.html',
   styleUrl: './land-use-card.css',
 })
@@ -135,6 +135,8 @@ export class LandUseCard {
     const evidence = this.evidence();
     return evidence?.verdict === 'no_data' ? noDataShort(evidence) : '';
   });
+  /** MODIS vio algo en algún año: recién ahí lleva su origen (VERIFICADO) */
+  protected readonly hasData = computed(() => this.years().some((year) => year.pixels > 0));
   protected readonly errorShort = computed(
     () => firstSentence(this.modis().error) || 'No se pudo consultar a MODIS',
   );

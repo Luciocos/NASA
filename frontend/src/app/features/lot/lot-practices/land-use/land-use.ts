@@ -16,7 +16,8 @@ const NOMINAL_PIXEL_M = 460;
 /**
  * lo que hay de MODIS: el veredicto, o que todavía no llegó, o que no se pudo pedir. un
  * posible cambio sin un uso dominante en el año base (un empate) es 'unclear': MODIS no vio
- * otro uso, solo no alcanza para decir cuál había
+ * otro uso, solo no alcanza para decir cuál había. un cambio en parte del lote (el dominante
+ * sigue igual) es un posible cambio como cualquier otro
  */
 export type ModisStatus = 'loading' | 'error' | 'unclear' | LandUseEvidence['verdict'];
 
@@ -74,7 +75,10 @@ export function joinList(items: readonly (string | number)[]): string {
 export function modisStatus(state: LoadState<LandUseEvidence>): ModisStatus {
   const evidence = state.data;
   if (evidence) {
-    const unclear = evidence.verdict === 'possible_change' && !differentYears(evidence).length;
+    const unclear =
+      evidence.verdict === 'possible_change' &&
+      !differentYears(evidence).length &&
+      !partialChange(evidence);
     return unclear ? 'unclear' : evidence.verdict;
   }
   return state.status === 'error' ? 'error' : 'loading';
@@ -120,6 +124,28 @@ export function differentYears(evidence: LandUseEvidence): number[] {
   return evidence.years
     .filter((y) => y.year > evidence.baselineYear && y.pixels > 0 && y.group !== base.group)
     .map((y) => y.year);
+}
+
+/**
+ * un posible cambio en parte del lote: el año base tiene un uso dominante y ningún año lo
+ * cambia, pero una parte de los píxeles vio otro uso (core/nasa, LAND_USE_CHANGED_SHARE). no
+ * es un empate: MODIS sí vio un uso distinto, solo que no en la mayor parte del lote
+ */
+export function partialChange(evidence: LandUseEvidence): boolean {
+  const base = baseYear(evidence);
+  return (
+    evidence.verdict === 'possible_change' &&
+    !!base &&
+    base.group !== null &&
+    differentYears(evidence).length === 0
+  );
+}
+
+/** "en 2022 y 2023", "en parte del lote" o '' (un empate en el año base): dónde vio otro uso */
+function changeWhere(evidence: LandUseEvidence): string {
+  const years = differentYears(evidence);
+  if (years.length) return `en ${joinList(years)}`;
+  return partialChange(evidence) ? 'en parte del lote' : '';
 }
 
 /** el grupo de un año en una o dos palabras: "Agrícola", "Mixto" (empate), "Sin dato" */
@@ -209,14 +235,18 @@ export function modisChangeLine(evidence: LandUseEvidence, mine: boolean): Line 
   if (evidence.verdict !== 'possible_change') return null;
   const years = differentYears(evidence);
   const detail = `${forLot(evidence.reason, mine)} Cada píxel de unos ${pixelSize(evidence)} m mezcla el lote con lo que lo rodea.`;
-  return years.length
-    ? { tone: 'warn', icon: 'alert', title: `Uso distinto en ${joinList(years)}`, detail }
-    : {
-        tone: 'neutral',
-        icon: 'layers',
-        title: `Sin un uso claro en ${evidence.baselineYear}`,
-        detail,
-      };
+  if (years.length) {
+    return { tone: 'warn', icon: 'alert', title: `Uso distinto en ${joinList(years)}`, detail };
+  }
+  if (partialChange(evidence)) {
+    return { tone: 'warn', icon: 'alert', title: 'Un uso distinto en parte del lote', detail };
+  }
+  return {
+    tone: 'neutral',
+    icon: 'layers',
+    title: `Sin un uso dominante en ${evidence.baselineYear}`,
+    detail,
+  };
 }
 
 /**
@@ -248,9 +278,11 @@ export function matchLine(
       };
     }
     case 'mismatch': {
-      const years = evidence ? differentYears(evidence) : [];
-      const seen = years.length
-        ? `MODIS vio un uso distinto en ${joinList(years)}.`
+      const where = evidence ? changeWhere(evidence) : '';
+      // en parte del lote, el motivo de core/nasa dice en qué año y en cuántos píxeles
+      const why = evidence && partialChange(evidence) ? ` ${evidence.reason}` : '';
+      const seen = where
+        ? `MODIS vio un uso distinto ${where}.${why}`
         : `MODIS no vio un uso dominante en ${evidence?.baselineYear}.`;
       return {
         tone: 'warn',
@@ -269,9 +301,9 @@ export function matchLine(
     case 'declared_change': {
       let seen = '';
       if (evidence?.verdict === 'possible_change') {
-        const years = differentYears(evidence);
-        seen = years.length
-          ? ` MODIS también vio un uso distinto en ${joinList(years)}.`
+        const where = changeWhere(evidence);
+        seen = where
+          ? ` MODIS también vio un uso distinto ${where}.`
           : ' MODIS tampoco puede confirmar que el uso siguió igual.';
       } else if (evidence?.verdict === 'unchanged') {
         seen = ` MODIS no lo vio: con ${pixel}, un cambio chico puede no verse.`;

@@ -66,8 +66,9 @@
           } @else if (state.data; as data) {
             <p class="source-line">
               <app-origin-badge [origin]="modis.origin" />
+              <!-- en una línea con su origen: el compuesto de 16 días y el producto, en el (i) -->
               <span class="source"
-                >MODIS Terra · compuesto del {{ formatDate(data.date)
+                >MODIS · imagen del {{ formatDate(data.date)
                 }}{{ state.stale ? ' · copia guardada, no se pudo actualizar' : '' }}</span
               >
             </p>
@@ -100,7 +101,7 @@
                   [style.border-color]="zoneStyle[row.zone.level].color"
                   aria-hidden="true"
                 ></span>
-                NDVI {{ number(row.zone.from, 2) }} a {{ number(row.zone.to, 2) }}
+                {{ number(row.zone.from, 2) }} a {{ number(row.zone.to, 2) }}
               </span>
             </app-kpi-card>
           }
@@ -119,7 +120,13 @@
         subtitle="La decidís vos: no es una recomendación agronómica."
       >
         @if (embedded() && !plannerOpen()) {
-          <button actions type="button" class="btn btn--primary btn--sm" (click)="openPlanner()">
+          <button
+            #plannerButton
+            actions
+            type="button"
+            class="btn btn--primary btn--sm"
+            (click)="openPlanner()"
+          >
             <app-icon name="leaf" /> Armar dosis
           </button>
         }
@@ -177,46 +184,52 @@
               }}.
             </p>
           }
-        } @else {
-          <p class="muted">Cargá la dosis de cada ambiente y ves el total.</p>
         }
 
-        <app-disclosure [(open)]="plannerOpen" label="Dosis por ambiente" [hint]="dosesHint()">
-          <div class="doses">
-            @for (row of rows(); track row.zone.level) {
-              <label class="field dose">
-                <span class="dose__name">
-                  <span
-                    [class]="'swatch swatch--' + row.zone.level"
-                    [style.background]="zoneStyle[row.zone.level].fill"
-                    [style.border-color]="zoneStyle[row.zone.level].color"
-                    aria-hidden="true"
-                  ></span>
-                  {{ row.zone.label }}
-                  <span class="muted">· {{ formatHectares(row.ha) }}</span>
-                </span>
-                <input
-                  type="text"
-                  inputmode="decimal"
-                  autocomplete="off"
-                  [value]="doseText(row.zone.level)"
-                  (input)="setDose(row.zone.level, $any($event.target).value)"
-                  placeholder="kg N/ha"
-                />
-                <span class="field__hint">
-                  {{
-                    row.totalN === null
-                      ? 'kg de N por hectárea'
-                      : number(row.dose, 1) + ' kg N/ha: ' + number(row.totalN) + ' kg de N'
-                  }}
-                </span>
-              </label>
-            }
-            <p class="field__hint">
-              <app-origin-badge origin="DECLARED" /> Las dosis las cargás vos.
-            </p>
-          </div>
-        </app-disclosure>
+        <!-- en el popup la planilla aparece con "Armar dosis": cerrada, no repite la acción -->
+        @if (!embedded() || plannerOpen()) {
+          <app-disclosure
+            [open]="plannerOpen()"
+            (openChange)="togglePlanner($event)"
+            label="Dosis por ambiente"
+            [hint]="dosesHint()"
+          >
+            <div class="doses">
+              @for (row of rows(); track row.zone.level) {
+                <label class="field dose">
+                  <span class="dose__name">
+                    <span
+                      [class]="'swatch swatch--' + row.zone.level"
+                      [style.background]="zoneStyle[row.zone.level].fill"
+                      [style.border-color]="zoneStyle[row.zone.level].color"
+                      aria-hidden="true"
+                    ></span>
+                    {{ row.zone.label }}
+                    <span class="muted">· {{ formatHectares(row.ha) }}</span>
+                  </span>
+                  <input
+                    type="text"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    [value]="doseText(row.zone.level)"
+                    (input)="setDose(row.zone.level, $any($event.target).value)"
+                    placeholder="kg N/ha"
+                  />
+                  <span class="field__hint">
+                    {{
+                      row.totalN === null
+                        ? 'kg de N por hectárea'
+                        : number(row.dose, 1) + ' kg N/ha: ' + number(row.totalN) + ' kg de N'
+                    }}
+                  </span>
+                </label>
+              }
+              <p class="field__hint">
+                <app-origin-badge origin="DECLARED" /> Las dosis las cargás vos.
+              </p>
+            </div>
+          </app-disclosure>
+        }
 
         <app-disclosure
           footer

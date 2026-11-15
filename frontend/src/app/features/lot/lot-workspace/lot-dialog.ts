@@ -220,9 +220,24 @@ export class LotDialog {
     if (this.lotId() !== null && !this.closing) this.close();
   }
 
-  /** un toque en el fondo atenuado cierra: el fondo es el propio <dialog>, sin relleno */
+  /**
+   * un toque en el fondo atenuado cierra: el fondo es el propio <dialog>, sin relleno. con una
+   * ayuda (i) o el menú ⋯ abiertos, ese toque solo los cierra a ellos
+   */
   protected onPointerDown(event: Event): void {
-    this.pressedBackdrop = event.target === this.dialogEl().nativeElement;
+    const dialog = this.dialogEl().nativeElement;
+    this.pressedBackdrop = event.target === dialog && !this.overlayOpen(dialog);
+  }
+
+  /** una ayuda (i) o el menú ⋯ abiertos adentro del popup */
+  private overlayOpen(dialog: HTMLElement): boolean {
+    if (dialog.querySelector('app-more-menu.is-open')) return true;
+    try {
+      return dialog.querySelector('[popover]:popover-open') !== null;
+    } catch {
+      // un navegador sin popover no entiende :popover-open: ahí la ayuda no flota
+      return false;
+    }
   }
 
   protected onBackdropClick(event: Event): void {

@@ -6,7 +6,7 @@ import { SimulatedNotice } from '../../../shared/simulated-notice/simulated-noti
 import { Icon } from '../../../shared/ui/icon/icon';
 import { SectionCard } from '../../../shared/ui/section-card/section-card';
 import { formatNumber, shortLabel, shortReason } from '../format';
-import { HelpTip } from '../help-tip/help-tip';
+import { InfoTip } from '../../../shared/ui/info-tip/info-tip';
 
 /**
  * vista "Desglose": una fila de una línea por componente (estado en un chip, nombre, motivo
@@ -17,7 +17,7 @@ import { HelpTip } from '../help-tip/help-tip';
 @Component({
   selector: 'app-footprint-components',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HelpTip, Icon, OriginBadge, SectionCard, SimulatedNotice],
+  imports: [InfoTip, Icon, OriginBadge, SectionCard, SimulatedNotice],
   styleUrl: './footprint-components.css',
   templateUrl: './footprint-components.html',
 })

@@ -3,7 +3,7 @@
   subtitle="Rinde e insumos por hectárea."
   [level]="level()"
 >
-  <app-help-tip actions label="Cómo cargar tus datos">
+  <app-info-tip actions label="Cómo cargar tus datos">
     <p>Lo que cargues queda como <strong>Declarado</strong> y reemplaza al valor de referencia.</p>
     <p>
       Si dejás un campo vacío, se usa la referencia regional cuando existe; si no, ese componente
@@ -18,7 +18,7 @@
         }
       }
     </ul>
-  </app-help-tip>
+  </app-info-tip>
 
   <form class="declaration" novalidate (submit)="$event.preventDefault(); save()">
     <div class="grid">

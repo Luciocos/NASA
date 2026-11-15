@@ -85,7 +85,11 @@ describe('FertilizationPage', () => {
     expect(el().querySelectorAll('.zones app-kpi-card')).toHaveLength(3);
     expect(text()).toContain('NDVI alto');
     expect(text()).toContain('33 % del lote');
-    expect(text()).toContain('compuesto del 16/10/2026');
+    // a la vista, en una línea con su origen; que es un compuesto de 16 días, en el (i)
+    expect(el().querySelector('.source-line')?.textContent).toContain(
+      'MODIS · imagen del 16/10/2026',
+    );
+    expect(el().querySelector('app-info-tip')?.textContent).toContain('compuesto del 16/10/2026');
     expect(text()).toContain('Verificado');
     // una sola acción principal
     expect(el().querySelectorAll('.btn--primary')).toHaveLength(1);
@@ -143,5 +147,37 @@ describe('FertilizationPage', () => {
     expect(host.querySelector('.planner .btn--primary')?.textContent).toContain('Armar dosis');
     // cómo se arman los ambientes queda detrás de un (i)
     expect(host.querySelector('button[aria-label="Cómo se arman los ambientes"]')).toBeTruthy();
+  });
+
+  it('embebida, la planilla cerrada no repite la acción: "Armar dosis" la abre y la vuelve a dar', async () => {
+    const embedded = TestBed.createComponent(FertilizationPage);
+    embedded.componentRef.setInput('id', 2);
+    embedded.componentRef.setInput('embedded', true);
+    await embedded.whenStable();
+    http.expectOne('/api/lots/2/').flush({ ...LOT, id: 2 });
+    http.expectOne('/api/lots/2/footprint/').flush({ components: [] });
+    await embedded.whenStable();
+
+    const host = embedded.nativeElement as HTMLElement;
+    const planner = () =>
+      [...host.querySelectorAll<HTMLDetailsElement>('.planner app-disclosure details')].find(
+        (details) => details.querySelector('summary')?.textContent?.includes('Dosis por ambiente'),
+      );
+    const armar = () => host.querySelector<HTMLButtonElement>('.planner .btn--primary');
+    expect(planner()).toBeUndefined();
+
+    armar()!.click();
+    await embedded.whenStable();
+    expect(planner()?.open).toBe(true);
+    expect(armar()).toBeNull();
+
+    // al cerrarla con su rótulo vuelve "Armar dosis", con el foco
+    planner()!.open = false;
+    planner()!.dispatchEvent(new Event('toggle'));
+    await embedded.whenStable();
+    await new Promise((resolve) => setTimeout(resolve));
+    expect(planner()).toBeUndefined();
+    expect(armar()).not.toBeNull();
+    expect(document.activeElement).toBe(armar());
   });
 });

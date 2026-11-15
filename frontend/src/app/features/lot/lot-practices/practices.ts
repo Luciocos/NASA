@@ -1,9 +1,21 @@
+import { Params } from '@angular/router';
+
 import { CriterionStatus, LandUseDeclaration, Origin, ScoreCriterion } from '../../../core/models';
 import { IconName } from '../../../shared/ui/icon/icons';
-import { LAND_USE_KEY, LandUseMatch, formatDay } from './land-use/land-use';
+import { LotTabKey } from '../../../shared/ui/lot-tabs/lot-tabs';
+import { LAND_USE_KEY, LandUseMatch, ModisStatus, formatDay } from './land-use/land-use';
 
 /** cómo se pinta un estado: chip verde, ámbar o gris, siempre con ícono y texto */
 export type StatusTone = 'ok' | 'warn' | 'neutral';
+
+/** el enlace corto de una recomendación a la pestaña donde se sigue */
+export interface RecommendationLink {
+  /** pocas palabras: "Simular en Huella" */
+  label: string;
+  tab: LotTabKey;
+  /** la consulta que abre la vista justa de la pestaña (por ejemplo, el simulador de la huella) */
+  params?: Params;
+}
 
 /** una recomendación destacada: una frase a la vista; el resto, en la ayuda (i) */
 export interface Recommendation {
@@ -17,12 +29,15 @@ export interface Recommendation {
   now: string;
   /** dónde seguir en las pestañas del lote, o null */
   where: string | null;
+  /** el enlace a esa pestaña, o null */
+  link: RecommendationLink | null;
 }
 
 interface Advice {
   action: string;
   why: string;
   where?: string;
+  link?: RecommendationLink;
 }
 
 /**
@@ -34,6 +49,7 @@ const ADVICE: Record<string, Advice> = {
     action: 'Sumá un cultivo de cobertura en invierno.',
     why: 'Cubre el suelo entre la cosecha y la siembra: lo protege de la erosión, suma materia orgánica y compite con las malezas.',
     where: 'En la pestaña Huella podés simular el efecto de sumarlo.',
+    link: { label: 'Simular en Huella', tab: 'footprint', params: { vista: 'simulador' } },
   },
   no_till: {
     action: 'Sembrá sin remover el suelo.',
@@ -43,6 +59,7 @@ const ADVICE: Record<string, Advice> = {
     action: 'Alterná cultivos entre campañas.',
     why: 'Por ejemplo, maíz o trigo después de soja: corta el ciclo de plagas, enfermedades y malezas, y mejora la estructura del suelo.',
     where: 'En la pestaña Fertilización podés planificar el próximo cultivo.',
+    link: { label: 'Ir a Fertilización', tab: 'fertilization' },
   },
   no_burn: {
     action: 'Dejá el rastrojo como cobertura, sin quemarlo.',
@@ -56,6 +73,7 @@ const ADVICE: Record<string, Advice> = {
 
 /** lo que no cumple por un evento detectado se puede revisar (y corregir) en la bitácora */
 const DETECTED = 'Lo detectó el satélite: podés revisarlo en la pestaña Bitácora.';
+const DETECTED_LINK: RecommendationLink = { label: 'Revisar en Bitácora', tab: 'log' };
 
 /**
  * orden dentro de cada grupo: primero lo que más suele estar al alcance de un productor de la
@@ -121,6 +139,7 @@ export function pickRecommendations(
         why: advice?.why ?? criterion.reason,
         now: `Hoy figura como «${statusLabel(criterion)}»: ${criterion.reason}`,
         where: detected ? DETECTED : (advice?.where ?? null),
+        link: detected ? DETECTED_LINK : (advice?.link ?? null),
       };
     });
 }
@@ -142,17 +161,26 @@ export interface PracticeRow {
   declared: boolean;
   /** la ayuda (i) de la fila, o null */
   note: string | null;
+  /** el nombre de esa ayuda */
+  noteLabel: string;
 }
+
+/** sin declaración, el puntaje da por cumplido el uso del suelo y MODIS vio otro uso */
+const UNDECLARED_REVIEW =
+  'El puntaje lo da por cumplido porque la bitácora no tiene un cambio de uso, pero MODIS vio un uso distinto: miralo en «Uso del suelo desde 2020».';
 
 /**
  * las filas de la lista. con una declaración de uso del suelo, su fila muestra lo declarado
  * (DECLARED) para no contradecir a la tarjeta de uso del suelo: "Revisar" si no coincide con
- * MODIS. la ayuda aclara que el puntaje provisional todavía no la suma y qué figura ahí
+ * MODIS. la ayuda aclara que el puntaje provisional todavía no la suma y qué figura ahí. sin
+ * declaración tampoco la contradice: si el puntaje la da por cumplida y MODIS vio un uso
+ * distinto (`modis`), la fila pide revisarla
  */
 export function practiceRows(
   criteria: readonly ScoreCriterion[],
   declaration: LandUseDeclaration | null,
   match: LandUseMatch | null,
+  modis: ModisStatus | null = null,
 ): PracticeRow[] {
   return criteria.map((criterion) => {
     const row: PracticeRow = {
@@ -166,8 +194,20 @@ export function practiceRows(
       hypothetical: criterion.hypothetical,
       declared: false,
       note: null,
+      noteLabel: 'Tu declaración y el puntaje',
     };
-    if (criterion.key !== LAND_USE_KEY || !declaration) return row;
+    if (criterion.key !== LAND_USE_KEY) return row;
+    if (!declaration) {
+      if (criterion.status !== 'cumple' || modis !== 'possible_change') return row;
+      return {
+        ...row,
+        chip: 'Revisar',
+        icon: 'alert',
+        tone: 'warn',
+        note: UNDECLARED_REVIEW,
+        noteLabel: 'MODIS y el puntaje',
+      };
+    }
 
     const status: CriterionStatus = declaration.unchanged ? 'cumple' : 'no_cumple';
     const review = declaration.unchanged && match === 'mismatch';

@@ -1,43 +1,45 @@
 :host {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-4);
 }
 
 p {
   margin: 0;
 }
 
-/* totales cortos debajo del subtítulo */
-.totals {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2) var(--space-4);
-  margin-top: var(--space-1);
-  color: var(--ink-2);
-}
-
-.totals strong {
-  color: var(--ink);
-  font-size: var(--text-lg);
-  font-variant-numeric: tabular-nums;
-}
-
+/* alto de la maqueta: casi toda la ventana en la compu. la lista de lotes lo usa de tope */
 .layout {
+  --stage-h: clamp(22rem, calc(100dvh - var(--topbar-h) - 8.5rem), 46rem);
   display: grid;
   grid-template-columns: minmax(0, 1fr) 23rem;
   gap: var(--space-5);
   align-items: start;
 }
 
+/* la tarjeta de la maqueta, sin título a la vista: arriba solo el selector y la ayuda (i) */
 .stage {
+  position: relative;
+  min-width: 0;
+  overflow: clip;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
   /* la barra de la maqueta se acomoda al ancho de la escena, no al de la ventana */
   container-type: inline-size;
 }
 
+.stage__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+
 .scene {
   display: block;
-  height: clamp(24rem, 64vh, 44rem);
+  height: var(--stage-h);
 }
 
 /* HUD mínimo arriba a la izquierda: la brújula y la escala quedan abajo a la derecha */
@@ -46,18 +48,51 @@ p {
   top: var(--space-3);
   left: var(--space-3);
   z-index: 3;
+  flex-wrap: wrap;
   max-width: calc(100% - var(--space-6));
   overflow: visible;
 }
 
-/* en angosto quedan solo los íconos; el rótulo sigue para el lector de pantalla */
+/* accesos directos al popup del lote elegido, después de NDVI */
+.stage__lot {
+  display: flex;
+  gap: 2px;
+}
+
+/* si no entran en la misma fila, bajan a una fila aparte que se desliza de costado */
+@container (max-width: 46rem) {
+  .stage__lot-sep {
+    display: none;
+  }
+
+  .stage__lot {
+    flex-basis: 100%;
+    order: 1;
+    min-width: 0;
+    margin-top: 2px;
+    padding-top: 2px;
+    overflow-x: auto;
+    border-top: 1px solid var(--night-600);
+    scrollbar-width: none;
+  }
+
+  .stage__lot .hud__btn {
+    min-width: 3.5rem;
+  }
+}
+
+/* en angosto, los controles de la maqueta quedan solo con el ícono (el rótulo sigue para el
+lector de pantalla); los accesos al lote conservan el suyo */
 @container (max-width: 30rem) {
-  .stage__hud .hud__btn {
-    min-width: 2.75rem;
-    min-height: 2.75rem;
+  .stage__hud > .hud__btn,
+  .stage__hud ::ng-deep app-more-menu .hud__btn {
+    min-width: var(--tap);
+    min-height: var(--tap);
     padding: var(--space-1);
   }
-  .stage__hud .hud__btn > span {
+
+  .stage__hud > .hud__btn > span,
+  .stage__hud ::ng-deep app-more-menu .hud__btn > span:not(.visually-hidden) {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -65,15 +100,50 @@ p {
     clip-path: inset(50%);
     white-space: nowrap;
   }
+
+  .stage__hud {
+    left: var(--space-2);
+    max-width: calc(100% - var(--space-4));
+  }
+
+  /* los cuatro accesos entran en 390 px: rótulo más apretado y el ancho repartido */
+  .stage__lot .hud__btn {
+    flex: 1 0 auto;
+    min-width: 0;
+    min-height: var(--tap);
+    padding-inline: 0.375rem;
+    letter-spacing: 0.02em;
+  }
 }
 
+/* escala del NDVI: flota abajo a la izquierda de la maqueta; en angosto va debajo */
 .ndvi-legend {
   display: grid;
   gap: var(--space-1);
-  max-width: 26rem;
-  padding: var(--space-3) var(--space-5);
+  padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--line);
   font-size: var(--text-sm);
+}
+
+@container (min-width: 40rem) {
+  .ndvi-legend {
+    position: absolute;
+    bottom: var(--space-3);
+    left: var(--space-3);
+    z-index: 2;
+    width: 20rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-2);
+  }
+}
+
+.ndvi-legend__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .ndvi-legend__bar {
@@ -89,41 +159,16 @@ p {
 }
 
 .side {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-4);
   min-width: 0;
 }
 
-.pending {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.pending header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-2);
-}
-
-.pending h2 {
-  margin: 0;
-  font-size: var(--text-xl);
-  overflow-wrap: anywhere;
-}
-
-.pending .chip {
-  justify-self: start;
-}
-
 .stage-placeholder {
-  height: clamp(24rem, 64vh, 44rem);
+  height: var(--stage-h);
   border-radius: var(--radius-lg);
 }
 
 .side-placeholder {
-  height: 18rem;
+  height: 14rem;
   border-radius: var(--radius-lg);
 }
 
@@ -184,20 +229,21 @@ p {
 @media (max-width: 64rem) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
   }
 }
 
 @media (max-width: 40rem) {
-  :host {
-    gap: var(--space-4);
+  .layout {
+    --stage-h: clamp(18rem, 52svh, 28rem);
   }
 
-  .scene,
-  .stage-placeholder {
-    height: clamp(20rem, 56vh, 30rem);
+  .stage__bar {
+    padding: var(--space-1) var(--space-2);
   }
 
   .welcome {
+    gap: var(--space-4);
     margin-top: 0;
   }
 

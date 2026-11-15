@@ -9,7 +9,7 @@
     <div class="alert alert--error" role="alert">
       <app-icon name="alert" />
       <p>{{ message }}</p>
-      <button type="button" class="btn btn--sm" (click)="retry()">Probar de nuevo</button>
+      <button type="button" class="btn btn--sm" (click)="retry()">Reintentar</button>
     </div>
   } @else if (footprint(); as fp) {
     <app-footprint-summary
@@ -18,7 +18,11 @@
       [level]="level()"
       (campaignChange)="onCampaign($event)"
     >
-      @if (canDeclare() && view() !== 'datos') {
+      <!--
+        un bloque por botón: así cada uno llega a la ranura [actions] del resumen. con el rinde ya
+        cargado no hay botón: lo declarado se revisa en la vista "Tus datos", justo abajo
+      -->
+      @if (canDeclare() && view() !== 'datos' && fp.yield.origin !== 'DECLARED') {
         <button actions type="button" class="btn btn--primary" (click)="openDeclaration()">
           <app-icon name="plus" /> Cargar rinde e insumos
         </button>
@@ -100,7 +104,7 @@
     <div class="alert alert--error" role="alert">
       <app-icon name="alert" />
       <p>{{ message }}</p>
-      <button type="button" class="btn btn--sm" (click)="retry()">Probar de nuevo</button>
+      <button type="button" class="btn btn--sm" (click)="retry()">Reintentar</button>
     </div>
   } @else {
     <div class="card loading" aria-busy="true">

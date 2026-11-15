@@ -67,7 +67,8 @@ function buildView(
   uid: string,
 ): ColumnView {
   const values = items.map((item) => item.value).filter(isNumber);
-  const plotHeight = width < STACK_BELOW ? 140 : 170;
+  // en el celular, más baja: la tarjeta de la lluvia no estira la pista de tarjetas
+  const plotHeight = width < STACK_BELOW ? 120 : 170;
   const nice = niceTicks(Math.min(0, ...values), Math.max(0, ...values), 4);
   const tickLabels = nice.values.map((value) => formatNumber(value, nice.decimals));
   const left = Math.max(

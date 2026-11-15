@@ -60,17 +60,17 @@
       }
       @if (fp.yield.reference) {
         <span class="source">Referencia regional</span>
-        <app-help-tip label="De dónde sale el rinde">
+        <app-info-tip label="De dónde sale el rinde">
           <p>Valor de referencia regional: no es un dato del lote ni una observación satelital.</p>
           <p>Fuente: {{ fp.yield.reference }}</p>
-        </app-help-tip>
+        </app-info-tip>
       }
     </app-kpi-card>
   </div>
 
   <div class="slide">
     <app-section-card heading="De dónde salen los datos" [level]="level()">
-      <app-help-tip actions label="Qué significa cada origen">
+      <app-info-tip actions label="Qué significa cada origen">
         <ul>
           <li><strong>Verificado:</strong> observado por satélite (NISAR, HLS).</li>
           <li><strong>Declarado:</strong> cargado por el productor.</li>
@@ -84,7 +84,7 @@
           {{ fp.confidence.rule }}
         </p>
         <p>Los factores de emisión son constantes publicadas, con su fuente en cada componente.</p>
-      </app-help-tip>
+      </app-info-tip>
       <ul class="origins">
         <li>
           <span class="origins__count">{{ fp.confidence.counts.VERIFIED }}</span>

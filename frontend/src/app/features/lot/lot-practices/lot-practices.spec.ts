@@ -1,6 +1,7 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 
 import {
   LandUseDeclaration,
@@ -157,6 +158,18 @@ describe('pickRecommendations', () => {
     expect(rotation.where).toContain('pestaña Fertilización');
   });
 
+  it('cada recomendación que sigue en otra pestaña lleva un enlace corto a esa pestaña', () => {
+    const [cover, burn, rotation] = pickRecommendations(MIXED);
+    expect(cover.link).toEqual({
+      label: 'Simular en Huella',
+      tab: 'footprint',
+      params: { vista: 'simulador' },
+    });
+    expect(burn.link).toEqual({ label: 'Revisar en Bitácora', tab: 'log' });
+    expect(rotation.link).toEqual({ label: 'Ir a Fertilización', tab: 'fertilization' });
+    expect(pickRecommendations([criterion('nuevo', 'no_cumple')])[0].link).toBeNull();
+  });
+
   it('no recomienda lo que se pide saltear, como el uso del suelo ya declarado', () => {
     const picked = pickRecommendations(NEW_LOT.slice(0, 2), 3, ['no_land_use_change_since_2020']);
     expect(picked.map((rec) => rec.key)).toEqual(['no_till']);
@@ -240,7 +253,7 @@ describe('LotPractices', () => {
     [...el().querySelectorAll('button')].find((b) => b.textContent?.trim().includes(label));
   const landUseRow = () => el().querySelector('.practices li');
   const tipOf = (node: Element | null | undefined) =>
-    squash(node?.querySelector('app-practice-tip [popover]')?.textContent);
+    squash(node?.querySelector('app-info-tip [popover]')?.textContent);
 
   async function render(lot: LotDetail, body: SustainabilityScore, editable = true) {
     fixture.componentRef.setInput('lot', lot);
@@ -276,7 +289,7 @@ describe('LotPractices', () => {
     ]);
     // el porqué y el estado de hoy, en la ayuda (i) de cada tarjeta
     expect(tipOf(recs[0])).toContain('Hoy figura como «No cumple»');
-    expect(recs[0].querySelector('app-practice-tip button')?.getAttribute('aria-label')).toBe(
+    expect(recs[0].querySelector('app-info-tip button')?.getAttribute('aria-label')).toBe(
       'Por qué: Sumá un cultivo de cobertura en invierno.',
     );
     // las recomendaciones son una región con nombre
@@ -301,6 +314,38 @@ describe('LotPractices', () => {
     expect(visible()).not.toContain('Motivo de');
     expect(visible()).not.toContain('erosión');
     expect(text()).not.toContain('Dato simulado para la demostración');
+  });
+
+  it('el enlace de una recomendación pide la pestaña al espacio del lote, sin navegar', async () => {
+    const requests: unknown[] = [];
+    fixture.componentInstance.openTab.subscribe((change) => requests.push(change));
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl');
+    await render(LOT, score(MIXED, { score: 40, missing_criteria: [] }));
+
+    const links = [...el().querySelectorAll<HTMLAnchorElement>('.rec__link')];
+    expect(links.map((link) => squash(link.textContent))).toEqual([
+      'Simular en Huella',
+      'Revisar en Bitácora',
+      'Ir a Fertilización',
+    ]);
+    // con dirección de verdad: Ctrl+clic o el botón del medio abren la pestaña aparte
+    expect(links[0].getAttribute('href')).toBe('/huella/1?vista=simulador');
+    expect(links[1].getAttribute('href')).toBe('/lotes/1/bitacora');
+
+    links[0].dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    expect(requests).toEqual([{ tab: 'footprint', params: { vista: 'simulador' } }]);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('si nadie escucha, el enlace de una recomendación navega a la ruta de la pestaña', async () => {
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    await render(LOT, score(MIXED, { score: 40, missing_criteria: [] }));
+
+    const link = el().querySelector<HTMLAnchorElement>('.rec__link')!;
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+    link.dispatchEvent(click);
+    expect(click.defaultPrevented).toBe(true);
+    expect(navigate).toHaveBeenCalledWith('/huella/1?vista=simulador');
   });
 
   it('"Cómo se calcula" tiene pesos, motivos, confianza, aviso provisional y evidencia', async () => {
@@ -329,6 +374,38 @@ describe('LotPractices', () => {
       'Faltan datos de 5 prácticas',
     );
     expect(el().querySelectorAll('.rec').length).toBe(3);
+    // las cinco sin dato van plegadas en una línea: "Sin dato" no se repite en cada fila
+    expect(squash(el().querySelector('.folded summary')?.textContent)).toContain(
+      '5 prácticas sin dato todavía',
+    );
+    expect(el().querySelectorAll('app-disclosure.folded .practices li').length).toBe(5);
+    expect(el().querySelectorAll('.practices li').length).toBe(5);
+  });
+
+  it('con una declaración en un lote nuevo, lo declarado sigue a la vista y el resto plegado', async () => {
+    await render({ ...LOT, land_use_declaration: declared(true) }, score(NEW_LOT));
+    const shown = [...el().querySelectorAll('.practices li')].filter(
+      (row) => !row.closest('app-disclosure'),
+    );
+    expect(shown.length).toBe(1);
+    expect(shown[0].querySelector('.state')?.textContent?.trim()).toBe('Cumple');
+    expect(squash(el().querySelector('.folded summary')?.textContent)).toContain(
+      '4 prácticas sin dato todavía',
+    );
+    // el puntaje cuenta las mismas que la lista: la declarada no falta, aunque todavía no sume
+    expect(el().querySelector('.score .stat__hint')?.textContent?.trim()).toBe(
+      'Faltan datos de 4 prácticas · tu declaración aún no suma',
+    );
+  });
+
+  it('si solo faltaba el uso del suelo y está declarado, el puntaje no dice que faltan datos', async () => {
+    const criteria = NEW_LOT.map((c, index) =>
+      index === 0 ? c : { ...c, status: 'cumple' as const },
+    );
+    await render({ ...LOT, land_use_declaration: declared(true) }, score(criteria));
+    expect(el().querySelector('.score .stat__hint')?.textContent?.trim()).toBe(
+      'Tu declaración aún no suma',
+    );
   });
 
   it('en un ejemplo es de solo lectura: no invita a declarar y muestra solo lo de MODIS', async () => {
@@ -365,7 +442,34 @@ describe('LotPractices', () => {
     expect(visible()).toContain('No coincide con MODIS: revisalo');
   });
 
+  it('sin declaración, si el puntaje lo da por cumplido y MODIS vio otro uso, pide revisarlo', async () => {
+    modis.set(MODIS_CHANGED);
+    const criteria = NEW_LOT.map((c, index) =>
+      index === 0
+        ? { ...c, status: 'cumple' as const, status_label: 'Cumple', origin: 'ESTIMATED' as const }
+        : c,
+    );
+    await render({ ...LOT, is_example: true, owned: false }, score(criteria));
+
+    const row = landUseRow();
+    const state = row?.querySelector('.state');
+    expect(state?.textContent?.trim()).toBe('Revisar');
+    expect(state?.classList).toContain('chip--warn');
+    expect(row?.querySelector('app-origin-badge')?.textContent).toContain('Estimado');
+    expect(row?.querySelector('app-info-tip button')?.getAttribute('aria-label')).toBe(
+      'MODIS y el puntaje',
+    );
+    expect(tipOf(row)).toContain('MODIS vio un uso distinto');
+
+    // si MODIS no vio nada distinto, queda lo que dice el puntaje
+    modis.set(MODIS_SAME);
+    await fixture.whenStable();
+    expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('Cumple');
+  });
+
   it('al declarar desde la tarjeta, la fila pasa a mostrar lo declarado', async () => {
+    const emitted: LandUseDeclaration[] = [];
+    fixture.componentInstance.declared.subscribe((value) => emitted.push(value));
     await render(LOT, score(NEW_LOT));
     expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('Sin dato');
 
@@ -374,6 +478,8 @@ describe('LotPractices', () => {
     http.expectOne('/api/lots/1/land-use/').flush(declared(false));
     await fixture.whenStable();
 
+    // el espacio del lote se entera, así la declaración sigue al volver a la pestaña
+    expect(emitted).toEqual([declared(false)]);
     expect(landUseRow()?.querySelector('.state')?.textContent?.trim()).toBe('No cumple');
     expect(tipOf(landUseRow())).toContain('ahí figura como «Sin dato»');
     expect(visible()).toContain('Con un cambio, la práctica no se cumple');

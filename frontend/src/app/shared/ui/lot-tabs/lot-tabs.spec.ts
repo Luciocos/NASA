@@ -102,6 +102,14 @@ describe('LotTabs', () => {
     expect(button('Compartir pasaporte')).toBeDefined();
   });
 
+  it('el RENSPA que cargó el productor va en el menú ⋯, con su origen, y no en el encabezado', async () => {
+    await setup('/lotes/7', { lot: { ...LOT, renspa: '01.234.5.67890/00' } });
+    const note = el().querySelector('app-more-menu .menu-note');
+    expect(note?.textContent).toContain('RENSPA 01.234.5.67890/00');
+    expect(note?.querySelector('app-origin-badge')?.textContent).toContain('Declarado');
+    expect(el().querySelector('.meta')?.textContent).not.toContain('RENSPA');
+  });
+
   it('en un ejemplo vuelve a Ejemplos, avisa que es de solo lectura y no ofrece el menú', async () => {
     await setup('/lotes/7', { lot: { ...LOT, is_example: true, owned: false } });
     expect(back()?.textContent?.trim()).toBe('Ejemplos');
@@ -171,6 +179,44 @@ describe('LotTabs', () => {
 
       button('Cerrar')?.click();
       expect(closed).toBe(1);
+    });
+
+    it('al cambiar el ancho del popup la fila vuelve a marcar si hay más pestañas', async () => {
+      const observers: (() => void)[] = [];
+      vi.stubGlobal(
+        'ResizeObserver',
+        class {
+          constructor(callback: () => void) {
+            observers.push(callback);
+          }
+          observe(): void {
+            // la prueba avisa el cambio de ancho a mano
+          }
+          disconnect(): void {
+            // nada que soltar
+          }
+        },
+      );
+      try {
+        await setup('/mapa?lote=7', { lot: LOT, mode: 'dialog', active: 'satellite' });
+        const track = el().querySelector<HTMLElement>('.track')!;
+        const size = (scroll: number, client: number) => {
+          Object.defineProperty(track, 'scrollWidth', { configurable: true, value: scroll });
+          Object.defineProperty(track, 'clientWidth', { configurable: true, value: client });
+          observers.forEach((callback) => callback());
+          fixture.detectChanges();
+        };
+        expect(observers.length).toBe(1);
+
+        // se achicó: no entran las seis y el borde lo avisa
+        size(720, 360);
+        expect(track.classList).toContain('fade-end');
+        // se agrandó: entran todas y el borde ya no se esfuma
+        size(720, 720);
+        expect(track.classList).not.toContain('fade-end');
+      } finally {
+        vi.unstubAllGlobals();
+      }
     });
   });
 

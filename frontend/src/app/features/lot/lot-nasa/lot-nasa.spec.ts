@@ -4,7 +4,15 @@ import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 
 import { LotDetail } from '../../../core/models';
-import { ClimateDay, LotSatellite, NASA_CLIENTS, NasaClients } from '../../../core/nasa';
+import {
+  ClimateDay,
+  LoadState,
+  LotSatellite,
+  NASA_CLIENTS,
+  NasaClients,
+  NdviObservation,
+  landUseEvidence,
+} from '../../../core/nasa';
 import { provideNasaTesting } from '../../../core/nasa/testing';
 import { Connectivity } from '../../../core/offline';
 import { ColumnChart, SeriesChart } from '../../../shared/charts';
@@ -126,8 +134,40 @@ describe('LotNasa', () => {
     );
     expect(slides[0].querySelector('app-column-chart')).toBeTruthy();
     expect(
-      [...slides[5].querySelectorAll('button')].map((button) => button.textContent?.trim()),
-    ).toEqual(['Traer el historial desde 2020', 'Volver a consultar']);
+      [...slides[5].querySelectorAll('.options button')].map((button) =>
+        button.textContent?.trim(),
+      ),
+    ).toEqual(['Historial desde 2020', 'Actualizar']);
+  });
+
+  it('en el celular "Más datos" va plegado: la pestaña entra en una pantalla', async () => {
+    // una pantalla de celular: matchMedia dice que sí al corte de 40rem
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes('max-width: 40rem'),
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    })) as unknown as typeof window.matchMedia;
+    try {
+      const fixture = await setup(provideNasaTesting());
+      const element = fixture.nativeElement as HTMLElement;
+
+      // los tres números y el verdor siguen a la vista, fuera de lo plegado
+      expect(element.querySelectorAll('app-kpi-card').length).toBe(3);
+      expect(element.querySelector('app-series-chart')?.closest('app-disclosure')).toBeNull();
+      const fold = element.querySelector('app-disclosure.more')!;
+      expect(fold.querySelector('summary')?.textContent).toContain('Más datos');
+      expect(fold.querySelector('details')?.open).toBe(false);
+      // adentro, las mismas seis tarjetas con nombre
+      const region = fold.querySelector('[role="region"]');
+      expect(region?.getAttribute('aria-label')).toBe('Más datos');
+      expect(region?.getAttribute('aria-roledescription')).toBe('carrusel');
+      expect(region?.querySelector('#sat-cards')?.children.length).toBe(SATELLITE_SLIDES.length);
+      expect(element.querySelector('section[aria-roledescription="carrusel"]')).toBeNull();
+    } finally {
+      window.matchMedia = original;
+    }
   });
 
   it('las flechas mueven la pista de a una tarjeta y dicen en cuál está', async () => {
@@ -201,7 +241,7 @@ describe('LotNasa', () => {
     expect(rain.textContent).toContain('Hasta el 14/11');
     expect(rain.textContent).toContain('Estimado');
     expect(soil.textContent).toContain('62');
-    expect(soil.textContent).toContain('Zona de raíces · 100 es saturado');
+    expect(soil.textContent).toContain('Raíces · 100 es saturado');
   });
 
   it('marca el mes en curso de la lluvia como parcial', async () => {
@@ -236,8 +276,106 @@ describe('LotNasa', () => {
     expect(chart.items()[1].note).toBe('mes en curso: hasta el 10/11');
     expect(chart.items()[0].note).toBeUndefined();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      '* nov 26: mes en curso, suma hasta el 10/11.',
+      '* nov 26: suma hasta el 10/11',
     );
+  });
+
+  describe('motivos y ayudas', () => {
+    // observación y motivos armados para la prueba: no son datos de MODIS
+    const OBS: NdviObservation = {
+      date: '2026-10-16',
+      satellite: 'Terra',
+      mean: 0.62,
+      min: 0.4,
+      max: 0.8,
+      pixels: 4,
+      validPixels: 4,
+      quality: 'good',
+      centroidOnly: false,
+    };
+    const OFFLINE = 'Sin conexión y sin una copia guardada en este dispositivo.';
+    const loaded = <T>(data: T | null, error: string | null): LoadState<T> => ({
+      status: data ? 'ready' : 'error',
+      data,
+      progress: 1,
+      stale: false,
+      updatedAt: null,
+      error,
+    });
+    const crops = landUseEvidence({
+      years: [2020, 2021, 2022, 2023].map((year) => ({ year, classes: [12, 12] })),
+      baselineYear: 2020,
+      pixelCount: 2,
+      pixelSizeM: 463.31,
+      centroidFallback: false,
+      retrievedAt: '2026-11-15T12:00:00Z',
+    });
+
+    async function render(ndvi: LoadState<NdviObservation[]>, lot: LotDetail = LOT) {
+      await TestBed.configureTestingModule({
+        imports: [LotNasa],
+        providers: [
+          provideRouter([]),
+          {
+            provide: LotSatellite,
+            useValue: {
+              ndviHistory: () => signal(ndvi),
+              climate: () => signal(loaded(null, OFFLINE)),
+              scenes: () => signal(loaded(null, OFFLINE)),
+              landUse: () => signal(loaded(crops, null)),
+              retry: () => undefined,
+            },
+          },
+        ],
+      }).compileComponents();
+      const fixture = TestBed.createComponent(LotNasa);
+      fixture.componentRef.setInput('lot', lot);
+      await settle(fixture);
+      return fixture.nativeElement as HTMLElement;
+    }
+    const tip = (element: HTMLElement, label: string) =>
+      element
+        .querySelector(`app-info-tip button[aria-label="${label}"]`)
+        ?.closest('app-info-tip')
+        ?.textContent?.replace(/\s+/g, ' ') ?? '';
+
+    it('con una parte del verdor lo dice corto, sin la jerga del servicio, y el motivo en la ayuda', async () => {
+      const element = await render(loaded([OBS], `${OFFLINE} Faltan 2 de 3 tandas.`));
+      expect(element.textContent).toContain('Faltan algunas fechas del verdor');
+      expect(tip(element, 'Por qué faltan fechas')).toContain(OFFLINE);
+      expect(element.textContent).not.toContain('tandas');
+    });
+
+    it('sin verdor el motivo es una frase corta, sin la cuenta de pedidos', async () => {
+      const element = await render(
+        loaded<NdviObservation[]>(
+          null,
+          'Sin respuesta del servicio de la NASA. Probá de nuevo en unos minutos. Faltan 3 de 3 tandas.',
+        ),
+      );
+      const kpi = element.querySelector('app-kpi-card')?.textContent ?? '';
+      expect(kpi).toContain('Sin dato');
+      expect(kpi).toContain('Sin respuesta del servicio de la NASA');
+      expect(kpi).not.toContain('Probá de nuevo');
+      expect(element.textContent).not.toContain('tandas');
+    });
+
+    it('las fuentes dicen, en su ayuda, cada cuánto llegan y qué limita a cada una', async () => {
+      const element = await render(loaded([OBS], null));
+      const sources = tip(element, 'Detalle de las fuentes');
+      expect(sources).toContain('publicado unas 2 o 3 semanas después');
+      expect(sources).toContain('puede mezclar lotes vecinos, caminos o montes');
+      expect(sources).toContain('Las escenas provisionales pueden cambiar cuando se validen');
+    });
+
+    it('en un ejemplo las ayudas no le hablan al visitante como si fuera el dueño', async () => {
+      const element = await render(loaded([OBS], null), { ...LOT, is_example: true, owned: false });
+      const landUse = tip(element, 'Cómo se lee');
+      expect(landUse).toContain('que cubren este lote');
+      expect(landUse).toContain('En Prácticas se ve año por año.');
+      expect(landUse).not.toContain('lo que declarás');
+      expect(tip(element, 'Detalle de las fuentes')).not.toContain('tu lote');
+    });
   });
 });
 

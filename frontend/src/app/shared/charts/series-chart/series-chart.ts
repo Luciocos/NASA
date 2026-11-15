@@ -170,7 +170,8 @@ function buildView(
   const dates = unionDates(series);
   const values = series.flatMap((item) => item.points.map((point) => point.value)).filter(isNumber);
   const range = band && isNumber(band.from) && isNumber(band.to) ? band : null;
-  const plotHeight = width < STACK_BELOW ? 160 : 200;
+  // baja: la pestaña Satélite entra en el popup sin desplazar en la compu y con poco en el celular
+  const plotHeight = width < STACK_BELOW ? 130 : 180;
 
   const fixed =
     yDomain && isNumber(yDomain[0]) && isNumber(yDomain[1]) && yDomain[0] !== yDomain[1]

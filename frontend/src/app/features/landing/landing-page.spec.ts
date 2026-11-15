@@ -53,6 +53,19 @@ describe('LandingPage', () => {
     expect(text()).not.toMatch(/pint[áa]/i);
   });
 
+  it('poco texto a la vista: la bajada, cada paso y la sección de datos en una línea corta', async () => {
+    await setup();
+
+    const short = (selector: string) =>
+      [...el().querySelectorAll(selector)].map((p) => p.textContent!.replace(/\s+/g, ' ').trim());
+    const lines = [...short('.hero__lead'), ...short('.steps > li p'), ...short('.section__lead')];
+    expect(lines).toHaveLength(5);
+    for (const line of lines) expect(line.length).toBeLessThanOrEqual(90);
+    expect(short('.hero__lead')[0]).toContain('datos abiertos de la NASA');
+    // las estimaciones se dicen como tales, sin afirmar más de lo que son
+    expect(short('.steps > li p')[2]).toContain('Son estimaciones');
+  });
+
   it('sin sesión: una acción principal para crear la cuenta, ingresar al lado y un ejemplo', async () => {
     await setup();
 

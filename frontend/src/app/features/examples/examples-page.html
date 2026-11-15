@@ -1,6 +1,6 @@
 <app-page-header
   heading="Lotes de ejemplo"
-  subtitle="Lotes reales de Casilda, Santa Fe, con el radar NISAR de la NASA. Solo lectura."
+  subtitle="Lotes reales de Casilda vistos por el radar NISAR de la NASA. Solo lectura."
 >
   <a
     actions
@@ -66,27 +66,30 @@
               </div>
             </div>
 
+            <!-- el último evento en una línea, con su origen; sin eventos, una línea corta -->
             @if (card.last; as last) {
-              <div class="example__last">
+              <p class="example__last">
                 <app-event-glyph [type]="last.type" />
-                <p>
-                  <span class="muted small">Último evento</span>
-                  <strong>{{ last.type_label }}</strong>
-                  <span class="small">{{ card.lastDate }} · {{ last.sensor_label }}</span>
-                </p>
-                <app-origin-badge class="example__origin" [origin]="last.origin" />
-              </div>
+                <span class="example__event"
+                  ><span class="visually-hidden">Último evento: </span
+                  ><strong>{{ last.type_label }}</strong> {{ card.lastDate }} ·
+                  {{ last.sensor_label }}
+                  <app-origin-badge [origin]="last.origin" />
+                </span>
+              </p>
               @if (last.is_simulated) {
                 <app-simulated-notice />
               }
             } @else {
-              <p class="example__last example__last--empty muted small">
-                Todavía no hay eventos en su bitácora.
+              <p class="example__last example__last--empty">
+                <app-event-glyph type="NO_DATA" />
+                <span>Sin eventos todavía</span>
               </p>
             }
 
+            <!-- en el celular queda solo la flecha, al lado del nombre: la tarjeta entera abre -->
             <span class="example__cta" aria-hidden="true">
-              Ver su historia <app-icon name="arrow-right" />
+              <span class="example__cta-text">Ver su historia</span> <app-icon name="arrow-right" />
             </span>
           </li>
         }

@@ -5,7 +5,7 @@ import { Api } from '../../../core/api';
 import { Crop, DeclarableInput, DeclarationRequest, Footprint } from '../../../core/models';
 import { Icon } from '../../../shared/ui/icon/icon';
 import { SectionCard } from '../../../shared/ui/section-card/section-card';
-import { HelpTip } from '../help-tip/help-tip';
+import { InfoTip } from '../../../shared/ui/info-tip/info-tip';
 
 let nextId = 0;
 
@@ -70,7 +70,7 @@ const CROPS: { value: Crop; label: string }[] = [
  * existe). La explicación y la aclaración de cada campo van en la ayuda (i) de la tarjeta.
  */
 @Component({
-  imports: [HelpTip, Icon, SectionCard],
+  imports: [InfoTip, Icon, SectionCard],
   selector: 'app-declaration-form',
   styleUrl: './declaration-form.css',
   templateUrl: './declaration-form.html',
