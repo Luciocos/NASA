@@ -15,7 +15,7 @@ Guía para el equipo y para quien lea el repositorio: cómo se usa la app, de d�
 
 ## 1. Qué es LoTestigo
 
-LoTestigo es una bitácora de manejo de un lote agrícola, detectada por satélite. El productor crea su cuenta, marca el perímetro de su lote y ve lo que observan los satélites, su huella de carbono estimada, una planilla de fertilización y su margen bruto. Es una prueba de concepto del NASA Space Apps Challenge 2026 (sede Rosario): usa datos abiertos de la NASA, con el radar NISAR como sensor principal, y no es una certificación.
+LoTestigo es una bitácora de manejo de un lote agrícola, detectada por satélite. El productor (o su asesor) crea su cuenta, marca el perímetro de su lote y ve lo que observan los satélites, su huella de carbono estimada, una planilla de fertilización, su margen bruto y unos chequeos territoriales indicativos. En la zona del Lote 3 de ejemplo suma la pestaña Cuenca y Caudal. Es una prueba de concepto del NASA Space Apps Challenge 2026 (sede Rosario): usa datos abiertos de la NASA, con el radar NISAR como sensor principal, y no es una certificación.
 
 **Para tener presente al responder:**
 
@@ -26,12 +26,12 @@ LoTestigo es una bitácora de manejo de un lote agrícola, detectada por satéli
 
 ## 2. Cómo se usa
 
-Para empezar alcanza con marcar el perímetro del lote. Todo lo demás es opcional. Para mostrar con imágenes qué tocar en cada pantalla está la guía "Cómo cargar tus datos", en `/ayuda` (se ve sin cuenta).
+Para empezar alcanza con marcar el perímetro del lote. Todo lo demás es opcional. Para mostrar con imágenes qué tocar en cada pantalla está la guía "Cómo cargar tus datos", en `/ayuda` (se ve sin cuenta). También la abre el botón "?" de ayuda: en la barra de la app (con la sesión abierta) y en el encabezado del popup del lote, donde arranca en el paso de la pestaña abierta.
 
 ### Guion de la demo
 
-1. **Inicio (`/`).** La página invita a crear una cuenta: "Crear cuenta gratis" o "Ya tengo cuenta". El enlace "Ver un lote de ejemplo" lleva a los ejemplos sin cuenta. Con la sesión abierta, el botón dice "Ir a mi campo".
-2. **Crear la cuenta (`/registrarse`).** El productor carga nombre (opcional), mail y contraseña (al menos 8 caracteres, que no sean solo números). Queda con la sesión abierta y pasa a Mi campo. Arriba (abajo en el celular) quedan Mi campo, Marcar lote y la cuenta.
+1. **Inicio (`/`).** Arriba dice "Para productores agrícolas, ganaderos y asesores" y el título "Ecosistema que facilita y potencia a los productores y asesores en monitorear datos de la NASA simplificados, huellas, fertilización y rentabilidad". Al lado del título (debajo en el celular) va el video del recorrido de la app: arranca solo cuando se ve, sin sonido y en bucle, con subtítulos, un botón para pausarlo ("Pausar el recorrido") y capítulos para saltar a cada parte. La página invita a crear una cuenta: "Crear cuenta gratis" o "Ya tengo cuenta". El enlace "Ver un lote de ejemplo" lleva a los ejemplos sin cuenta. Con la sesión abierta, el botón dice "Ir a mi campo".
+2. **Crear la cuenta (`/registrarse`).** El productor carga nombre (opcional), mail y contraseña (al menos 8 caracteres, que no sean solo números). Queda con la sesión abierta y pasa a Mi campo. En la barra de la app quedan Mi campo y Marcar lote (abajo en el celular), el botón "?" de ayuda y la cuenta.
 3. **Mi campo, sin lotes.** Aparece "Marcá tu primer lote" con "Usar mi ubicación" (no se guarda) o "Buscar en el mapa".
 4. **Marcar el lote (`/mapa/nuevo`).**
    - Busca su localidad ("Buscá tu localidad") o usa su ubicación.
@@ -44,10 +44,10 @@ Para empezar alcanza con marcar el perímetro del lote. Todo lo demás es opcion
 5. **Mi campo, con lotes (`/mapa`).**
    - Muestra la maqueta isométrica de los lotes y, al costado (abajo en el celular), la lista "Tus lotes".
    - La maqueta es una ilustración, no una foto: cada bloque es un lote, su textura ilustra el último evento y el borde del globo dice el origen ("Cómo leer la maqueta").
-   - Tocar una tarjeta de "Tus lotes" marca el lote. La lupa lo abre en el popup.
-   - Con un lote elegido, la barra de la maqueta suma accesos a Datos (pestaña Satélite), Huella, Fertilización y Rentabilidad. Bitácora y Prácticas quedan en "Más".
+   - Tocar una tarjeta de "Tus lotes" o un bloque de la maqueta marca el lote. La lupa de la tarjeta lo abre en el popup. En la maqueta también lo abre el doble clic sobre el bloque (o Enter con el lote marcado).
+   - Con un lote elegido, la barra de la maqueta suma accesos a Datos (pestaña Satélite), Huella, Fertilización y Rentabilidad. Bitácora y Prácticas quedan en "Más". Cuenca y Caudal no tiene acceso en la barra: se abre desde el popup.
    - El botón NDVI pinta cada bloque con el verdor actual de MODIS. También hay una vista "Satélite".
-6. **El popup del lote.** En la compu ocupa casi toda la pantalla; en el celular, la pantalla entera. Arriba muestra el nombre, las hectáreas y el lugar. A la derecha están ⋯ (solo en lotes propios) y la X. Se cierra con la X, con Escape, tocando afuera o con "atrás". Tiene seis pestañas: Satélite, Bitácora, Prácticas, Huella, Fertilización y Rentabilidad (tabla de abajo).
+6. **El popup del lote.** En la compu ocupa casi toda la pantalla; en el celular, la pantalla entera. Arriba muestra el nombre, las hectáreas y el lugar. A la derecha están el botón "?" de ayuda (abre la guía en el paso de la pestaña abierta), ⋯ (solo en lotes propios) y la X. Se cierra con la X, con Escape, tocando afuera o con "atrás". Tiene siete pestañas: Satélite, Bitácora, Prácticas, Huella, Fertilización, Rentabilidad y Cuenca y Caudal (tabla de abajo). Cuenca y Caudal aparece en todos los lotes, pero solo tiene análisis en la zona procesada alrededor del Lote 3.
 7. **Compartir el pasaporte.** En ⋯, "Compartir pasaporte" crea un enlace público y lo copia ("Enlace copiado. Pegalo en un mensaje para compartir el pasaporte."). También ofrece "Abrir el pasaporte". Quien lo abre no necesita cuenta.
 8. **Los lotes de ejemplo (`/ejemplos`).** Se ven sin cuenta. Son cuatro lotes reales de Casilda (Santa Fe), procesados con datos abiertos de la NASA. "Ver su historia" abre el lote en el mismo popup, de solo lectura.
 
@@ -57,21 +57,25 @@ Para empezar alcanza con marcar el perímetro del lote. Todo lo demás es opcion
 |---|---|---|---|
 | Satélite | Verdor (NDVI de MODIS), lluvia en 30 días y humedad del suelo (NASA POWER), y el verdor en el tiempo con los eventos marcados. En "Más datos" (plegado en el celular), seis tarjetas: lluvia por mes, uso del suelo desde 2020, pasadas de NISAR, imágenes HLS, verdor y humedad, y fuentes y opciones. | Nada. "Historial desde 2020" pide el verdor desde 2020. | No va a la base. Queda una copia en el dispositivo. |
 | Bitácora | Los eventos con tipo, fecha, margen (± días), sensor y origen. El detalle muestra la evidencia de radar contra óptico, lado a lado o con un deslizador. | En un lote propio: "Corregir" (tipo, fecha, margen y notas) y, si el evento es ESTIMADO, "Confirmar". | En la base. El evento pasa a DECLARADO (cambiar solo las notas no lo cambia). |
-| Prácticas | El "Puntaje provisional", "Qué conviene hacer", "Cómo está cada práctica", "Cómo se calcula" y la tarjeta "Uso del suelo desde 2020" con lo que vio MODIS. | En un lote propio: "No cambié el uso" o "Sí, hubo un cambio" (después, "Cambiar"). | En la base, como DECLARADO con fecha. |
+| Prácticas | El "Puntaje provisional", "Qué conviene hacer", "Cómo está cada práctica", "Cómo se calcula", la tarjeta "Uso del suelo desde 2020" con lo que vio MODIS y la tarjeta "Chequeos territoriales": distancia a zonas urbanas, bosque nativo (OTBN) y Buenas Prácticas (BPA). | En un lote propio: "No cambié el uso" o "Sí, hubo un cambio" (después, "Cambiar"), que cuenta en el puntaje y en la huella. En el chequeo de BPA ("Declarar"): Sí, No o Sin declarar, con el N.º de inscripción opcional, y "Guardar declaración". | En la base, como DECLARADO con fecha. |
 | Huella | La huella en kg CO2e/t o "Todavía no se puede calcular", qué falta y la confianza. Vistas Resumen, Desglose, Simulador y Tus datos. | En un lote propio, "Cargar rinde e insumos" abre "Tus datos": campaña, cultivo, rinde (t/ha), nitrógeno (kg N/ha), fósforo (kg P2O5/ha), gasoil (l/ha), fitosanitarios (kg p. a./ha) y semilla (kg/ha). Se guarda con "Guardar datos". En el Simulador, "Sumar cultivo de cobertura" y "Simular". | "Tus datos", en la base, como DECLARADO. El Simulador no guarda nada. |
-| Fertilización | Los ambientes por NDVI (alto, medio y bajo) en un mapa de cuadros de 250 m, con una tarjeta por ambiente. | "Armar dosis" (en la página, "Armar dosis variable"): una dosis de nitrógeno en kg N/ha por ambiente. | Solo en el dispositivo. |
-| Rentabilidad | El margen bruto por hectárea y del lote, "De dónde sale el margen" y "Ver detalle". | Precio del grano (US$/t), rinde (t/ha, opcional) y, en "Costos y gastos", flete y comercialización (US$/t) y siete costos (US$/ha). | Solo en el dispositivo. |
+| Fertilización | Los ambientes por NDVI (alto, medio y bajo) en un mapa recortado al borde del lote, con un degradado entre los cuadros de 250 m y una tarjeta por ambiente. Los píxeles mixtos se ven más claros. | "Armar dosis" (en la página, "Armar dosis variable"): una dosis de nitrógeno en kg N/ha por ambiente. | Solo en el dispositivo. |
+| Rentabilidad | El margen bruto por hectárea y del lote, "De dónde sale el margen" y "Ver detalle". | Precio del grano (US$/t), a mano o, en soja, con "Usar precio sugerido de Rofex"; rinde (t/ha, opcional) y, en "Costos y gastos", flete y comercialización (US$/t) y siete costos (US$/ha). | Solo en el dispositivo, con el precio de Rofex si se usó. |
+| Cuenca y Caudal | En la zona del Lote 3, cuatro secciones con mapa: A · Cuenca aportante, B · Historial hidrológico, C · Simulador de lluvia y D · Impacto sobre el lote. Fuera de esa zona, un aviso. | Nada que se guarde. Un clic en el mapa elige otro punto de salida. El simulador pide una lluvia (mm) y su duración (h). | No va a la base: lo calcula el servidor en cada pedido. |
 
-En un lote de ejemplo se puede mirar todo y usar el Simulador, Rentabilidad y la planilla de Fertilización. No se puede Confirmar, Corregir, cargar "Tus datos", declarar el uso del suelo ni compartir el pasaporte.
+En un lote de ejemplo se puede mirar todo y usar el Simulador de la Huella, Rentabilidad (también el precio de Rofex), la planilla de Fertilización y Cuenca y Caudal con su simulador. No se puede Confirmar, Corregir, cargar "Tus datos", declarar el uso del suelo ni la adhesión a BPA, ni compartir el pasaporte.
 
 ### Antes de la demo
 
 - **El evento para mostrar es el del Lote 3 de ejemplo:** la siembra detectada por NISAR, con su evidencia de radar contra óptico. Es el único evento de todo el sistema. Un lote recién marcado arranca con la bitácora vacía ("Todavía no hay eventos").
 - **Confirmar y Corregir no se pueden mostrar en vivo.** El único evento está en un lote de ejemplo, que es de solo lectura. Además, "Confirmar" solo aparece en eventos ESTIMADO, y la siembra del Lote 3 es VERIFICADO.
-- **Hoy ningún lote muestra una huella por tonelada ni un puntaje numérico.** "Todavía no se puede calcular" y "Sin calcular" son la regla de no inventar datos, no un error. Lo que falta se explica con la ayuda "Qué falta para calcularla".
-- **Simular en el Lote 3 de ejemplo.** Ahí "Sumar cultivo de cobertura" cambia solo "Cobertura invernal", de "No cumple" a "Cumple"; el puntaje sigue "Sin número" porque falta la rotación. En un lote sin eventos (uno recién marcado), el simulador infiere además que no hubo cambio de uso, remoción ni quema: el "Después (hipotético)" puede mostrar una huella que el "Antes" no tenía y, si el lote tiene dos campañas con cultivos distintos, 100 / 100. No presentarlo como resultado.
+- **Para mostrar una huella por tonelada, usar un lote propio.** Con una campaña de maíz, soja o trigo, el nitrógeno, el fósforo y el gasoil en "Tus datos" y "No cambié el uso" en Prácticas, la huella llega a un total: el rinde, la semilla y los fitosanitarios pueden quedar de referencia. Los lotes de ejemplo siguen en "Todavía no se puede calcular", porque no se puede declarar en ellos.
+- **Ningún lote muestra un puntaje numérico.** En un lote propio faltan eventos para siembra directa, cobertura y quema; en el Lote 3, la rotación. "Todavía no se puede calcular" y "Sin calcular" son la regla de no inventar datos, no un error. Lo que falta se explica con la ayuda "Qué falta para calcularla".
+- **Simular en el Lote 3 de ejemplo.** Ahí "Sumar cultivo de cobertura" cambia solo "Cobertura invernal", de "No cumple" a "Cumple"; el puntaje sigue "Sin número" porque falta la rotación. En un lote sin eventos (uno recién marcado) también cambia solo la cobertura: el evento hipotético no cuenta como bitácora, así que siembra directa y quema siguen "Sin dato", y el cambio de uso también, salvo que el productor lo haya declarado.
 - **Abrir antes las pestañas Satélite y Fertilización de cada lote**, en el dispositivo de la demo. La primera consulta a MODIS puede tardar más de un minuto. Después queda la copia guardada.
-- **Un lote de menos de unas 16 ha difícilmente tenga ambientes de Fertilización.** Cada píxel mide unas 5,4 ha y hacen falta 3 válidos con el centro adentro. Depende de la forma del lote: el Lote 1 (23 ha) tiene 4, así que con 2 nublados ya no alcanza.
+- **Fertilización cuenta cada píxel que toca el lote.** Cada píxel mide unas 5,4 ha y pesa por las hectáreas que caen adentro. Hacen falta 3 válidos. Los que tienen menos de la mitad adentro son píxeles mixtos: se pintan más claros y la leyenda dice cuántas hectáreas son ("… ha de píxeles mixtos, menos seguras").
+- **El precio de Rofex solo se ofrece en soja o sin campaña.** En el Lote 3 (maíz) y el Lote 1 ("Otro") no aparece el botón: probarlo en el Lote 2 o el 4. Si el servidor no tiene las credenciales de Matba Rofex, dice "Sin precio de Rofex" y el precio se carga a mano. Si usa el entorno de prueba reMarkets, el precio lleva "Precio de prueba". Probarlo antes en la demo publicada.
+- **Cuenca y Caudal: mostrarla en el Lote 3.** Anda en los cuatro lotes de ejemplo, que caen dentro de la zona procesada. En el repositorio faltan `forcing.json` (lluvia, humedad y evapotranspiración) y `landcover.npz` (cobertura MODIS), y la demo publicada se arma desde el repositorio. Sin ellos, "B · Historial hidrológico" dice "Faltan los datos de lluvia del pipeline (forcing.json).", el grupo de suelo queda B por defecto y toda la cuenca se toma como cultivo. A, C y D andan con el terreno. Abrirla antes en el dispositivo de la demo.
 
 ## 3. De dónde salen los datos
 
@@ -89,6 +93,7 @@ Los datos llegan por dos caminos:
 | **NASA POWER** | Un modelo de clima (reanálisis), no un satélite que mira el lote. | Grilla de unos 50 km. Datos diarios. | La lluvia y la humedad del suelo de la zona. | En vivo. | ESTIMADO |
 | **CMR de Earthdata** | El catálogo de datos de la NASA. | No aplica. | Saber qué pasadas de NISAR y qué escenas HLS cruzan el lote, sin bajar las imágenes. | En vivo. | No aplica: es un listado, no una medición del lote. |
 | **GIBS** | Imágenes de la NASA ya pintadas, por fecha. Sirven para mirar, no para medir. | Según la capa. | Hoy, solo la foto satelital del inicio, que se repite en Ingresar y Crear cuenta. | Archivo fijo de la app, armado con teselas de GIBS. | No aplica |
+| **GPM IMERG, SMAP y MODIS MOD16** (NASA) | Lluvia satelital cada media hora, humedad del suelo y evapotranspiración. | IMERG, celdas de 0,1° (unos 10 km). SMAP, 9 km. MOD16, 500 m cada 8 días. | Cuenca y Caudal: las lluvias del historial, la humedad previa y la evapotranspiración, como contexto. | Pipeline (`forcing.json`, que hoy no está en el repositorio). | No aplica: entra a un modelo sin validar. |
 | **Sentinel-1** (ESA) | Un radar en banda C. No es dato NASA. | No aplica. | Respaldo previsto si no hay escenas NISAR de la zona. Hoy no se usa. | No llega. | Se rotula "no es dato NASA". |
 
 ### Detalle por fuente
@@ -145,12 +150,17 @@ Los datos llegan por dos caminos:
 | Sentinel-2 L2A (ESA) | La imagen del 08/11/2026 sobre la que el equipo dibujó los 4 lotes de ejemplo. |
 | MAGyP, Informe de Márgenes y Resultados (septiembre 2026) | Los rindes de referencia de la Zona Núcleo Norte. |
 | Field to Market (Metric Methods 5.0), US EPA (GHG Emission Factors Hub) e IPCC (2019 Refinement) | Los factores de emisión y las dosis de referencia de semilla y fitosanitarios. |
+| OTBN de Santa Fe (Ministerio de Ambiente de la Nación, IDE Ambiental, capa `bosques:SF_2022_OTBN`) | El chequeo de bosque nativo. |
+| Ley provincial de Santa Fe N° 11.273 y OpenStreetMap (`landuse=residential`) | El chequeo de distancia a zonas urbanas: las distancias de la norma y las áreas urbanas aproximadas. |
+| Matba Rofex (A3 Mercados), API de Primary vía pyRofex | El precio sugerido de soja en Rentabilidad. |
+| Copernicus DEM GLO-30 (ESA, vía AWS Open Data), OpenStreetMap (cursos de agua) e ISRIC SoilGrids 2.0 | El relieve, los canales y arroyos y la textura del suelo de Cuenca y Caudal. |
+| USDA NRCS (TR-55 y NEH Parte 630) | Los números de curva, el retardo y el hidrograma unitario de Cuenca y Caudal. |
 
 ## 4. Cómo se calcula cada cosa
 
 ### Pestaña Satélite
 
-- **Verdor del lote:** el promedio del NDVI de los píxeles válidos de MODIS cuyo centro cae dentro del polígono. Si el lote es más chico que un píxel, se usa el del centro y la app lo avisa.
+- **Verdor del lote:** el promedio del NDVI de los píxeles válidos de MODIS que tocan el polígono, pesado por las hectáreas de cada píxel que caen dentro del lote. Un píxel que apenas roza el borde pesa poco. Si ningún píxel toca el lote, se usa el más cercano al centro y la app lo avisa.
 - **Huecos:** un compuesto sin píxeles válidos queda como hueco, con su motivo ("nublado" o "sin dato"). Nunca se interpola.
 - **Tendencia del verdor:** compara el último valor con el de la misma época del año anterior (± 8 días) o, si no lo hay, con el compuesto anterior.
 - **Lluvia en 30 días:** la suma de los 30 días que terminan en el último día con dato de POWER. Avisa si faltan días.
@@ -217,7 +227,7 @@ Cada componente da primero kg CO2e/ha (cantidad × factor) y después kg CO2e/t 
 | Gasoil de labores | litros | 2,781 kg CO2e/l | US EPA, GHG Emission Factors Hub (15/01/2025), Tables 2 y 5. Solo combustión |
 | Fitosanitarios | kg de principio activo | 20,71 kg CO2e/kg | Field to Market, Impact Factors of Crop Protectants and Inoculants, Table 2 (herbicidas). Se usa para todos los fitosanitarios |
 | Semilla | kg | Maíz 0,370; soja 0,463; trigo 0,949 kg CO2e/kg | Field to Market, Impact Factors of Seed Production, Table 3. El cultivo "Otro" no tiene factor |
-| Cambio de uso del suelo (desde 2020) | Sale de la bitácora | Sin factor | Ninguna fuente cargada |
+| Cambio de uso del suelo (desde 2020) | Sale de la bitácora o, si no hay evento, de la declaración del productor | Sin factor | Ninguna fuente cargada |
 
 - Los gases se pasan a CO2e con los potenciales a 100 años de IPCC AR5 que publica US EPA: CH4 = 28 y N2O = 265.
 - Los factores están en `backend/carbon/factors.yaml`, cada uno con su fuente y, en un comentario, la cuenta que da el valor. Ninguno es un dato satelital: son constantes publicadas que cargó el equipo.
@@ -237,11 +247,14 @@ Nitrógeno, fósforo y gasoil no tienen referencia con fuente: los tiene que dec
 
 **Cuándo hay un total.** Solo si los 7 componentes están calculados y hay un rinde mayor que cero. No hay totales parciales: sumar solo lo que hay subestimaría la huella. Si falta algo, la pestaña dice "Todavía no se puede calcular" y la ayuda, por ejemplo, "Faltan 4 de 7 componentes" o "Faltan 7 de 7 componentes y falta el rendimiento". Sin rinde, los componentes con dato se muestran por hectárea.
 
-**Cambio de uso del suelo, tres casos:**
+**Cambio de uso del suelo, en orden de prioridad** (`backend/carbon/footprint.py`):
 
-1. Con algún evento de cambio de uso desde el 01/01/2020: hace falta un factor por hectárea que hoy no existe, así que queda "Sin dato".
-2. Con eventos, pero ninguno de cambio de uso: aporta 0, con origen ESTIMADO. La ausencia es inferida, no una observación directa.
-3. Sin ningún evento: queda "Sin dato". Por eso la huella de un lote marcado por el productor no llega a un total aunque declare todo.
+1. Con algún evento de cambio de uso desde el 01/01/2020 en la bitácora: manda el evento. Hace falta un factor por hectárea que hoy no existe, así que queda "Sin dato".
+2. Sin ese evento, pero con la declaración del productor (pestaña Prácticas): "No cambié el uso" aporta 0, con origen DECLARADO ("dato declarado, no observado por satélite"). "Sí, hubo un cambio" queda "Sin dato", porque falta el factor.
+3. Sin evento ni declaración, pero con otros eventos en la bitácora: aporta 0, con origen ESTIMADO. La ausencia es inferida, no una observación directa.
+4. Sin evento, sin declaración y sin bitácora: queda "Sin dato". Los eventos hipotéticos del Simulador no cuentan como bitácora.
+
+Por eso un lote propio con "No cambié el uso" y los insumos cargados ya llega a una huella total. Lo que vio MODIS no entra en la cuenta: es orientativo.
 
 **Confianza.** Cuenta los orígenes de los datos del lote: el rinde, cada insumo usado y el dato de cambio de uso. Los factores no cuentan, porque son constantes con fuente.
 
@@ -278,6 +291,7 @@ Huella = 765,0 ÷ 9 = **85,0 kg CO2e/t**. El N2O del suelo es el 54 %. La confia
 - Solo prueba sumar o quitar un cultivo de cobertura. Trabaja sobre una copia en memoria: agrega un evento hipotético de cobertura con la fecha de hoy y devuelve la huella y el puntaje antes y después, con los criterios que cambian.
 - No guarda nada ("Simulación: no modifica los datos del lote."). Por eso anda también en los lotes de ejemplo, sin cuenta.
 - La cobertura no cambia ningún componente de la huella: su posible efecto sobre el carbono del suelo no está modelado, porque no hay un factor con fuente. Solo mueve el criterio de cobertura invernal del puntaje.
+- El evento hipotético no cuenta como bitácora: en un lote sin eventos no permite inferir "sin labranza", "sin quema" ni "sin cambio de uso".
 
 ### Puntaje de buenas prácticas
 
@@ -291,7 +305,7 @@ Con pesos iguales solo puede valer 0, 20, 40, 60, 80 o 100. Solo hay número si 
 
 | Criterio | Cumple si... | De dónde sale |
 |---|---|---|
-| Sin cambio de uso del suelo desde 2020 | No hay eventos de cambio de uso desde el 01/01/2020. | Bitácora |
+| Sin cambio de uso del suelo desde 2020 | No hay eventos de cambio de uso desde el 01/01/2020. Sin esos eventos, vale la declaración del productor: "No cambié el uso" cumple y "Sí, hubo un cambio" no cumple, con origen DECLARADO. | Bitácora o declaración |
 | Siembra directa | No hay eventos de remoción de suelo, en ninguna fecha. | Bitácora |
 | Cobertura invernal | Hay algún evento de cultivo de cobertura. No mira la estación ni la campaña. | Bitácora |
 | Rotación de cultivos | Hay al menos dos campañas y, entre todas, más de un cultivo distinto. | Campañas |
@@ -301,7 +315,9 @@ Los criterios de la bitácora tienen tres casos:
 
 1. **Hay eventos de ese tipo:** el estado sale de su presencia, con el origen más respaldado de esos eventos y la lista de evidencia.
 2. **El lote tiene eventos, pero ninguno de ese tipo:** la ausencia se informa como ESTIMADO. Es inferida, no observada.
-3. **El lote no tiene ningún evento:** el criterio queda "Sin dato".
+3. **El lote no tiene ningún evento:** el criterio queda "Sin dato". Los eventos hipotéticos del Simulador no cuentan.
+
+El de cambio de uso mira antes la declaración del productor: un evento de la bitácora manda y, sin él, vale lo declarado (tabla de arriba).
 
 - El puntaje mira toda la historia del lote. La huella, en cambio, es de una sola campaña.
 - La confianza del puntaje usa la misma regla que la huella, sobre el origen de cada criterio.
@@ -316,7 +332,9 @@ Hay dos datos que se comparan: lo que declara el productor y lo que vio MODIS.
 
 - Responde "¿Cambió el uso del suelo desde 2020?" con "No cambié el uso" o "Sí, hubo un cambio".
 - Se guarda en el lote como DECLARADO, con la fecha. Declarar otra vez pisa la declaración anterior.
-- Hoy no genera eventos ni cambia el puntaje ni la huella. La pantalla lo aclara: "Tu declaración del … todavía no entra en este cálculo."
+- No genera eventos, pero cuenta en el puntaje (criterio "Sin cambio de uso del suelo desde 2020") y en la huella (componente de cambio de uso), salvo que la bitácora tenga un evento de cambio de uso, que manda. En ese caso la pantalla lo aclara: "Tu declaración del … no cuenta acá: manda el cambio de uso que registra la bitácora."
+- Cuando cuenta, la ayuda de la fila en "Cómo está cada práctica" dice "El puntaje provisional y la huella usan tu declaración."
+- También la usa el chequeo de bosque nativo: con superposición de categoría I o II y un cambio declarado, da la alerta de posible desmonte.
 
 **Lo que vio MODIS** (MCD12Q1, en vivo, orientativo):
 
@@ -328,17 +346,19 @@ Hay dos datos que se comparan: lo que declara el productor y lo que vio MODIS.
 - Un cambio de un solo año que después vuelve, o uno de menos de un cuarto de los píxeles, no cambia el veredicto: el texto lo menciona como posible error de clasificación.
 - Ejemplo real (consulta del 14/11/2026): el píxel que contiene el centro del Lote 3 figura como cultivo todos los años de 2020 a 2025.
 
-**La comparación**, en una línea: "Respaldado por lo que vio MODIS", "No coincide con MODIS: revisalo" (aclara que puede ser un error de clasificación), "MODIS no alcanza para confirmarlo" (en 2020 no hubo un uso dominante), "Con un cambio, la práctica no se cumple" o "Sin dato de MODIS para comparar". El texto nunca acusa, y ninguna de estas líneas cambia el puntaje.
+**La comparación**, en una línea: "Respaldado por lo que vio MODIS", "No coincide con MODIS: revisalo" (aclara que puede ser un error de clasificación), "MODIS no alcanza para confirmarlo" (en 2020 no hubo un uso dominante), "Con un cambio, la práctica no se cumple" o "Sin dato de MODIS para comparar". El texto nunca acusa. Ninguna de estas líneas cambia el puntaje ni la huella: lo que vio MODIS no entra en la cuenta.
 
 ### Fertilización
 
 **Ambientes por NDVI:**
 
 - Usa el NDVI de MODIS (MOD13Q1, 250 m), pedido en vivo. Toma un solo compuesto de 16 días: el último publicado con algún píxel válido dentro del lote. La fecha que muestra es la de inicio de ese compuesto.
-- Un píxel cuenta si su centro cae dentro del polígono y su dato es bueno o marginal (sin nubes ni nieve). En el mapa se pinta el cuadrado entero, que puede salirse del borde.
+- Un píxel cuenta si alguna parte cae dentro del polígono y su dato es bueno o marginal (sin nubes ni nieve). Pesa por las hectáreas que tiene adentro.
+- Un píxel con menos de la mitad adentro es un píxel mixto: su NDVI refleja sobre todo lo que hay alrededor. Se pinta más claro y la leyenda dice "… ha de píxeles mixtos, menos seguras".
+- El mapa se recorta al borde del lote y pasa suave de un ambiente a otro con un degradado entre cuadros vecinos. El degradado es solo visual: las hectáreas, los porcentajes y las dosis salen de cada cuadro.
 - Toma el NDVI mínimo y el máximo de esos píxeles y parte el rango en tres tramos iguales: bajo, medio y alto. No hay umbrales fijos.
 - Sin ambientes si hay menos de 3 píxeles válidos ("Hacen falta al menos 3 píxeles de 250 m válidos dentro del lote para separar ambientes.") o si todos valen lo mismo ("El NDVI es parejo en todo el lote.").
-- La superficie de cada ambiente es la proporción de píxeles que cae en él por la superficie del lote. Es aproximada.
+- La superficie de cada ambiente es su parte de las hectáreas válidas dentro del lote (no la cuenta de píxeles) por la superficie del lote. Es aproximada.
 
 **Planilla de dosis variable de nitrógeno** ("La decidís vos: no es una recomendación agronómica."):
 
@@ -367,11 +387,14 @@ rinde de indiferencia (t/ha) = costos directos ÷ (precio − flete y comerciali
 ```
 
 - **Lo que carga el productor:** el precio del grano en US$/t, antes del flete; su rinde en t/ha (opcional); y, en "Costos y gastos", el flete y comercialización en US$/t y siete costos en US$/ha: semilla, fertilizantes, fitosanitarios, labores (siembra y pulverizaciones), cosecha, arrendamiento y otros costos. La superficie sale del polígono.
-- **No hay precios ni costos de referencia.** Todo lo económico es DECLARADO.
-- **El rinde:** el que escribe el productor o, si lo deja vacío, el de la huella: el declarado en "Cargar rinde e insumos" o la referencia regional de MAGyP. Con la referencia, el margen lleva ESTIMADO ("Con el rinde de referencia"). Si no, DECLARADO ("Con tus datos"). El rinde escrito en Rentabilidad no vuelve a la huella.
+- **Precio sugerido de Matba Rofex (solo soja).** "Usar precio sugerido de Rofex" lo pide al backend (`backend/market/rofex.py`) y lo carga en el campo. Es el futuro de soja Rosario en la posición mayo de la cosecha: para la campaña 2026/27, `SOJ.ROS/MAY27`; sin campaña, la próxima posición mayo. Toma el precio de ajuste o, si no hay, el último operado o el de cierre. El servidor lo guarda 10 minutos y espera a Rofex hasta 10 segundos. Solo aparece si la campaña es de soja o no hay campaña.
+- **Su etiqueta:** mientras no se cambie, el precio es ESTIMADO y dice "Sugerido por Matba Rofex" con la fecha. Si el productor lo cambia, pasa a DECLARADO. La (i) dice el contrato, el tipo de precio, la fuente ("Matba Rofex (A3 Mercados), API de Primary vía pyRofex") y "Precio sugerido de mercado, para tomar como referencia: no es una cotización en firme ni una recomendación comercial. Podés cambiarlo."
+- **Si no hay precio:** sin credenciales en el servidor dice "Sin precio de Rofex" y la (i) explica "El precio sugerido de Rofex todavía no está disponible: el servidor no tiene configurada la conexión con Matba Rofex. Podés cargar el precio a mano." Si Rofex falla o tarda, también dice "Sin precio de Rofex", con "Reintentar". Si el servidor usa el entorno de prueba reMarkets, el precio lleva "Precio de prueba": "no es un precio real de mercado".
+- **No hay costos de referencia.** Los costos son siempre DECLARADO.
+- **El rinde:** el que escribe el productor o, si lo deja vacío, el de la huella: el declarado en "Cargar rinde e insumos" o la referencia regional de MAGyP. Con la referencia, el margen lleva ESTIMADO ("Con el rinde de referencia"). Con el precio de Rofex, también ("Con el precio de Rofex", "Con el precio de prueba de Rofex" o "Con rinde de referencia y precio de Rofex"). Si no, DECLARADO ("Con tus datos"). El rinde escrito en Rentabilidad no vuelve a la huella.
 - **Si falta algo:** sin precio o sin rinde no hay margen, y la tarjeta dice "Sin dato" con el motivo. Un costo vacío suma 0, pero queda como faltante: "Falta 1 costo por cargar: el margen real es menor." El rinde de indiferencia solo existe si el precio supera al flete y comercialización.
 - **Sensibilidad:** una tabla de 5 × 5 que recalcula el margen por hectárea con el rinde y el precio a −20 %, −10 %, actual, +10 % y +20 %. Las celdas negativas van en rojo.
-- **Margen y huella** (ESTIMADO): huella (kg CO2e/t) × rinde da kg CO2e por hectárea. Con margen positivo, dividido por el margen da kg CO2e por dólar. Hoy siempre ofrece "Completala en la huella", porque ningún lote tiene una huella total.
+- **Margen y huella** (ESTIMADO): huella (kg CO2e/t) × rinde da kg CO2e por hectárea. Con margen positivo, dividido por el margen da kg CO2e por dólar. Mientras el lote no tenga una huella total (los de ejemplo no la tienen), ofrece "Completala en la huella".
 - **Cómo se escriben los números:** con coma decimal y sin puntos de miles: 1200 o 1200,50.
 - **Ejemplo de una prueba, con números ficticios:** 3 t/ha × 300 US$/t = 900 US$/ha. Menos 60 de flete (20 US$/t) y 370 de costos (semilla 100, fertilizantes 150, labores 120) da 470 US$/ha, o 18.800 US$ en 40 ha. El rinde de indiferencia es 370 ÷ 280, unas 1,32 t/ha.
 - **Dónde queda:** solo en el dispositivo, por lote y campaña. Sin sesión, solo mientras la app está abierta ("Sin cuenta no se guardan: se borran al cerrar.").
@@ -389,13 +412,51 @@ rinde de indiferencia (t/ha) = costos directos ÷ (precio − flete y comerciali
 
 La que se ve al marcar es aproximada: la calcula el navegador. La que queda guardada la calcula el backend sobre el elipsoide WGS84 (área geodésica) cada vez que se guarda el lote. Al marcar y en Rentabilidad se muestra como DECLARADO; en Rentabilidad, con la leyenda "Del polígono que marcaste."
 
+### Chequeos territoriales
+
+Están en la pestaña Prácticas, en la tarjeta "Chequeos territoriales" ("Cruce indicativo con capas públicas."). El backend (`backend/territory/`) cruza el polígono del lote con capas públicas que el equipo bajó y guardó en `data/layers/` con `pipeline/scripts/build_layer_*.py`. No se consultan en vivo. Cada chequeo es una fila con su estado ("Sin conflicto detectado", "Posible conflicto" o "Sin dato") y su origen ("Capa pública" o DECLARADO). Al abrirla muestra el resumen, el detalle y la fuente. El descargo dice: "Cruce con capas públicas, indicativo. No reemplaza asesoramiento legal ni constituye una auditoría."
+
+| Chequeo | Qué cruza | Qué responde | De dónde sale |
+|---|---|---|---|
+| Distancia a zonas urbanas (periurbano) | El área urbana de las localidades cercanas, ampliada 500 m (aplicación terrestre) y 3.000 m (aplicación aérea). | Las hectáreas y el porcentaje del lote dentro de cada franja, la distancia al área urbana y un mapa con las franjas. Con alguna superposición, "Posible conflicto": ahí la norma restringe aplicar fitosanitarios de clase toxicológica A y B. | Ley provincial de Santa Fe N° 11.273, arts. 33 (aérea) y 34 (terrestre), leída en el texto oficial. Las áreas urbanas son aproximadas con OpenStreetMap (`landuse=residential`, bajado el 15/11/2026) para Casilda, Chabás, Fuentes, Los Molinos, Pujato y Sanford. |
+| Bosque nativo (OTBN) | El Ordenamiento Territorial de Bosques Nativos de Santa Fe (Ley 26.331): categorías I (rojo) y II (amarillo), que no admiten desmonte. | Las hectáreas y el porcentaje superpuestos por categoría y la distancia al polígono protegido más cercano. Con superposición, "Posible conflicto". Si además la bitácora tiene un cambio de uso o el productor declaró uno, "Posible desmonte: revisalo con la autoridad provincial." | Capa oficial `bosques:SF_2022_OTBN` del Ministerio de Ambiente de la Nación (IDE Ambiental), aprobada por la Ley provincial 13.372 y actualizada por el Decreto 1.690/2022. Recortada al sur de Santa Fe: 1.510 polígonos. |
+| Buenas Prácticas (BPA) | Nada: muestra lo que declaró el productor sobre su adhesión al programa provincial de Buenas Prácticas Agropecuarias de Santa Fe. | Adherido: "Sin conflicto detectado". No adherido: "Posible conflicto", que "No implica un incumplimiento: es un punto para revisar." Sin declaración: "Sin declarar". | El productor, como DECLARADO. No se contrasta con ningún registro ("No se verificó contra el registro provincial."). |
+
+- **Qué no responde:** no dice si una aplicación fue legal ni reemplaza la consulta a la autoridad provincial. El área urbana no es el límite oficial de la planta urbana, que fija cada municipio por ordenanza. No se encontró una ordenanza de Casilda con distancias propias, así que se usa la ley provincial. La inscripción en BPA no se verifica.
+- **"Sin dato":** si falta la capa, si la localidad más cercana no tiene una distancia leída en la norma, o si el lote queda fuera del recorte del OTBN (latitud −33,8 a −32,3 y longitud −62,3 a −60,3).
+- **En los lotes de ejemplo** (cálculo aproximado para este documento; mirar antes el resultado en la app): los cuatro están cerca de Casilda. Los lotes 1, 2 y 3 quedan dentro de la franja de 3.000 m y fuera de la de 500 m, así que dan "Posible conflicto" por la aplicación aérea. El Lote 4 queda a unos 3 km, justo en el borde de esa franja. Ninguno se superpone con bosque nativo de categoría I o II: el polígono protegido más cercano queda a más de 1 km. BPA dice "Sin declarar".
+
+### Cuenca y Caudal
+
+Es la séptima pestaña del popup: "De dónde viene el agua que llega al lote, cuánto escurre con una lluvia y dónde se junta." Está configurada para el Lote 3 de ejemplo y su entorno: una ventana de 0,18° de latitud por 0,20° de longitud (unos 20 × 19 km) que incluye a los cuatro lotes de ejemplo. Un lote fuera de esa ventana muestra "El análisis de Cuenca y Caudal está configurado para el Lote 3 (Casilda) y su entorno. Este lote queda fuera de la zona procesada." Arriba siempre dice: "Estimaciones de un modelo físico con datos satelitales, sin validar: en esta cuenca no hay caudales ni niveles medidos."
+
+**De dónde salen los datos.** El pipeline los procesa aparte (`pipeline/scripts/hydrology_terrain.py` y `hydrology_forcing.py`). El backend (`backend/hydrology/`) solo los lee de `data/hydrology/lote3/` y calcula en cada pedido.
+
+- **Terreno:** el Copernicus DEM GLO-30 (ESA, 30 m). Es un modelo de superficie: incluye árboles, edificios y terraplenes. Se rellenan los bajos (Priority-Flood+ε) y se calcula la dirección de flujo D8, hacia la celda vecina más baja.
+- **Acumulación de flujo:** cuánta superficie drena a cada celda. Los canales y arroyos de OpenStreetMap se "queman" 3 m en el DEM para que el flujo los siga. Es un criterio de modelado, no una profundidad. La cuenca también se calcula sin ellos ("Sin canales OSM").
+- **TWI:** el índice topográfico de humedad, ln(a / tan β) (Beven y Kirkby 1979). Es alto donde el flujo converge y hay poca pendiente.
+- **Lluvia, humedad y cobertura:** NASA GPM IMERG V07 (eventos desde 2020), SMAP L3 (humedad previa, como contexto), MODIS MOD16 (evapotranspiración), MODIS MCD12Q1 (cobertura) y la textura de ISRIC SoilGrids. Van en `forcing.json` y `landcover.npz`, que hoy no están en el repositorio (ver "Antes de la demo").
+- **Caudal:** la escorrentía sale del número de curva SCS-CN (USDA NRCS TR-55), según la cobertura y el grupo de suelo. El caudal, del hidrograma unitario SCS (NEH 630, factor de pico 484) con el retardo de Mockus. Los parámetros y su fuente están en `backend/hydrology/parameters.yaml`.
+
+| Sección | Qué muestra |
+|---|---|
+| A · Cuenca aportante | "Toda la superficie aguas arriba, también fuera del lote." El mapa, "Qué le llega al lote", "Cuenca al punto de salida" (superficie, pendiente, desnivel y largo) y "Cobertura del suelo". Un clic en el mapa elige otro punto de salida; "Volver a la salida del lote" lo devuelve. |
+| B · Historial hidrológico | "Lluvias fuertes desde 2020 y lo que el modelo estima que escurrió en cada una." Eventos de 20 mm o más en un día, con la lámina escurrida, el volumen y el caudal pico en condición media (ARC II), y el rango de seco a húmedo. |
+| C · Simulador de lluvia | "Escenarios hipotéticos: no son pronósticos meteorológicos." Con una lluvia (mm), su "Duración", la "Humedad previa", el "Grupo hidrológico del suelo" y si hay rastrojo (siembra directa), devuelve la lámina escurrida, el volumen, el caudal pico y el hidrograma. No guarda nada en la base. |
+| D · Impacto sobre el lote | "Por dónde entra y sale el agua y dónde tiende a juntarse." "Qué revisar en el campo" (sectores con TWI en el 10 % más alto de la zona o bajos de 10 cm o más) y "Salidas de agua". |
+
+- No pide cuenta en los lotes de ejemplo y no guarda nada.
+- No hay caudales ni niveles medidos en la cuenca: ningún resultado está validado y no se entrenó un modelo de aprendizaje automático. Las zonas de acumulación son susceptibilidad relativa, no una simulación de anegamiento.
+
 ## 5. Qué significa cada etiqueta
 
 | Etiqueta | Qué quiere decir | Ejemplos |
 |---|---|---|
 | **VERIFICADO** | Lo observó un satélite. No quiere decir que esté validado en campo ni que sea exacto. | La siembra del Lote 3 (NISAR), el NDVI de MODIS, el uso del suelo de MODIS (orientativo), el cultivo "Otro" del Lote 1. |
-| **DECLARADO** | Lo cargó, corrigió o confirmó el productor. | "Tus datos" de la Huella, la declaración de uso del suelo, un evento corregido, el precio y los costos de Rentabilidad, las dosis de Fertilización, la superficie del polígono. |
-| **ESTIMADO** | Un valor regional, por defecto, de un modelo o inferido. No es una observación directa del lote. | NASA POWER, los rindes de MAGyP, la semilla y los fitosanitarios de referencia, el maíz del Lote 3, la ausencia de un evento, las emisiones de Fertilización. |
+| **DECLARADO** | Lo cargó, corrigió o confirmó el productor. | "Tus datos" de la Huella, la declaración de uso del suelo, la adhesión a BPA, un evento corregido, el precio escrito a mano y los costos de Rentabilidad, las dosis de Fertilización, la superficie del polígono. |
+| **ESTIMADO** | Un valor regional, por defecto, de un modelo o inferido. No es una observación directa del lote. | NASA POWER, los rindes de MAGyP, la semilla y los fitosanitarios de referencia, el maíz del Lote 3, la ausencia de un evento, las emisiones de Fertilización, el precio sugerido de Rofex mientras no se cambie. |
+| **Capa pública** | El dato sale de una capa pública (un organismo u OpenStreetMap), no de un satélite. Solo en los chequeos territoriales. | Bosque nativo (OTBN) y distancia a zonas urbanas. |
+| **Precio de prueba** | El precio sugerido viene del entorno de prueba reMarkets de Rofex: no es un precio real de mercado. | El precio de Rentabilidad si el servidor usa reMarkets. |
 | **Dato simulado para la demostración** | El dato tiene `is_simulated: true` en la base. | Hoy ningún dato de los lotes de ejemplo es simulado. |
 | **Sin dato** | Falta el dato o algo para calcularlo. Siempre va con el motivo. Nunca se rellena ni se interpola. | "Falta el factor de emisión", "El compuesto vino nublado sobre el lote", "NASA POWER publica los últimos días con demora". |
 
@@ -433,13 +494,14 @@ La que se ve al marcar es aproximada: la calcula el navegador. La que queda guar
 - **A Esri y OpenStreetMap:** los pedidos de las imágenes del mapa. **A Nominatim:** el texto buscado, solo al apretar Enter o "Buscar".
 - **La ubicación del dispositivo:** se pide una sola vez y solo para llevar el mapa. No se guarda ni en el backend ni en el dispositivo: solo viaja en la dirección de la pantalla de Marcar lote.
 - **El token** solo viaja al backend de LoTestigo.
+- **A Matba Rofex:** el pedido lo hace el backend, solo con el contrato (por ejemplo, `SOJ.ROS/MAY27`). No viaja nada del lote ni de la cuenta.
 
 ### Dónde queda cada dato
 
 | Dato | Dónde queda |
 |---|---|
-| Cuenta (mail, nombre y hash de la contraseña), token, lotes (polígono, área, nombre, RENSPA, localidad, provincia y declaración de uso del suelo), campañas, insumos declarados, eventos con sus correcciones y pasaportes | En la base PostgreSQL del backend |
-| Sesión, copias de lo que respondió el backend, lotes sin subir, Rentabilidad, dosis de Fertilización, borrador del lote que se está marcando | En el navegador. Al salir se borra todo lo personal. |
+| Cuenta (mail, nombre y hash de la contraseña), token, lotes (polígono, área, nombre, RENSPA, localidad, provincia y declaración de uso del suelo), declaración de BPA, campañas, insumos declarados, eventos con sus correcciones y pasaportes | En la base PostgreSQL del backend |
+| Sesión, copias de lo que respondió el backend, lotes sin subir, Rentabilidad (con el precio de Rofex que se usó), dosis de Fertilización, borrador del lote que se está marcando | En el navegador. Al salir se borra todo lo personal. |
 | Respuestas de los servicios de la NASA | En el navegador. No se guardan nunca en la base. |
 
 ### Modo sin conexión
@@ -448,7 +510,7 @@ La que se ve al marcar es aproximada: la calcula el navegador. La que queda guar
 - **Lo que respondió el backend:** cada lectura de lotes, ejemplos y pasaportes queda copiada a nombre de quien la pidió. Si no se llega al backend, se muestra la última copia. Un error real (por ejemplo, un lote que no existe o un pasaporte vencido) nunca se tapa con una copia vieja.
 - **Lo de la NASA:** sin red se usa la copia, aunque esté vencida, con el aviso "Copia guardada: no se pudo actualizar". Sin copia, el motivo es "Sin conexión y sin una copia guardada en este dispositivo". Cuando vuelve la red, la pestaña Satélite vuelve a pedir sola.
 - **Marcar un lote sin red:** queda en una cola del dispositivo y se sube solo cuando vuelve la conexión. En Mi campo se ve como "Sin sincronizar", sin lupa. El encabezado muestra los lotes por sincronizar y "Sincronizar ahora". Si el backend rechaza uno, queda "Rechazado" con el motivo.
-- **Necesitan red:** ingresar, crear la cuenta, "Tus datos", declarar el uso del suelo, Confirmar y Corregir, compartir el pasaporte, el Simulador y el buscador.
+- **Necesitan red:** ingresar, crear la cuenta, "Tus datos", declarar el uso del suelo y la adhesión a BPA, Confirmar y Corregir, compartir el pasaporte, el Simulador, el simulador de Cuenca y Caudal, el precio de Rofex y el buscador.
 - **El chip de conexión** del encabezado dice "Conectando…", "Conectado", "Sin conexión con el servidor" o "Sin conexión a internet", y agrega "mostrando datos guardados del …" cuando lo que se ve es una copia.
 
 La demo está publicada en https://lotestigo.1mj0t4h.workers.dev: un Worker de Cloudflare sirve la app y reenvía la API al backend Django en Railway, con PostgreSQL. Ni la app ni los pasaportes aparecen en buscadores. El detalle está en el [README](README.md#despliegue).
@@ -485,7 +547,7 @@ Cada lote lo ve solo su dueño: un lote ajeno responde igual que uno que no exis
 
 ### ¿Qué datos se mandan afuera?
 
-El navegador manda las coordenadas o el polígono del lote a NASA POWER, ORNL DAAC y CMR para pedir sus datos, pide las imágenes del mapa a Esri y OpenStreetMap y manda a Nominatim el texto que se busca. A ninguno le manda la cuenta ni el token.
+El navegador manda las coordenadas o el polígono del lote a NASA POWER, ORNL DAAC y CMR para pedir sus datos, pide las imágenes del mapa a Esri y OpenStreetMap y manda a Nominatim el texto que se busca. A ninguno le manda la cuenta ni el token. El precio de Rofex lo pide el backend, solo con el contrato.
 
 ### ¿Cómo escala?
 
@@ -493,7 +555,7 @@ Los datos en vivo los pide cada navegador directo a la NASA, sin pasar por el ba
 
 ### ¿Qué falta para producción?
 
-Validar en campo la detección y su umbral, y detectar los otros tipos de evento. Correr el pipeline para los lotes de los productores. Factores locales, carbono del suelo y un factor para el cambio de uso. Que la declaración de uso del suelo entre al puntaje y que Rentabilidad y Fertilización se guarden en el servidor. Anular pasaportes, editar y borrar lotes, recuperar la contraseña y borrar la cuenta.
+Validar en campo la detección y su umbral, y detectar los otros tipos de evento. Correr el pipeline para los lotes de los productores. Factores locales, carbono del suelo y un factor para el cambio de uso. Que Rentabilidad y Fertilización se guarden en el servidor. Medir caudales para validar Cuenca y Caudal y procesar otras zonas. El límite oficial de cada planta urbana y un registro de BPA consultable. Anular pasaportes, editar y borrar lotes, recuperar la contraseña y borrar la cuenta.
 
 ### ¿En qué se diferencia de otras plataformas?
 
@@ -509,7 +571,7 @@ Porque el navegador solo usa servicios que no piden login, y el ORNL DAAC entreg
 
 ### ¿Por qué la huella dice "Todavía no se puede calcular"?
 
-Porque falta algún componente o el rinde, y la app no suma totales parciales: sumar solo lo que hay subestimaría la huella. Hoy ningún lote de la demo llega a un total. En un lote propio, además, faltan eventos en la bitácora para saber si hubo cambio de uso.
+Porque falta algún componente o el rinde, y la app no suma totales parciales: sumar solo lo que hay subestimaría la huella. Los lotes de ejemplo no llegan a un total. En un lote propio se completa con el nitrógeno, el fósforo y el gasoil en "Tus datos" y "No cambié el uso" en Prácticas.
 
 ### ¿Sumar un cultivo de cobertura baja la huella?
 
@@ -551,6 +613,46 @@ El ORNL DAAC, que entrega MODIS, tarda cerca de un minuto por pedido, y el histo
 
 No. Alcanza con el perímetro. Lo que no carga se completa con referencias marcadas como ESTIMADO o queda "Sin dato".
 
+### ¿Cuenta la declaración del productor?
+
+Sí. "No cambié el uso" o "Sí, hubo un cambio", en la pestaña Prácticas, cuenta en el puntaje (criterio "Sin cambio de uso del suelo desde 2020") y en la huella (componente de cambio de uso), con origen DECLARADO. Si la bitácora tiene un cambio de uso detectado por satélite, manda el evento. No se verifica: solo se compara con lo que vio MODIS, que es orientativo y no entra en la cuenta. La adhesión a BPA también es una declaración, que no se verifica contra ningún registro.
+
+### ¿Qué son los chequeos territoriales?
+
+Son cruces indicativos del lote con capas públicas, en la pestaña Prácticas. Distancia a zonas urbanas: qué parte del lote cae a menos de 500 m (terrestre) o 3.000 m (aérea) del área urbana, donde la Ley 11.273 de Santa Fe restringe los fitosanitarios de clase A y B. Bosque nativo: si el lote se superpone con las categorías I o II del OTBN, que no admiten desmonte. BPA: lo que declaró el productor. No son un dictamen legal ni una auditoría.
+
+### ¿De dónde salen las capas territoriales?
+
+El OTBN es la capa oficial de Santa Fe del Ministerio de Ambiente de la Nación (IDE Ambiental), recortada al sur de la provincia. Las distancias son las de la Ley provincial 11.273, leídas en el texto oficial. Las áreas urbanas son aproximadas con OpenStreetMap, porque el límite oficial de la planta urbana no está publicado como capa. Las bajó el equipo el 15/11/2026 y viven en `data/layers/`.
+
+### ¿Qué quiere decir "Posible desmonte"?
+
+Que el lote se superpone con bosque nativo de categoría I o II y, además, la bitácora tiene un cambio de uso del suelo o el productor declaró uno. Es una alerta para revisar con la autoridad provincial, no una prueba.
+
+### ¿De dónde sale el precio?
+
+Del futuro de soja Rosario en Matba Rofex, en la posición mayo de la cosecha (para la campaña 2026/27, `SOJ.ROS/MAY27`). El backend lo pide con la API de Primary (pyRofex) y toma el precio de ajuste o, si no hay, el último operado o el de cierre. Es una sugerencia: queda ESTIMADO y, si el productor lo cambia, pasa a DECLARADO. Solo hay contrato para soja.
+
+### ¿Por qué dice "Sin precio de Rofex" o "Precio de prueba"?
+
+"Sin precio de Rofex" aparece si el servidor no tiene las credenciales de Matba Rofex o si Rofex falla o tarda más de 10 segundos. El precio se carga a mano igual. "Precio de prueba" aparece si el servidor está conectado al entorno de prueba reMarkets: el precio es simulado, no de mercado.
+
+### ¿Qué es Cuenca y Caudal?
+
+La séptima pestaña del lote. Con el relieve (Copernicus DEM de 30 m) y los canales de OpenStreetMap, arma la cuenca que aporta agua al lote, la acumulación de flujo y el índice de humedad (TWI). Con la lluvia de NASA IMERG estima cuánto escurrió en cada lluvia fuerte desde 2020, y tiene un simulador de lluvia hipotética. Está procesada solo para la zona del Lote 3 de Casilda, que incluye los cuatro lotes de ejemplo.
+
+### ¿Qué tan confiable es el caudal?
+
+No está validado: en esa cuenca no hay caudales ni niveles medidos. Es un modelo físico con métodos de USDA (número de curva y hidrograma unitario) pensados para cuencas de EE.UU. En la llanura, el error del DEM es del orden de los desniveles, y el factor de pico 484 probablemente sobreestima el caudal. La pantalla lo dice arriba.
+
+### ¿Por qué el mapa de ambientes tiene partes más claras?
+
+Son píxeles mixtos: más de la mitad del cuadro de 250 m queda fuera del lote, así que su NDVI refleja sobre todo lo de alrededor y su ambiente es menos seguro. El paso suave de un color a otro es solo visual: las hectáreas salen de cada cuadro.
+
+### ¿Dónde está la ayuda?
+
+En el botón "?" de la barra de la app y del encabezado del popup del lote, que abre la guía "Cómo cargar tus datos" con imágenes. También está en `/ayuda`, sin cuenta.
+
 ## 8. Limitaciones conocidas
 
 **Detección y bitácora**
@@ -568,30 +670,43 @@ No. Alcanza con el perímetro. Lo que no carga se completa con referencias marca
 - El alcance es parcial. El N2O es solo directo, sin las emisiones indirectas ni el N de los rastrojos. El gasoil cuenta solo la combustión y los fertilizantes llegan hasta la puerta de fábrica. No incluye el CO2 de la urea, ni el potasio, ni otros fertilizantes. El factor de herbicidas se usa para todos los fitosanitarios.
 - El carbono del suelo no está modelado: la cobertura y la siembra directa no bajan la huella.
 - El cambio de uso no tiene factor: con un evento de cambio de uso, la huella queda "Sin dato". El cultivo "Otro" no tiene factor de semilla, así que su huella nunca se calcula.
-- Hoy ningún lote llega a una huella total ni a un puntaje numérico.
+- Los lotes de ejemplo no llegan a una huella total y ningún lote llega a un puntaje numérico. Un lote propio llega a una huella total gracias a la declaración de uso del suelo, que no se verifica.
 - Los criterios de la bitácora se apoyan en la ausencia de eventos, que es una inferencia. Salvo el cambio de uso, no filtran por fecha ni por campaña. La cobertura no se verifica como invernal y la rotación solo mira si hubo más de un cultivo.
-- En un lote sin eventos, el Simulador puede mostrar un "después" con huella total y, con dos campañas de cultivos distintos, de 100 / 100.
+- El Simulador solo prueba la cobertura, y su evento hipotético no cuenta como bitácora.
 
 **Uso del suelo**
 
-- La declaración del productor se guarda y se muestra, pero no cambia el puntaje ni la huella.
+- La declaración del productor cuenta en el puntaje y en la huella sin verificarse: solo se compara con MODIS, que es orientativo. Un evento de cambio de uso de la bitácora la pisa.
 - MODIS es orientativo: cada píxel cubre unas 21 ha y mezcla el lote con lo que lo rodea. Un "No coincide" puede ser un error de clasificación, no una prueba de desmonte. El último mapa es el de 2025.
 
 **Fertilización**
 
 - Los ambientes salen de un solo compuesto de 16 días. Si cae en barbecho o con el cultivo recién nacido, muestran la cobertura de ese momento, no la productividad del suelo.
 - Son tercios del rango, no grupos con la misma cantidad de píxeles, y no hay una diferencia mínima: un rango de 0,60 a 0,61 también se parte en tres. Un píxel raro (un camino, un monte o un borde) estira el rango.
-- Un lote de menos de unas 16 ha difícilmente tenga ambientes. Si el último compuesto tiene 1 o 2 píxeles válidos por nubes, no se buscan compuestos anteriores.
+- Los píxeles mixtos (menos de la mitad adentro) entran en los ambientes con su NDVI, que mezcla el borde con lo de alrededor. Se marcan más claros, pero no se descartan. Si el último compuesto tiene 1 o 2 píxeles válidos por nubes, no se buscan compuestos anteriores.
 - Las emisiones son parciales: el factor de producción es un promedio de EE.UU. que no distingue entre fertilizantes (urea, UAN o MAP), y el N2O es solo directo. Se dan en kg CO2e del lote entero, no por hectárea ni por tonelada.
 - La dosis uniforme siempre sale de la última campaña. En los lotes de ejemplo siempre dice "Sin dato", porque ahí no se puede declarar.
 
 **Rentabilidad**
 
-- Es el margen bruto, no el resultado neto: no incluye gastos de estructura, impuestos, retenciones, intereses ni amortizaciones, salvo que se sumen en "Otros costos". Todo va en dólares, sin tipo de cambio ni precios de mercado.
+- Es el margen bruto, no el resultado neto: no incluye gastos de estructura, impuestos, retenciones, intereses ni amortizaciones, salvo que se sumen en "Otros costos". Todo va en dólares, sin tipo de cambio. El único precio de mercado es el sugerido de Rofex: solo para soja y solo si el servidor tiene las credenciales.
 - No se conecta con Fertilización: el costo de fertilizantes se escribe a mano.
 - La carga no acepta puntos de miles: "1.200" se lee como 1,2. Hay que escribir 1200.
 - Si el rinde escrito en Rentabilidad difiere del de la huella, "Margen y huella" escala la huella con ese rinde.
 - La superficie es la de todo el polígono, con las partes no productivas incluidas.
+
+**Chequeos territoriales**
+
+- Son indicativos. Las áreas urbanas son una aproximación con OpenStreetMap, no el límite legal de la planta urbana. Se aplica la ley provincial, sin ordenanzas municipales ni fallos judiciales que fijaron distancias mayores.
+- Las capas cubren solo el sur de Santa Fe y seis localidades. Fuera de eso, el chequeo dice "Sin dato".
+- BPA es solo lo declarado: no hay un registro oficial consultable.
+
+**Cuenca y Caudal**
+
+- Solo está procesada la zona del Lote 3. Fuera de ella, la pestaña muestra un aviso.
+- En el repositorio faltan `forcing.json` y `landcover.npz`: sin ellos no hay historial, el grupo de suelo queda B por defecto y toda la cuenca se toma como cultivo.
+- No hay caudales medidos para validar. El DEM de 30 m tiene un error del orden de los desniveles de la llanura, y los caminos, terraplenes y alcantarillas que no están en OpenStreetMap no están en el modelo.
+- IMERG tiene celdas de unos 10 km y su versión Late es preliminar. El factor de pico 484 probablemente sobreestima el caudal en la llanura.
 
 **Datos en el dispositivo, cuentas y pasaporte**
 
