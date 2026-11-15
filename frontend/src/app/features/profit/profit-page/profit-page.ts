@@ -15,6 +15,7 @@ import { formatHectares } from '../../../core/insights';
 import { Footprint, LotDetail } from '../../../core/models';
 import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
 import { LotTabs } from '../../../shared/ui/lot-tabs/lot-tabs';
+import { WaterfallChart, WaterfallStep } from '../../../shared/charts';
 import {
   COST_KEYS,
   COST_LABELS,
@@ -35,7 +36,7 @@ import { ProfitStore } from '../profit-store';
 @Component({
   selector: 'app-profit-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, OriginBadge, LotTabs],
+  imports: [RouterLink, OriginBadge, LotTabs, WaterfallChart],
   templateUrl: './profit-page.html',
   styleUrl: './profit-page.css',
 })
@@ -68,6 +69,21 @@ export class ProfitPage {
   protected readonly table = computed(() => {
     const y = this.yieldTHa();
     return y === null || this.inputs().priceUsdT === null ? [] : sensitivity(this.inputs(), y);
+  });
+  /** cascada del margen por hectárea con los conceptos cargados (los vacíos no se dibujan) */
+  protected readonly waterfall = computed<WaterfallStep[]>(() => {
+    const r = this.result();
+    if (r.grossUsdHa === null || r.marginUsdHa === null) return [];
+    const steps: WaterfallStep[] = [{ label: 'Ingreso bruto', value: r.grossUsdHa, kind: 'total' }];
+    if (r.commercialUsdHa) {
+      steps.push({ label: 'Comercialización', value: -r.commercialUsdHa, kind: 'delta' });
+    }
+    for (const key of COST_KEYS) {
+      const cost = this.inputs().costs[key];
+      if (cost) steps.push({ label: COST_LABELS[key], value: -cost, kind: 'delta' });
+    }
+    steps.push({ label: 'Margen bruto', value: r.marginUsdHa, kind: 'total' });
+    return steps;
   });
   protected readonly breakdown = computed(() => {
     const r = this.result();

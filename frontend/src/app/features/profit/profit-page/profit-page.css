@@ -120,6 +120,13 @@ legend {
   background: var(--origin-estimated-bg);
 }
 
+.chart-card {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
 .breakdown .is-empty td {
   color: var(--ink-3);
 }

@@ -136,6 +136,17 @@
             </p>
           }
 
+          @if (waterfall().length > 0) {
+            <div class="chart-card">
+              <app-waterfall
+                title="De dónde sale el margen"
+                description="Ingreso bruto por hectárea, cada costo cargado y el margen bruto que queda"
+                [steps]="waterfall()"
+                unit="US$/ha"
+              />
+            </div>
+          }
+
           <table class="table breakdown">
             <caption class="visually-hidden">
               Desglose del margen

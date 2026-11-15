@@ -77,6 +77,8 @@ Decisión sobre geodatos: los polígonos se guardan como GeoJSON en un `JSONFiel
 [Angular 22]  <-- REST/JSON -->  [Django + DRF]  <-->  [PostgreSQL]
 ```
 
+El frontend consulta en vivo, desde el navegador, servicios abiertos de la NASA sin login (NASA POWER, ORNL DAAC para MODIS, CMR de Earthdata y GIBS) para mostrar datos de cualquier polígono, también de un lote recién marcado. El acceso está en `frontend/src/app/core/nasa/`: cada dato lleva su fuente y su origen, nada se interpola, y lo recibido se guarda en el dispositivo para usarlo sin conexión. Esos datos no se guardan en la base ni generan eventos.
+
 Regla central: **el backend no procesa imágenes satelitales en el ciclo de una petición.** El análisis de radar y óptico lo hace el integrante de GIS en notebooks o scripts (carpeta `pipeline/`), y su salida se importa a la base con un comando de gestión. Claude Code no debe implementar descarga ni procesamiento SAR dentro de las vistas.
 
 ## 6. Estructura del repositorio
@@ -229,6 +231,8 @@ Un lote creado por POST sin eventos importados devuelve bitácora vacía con un 
 ## 11. Frontend
 
 Idioma de la interfaz: español de Argentina. Diseño sobrio, legible en notebook y proyector.
+
+Hay una página de inicio pública con "Probar demo", que abre una cuenta demo gratuita guardada en el navegador (no hay usuarios en el backend: ver sección 17). Las pantallas de la app abren esa cuenta si hace falta.
 
 Pantallas, en orden de prioridad:
 

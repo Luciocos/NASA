@@ -20,6 +20,16 @@ LoTestigo es una **prueba de concepto** desarrollada en 48 horas para el NASA Sp
 
 El productor no carga planillas: marca su lote en el mapa y confirma o corrige lo que se detectó.
 
+### Cómo se usa
+
+1. **Inicio:** la página de inicio presenta el proyecto. "Probar demo" abre una cuenta free que vive en el navegador (sin mail ni contraseña: el backend no tiene usuarios) y recuerda los lotes que marca quien la usa.
+2. **Mi campo:** los lotes de la cuenta y los lotes de ejemplo de la zona en una maqueta isométrica interactiva (motor propio en canvas, sin dependencias). Cada bloque ilustra el último evento registrado y se puede pintar con el NDVI actual de MODIS. También hay vista satelital.
+3. **Marcar un lote:** se pintan hectáreas sobre la imagen satelital (grilla de 1 ha o 1/4 ha que se puede girar para alinearla con los alambrados) o se traza el perímetro. Sin conexión, el lote queda en el dispositivo y se sube solo cuando vuelve la red.
+4. **Ficha del lote:** la bitácora con su evidencia y, consultados en vivo para el polígono, el NDVI de MODIS, la lluvia y la humedad de NASA POWER, las pasadas de NISAR y HLS y la cobertura del suelo por año.
+5. **Huella, fertilización y rentabilidad:** la huella con el origen de cada dato, los ambientes del lote por NDVI con una planilla de dosis variable de nitrógeno, y el margen bruto con el área y el rinde del lote y el precio y los costos que declara el productor.
+
+La app funciona sin conexión: un service worker guarda la interfaz y cada respuesta del backend y de la NASA queda guardada en el dispositivo.
+
 ## Qué no es
 
 - No es una certificación y no reemplaza a VISEC, RTRS ni 2BSvs.
@@ -37,6 +47,8 @@ El productor no carga planillas: marca su lote en el mapa y confirma o corrige l
 ```
 
 El backend no procesa imágenes satelitales. El análisis de radar y óptico se hace aparte (carpeta `pipeline/`) y su salida se importa con un comando de gestión.
+
+El navegador consulta además servicios abiertos de la NASA que no piden login, para mostrar los datos de cualquier polígono: NASA POWER (clima), ORNL DAAC (NDVI y cobertura de MODIS), el catálogo CMR de Earthdata (pasadas de NISAR y HLS) y GIBS (imágenes por fecha). Esos datos se muestran con su fuente y no se guardan en la base.
 
 ## Stack
 
@@ -134,6 +146,7 @@ Quién es dueño de cada parte está en [docs/EQUIPO.md](docs/EQUIPO.md). Las re
 | NISAR (NASA/ISRO), banda L | Labranza, anegamiento, cambios de superficie |
 | HLS y Landsat (NASA/USGS) | Uso del suelo desde 2020, cobertura |
 | MODIS y VIIRS (NASA) | Focos de calor, quema de rastrojos |
+| MODIS (NASA), MOD13Q1 y MCD12Q1 | NDVI cada 16 días y cobertura del suelo anual, consultados en vivo por polígono |
 | SMAP y NASA POWER | Humedad de suelo y clima |
 | Sentinel-1 (ESA), banda C | Respaldo cuando no hay escenas NISAR; no es dato NASA |
 

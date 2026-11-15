@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, DOCUMENT, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
@@ -23,7 +23,8 @@ export class App {
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
       map((event) => event.urlAfterRedirects.split(/[?#]/)[0] === '/'),
     ),
-    { initialValue: false },
+    // con el valor inicial correcto el encabezado de la app no parpadea al abrir la landing
+    { initialValue: inject(DOCUMENT).location?.pathname === '/' },
   );
 
   protected skipToContent(event: Event, content: HTMLElement): void {
