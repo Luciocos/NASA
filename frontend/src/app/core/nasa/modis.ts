@@ -1,15 +1,20 @@
 import type { PolygonGeometry } from '../models';
-import { pointInPolygon, round, sinusoidalToLatLng } from './geo';
-import type { NasaHttp } from './http';
+import { latLngToSinusoidal, pointInPolygon, round, sinusoidalToLatLng } from './geo';
+import type { NasaHttp, NasaResponse } from './http';
 import type { LandCoverYear, LatLng, NdviGrid, NdviPixel } from './models';
 import { IGBP_LABELS } from './sources';
 
 export const ORNL_BASE = 'https://modis.ornl.gov/rst/api/v1';
 export const NDVI_BAND = '250m_16_days_NDVI';
 export const RELIABILITY_BAND = '250m_16_days_pixel_reliability';
+export const LANDCOVER_BAND = 'LC_Type1';
 /** ORNL rechaza rangos de más de 10 fechas ("exceeds maximum subset tiles support of 10") */
 export const ORNL_MAX_DATES = 10;
 export const MODIS_CELL_M = 231.656358264;
+/** lado del píxel de MCD12Q1 (500 m nominales) en la grilla sinusoidal */
+export const LANDCOVER_CELL_M = 463.312716528;
+/** tope de km por lado de la ventana de cobertura: 21 x 21 píxeles, unos 9,7 km de lado */
+export const LANDCOVER_MAX_KM = 5;
 
 const NDVI_FILL = -3000;
 const COMPOSITES_PER_YEAR = 23;
@@ -115,12 +120,107 @@ export function batchDates(product: ModisProduct, dates: string[]): ModisDate[][
   return [...groups.values()].map((g) => g.sort((a, b) => a.index - b.index));
 }
 
-/** ventana mínima en km enteros que cubre una distancia desde el centro, con la grilla de 250 m */
-export function windowKm(halfExtentKm: number): number {
+/**
+ * ventana mínima en km enteros que cubre una distancia desde el centro: ORNL suma
+ * floor(km * 1000 / lado) píxeles a cada lado del que contiene el centro (grilla de 250 m si no
+ * se indica el lado)
+ */
+export function windowKm(halfExtentKm: number, cellM = MODIS_CELL_M): number {
   for (let km = 0; km < 100; km++) {
-    if (Math.floor((km * 1000) / MODIS_CELL_M) * MODIS_CELL_M >= halfExtentKm * 1000) return km;
+    if (Math.floor((km * 1000) / cellM) * cellM >= halfExtentKm * 1000) return km;
   }
   return 100;
+}
+
+/**
+ * ventana de la grilla de cobertura (500 m) que cubre el polígono, con un tope de km por lado
+ * se mide en metros de la proyección sinusoidal: sus columnas se inclinan respecto de los
+ * meridianos (en Casilda, unos 580 m hacia el este por cada km hacia el norte), así que la caja en
+ * grados no alcanza. el centro va redondeado como en la url, para medir desde el punto pedido.
+ * clipped avisa que el lote no entra en la ventana y quedó afuera una parte
+ */
+export function landCoverWindow(
+  geometry: PolygonGeometry,
+  maxKm = LANDCOVER_MAX_KM,
+): ModisWindow & { clipped: boolean } {
+  const points = (geometry.coordinates[0] ?? []).map(([lng, lat]) =>
+    latLngToSinusoidal([lat, lng]),
+  );
+  const xs = points.map((p) => p[0]);
+  const ys = points.map((p) => p[1]);
+  const [lat, lng] = sinusoidalToLatLng(
+    (Math.min(...xs) + Math.max(...xs)) / 2,
+    (Math.min(...ys) + Math.max(...ys)) / 2,
+  );
+  const center: LatLng = [round(lat, 4), round(lng, 4)];
+  const [cx, cy] = latLngToSinusoidal(center);
+  const kmEw = windowKm(Math.max(...xs.map((x) => Math.abs(x - cx))) / 1000, LANDCOVER_CELL_M);
+  const kmNs = windowKm(Math.max(...ys.map((y) => Math.abs(y - cy))) / 1000, LANDCOVER_CELL_M);
+  return {
+    center,
+    kmNs: Math.min(kmNs, maxKm),
+    kmEw: Math.min(kmEw, maxKm),
+    clipped: kmNs > maxKm || kmEw > maxKm,
+  };
+}
+
+/** geometría de la grilla de un subset, en metros de la proyección sinusoidal */
+export interface SubsetGrid {
+  /** esquina inferior izquierda de la grilla */
+  xll: number;
+  yll: number;
+  cellSizeM: number;
+  nrows: number;
+  ncols: number;
+}
+
+export function subsetGrid(subset: OrnlSubset): SubsetGrid {
+  return {
+    xll: Number(subset.xllcorner),
+    yll: Number(subset.yllcorner),
+    cellSizeM: Number(subset.cellsize),
+    nrows: subset.nrows,
+    ncols: subset.ncols,
+  };
+}
+
+/**
+ * bordes del píxel i de data en la proyección: data recorre las filas de norte a sur y, en cada
+ * fila, las columnas de oeste a este. verificado con datos reales en la costa de Rosario, con
+ * NDVI y con cobertura del suelo (ver modis.spec.ts)
+ */
+function cellBounds(grid: SubsetGrid, index: number) {
+  const row = Math.floor(index / grid.ncols);
+  const col = index % grid.ncols;
+  const x0 = grid.xll + col * grid.cellSizeM;
+  const yTop = grid.yll + (grid.nrows - row) * grid.cellSizeM;
+  return { x0, x1: x0 + grid.cellSizeM, yTop, yBottom: yTop - grid.cellSizeM };
+}
+
+/** centro del píxel i de data, en [lat, lng] */
+export function cellCenter(grid: SubsetGrid, index: number): LatLng {
+  const { x0, yTop } = cellBounds(grid, index);
+  return sinusoidalToLatLng(x0 + grid.cellSizeM / 2, yTop - grid.cellSizeM / 2);
+}
+
+/** las cuatro esquinas del píxel i de data, desde la de arriba a la izquierda y en sentido horario */
+export function cellRing(grid: SubsetGrid, index: number): LatLng[] {
+  const { x0, x1, yTop, yBottom } = cellBounds(grid, index);
+  return [
+    sinusoidalToLatLng(x0, yTop),
+    sinusoidalToLatLng(x1, yTop),
+    sinusoidalToLatLng(x1, yBottom),
+    sinusoidalToLatLng(x0, yBottom),
+  ];
+}
+
+/** índice en data del píxel que contiene el punto, o null si cae fuera de la grilla */
+export function cellAt(grid: SubsetGrid, point: LatLng): number | null {
+  const [x, y] = latLngToSinusoidal(point);
+  const col = Math.floor((x - grid.xll) / grid.cellSizeM);
+  const fromBottom = Math.floor((y - grid.yll) / grid.cellSizeM);
+  if (col < 0 || col >= grid.ncols || fromBottom < 0 || fromBottom >= grid.nrows) return null;
+  return (grid.nrows - 1 - fromBottom) * grid.ncols + col;
 }
 
 /** valor NDVI escalado, o null si es relleno o está fuera de rango */
@@ -131,8 +231,7 @@ function ndviValue(raw: number | undefined, scale: number): number | null {
 
 /**
  * arma las grillas georreferenciadas de un subset de NDVI y su banda de confiabilidad
- * las filas vienen de norte a sur y las columnas de oeste a este (verificado sobre el río Paraná
- * frente a Rosario, ver modis.spec.ts); xllcorner e yllcorner son la esquina inferior izquierda
+ * las filas vienen de norte a sur y las columnas de oeste a este (ver cellBounds)
  */
 export function parseNdviSubset(
   ndvi: OrnlSubset,
@@ -140,45 +239,60 @@ export function parseNdviSubset(
   product: ModisProduct,
   geometry: PolygonGeometry | null = null,
 ): NdviGrid[] {
-  const xll = Number(ndvi.xllcorner);
-  const yll = Number(ndvi.yllcorner);
-  const cs = Number(ndvi.cellsize);
+  const grid = subsetGrid(ndvi);
   const scale = Number(ndvi.scale) || 0.0001;
-  const { nrows, ncols } = ndvi;
   const relByDate = new Map((reliability?.subset ?? []).map((s) => [s.modis_date, s.data]));
   return ndvi.subset
     .filter((s) => s.band === NDVI_BAND)
     .map((entry) => {
       const rel = relByDate.get(entry.modis_date);
       const pixels: NdviPixel[] = [];
-      for (let r = 0; r < nrows; r++) {
-        const yTop = yll + (nrows - r) * cs;
-        for (let c = 0; c < ncols; c++) {
-          const i = r * ncols + c;
-          const x0 = xll + c * cs;
-          const center = sinusoidalToLatLng(x0 + cs / 2, yTop - cs / 2);
-          const relValue = rel?.[i];
-          pixels.push({
-            ring: [
-              sinusoidalToLatLng(x0, yTop),
-              sinusoidalToLatLng(x0 + cs, yTop),
-              sinusoidalToLatLng(x0 + cs, yTop - cs),
-              sinusoidalToLatLng(x0, yTop - cs),
-            ],
-            center,
-            value: ndviValue(entry.data[i], scale),
-            reliability: relValue === undefined ? null : relValue,
-            inside: geometry ? pointInPolygon(center, geometry) : false,
-          });
-        }
+      for (let i = 0; i < grid.nrows * grid.ncols; i++) {
+        const center = cellCenter(grid, i);
+        const relValue = rel?.[i];
+        pixels.push({
+          ring: cellRing(grid, i),
+          center,
+          value: ndviValue(entry.data[i], scale),
+          reliability: relValue === undefined ? null : relValue,
+          inside: geometry ? pointInPolygon(center, geometry) : false,
+        });
       }
       return {
         date: entry.calendar_date,
         satellite: MODIS_SATELLITE[product],
-        cellSizeM: cs,
+        cellSizeM: grid.cellSizeM,
         pixels,
       };
     });
+}
+
+/** clase IGBP de un año en cada píxel de la grilla de cobertura */
+export interface LandCoverGridYear {
+  year: number;
+  /** en el orden de data; null si es relleno (255, sin clasificar) o un valor fuera de 1 a 17 */
+  classes: (number | null)[];
+}
+
+/** grilla de cobertura del suelo MCD12Q1 de una ventana, con un mapa por año */
+export interface LandCoverGrid extends SubsetGrid {
+  years: LandCoverGridYear[];
+}
+
+/** arma la grilla de cobertura de un subset de LC_Type1, con los años en orden */
+export function parseLandCoverSubset(subset: OrnlSubset): LandCoverGrid {
+  const grid = subsetGrid(subset);
+  const years = subset.subset
+    .filter((s) => s.band === LANDCOVER_BAND)
+    .map((s) => ({
+      year: Number(s.calendar_date.slice(0, 4)),
+      classes: Array.from({ length: grid.nrows * grid.ncols }, (_, i) => {
+        const raw = s.data[i];
+        return raw !== undefined && IGBP_LABELS[raw] ? raw : null;
+      }),
+    }))
+    .sort((a, b) => a.year - b.year);
+  return { ...grid, years };
 }
 
 export interface ModisFetched<T> {
@@ -273,23 +387,7 @@ export class ModisClient {
 
   /** clase IGBP anual (MCD12Q1 LC_Type1) del píxel de 500 m que contiene el punto */
   async landCover(point: LatLng, fromYear = 2020): Promise<ModisFetched<LandCoverYear[]>> {
-    const toYear = new Date(this.now()).getUTCFullYear();
-    const [lat, lng] = point.map((v) => round(v, 4));
-    const requests = [];
-    for (let start = fromYear; start <= toYear; start += ORNL_MAX_DATES) {
-      const end = Math.min(toYear, start + ORNL_MAX_DATES - 1);
-      requests.push(
-        this.http.get<OrnlSubset>({
-          url:
-            `${ORNL_BASE}/MCD12Q1/subset?latitude=${lat}&longitude=${lng}&band=LC_Type1` +
-            `&startDate=A${start}001&endDate=A${end}001&kmAboveBelow=0&kmLeftRight=0`,
-          service: 'ornl',
-          maxAgeMs: 7 * 24 * HOUR_MS,
-          headers: { Accept: 'application/json' },
-        }),
-      );
-    }
-    const responses = await Promise.all(requests);
+    const responses = await this.landCoverSubsets({ center: point, kmNs: 0, kmEw: 0 }, fromYear);
     const data = responses
       .flatMap((r) => r.body.subset)
       .map((s): LandCoverYear => {
@@ -307,5 +405,47 @@ export class ModisClient {
       stale: responses.some((r) => r.stale),
       savedAt: responses.map((r) => r.savedAt).sort()[0],
     };
+  }
+
+  /**
+   * clases IGBP anuales (MCD12Q1 LC_Type1) de todos los píxeles de 500 m de la ventana, desde
+   * fromYear hasta el último mapa publicado (el del año en curso sale recién el año siguiente)
+   */
+  async landCoverGrid(window: ModisWindow, fromYear = 2020): Promise<ModisFetched<LandCoverGrid>> {
+    const responses = await this.landCoverSubsets(window, fromYear);
+    // la misma ventana da la misma grilla en cada pedido: solo se juntan los años
+    const grids = responses.map((r) => parseLandCoverSubset(r.body));
+    if (!grids[0]) throw new Error(`no hay mapas de cobertura desde ${fromYear}`);
+    return {
+      data: { ...grids[0], years: grids.flatMap((g) => g.years).sort((a, b) => a.year - b.year) },
+      stale: responses.some((r) => r.stale),
+      savedAt: responses.map((r) => r.savedAt).sort()[0],
+    };
+  }
+
+  /** LC_Type1 de una ventana desde fromYear hasta el año en curso, en pedidos de a 10 años */
+  private landCoverSubsets(
+    window: ModisWindow,
+    fromYear: number,
+  ): Promise<NasaResponse<OrnlSubset>[]> {
+    const toYear = new Date(this.now()).getUTCFullYear();
+    const [lat, lng] = window.center.map((v) => round(v, 4));
+    const requests: Promise<NasaResponse<OrnlSubset>>[] = [];
+    for (let start = fromYear; start <= toYear; start += ORNL_MAX_DATES) {
+      const end = Math.min(toYear, start + ORNL_MAX_DATES - 1);
+      requests.push(
+        this.http.get<OrnlSubset>({
+          url:
+            `${ORNL_BASE}/MCD12Q1/subset?latitude=${lat}&longitude=${lng}&band=${LANDCOVER_BAND}` +
+            `&startDate=A${start}001&endDate=A${end}001` +
+            `&kmAboveBelow=${window.kmNs}&kmLeftRight=${window.kmEw}`,
+          service: 'ornl',
+          // el mapa de un año sale durante el siguiente: la copia se renueva cada semana
+          maxAgeMs: 7 * 24 * HOUR_MS,
+          headers: { Accept: 'application/json' },
+        }),
+      );
+    }
+    return Promise.all(requests);
   }
 }

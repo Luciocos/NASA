@@ -1,6 +1,7 @@
 import { Provider, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 
 import { LotDetail } from '../../../core/models';
 import { ClimateDay, LotSatellite, NASA_CLIENTS, NasaClients } from '../../../core/nasa';
@@ -8,7 +9,8 @@ import { provideNasaTesting } from '../../../core/nasa/testing';
 import { Connectivity } from '../../../core/offline';
 import { ColumnChart, SeriesChart } from '../../../shared/charts';
 import { makeEvent } from '../testing';
-import { LotNasa } from './lot-nasa';
+import { LotNasa, SATELLITE_SLIDES } from './lot-nasa';
+import { SlideTrack } from './slide-track';
 
 // lote armado para la prueba: no representa un lote real
 const LOT: LotDetail = {
@@ -38,7 +40,7 @@ describe('LotNasa', () => {
   it('marca en la serie de NDVI solo los eventos del período que se pidió', async () => {
     await TestBed.configureTestingModule({
       imports: [LotNasa],
-      providers: [...provideNasaTesting()],
+      providers: [provideRouter([]), ...provideNasaTesting()],
     }).compileComponents();
     const fixture = TestBed.createComponent(LotNasa);
     const lastMonth = new Date();
@@ -94,7 +96,7 @@ describe('LotNasa', () => {
     retries[0].click();
   });
 
-  it('a la vista deja tres indicadores y el NDVI; lo demás, en un único detalle técnico', async () => {
+  it('a la vista deja tres indicadores y el NDVI; el detalle, en tarjetas deslizables', async () => {
     const fixture = await setup(provideNasaTesting());
     const element = fixture.nativeElement as HTMLElement;
 
@@ -102,24 +104,68 @@ describe('LotNasa', () => {
     expect(kpis.length).toBe(3);
     // sin dato no inventa un cero: lo dice con su motivo
     expect(kpis.every((kpi) => kpi.textContent?.includes('Sin dato'))).toBe(true);
-    expect(element.querySelector('app-series-chart')?.closest('app-disclosure')).toBeNull();
-
-    const details = [...element.querySelectorAll('app-disclosure')];
-    expect(details.length).toBe(1);
-    expect(details[0].textContent).toContain('Ver detalle técnico');
-    for (const heading of [
-      'Lluvia por mes',
-      'Pasadas NISAR sobre el lote',
-      'Imágenes HLS recientes',
-      'Cobertura del suelo por año',
-      'De dónde sale cada dato',
-    ]) {
-      expect(details[0].textContent).toContain(heading);
-    }
-    expect(details[0].querySelector('app-column-chart')).toBeTruthy();
+    const track = element.querySelector('#sat-cards');
+    expect(element.querySelector('app-series-chart')?.closest('#sat-cards')).toBeNull();
+    // nada plegado ni párrafos a la vista: las explicaciones van detrás de un (i)
+    expect(element.querySelectorAll('app-disclosure').length).toBe(0);
     expect(
-      [...details[0].querySelectorAll('button')].map((button) => button.textContent?.trim()),
+      element.querySelector('app-section-card button[aria-label="De dónde salen estos datos"]'),
+    ).toBeTruthy();
+
+    // un carrusel con nombre, y cada tarjeta dice cuál es y cuántas hay
+    const carousel = element.querySelector('section[aria-roledescription="carrusel"]');
+    const titleId = carousel?.getAttribute('aria-labelledby') ?? '';
+    expect(element.querySelector(`#${titleId}`)?.textContent).toBe('Más datos');
+    const slides = [...(track?.children ?? [])];
+    expect(slides.map((slide) => slide.getAttribute('aria-label'))).toEqual(
+      SATELLITE_SLIDES.map((title, index) => `${index + 1} de 6: ${title}`),
+    );
+    expect(slides.every((slide) => slide.getAttribute('role') === 'group')).toBe(true);
+    expect(slides.every((slide) => slide.getAttribute('aria-roledescription') === 'tarjeta')).toBe(
+      true,
+    );
+    expect(slides[0].querySelector('app-column-chart')).toBeTruthy();
+    expect(
+      [...slides[5].querySelectorAll('button')].map((button) => button.textContent?.trim()),
     ).toEqual(['Traer el historial desde 2020', 'Volver a consultar']);
+  });
+
+  it('las flechas mueven la pista de a una tarjeta y dicen en cuál está', async () => {
+    const fixture = await setup(provideNasaTesting());
+    const element = fixture.nativeElement as HTMLElement;
+    const track = element.querySelector<HTMLElement>('#sat-cards')!;
+    // jsdom no mide: la pista muestra dos tarjetas de 300 px y se corre con scrollLeft
+    const slides = [...track.children] as HTMLElement[];
+    slides.forEach((slide, index) => {
+      Object.defineProperty(slide, 'offsetLeft', { value: index * 316, configurable: true });
+      Object.defineProperty(slide, 'offsetWidth', { value: 300, configurable: true });
+    });
+    Object.defineProperty(track, 'clientWidth', { value: 620, configurable: true });
+    const slider = fixture.debugElement.query(By.directive(SlideTrack)).injector.get(SlideTrack);
+    const moves: number[] = [];
+    // el desplazamiento real avisa con un evento de scroll; acá se mide a mano
+    track.scrollTo = ((options: ScrollToOptions) => {
+      moves.push(options.left ?? 0);
+      track.scrollLeft = options.left ?? 0;
+      slider.sync();
+    }) as typeof track.scrollTo;
+    slider.sync();
+    await settle(fixture);
+
+    const count = () => element.querySelector('.more__count')?.textContent?.trim();
+    const step = (name: string) =>
+      [...element.querySelectorAll<HTMLButtonElement>('.more__step')].find((button) =>
+        button.textContent?.includes(name),
+      )!;
+    expect(count()).toBe('1 a 2 de 6');
+    expect(step('Tarjeta anterior').getAttribute('aria-disabled')).toBe('true');
+    expect(step('Tarjeta siguiente').getAttribute('aria-controls')).toBe('sat-cards');
+
+    step('Tarjeta siguiente').click();
+    await settle(fixture);
+    expect(moves).toEqual([316]);
+    expect(count()).toBe('2 a 3 de 6');
+    expect(step('Tarjeta anterior').getAttribute('aria-disabled')).toBeNull();
   });
 
   it('muestra la lluvia y la humedad en lenguaje llano, con su origen', async () => {
@@ -152,10 +198,10 @@ describe('LotNasa', () => {
 
     expect(rain.textContent).toContain('45');
     expect(rain.textContent).toContain('mm');
-    expect(rain.textContent).toContain('hasta el 14/11/2026');
+    expect(rain.textContent).toContain('Hasta el 14/11');
     expect(rain.textContent).toContain('Estimado');
     expect(soil.textContent).toContain('62');
-    expect(soil.textContent).toContain('Zona de raíces al 14/11/2026 (100 es saturado).');
+    expect(soil.textContent).toContain('Zona de raíces · 100 es saturado');
   });
 
   it('marca el mes en curso de la lluvia como parcial', async () => {
@@ -190,13 +236,16 @@ describe('LotNasa', () => {
     expect(chart.items()[1].note).toBe('mes en curso: hasta el 10/11');
     expect(chart.items()[0].note).toBeUndefined();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      '* nov 26 es el mes en curso: suma la lluvia hasta el 10/11, no la del mes completo.',
+      '* nov 26: mes en curso, suma hasta el 10/11.',
     );
   });
 });
 
 async function setup(providers: Provider[]): Promise<ComponentFixture<LotNasa>> {
-  await TestBed.configureTestingModule({ imports: [LotNasa], providers }).compileComponents();
+  await TestBed.configureTestingModule({
+    imports: [LotNasa],
+    providers: [provideRouter([]), ...providers],
+  }).compileComponents();
   const fixture = TestBed.createComponent(LotNasa);
   fixture.componentRef.setInput('lot', LOT);
   await settle(fixture);

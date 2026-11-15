@@ -122,4 +122,26 @@ describe('FertilizationPage', () => {
     expect(el().querySelector('app-login-invite')).not.toBeNull();
     expect(el().querySelector('app-zones-map')).toBeNull();
   });
+
+  it('embebida en el popup toma el id del input, sin pestañas ni encabezado propios', async () => {
+    const embedded = TestBed.createComponent(FertilizationPage);
+    embedded.componentRef.setInput('id', 2);
+    embedded.componentRef.setInput('embedded', true);
+    await embedded.whenStable();
+    // el input manda sobre el :id de la ruta
+    http.expectOne('/api/lots/2/').flush({ ...LOT, id: 2 });
+    http.expectOne('/api/lots/2/footprint/').flush({ components: [] });
+    await embedded.whenStable();
+
+    const host = embedded.nativeElement as HTMLElement;
+    expect(host.classList).toContain('is-embedded');
+    expect(host.querySelector('app-lot-tabs')).toBeNull();
+    expect(host.querySelector('app-page-header')).toBeNull();
+    expect(host.querySelectorAll('.zones app-kpi-card')).toHaveLength(3);
+    // la acción principal pasa a la planilla: sigue siendo una sola
+    expect(host.querySelectorAll('.btn--primary')).toHaveLength(1);
+    expect(host.querySelector('.planner .btn--primary')?.textContent).toContain('Armar dosis');
+    // cómo se arman los ambientes queda detrás de un (i)
+    expect(host.querySelector('button[aria-label="Cómo se arman los ambientes"]')).toBeTruthy();
+  });
 });

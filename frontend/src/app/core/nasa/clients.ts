@@ -6,7 +6,9 @@ import { SceneCatalog } from './scenes';
 
 export interface NasaClients {
   power: Pick<PowerClient, 'daily'>;
-  modis: Pick<ModisClient, 'ndviBatch' | 'landCover'>;
+  // landCoverGrid es opcional para no romper los dobles de prueba armados antes de que existiera;
+  // createNasaClients siempre lo trae
+  modis: Pick<ModisClient, 'ndviBatch' | 'landCover'> & Partial<Pick<ModisClient, 'landCoverGrid'>>;
   scenes: Pick<SceneCatalog, 'nisarScenes' | 'hlsScenes'>;
   gibs: GibsCatalog;
   now: () => number;

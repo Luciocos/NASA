@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-import { formatHectares, latestCampaign } from '../../../core/insights';
+import { formatHectares } from '../../../core/insights';
 import { LotOverview } from '../../../core/lot-scene';
 import { NdviObservation } from '../../../core/nasa';
 import { EventGlyph } from '../../../shared/iso/event-glyph';
@@ -9,17 +8,19 @@ import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
 import { SimulatedNotice } from '../../../shared/simulated-notice/simulated-notice';
 import { Icon } from '../../../shared/ui/icon/icon';
 import { formatDate } from '../../lot/labels';
+import { LotLink } from '../../lot/lot-workspace/lot-link';
 
 let nextId = 0;
 
 /**
- * resumen del lote elegido en Mi campo: dónde está, su cultivo y su último evento, cada dato con
- * su origen. una sola acción: "Ver lote"
+ * resumen del lote elegido en Mi campo, sin párrafos: el nombre, las hectáreas y una línea de
+ * estado con su origen (su último evento o, con la capa NDVI prendida, su verdor actual). una
+ * sola acción: "Ver lote", que lo abre en el popup
  */
 @Component({
   selector: 'app-lot-summary',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, EventGlyph, OriginBadge, SimulatedNotice, Icon],
+  imports: [EventGlyph, OriginBadge, SimulatedNotice, Icon, LotLink],
   host: { role: 'region', '[attr.aria-labelledby]': 'headingId' },
   template: `
     @let lot = overview().lot;
@@ -27,7 +28,7 @@ let nextId = 0;
       <div class="titles">
         <h2 [id]="headingId">{{ lot.name }}</h2>
         <p class="where">
-          {{ lot.locality || 'Sin localidad' }} · {{ formatHectares(lot.area_ha) }}
+          {{ formatHectares(lot.area_ha) }}{{ lot.locality ? ' · ' + lot.locality : '' }}
         </p>
       </div>
       <button type="button" class="btn btn--ghost btn--icon btn--sm" (click)="closed.emit()">
@@ -35,57 +36,29 @@ let nextId = 0;
       </button>
     </header>
 
-    <dl class="facts">
-      <div>
-        <dt>Cultivo</dt>
-        <dd>
-          @if (campaign(); as current) {
-            <strong>{{ current.crop_label }}</strong>
-            <span class="muted">campaña {{ current.label }}</span>
-            <app-origin-badge [origin]="current.crop_origin" />
-          } @else {
-            <span class="muted">Sin campañas registradas</span>
-          }
-        </dd>
-      </div>
-      <div>
-        <dt>Último evento</dt>
-        <dd>
-          @if (overview().last; as event) {
-            <span class="event"><app-event-glyph [type]="event.type" />{{ event.type_label }}</span>
-            <span class="muted">{{ formatDate(event.date) }} · {{ event.sensor_label }}</span>
-            <app-origin-badge [origin]="event.origin" />
-            @if (event.is_simulated) {
-              <app-simulated-notice />
-            }
-          } @else {
-            <span class="muted">
-              Todavía no hay eventos detectados. Los datos de la NASA de su polígono se consultan en
-              vivo en la ficha.
-            </span>
-          }
-        </dd>
-      </div>
+    <p class="status">
       @if (ndvi(); as obs) {
-        <div>
-          <dt>Verdor actual</dt>
-          <dd>
-            <strong>{{
-              obs.mean === null ? 'Sin dato' : 'NDVI ' + obs.mean.toLocaleString('es-AR')
-            }}</strong>
-            <span class="muted">
-              {{ obs.mean === null ? 'nubes o sin píxeles válidos · ' : '' }}MODIS
-              {{ obs.satellite }}, compuesto del {{ formatDate(obs.date) }}
-            </span>
-            <app-origin-badge origin="VERIFIED" />
-          </dd>
-        </div>
+        @if (obs.mean === null) {
+          <strong>NDVI sin dato</strong>
+          <span class="muted">nubes o sin píxeles válidos</span>
+        } @else {
+          <strong>NDVI {{ obs.mean.toLocaleString('es-AR') }}</strong>
+          <span class="muted">{{ formatDate(obs.date) }}</span>
+          <app-origin-badge origin="VERIFIED" />
+        }
+      } @else if (overview().last; as event) {
+        <span class="event"><app-event-glyph [type]="event.type" />{{ event.type_label }}</span>
+        <span class="muted">{{ formatDate(event.date) }}</span>
+        <app-origin-badge [origin]="event.origin" />
+        @if (event.is_simulated) {
+          <app-simulated-notice />
+        }
+      } @else {
+        <span class="muted">Sin eventos detectados todavía</span>
       }
-    </dl>
+    </p>
 
-    <a class="btn btn--block" [routerLink]="['/lotes', lot.id]">
-      Ver lote <app-icon name="arrow-right" />
-    </a>
+    <a class="btn btn--block" [appLotLink]="lot.id">Ver lote <app-icon name="arrow-right" /></a>
   `,
   styles: `
     :host {
@@ -100,9 +73,7 @@ let nextId = 0;
         var(--shadow-2);
     }
     p,
-    h2,
-    dl,
-    dd {
+    h2 {
       margin: 0;
     }
     .head {
@@ -128,17 +99,7 @@ let nextId = 0;
       color: var(--ink-3);
       font-size: var(--text-sm);
     }
-    .facts {
-      display: grid;
-      gap: var(--space-3);
-    }
-    dt {
-      margin-bottom: 0.125rem;
-      color: var(--ink-3);
-      font-size: var(--text-xs);
-      font-weight: 600;
-    }
-    dd {
+    .status {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
@@ -165,7 +126,6 @@ export class LotSummary {
   readonly closed = output<void>();
 
   protected readonly headingId = `lot-summary-${nextId++}`;
-  protected readonly campaign = computed(() => latestCampaign(this.overview().campaigns ?? []));
   protected readonly formatHectares = formatHectares;
   protected readonly formatDate = formatDate;
 }

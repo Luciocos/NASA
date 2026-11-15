@@ -11,7 +11,9 @@
     <p class="headline__value">{{ formatKgPerTonne(fp.total_kg_co2e_per_t) }}</p>
   } @else {
     <p class="headline__value">No se puede calcular todavía</p>
-    <p class="headline__why">{{ fp.message }}</p>
+    @if (why(); as text) {
+      <p class="headline__why">{{ text }}</p>
+    }
   }
   <p class="headline__confidence">
     Nivel de confianza: <strong>{{ confidenceLabels[fp.confidence.level] }}</strong>
@@ -50,10 +52,15 @@
       <app-origin-badge [origin]="fp.yield.origin" />
     }
     @if (fp.yield.reference) {
-      <span class="reference">
+      <span class="reference" [class.print-only]="compact()">
         Valor de referencia regional, no observado por satélite. Fuente:
         {{ fp.yield.reference }}
       </span>
+      @if (compact()) {
+        <span class="reference screen-only">
+          Valor de referencia regional, no observado por satélite.
+        </span>
+      }
     }
   } @else {
     <strong>Sin dato</strong>
@@ -61,68 +68,94 @@
   }
 </p>
 
-<table class="breakdown">
-  <caption class="visually-hidden">
-    Desglose de la huella por componente
-  </caption>
-  <thead>
-    <tr>
-      <th scope="col">Componente</th>
-      <th scope="col">Dato de actividad</th>
-      @if (!compact()) {
-        <th scope="col">Factor de emisión</th>
-      }
-      <th scope="col">kg CO2e/t</th>
-      <th scope="col">Estado</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (c of fp.components; track c.key) {
-      <tr [class.missing]="c.status === 'sin_dato'">
-        <th scope="row">{{ c.label }}</th>
-        <td>
-          @if (c.activity.quantity !== null) {
-            {{ formatNumber(c.activity.quantity, 2) }} {{ c.activity.unit }}
-          } @else if (c.activity.records > 0) {
-            {{ c.activity.records }} registro/s
-          } @else {
-            Sin dato
-          }
-          @if (c.activity.origin) {
-            <app-origin-badge [origin]="c.activity.origin" />
-          }
-          @if (c.activity.reference) {
-            <span class="reference">
-              Valor de referencia, no observado por satélite. Fuente: {{ c.activity.reference }}
-            </span>
-          }
-          @if (c.is_simulated) {
-            <app-simulated-notice />
-          }
-        </td>
+<!-- pasaporte: en pantalla la tabla se pide; al imprimir sale abierta (PassportPage) y sin el
+     renglón "Ver" -->
+<details class="fold" [open]="!compact()" [attr.data-print-open]="compact() ? '' : null">
+  <summary [class.visually-hidden]="!compact()">
+    Ver el desglose por componente ({{ fp.components.length }})
+  </summary>
+  <table class="breakdown">
+    <caption class="visually-hidden">
+      Desglose de la huella por componente
+    </caption>
+    <thead>
+      <tr>
+        <th scope="col">Componente</th>
+        <th scope="col">Dato de actividad</th>
         @if (!compact()) {
+          <th scope="col">Factor de emisión</th>
+        }
+        <th scope="col">kg CO2e/t</th>
+        <th scope="col">Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (c of fp.components; track c.key) {
+        <tr [class.missing]="c.status === 'sin_dato'">
+          <th scope="row">{{ c.label }}</th>
           <td>
-            @if (c.factor.value !== null && c.factor.value !== undefined) {
-              {{ c.factor.value }} {{ c.factor.unit }}
-              <span class="muted small">Fuente: {{ c.factor.source }}</span>
+            @if (c.activity.quantity !== null) {
+              {{ formatNumber(c.activity.quantity, 2) }} {{ c.activity.unit }}
+            } @else if (c.activity.records > 0) {
+              {{ c.activity.records }} registro/s
             } @else {
-              Sin factor con fuente
+              Sin dato
+            }
+            @if (c.activity.origin) {
+              <app-origin-badge [origin]="c.activity.origin" />
+            }
+            @if (c.activity.reference) {
+              <span class="reference" [class.print-only]="compact()">
+                Valor de referencia, no observado por satélite. Fuente: {{ c.activity.reference }}
+              </span>
+              @if (compact()) {
+                <span class="reference screen-only"
+                  >Valor de referencia, no observado por satélite.</span
+                >
+              }
+            }
+            @if (c.is_simulated) {
+              <app-simulated-notice />
             }
           </td>
-        }
-        <td>{{ c.status === 'calculado' ? formatNumber(c.kg_co2e_per_t) : '—' }}</td>
-        <td>
-          <span class="status">
-            {{ c.status === 'calculado' ? '✓ Calculado' : '? Sin dato' }}
-          </span>
-          @if (c.reason) {
-            <span class="reason">{{ c.reason }}</span>
+          @if (!compact()) {
+            <td>
+              @if (c.factor.value !== null && c.factor.value !== undefined) {
+                {{ formatNumber(c.factor.value, 3) }} {{ c.factor.unit }}
+                <span class="muted small">Fuente: {{ c.factor.source }}</span>
+              } @else {
+                Sin factor con fuente
+              }
+            </td>
           }
-          @if (c.note) {
-            <span class="reason">{{ c.note }}</span>
-          }
-        </td>
-      </tr>
-    }
-  </tbody>
-</table>
+          <td>{{ c.status === 'calculado' ? formatNumber(c.kg_co2e_per_t) : '—' }}</td>
+          <td>
+            <span class="status">
+              {{ c.status === 'calculado' ? '✓ Calculado' : '? Sin dato' }}
+            </span>
+            @if (c.reason) {
+              <span class="reason">{{ c.reason }}</span>
+            }
+            @if (c.note) {
+              <span class="reason">{{ c.note }}</span>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</details>
+
+<!-- en pantalla, las fuentes largas de las referencias se piden; al imprimir van en cada fila -->
+@if (compact() && references().length > 0) {
+  <details class="legend sources screen-only">
+    <summary>Fuentes de los valores de referencia</summary>
+    <ul>
+      @for (ref of references(); track ref.name) {
+        <li>
+          <strong>{{ ref.name }}:</strong> {{ ref.source }}
+        </li>
+      }
+    </ul>
+  </details>
+}

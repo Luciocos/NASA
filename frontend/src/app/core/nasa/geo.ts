@@ -88,6 +88,12 @@ export function sinusoidalToLatLng(x: number, y: number): LatLng {
   return [lat / DEG, lng / DEG];
 }
 
+/** [lat, lng] a metros de la grilla sinusoidal: x = R·lon·cos(lat), y = R·lat */
+export function latLngToSinusoidal([lat, lng]: LatLng): [number, number] {
+  const phi = lat * DEG;
+  return [MODIS_SPHERE_RADIUS_M * lng * DEG * Math.cos(phi), MODIS_SPHERE_RADIUS_M * phi];
+}
+
 /** anillo exterior cerrado y antihorario, como lo pide el parámetro polygon de CMR */
 export function cmrPolygon(geometry: PolygonGeometry): string {
   const ring: number[][] = [];

@@ -1,11 +1,15 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 import { provideSignedInTesting } from '../../../core/auth/testing';
 import { LotDetail } from '../../../core/models';
 import { provideNasaTesting } from '../../../core/nasa/testing';
+import { LotTabKey } from '../../../shared/ui/lot-tabs/lot-tabs';
+import { LotLog } from '../lot-log/lot-log';
+import { LotNasa } from '../lot-nasa/lot-nasa';
 import { makeEvent } from '../testing';
 import { LotPage } from './lot-page';
 
@@ -22,18 +26,7 @@ const LOT: LotDetail = {
   created_at: '2026-11-14T10:00:00Z',
   is_example: false,
   owned: true,
-  campaigns: [
-    {
-      id: 10,
-      lot: 1,
-      label: '2025/26',
-      crop: 'SOY',
-      crop_label: 'Soja',
-      crop_origin: 'DECLARED',
-      yield_t_ha: null,
-      yield_origin: '',
-    },
-  ],
+  campaigns: [],
 };
 
 const EXAMPLE: LotDetail = { ...LOT, is_example: true, owned: false };
@@ -46,15 +39,8 @@ describe('LotPage', () => {
   const button = (label: string) =>
     [...el().querySelectorAll('button')].find((b) => b.textContent?.trim() === label);
 
-  async function load(lot: LotDetail, events = [makeEvent()]): Promise<void> {
-    http.expectOne('/api/lots/1/').flush(lot);
-    http
-      .expectOne('/api/lots/1/events/')
-      .flush({ lot: 1, count: events.length, message: null, events });
-    await fixture.whenStable();
-  }
-
-  beforeEach(async () => {
+  /** la página de una ruta del lote: el :id y la pestaña de data.tab */
+  async function setup(tab: LotTabKey = 'satellite'): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [LotPage],
       providers: [
@@ -62,112 +48,96 @@ describe('LotPage', () => {
         ...provideNasaTesting(),
         ...provideSignedInTesting(),
         provideHttpClientTesting(),
-        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: '1' })) } },
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(convertToParamMap({ id: '1' })), data: of({ tab }) },
+        },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(LotPage);
     http = TestBed.inject(HttpTestingController);
     await fixture.whenStable();
+  }
+
+  async function load(lot: LotDetail): Promise<void> {
+    http.expectOne('/api/lots/1/').flush(lot);
+    await fixture.whenStable();
+  }
+
+  it('como página muestra el encabezado del lote, las pestañas como enlaces y Satélite', async () => {
+    await setup();
+    await load(LOT);
+    // la pestaña Satélite pide la bitácora solo para marcar los eventos en el verdor
+    http
+      .expectOne('/api/lots/1/events/')
+      .flush({ lot: 1, count: 1, message: null, events: [makeEvent()] });
+    await fixture.whenStable();
+
+    expect(el().querySelector('app-lot-tabs h1')?.textContent?.trim()).toBe('Lote de prueba');
+    expect(el().querySelector('app-lot-tabs .meta')?.textContent?.trim()).toBe(
+      '24,9 ha · Casilda, Santa Fe',
+    );
+    expect(el().querySelector('app-lot-tabs a.back')?.getAttribute('href')).toBe('/mapa');
+    const current = el().querySelector('nav a[aria-current="page"]');
+    expect(current?.textContent?.trim()).toBe('Satélite');
+    expect(current?.getAttribute('href')).toBe('/lotes/1');
+    const nasa = fixture.debugElement.query(By.directive(LotNasa));
+    expect((nasa.componentInstance as LotNasa).events().map((event) => event.id)).toEqual([1]);
+    expect(text()).toContain('Lo que ve el satélite');
   });
 
-  it('arriba muestra solo el nombre, la superficie y el lugar; debajo, las campañas y la bitácora', async () => {
+  it('la pestaña sale de la ruta: en Bitácora no pide nada de Satélite', async () => {
+    await setup('log');
     await load(LOT);
 
-    const header = el().querySelector('app-page-header');
-    expect(header?.textContent).toContain('Lote de prueba');
-    expect(header?.textContent).toContain('24,9 ha · Casilda, Santa Fe');
-    expect(header?.querySelectorAll('button, a').length).toBe(0);
-    expect(text()).toContain('Soja');
-    expect(text()).toContain('Declarado');
-    expect(text()).toContain('Remoción de suelo');
-    expect(text()).toContain('Dato simulado para la demostración');
-    // el panel satelital va antes que las buenas prácticas
-    const sections = [...el().querySelectorAll('app-lot-nasa, app-lot-practices')];
-    expect(sections.map((section) => section.tagName.toLowerCase())).toEqual([
-      'app-lot-nasa',
-      'app-lot-practices',
-    ]);
+    expect(el().querySelector('nav a[aria-current="page"]')?.textContent?.trim()).toBe('Bitácora');
+    expect(el().querySelector('app-lot-nasa')).toBeNull();
+    const log = fixture.debugElement.query(By.directive(LotLog));
+    expect((log.componentInstance as LotLog).editable()).toBe(true);
   });
 
-  it('en un lote propio ofrece confirmar, corregir y generar el pasaporte', async () => {
+  it('en un lote propio, el menú ⋯ ofrece compartir el pasaporte', async () => {
+    await setup('log');
     await load(LOT);
 
-    expect(button('Confirmar')).toBeDefined();
-    expect(button('Corregir')).toBeDefined();
-    expect(button('Generar pasaporte')).toBeDefined();
-    expect(text()).not.toContain('Lote de ejemplo: es de solo lectura');
-    expect(el().querySelector('app-lot-tabs a')?.getAttribute('href')).toBe('/mapa');
+    expect(el().querySelector('app-more-menu button')?.getAttribute('aria-label')).toBe(
+      'Más opciones del lote',
+    );
+    expect(button('Compartir pasaporte')).toBeDefined();
+    expect(text()).not.toContain('solo lectura');
   });
 
-  it('en un ejemplo oculta lo que escribe y avisa que es de solo lectura', async () => {
-    await load(EXAMPLE, [makeEvent({ evidence_image_url: '/media/evidence/prueba.png' })]);
+  it('en un ejemplo avisa que es de solo lectura, vuelve a Ejemplos y no deja escribir', async () => {
+    await setup('log');
+    await load(EXAMPLE);
 
-    expect(text()).toContain('Lote de ejemplo: es de solo lectura');
-    expect(button('Confirmar')).toBeUndefined();
-    expect(button('Corregir')).toBeUndefined();
-    expect(button('Generar pasaporte')).toBeUndefined();
-    // mirar la evidencia no escribe nada: sigue a mano
-    expect(button('Ver radar contra óptico')).toBeDefined();
-    const back = el().querySelector('app-lot-tabs a');
+    expect(el().querySelector('.example')?.textContent).toContain('Lote de ejemplo · solo lectura');
+    expect(el().querySelector('app-more-menu')).toBeNull();
+    const back = el().querySelector('app-lot-tabs a.back');
     expect(back?.textContent).toContain('Ejemplos');
     expect(back?.getAttribute('href')).toBe('/ejemplos');
-  });
-
-  it('muestra el mensaje del backend cuando la bitácora está vacía', async () => {
-    http.expectOne('/api/lots/1/').flush({ ...LOT, event_count: 0 });
-    http.expectOne('/api/lots/1/events/').flush({
-      lot: 1,
-      count: 0,
-      message: 'Este lote todavía no tiene eventos registrados.',
-      events: [],
-    });
-    await fixture.whenStable();
-    expect(text()).toContain('Este lote todavía no tiene eventos registrados.');
-  });
-
-  it('muestra el rendimiento con coma decimal', async () => {
-    const campaign = { ...LOT.campaigns[0], yield_t_ha: 3.1, yield_origin: 'DECLARED' as const };
-    await load({ ...LOT, campaigns: [campaign] }, []);
-    expect(el().querySelector('.campaigns')?.textContent).toContain('3,1 t/ha');
-  });
-
-  it('lleva la vista a la comparación cuando ya está dibujada', async () => {
-    const scrolled: Element[] = [];
-    const original = Element.prototype.scrollIntoView;
-    Element.prototype.scrollIntoView = function (this: Element) {
-      scrolled.push(this);
-    };
-    try {
-      await load(LOT, [makeEvent({ evidence_image_url: '/media/evidence/prueba.png' })]);
-
-      button('Ver radar contra óptico')?.click();
-      await fixture.whenStable();
-
-      expect(el().querySelector('#compare')).toBeTruthy();
-      expect(scrolled.map((element) => element.id)).toContain('compare');
-    } finally {
-      Element.prototype.scrollIntoView = original;
-    }
+    const log = fixture.debugElement.query(By.directive(LotLog));
+    expect((log.componentInstance as LotLog).editable()).toBe(false);
   });
 
   it('si el lote no existe o es de otra cuenta, invita a ingresar', async () => {
+    await setup();
     http.expectOne('/api/lots/1/').flush('', { status: 404, statusText: 'Not Found' });
-    http.expectOne('/api/lots/1/events/').flush('', { status: 404, statusText: 'Not Found' });
     await fixture.whenStable();
     expect(el().querySelector('app-login-invite')).toBeTruthy();
     expect(el().querySelector('app-lot-tabs')).toBeNull();
-    expect(text()).not.toContain('No existe un lote con ese identificador.');
+    http.expectNone('/api/lots/1/events/');
   });
 
   it('si falla la red, lo dice y deja reintentar', async () => {
+    await setup('log');
     http.expectOne('/api/lots/1/').flush('', { status: 0, statusText: 'Unknown Error' });
-    http.expectOne('/api/lots/1/events/').flush('', { status: 0, statusText: 'Unknown Error' });
     await fixture.whenStable();
     expect(text()).toContain('No se pudo cargar el lote');
 
     button('Reintentar')?.click();
     await fixture.whenStable();
     await load(LOT);
-    expect(text()).toContain('Lote de prueba');
+    expect(el().querySelector('app-lot-tabs h1')?.textContent).toContain('Lote de prueba');
   });
 });

@@ -1,67 +1,113 @@
-@if (lotId(); as id) {
-  @if (!notFound()) {
-    <app-lot-tabs [lotId]="id" />
-  }
-}
-
 @if (notFound()) {
   <app-login-invite />
-} @else if (error(); as message) {
-  <p class="error" role="alert">{{ message }}</p>
 } @else {
-  <h1>
-    Huella de carbono estimada
-    @if (lot(); as lot) {
-      <span class="lot-name">· {{ lot.name }}</span>
-    }
-  </h1>
-  <p class="notice" role="note">{{ notice }} Los valores son provisionales.</p>
-
-  @if (footprint(); as fp) {
-    @if (fp.available_campaigns.length > 0) {
-      <label class="campaign">
-        Campaña
-        <select (change)="onCampaign($any($event.target).value)">
-          @for (c of fp.available_campaigns; track c.id) {
-            <option [value]="c.id" [selected]="c.id === fp.campaign?.id">{{ c.label }}</option>
-          }
-        </select>
-      </label>
-    }
-    <section aria-labelledby="footprint-title">
-      <h2 id="footprint-title" class="visually-hidden">Huella</h2>
-      <app-footprint-breakdown [footprint]="fp" />
-      <p class="muted small">{{ fp.disclaimer }}</p>
-    </section>
-  } @else {
-    <p>Cargando huella…</p>
+  @if (!embedded() && id() > 0) {
+    <app-lot-tabs [lotId]="id()" [example]="lot()?.is_example ?? false" [lot]="lot()" />
   }
 
-  <!-- en un lote de ejemplo no se declara (el backend responde 403) -->
-  @if (lot(); as lot) {
-    @if (!lot.is_example) {
-      <section aria-labelledby="declaration-title">
-        <h2 id="declaration-title">Datos del productor</h2>
+  @if (error(); as message) {
+    <div class="alert alert--error" role="alert">
+      <app-icon name="alert" />
+      <p>{{ message }}</p>
+      <button type="button" class="btn btn--sm" (click)="retry()">Probar de nuevo</button>
+    </div>
+  } @else if (footprint(); as fp) {
+    <app-footprint-summary
+      [footprint]="fp"
+      [own]="lot()?.is_example !== true"
+      [level]="level()"
+      (campaignChange)="onCampaign($event)"
+    >
+      @if (canDeclare() && view() !== 'datos') {
+        <button actions type="button" class="btn btn--primary" (click)="openDeclaration()">
+          <app-icon name="plus" /> Cargar rinde e insumos
+        </button>
+      }
+      <a actions class="more-link" [href]="practicesHref()" (click)="openPractices($event)">
+        Ver puntaje y buenas prácticas <app-icon name="arrow-right" />
+      </a>
+    </app-footprint-summary>
+
+    <div class="seg views" role="tablist" aria-label="Qué ver de la huella">
+      @for (tab of views(); track tab.id) {
+        <button
+          type="button"
+          role="tab"
+          [id]="'huella-tab-' + tab.id"
+          [attr.aria-selected]="view() === tab.id"
+          [attr.aria-controls]="'huella-panel-' + tab.id"
+          [tabIndex]="view() === tab.id ? 0 : -1"
+          (click)="select(tab.id)"
+          (keydown)="onTabKey($event)"
+        >
+          {{ tab.label }}
+        </button>
+      }
+    </div>
+
+    <div
+      class="view"
+      role="tabpanel"
+      id="huella-panel-resumen"
+      aria-labelledby="huella-tab-resumen"
+      tabindex="0"
+      [hidden]="view() !== 'resumen'"
+    >
+      <app-footprint-overview
+        [footprint]="fp"
+        [level]="level()"
+        (showBreakdown)="select('desglose')"
+      />
+    </div>
+    <div
+      class="view"
+      role="tabpanel"
+      id="huella-panel-desglose"
+      aria-labelledby="huella-tab-desglose"
+      tabindex="0"
+      [hidden]="view() !== 'desglose'"
+    >
+      <app-footprint-components [footprint]="fp" [level]="level()" />
+    </div>
+    <div
+      class="view"
+      role="tabpanel"
+      id="huella-panel-simulador"
+      aria-labelledby="huella-tab-simulador"
+      tabindex="0"
+      [hidden]="view() !== 'simulador'"
+    >
+      <app-simulator [lotId]="fp.lot" [campaign]="fp.campaign?.id ?? null" [level]="level()" />
+    </div>
+    @if (canDeclare()) {
+      <div
+        class="view"
+        role="tabpanel"
+        id="huella-panel-datos"
+        aria-labelledby="huella-tab-datos"
+        tabindex="0"
+        [hidden]="view() !== 'datos'"
+      >
         <app-declaration-form
-          [lotId]="lotId()"
-          [footprint]="footprint()"
+          [lotId]="fp.lot"
+          [footprint]="fp"
+          [level]="level()"
           (declared)="onDeclared($event)"
         />
-      </section>
+      </div>
     }
+  } @else if (footprintError(); as message) {
+    <div class="alert alert--error" role="alert">
+      <app-icon name="alert" />
+      <p>{{ message }}</p>
+      <button type="button" class="btn btn--sm" (click)="retry()">Probar de nuevo</button>
+    </div>
+  } @else {
+    <div class="card loading" aria-busy="true">
+      <span class="skeleton loading__label"></span>
+      <span class="skeleton loading__value"></span>
+      <span class="skeleton loading__line"></span>
+      <p class="visually-hidden">Cargando huella…</p>
+    </div>
   }
-
-  <section aria-labelledby="score-title">
-    <h2 id="score-title">Puntaje de sustentabilidad (provisional)</h2>
-    @if (score(); as score) {
-      <app-score-panel [score]="score" />
-    } @else {
-      <p>Cargando puntaje…</p>
-    }
-  </section>
-
-  <section aria-labelledby="simulator-title">
-    <h2 id="simulator-title">Simulador</h2>
-    <app-simulator [lotId]="lotId()" [campaign]="footprint()?.campaign?.id ?? null" />
-  </section>
 }

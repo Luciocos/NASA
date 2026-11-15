@@ -3,29 +3,50 @@
 } @else if (error(); as message) {
   <p class="alert alert--error" role="alert">{{ message }}</p>
 } @else {
-  @if (lot(); as lot) {
-    <app-lot-tabs [lotId]="lot.id" [example]="lot.is_example ?? false" />
-  }
-
-  <app-page-header
-    [kicker]="lot()?.name ?? null"
-    heading="Fertilización"
-    subtitle="El satélite separa tu lote en ambientes según el verdor del cultivo: así ves dónde conviene más o menos nitrógeno."
-  >
-    @if (hasZones()) {
-      <button actions type="button" class="btn btn--primary" (click)="openPlanner()">
-        <app-icon name="leaf" /> Armar dosis variable
-      </button>
+  @if (!embedded()) {
+    @if (lot(); as lot) {
+      <app-lot-tabs [lotId]="lot.id" [example]="lot.is_example ?? false" />
     }
-  </app-page-header>
+
+    <app-page-header
+      [kicker]="lot()?.name ?? null"
+      heading="Fertilización"
+      subtitle="Ambientes del lote según el verdor, para decidir el nitrógeno."
+    >
+      @if (hasZones()) {
+        <button actions type="button" class="btn btn--primary" (click)="openPlanner()">
+          <app-icon name="leaf" /> Armar dosis variable
+        </button>
+      }
+    </app-page-header>
+  }
 
   <div class="layout">
     <app-section-card
       class="map-card"
       heading="Ambientes por NDVI"
-      subtitle="Dónde el cultivo está más y menos verde, en cuadros de 250 m."
+      subtitle="Más y menos verde, en cuadros de 250 m."
       flush
     >
+      <app-info-tip actions label="Cómo se arman los ambientes">
+        <p>
+          @if (zones(); as z) {
+            @if (z.min !== null && z.max !== null) {
+              El NDVI del lote va de {{ number(z.min, 2) }} a {{ number(z.max, 2) }} en
+              {{ z.validPixels }} {{ z.validPixels === 1 ? 'píxel válido' : 'píxeles válidos' }}.
+            }
+          }
+          Ese rango se parte en tres partes iguales: alto, medio y bajo, sin umbrales fijos. La
+          superficie de cada ambiente es aproximada.
+        </p>
+        <p>{{ modis.note }}</p>
+        <p>
+          {{ modis.product }} · {{ modis.resolution }} · {{ modis.cadence }}
+          @if (grid()?.data; as data) {
+            · {{ data.satellite }}, compuesto del {{ formatDate(data.date) }}
+          }
+        </p>
+      </app-info-tip>
       @if (lot(); as lot) {
         <app-zones-map class="zones-map" [geometry]="lot.geometry" [zones]="zones()" />
       } @else {
@@ -59,43 +80,6 @@
             }
           }
         }
-        <app-disclosure label="Cómo se arman los ambientes" icon="info" flat>
-          <div class="tech">
-            <p>
-              @if (zones(); as z) {
-                @if (z.min !== null && z.max !== null) {
-                  El NDVI del lote va de {{ number(z.min, 2) }} a {{ number(z.max, 2) }} en
-                  {{ z.validPixels }}
-                  {{ z.validPixels === 1 ? 'píxel válido' : 'píxeles válidos' }}.
-                }
-              }
-              Ese rango se parte en tres partes iguales: alto, medio y bajo. No hay umbrales fijos.
-              La superficie de cada ambiente es su parte de los píxeles por el área del lote: es
-              aproximada.
-            </p>
-            <p>{{ modis.note }}</p>
-            <dl class="specs">
-              <div>
-                <dt>Producto</dt>
-                <dd>{{ modis.product }}</dd>
-              </div>
-              <div>
-                <dt>Resolución</dt>
-                <dd>{{ modis.resolution }}</dd>
-              </div>
-              <div>
-                <dt>Frecuencia</dt>
-                <dd>{{ modis.cadence }}</dd>
-              </div>
-              @if (grid()?.data; as data) {
-                <div>
-                  <dt>Satélite</dt>
-                  <dd>{{ data.satellite }}, compuesto del {{ formatDate(data.date) }}</dd>
-                </div>
-              }
-            </dl>
-          </div>
-        </app-disclosure>
       </div>
     </app-section-card>
 
@@ -132,8 +116,13 @@
       <app-section-card
         class="planner"
         heading="Dosis variable de nitrógeno"
-        subtitle="La decidís vos para cada ambiente: no es una recomendación agronómica."
+        subtitle="La decidís vos: no es una recomendación agronómica."
       >
+        @if (embedded() && !plannerOpen()) {
+          <button actions type="button" class="btn btn--primary btn--sm" (click)="openPlanner()">
+            <app-icon name="leaf" /> Armar dosis
+          </button>
+        }
         @if (plan().variableN !== null) {
           <div class="summary">
             <p class="stat">
@@ -189,9 +178,7 @@
             </p>
           }
         } @else {
-          <p class="muted">
-            Poné cuántos kg de N por hectárea va en cada ambiente y te mostramos el total.
-          </p>
+          <p class="muted">Cargá la dosis de cada ambiente y ves el total.</p>
         }
 
         <app-disclosure [(open)]="plannerOpen" label="Dosis por ambiente" [hint]="dosesHint()">

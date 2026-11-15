@@ -1,0 +1,288 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+p {
+  margin: 0;
+}
+
+/* la pregunta: dos respuestas del mismo peso, para no empujar ninguna */
+.ask {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ask__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ask__question {
+  color: var(--ink);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ask__options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
+  gap: var(--space-2);
+}
+
+.option {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  line-height: 1.25;
+  white-space: normal;
+}
+
+.option[aria-pressed='true'] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.ask__cancel {
+  justify-self: start;
+}
+
+/* lo declarado: qué dijo, cuándo y su origen, con "Cambiar" a mano */
+.declared {
+  display: grid;
+  grid-template-areas:
+    'icon what change'
+    '. meta meta';
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.125rem var(--space-2);
+}
+
+.declared__icon {
+  --icon-size: 1.25rem;
+  grid-area: icon;
+  color: var(--origin-declared);
+}
+
+.declared__what {
+  grid-area: what;
+  color: var(--ink);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.declared__meta {
+  display: flex;
+  flex-wrap: wrap;
+  grid-area: meta;
+  align-items: center;
+  gap: 0.125rem var(--space-2);
+  color: var(--ink-2);
+  font-size: var(--text-xs);
+}
+
+.declared__change {
+  grid-area: change;
+}
+
+.failure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-3);
+}
+
+/* una línea de resultado: ícono, pocas palabras y, si hace falta, la ayuda (i) */
+.line {
+  --tone: var(--ink-2);
+  --tone-bg: var(--surface-2);
+  --icon-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.5rem;
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--tone) 24%, transparent);
+  border-radius: var(--radius-md);
+  background: var(--tone-bg);
+}
+
+.line[data-tone='ok'] {
+  --tone: var(--ok);
+  --tone-bg: var(--ok-bg);
+}
+
+.line[data-tone='warn'] {
+  --tone: var(--warn);
+  --tone-bg: var(--warn-bg);
+}
+
+.line[data-tone='info'] {
+  --tone: var(--info);
+  --tone-bg: var(--info-bg);
+}
+
+.line__icon {
+  flex: none;
+  color: var(--tone);
+}
+
+.line__title {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.line--match {
+  margin-top: var(--space-3);
+}
+
+/* lo que vio MODIS */
+.modis {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.modis--split {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.modis__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.modis__title {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+.modis__tip {
+  margin-left: auto;
+}
+
+/* una franja por año: el año, el ícono del grupo y su nombre; el color solo acompaña */
+.years {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(2.75rem, 1fr));
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.year {
+  --band: var(--line-strong);
+  --band-bg: var(--surface-2);
+  position: relative;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 0.125rem;
+  min-height: 4.25rem;
+  padding: var(--space-2) 0 var(--space-1);
+  border-top: 4px solid var(--band);
+  border-radius: var(--radius-sm);
+  background: var(--band-bg);
+  text-align: center;
+}
+
+.year[data-group='agricultural'] {
+  --band: var(--straw-500);
+  --band-bg: color-mix(in srgb, var(--straw-200) 40%, var(--surface));
+}
+
+.year[data-group='natural'] {
+  --band: var(--field-500);
+  --band-bg: var(--field-50);
+}
+
+.year[data-group='urban'] {
+  --band: var(--ink-3);
+  --band-bg: var(--paper-2);
+}
+
+.year[data-group='other'] {
+  --band: var(--water-600);
+  --band-bg: color-mix(in srgb, var(--water-300) 20%, var(--surface));
+}
+
+/* un año distinto del año base: borde ámbar y una marca, además de su nombre */
+.year.is-different {
+  box-shadow: inset 0 0 0 1.5px var(--warn);
+}
+
+.year__num {
+  color: var(--ink);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.year__icon {
+  --icon-size: 1.1rem;
+  color: var(--ink-2);
+}
+
+.year__label {
+  max-width: 100%;
+  color: var(--ink);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  hyphens: auto;
+}
+
+.year__flag {
+  --icon-size: 0.75rem;
+  position: absolute;
+  top: 0.2rem;
+  right: 0.2rem;
+  color: var(--warn);
+}
+
+.year-skeleton {
+  height: 4.25rem;
+  border-radius: var(--radius-sm);
+}
+
+.none {
+  --icon-size: 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.none strong {
+  color: var(--ink);
+}
+
+.note {
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+}
+
+/* adentro de las ayudas (i) */
+.help-years {
+  display: grid;
+  gap: 0.125rem;
+  margin: 0;
+  padding-left: var(--space-4);
+}
+
+.help-source {
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+}

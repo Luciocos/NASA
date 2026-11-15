@@ -1,74 +1,135 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  booleanAttribute,
   computed,
   effect,
   inject,
   input,
+  linkedSignal,
   signal,
   untracked,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
 
 import { Api } from '../../../core/api';
-import { CriterionStatus, LotDetail, SustainabilityScore } from '../../../core/models';
+import {
+  CriterionStatus,
+  EventType,
+  LandUseDeclaration,
+  LotDetail,
+  Origin,
+  SustainabilityScore,
+} from '../../../core/models';
+import { LotSatellite } from '../../../core/nasa';
 import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
 import { SimulatedNotice } from '../../../shared/simulated-notice/simulated-notice';
 import { Disclosure } from '../../../shared/ui/disclosure/disclosure';
 import { Icon } from '../../../shared/ui/icon/icon';
 import { SectionCard } from '../../../shared/ui/section-card/section-card';
-import { PracticeLinkKind, STATUS_ICONS, pickRecommendations, statusLabel } from './practices';
+import { EVENT_TYPE_LABELS, formatDate } from '../labels';
+import { PracticeTip } from './practice-tip/practice-tip';
+import { LandUseCard } from './land-use/land-use-card';
+import { LAND_USE_KEY, formatDay, landUseMatch, modisStatus } from './land-use/land-use';
+import {
+  STATUS_ICONS,
+  STATUS_TONES,
+  StatusTone,
+  pickRecommendations,
+  practiceRows,
+  statusLabel,
+} from './practices';
+import { Slides } from './slides/slides';
 
 type ScoreState =
   | { status: 'loading'; lot: number; data: null }
   | { status: 'error'; lot: number; data: null }
   | { status: 'ready'; lot: number; data: SustainabilityScore };
 
+let nextId = 0;
+
+const SCORE_FORMAT = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 });
+const CONFIDENCE_TEXT: Record<string, string> = {
+  ALTO: 'alta',
+  BAJO: 'baja',
+  'SIN DATOS': 'sin datos',
+};
+const CHIP_CLASSES: Record<StatusTone, string> = {
+  ok: 'chip--ok',
+  warn: 'chip--warn',
+  neutral: '',
+};
+
 /**
- * buenas prácticas del lote a partir de los criterios del puntaje (GET /api/lots/{id}/score/):
- * hasta tres recomendaciones destacadas (primero lo que no cumple, después lo que falta medir)
- * y el estado de cada práctica con ícono y texto. el puntaje es provisional y se dice; cómo se
- * calcula queda plegado
+ * la pestaña Prácticas del lote, para leer de un vistazo: el puntaje provisional
+ * (GET /api/lots/{id}/score/), hasta tres recomendaciones de una frase (deslizables si no
+ * entran), cada práctica con su estado en un chip y la tarjeta de uso del suelo desde 2020 (lo
+ * declarado frente a lo que vio MODIS). los porqués van en ayudas (i) y cómo se calcula el
+ * puntaje (pesos, motivos, confianza, aviso provisional y evidencia), plegado
+ *
+ * sirve igual en el popup del lote y en su ruta (/lotes/:id/practicas). lo que se escribe
+ * (declarar el uso del suelo) es solo del dueño: `editable`, y nunca en un ejemplo
  */
 @Component({
   selector: 'app-lot-practices',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, SectionCard, Disclosure, Icon, OriginBadge, SimulatedNotice],
+  imports: [
+    SectionCard,
+    Disclosure,
+    Icon,
+    OriginBadge,
+    SimulatedNotice,
+    PracticeTip,
+    LandUseCard,
+    Slides,
+  ],
   templateUrl: './lot-practices.html',
   styleUrl: './lot-practices.css',
 })
 export class LotPractices {
   private readonly api = inject(Api);
+  private readonly satellite = inject(LotSatellite);
 
   readonly lot = input.required<LotDetail>();
   /** sube cada vez que se confirma o corrige un evento: el puntaje se vuelve a pedir */
   readonly refresh = input(0);
+  /** el dueño puede declarar el uso del suelo; en un ejemplo nunca, aunque llegue en true */
+  readonly editable = input(false, { transform: booleanAttribute });
 
   private readonly attempt = signal(0);
   protected readonly state = signal<ScoreState>({ status: 'loading', lot: NaN, data: null });
   protected readonly score = computed(() => this.state().data);
 
-  /** solo el dueño puede confirmar eventos: en un ejemplo no se lo invita a hacerlo */
-  protected readonly editable = computed(
-    () => this.lot().owned === true && this.lot().is_example !== true,
+  protected readonly canEdit = computed(() => this.editable() && this.lot().is_example !== true);
+
+  /** lo declarado sobre el uso del suelo: el de la ficha, o el que se acaba de guardar */
+  protected readonly declaration = linkedSignal<LandUseDeclaration | null>(() =>
+    this.lot().is_example === true ? null : (this.lot().land_use_declaration ?? null),
   );
-  protected readonly heading = computed(() =>
-    this.editable() ? 'Buenas prácticas para tu lote' : 'Buenas prácticas para este lote',
+  private readonly ref = computed(() => ({ id: this.lot().id, geometry: this.lot().geometry }));
+  /** lo declarado frente a MODIS: solo se consulta si hay una declaración que comparar */
+  private readonly match = computed(() => {
+    const declaration = this.declaration();
+    if (!declaration) return null;
+    return landUseMatch(declaration.unchanged, modisStatus(this.satellite.landUse(this.ref())()));
+  });
+  private readonly skip = computed(() => (this.declaration() ? [LAND_USE_KEY] : []));
+
+  protected readonly rows = computed(() =>
+    practiceRows(this.score()?.criteria ?? [], this.declaration(), this.match()),
   );
-  /** sin ningún dato todavía (un lote nuevo) se explica qué va a pasar, sin culpar a nadie */
+  /** sin labores en la bitácora todavía (un lote nuevo): se dice en una línea, sin culpar */
   protected readonly empty = computed(() => {
-    const criteria = this.score()?.criteria ?? [];
+    const criteria = (this.score()?.criteria ?? []).filter(
+      (criterion) => !this.skip().includes(criterion.key),
+    );
     return criteria.length > 0 && criteria.every((criterion) => criterion.status === 'sin_dato');
   });
-  protected readonly subtitle = computed(() => {
-    if (!this.empty()) return 'Lo que muestra la bitácora sobre las prácticas que cuidan el suelo.';
-    return this.editable()
-      ? 'Todavía no hay datos: el satélite va a ir registrando las labores en la bitácora y vas a poder confirmarlas.'
-      : 'Todavía no hay datos: el satélite va a ir registrando las labores en la bitácora.';
-  });
+  protected readonly subtitle = computed(() =>
+    this.empty() ? 'Todavía no hay labores en la bitácora.' : 'Según la bitácora del lote.',
+  );
 
   protected readonly recommendations = computed(() =>
-    pickRecommendations(this.score()?.criteria ?? []),
+    pickRecommendations(this.score()?.criteria ?? [], 3, this.skip()),
   );
   protected readonly simulated = computed(() => {
     const score = this.score();
@@ -81,24 +142,37 @@ export class LotPractices {
         ))
     );
   });
-  protected readonly scoreText = computed(() => {
+  /** el número, o por qué no hay número */
+  protected readonly scoreValue = computed(() => {
     const score = this.score();
-    if (!score) return '';
-    if (score.score !== null) return `Puntaje provisional: ${score.score} de ${score.max_score}`;
-    if (!score.weights_defined) return 'Puntaje provisional: todavía sin pesos definidos';
-    const missing = score.missing_criteria.length;
-    if (missing > 0) {
-      return `Puntaje provisional: sin calcular, faltan datos de ${missing} ${missing === 1 ? 'práctica' : 'prácticas'}`;
-    }
-    return 'Puntaje provisional: sin dato';
+    return score?.score === null || score?.score === undefined
+      ? null
+      : SCORE_FORMAT.format(score.score);
   });
-  protected readonly confidenceLabel = computed(() => {
-    const level = this.score()?.confidence.level ?? '';
-    return level ? level.charAt(0) + level.slice(1).toLowerCase() : 'Sin dato';
+  protected readonly scoreHint = computed(() => {
+    const score = this.score();
+    if (!score || score.score !== null) return '';
+    if (!score.weights_defined) return 'Todavía sin pesos definidos';
+    const missing = score.missing_criteria.length;
+    if (missing > 0)
+      return `Faltan datos de ${missing} ${missing === 1 ? 'práctica' : 'prácticas'}`;
+    return 'Sin dato';
+  });
+  protected readonly confidenceText = computed(
+    () => CONFIDENCE_TEXT[this.score()?.confidence.level ?? ''] ?? 'sin dato',
+  );
+  protected readonly declaredOn = computed(() => {
+    const declaration = this.declaration();
+    return declaration ? formatDay(declaration.declared_at) : '';
   });
 
+  protected readonly recsId = `practice-recs-${++nextId}`;
+  protected readonly listId = `practice-list-${nextId}`;
+  protected readonly landUseKey = LAND_USE_KEY;
+  protected readonly origins: Origin[] = ['VERIFIED', 'DECLARED', 'ESTIMATED'];
   protected readonly statusIcons = STATUS_ICONS;
   protected readonly statusLabel = statusLabel;
+  protected readonly formatDate = formatDate;
 
   constructor() {
     effect((onCleanup) => {
@@ -124,18 +198,21 @@ export class LotPractices {
     this.attempt.update((value) => value + 1);
   }
 
-  protected route(kind: PracticeLinkKind): (string | number)[] {
-    const id = this.lot().id;
-    if (kind === 'footprint') return ['/huella', id];
-    if (kind === 'fertilization') return ['/lotes', id, 'fertilizacion'];
-    return ['/lotes', id];
+  protected chip(tone: StatusTone): string {
+    return CHIP_CLASSES[tone];
   }
 
   protected tone(status: CriterionStatus): string {
-    return status === 'cumple' ? 'chip--ok' : status === 'no_cumple' ? 'chip--warn' : '';
+    return CHIP_CLASSES[STATUS_TONES[status]];
   }
 
   protected weightText(weight: number | null, max: number): string {
-    return weight === null ? 'peso sin definir' : `vale ${weight} de ${max} puntos`;
+    return weight === null
+      ? 'peso sin definir'
+      : `vale ${SCORE_FORMAT.format(weight)} de ${max} puntos`;
+  }
+
+  protected eventLabel(type: EventType): string {
+    return EVENT_TYPE_LABELS[type] ?? type;
   }
 }

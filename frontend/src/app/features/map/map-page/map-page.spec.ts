@@ -149,18 +149,33 @@ describe('MapPage', () => {
     expect(el().querySelector('a[href="/mapa/nuevo"]')).toBeTruthy();
   });
 
-  it('indica en la lista cuál es el lote elegido y ofrece una sola acción: ver el lote', async () => {
+  it('tocar un lote de la lista lo elige y lo abre en el popup; el resumen ofrece "Ver lote"', async () => {
     await setup();
     await load([MINE]);
 
     const button = [...el().querySelectorAll<HTMLButtonElement>('button.lot')].find((item) =>
       item.textContent?.includes('Lote de prueba'),
     );
+    // una línea por lote: las hectáreas y la localidad, sin párrafos
+    expect(button?.querySelector('.line')?.textContent?.trim()).toBe('24,9 ha · Pueblo de prueba');
+    expect(button?.getAttribute('aria-haspopup')).toBe('dialog');
     button?.click();
     await fixture.whenStable();
     expect(button?.getAttribute('aria-pressed')).toBe('true');
+    expect(TestBed.inject(Router).url).toBe('/?lote=7');
+    expect(el().querySelector('dialog.lot-dialog')?.hasAttribute('open')).toBe(true);
+
     const summary = el().querySelector('app-lot-summary');
-    expect(summary?.querySelector('a[href="/lotes/7"]')?.textContent).toContain('Ver lote');
+    const open = summary?.querySelector('a[aria-haspopup="dialog"]');
+    expect(open?.textContent).toContain('Ver lote');
+    expect(open?.getAttribute('href')).toBe('/?lote=7');
+    // nombre, hectáreas y una línea de estado: sin párrafos
+    expect(summary?.querySelector('.where')?.textContent?.trim()).toBe(
+      '24,9 ha · Pueblo de prueba',
+    );
+    expect(summary?.querySelector('.status')?.textContent).toContain(
+      'Sin eventos detectados todavía',
+    );
   });
 
   it('con más de 6 lotes aparecen la búsqueda y el orden', async () => {

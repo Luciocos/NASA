@@ -1,9 +1,10 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 
 import { provideSignedInTesting } from '../../core/auth/testing';
 import { EventLogItem, LotSummary, PolygonGeometry } from '../../core/models';
+import { provideNasaTesting } from '../../core/nasa/testing';
 import { provideOfflineTesting } from '../../core/offline/testing';
 import { ExamplesPage } from './examples-page';
 import { outlinePath } from './outline';
@@ -68,6 +69,7 @@ describe('ExamplesPage', () => {
       providers: [
         provideRouter([]),
         provideHttpClientTesting(),
+        ...provideNasaTesting(),
         signedIn ? provideSignedInTesting() : provideOfflineTesting(),
       ],
     });
@@ -91,19 +93,21 @@ describe('ExamplesPage', () => {
 
   afterEach(() => http.verify());
 
-  it('explica en una línea qué son y muestra cada lote con enlace a su ficha', async () => {
+  it('explica en una línea qué son y muestra cada lote con enlace a su historia', async () => {
     await setup();
     expect(el().querySelector('[aria-busy="true"]')).not.toBeNull();
 
     await flushExamples([LOT, { ...LOT, id: 2, name: 'Lote 2', event_count: 0 }], [EVENT]);
 
     expect(el().querySelector('h1')?.textContent).toContain('Lotes de ejemplo');
-    expect(el().textContent).toContain('procesados con el radar NISAR de la NASA');
-    expect(el().textContent).toContain('Son de solo lectura.');
+    expect(el().textContent).toContain('con el radar NISAR de la NASA');
+    expect(el().textContent).toContain('Solo lectura.');
     const cards = el().querySelectorAll('.example');
     expect(cards).toHaveLength(2);
     const first = cards[0];
-    expect(first.querySelector('h2 a')?.getAttribute('href')).toBe('/lotes/1');
+    // la tarjeta abre el lote en el popup, encima de la lista
+    expect(first.querySelector('h2 a')?.getAttribute('href')).toBe('/?lote=1');
+    expect(first.querySelector('h2 a')?.getAttribute('aria-haspopup')).toBe('dialog');
     expect(first.textContent).toContain('Casilda, Santa Fe');
     expect(first.textContent).toContain('Remoción de suelo');
     expect(first.querySelector('app-origin-badge')).not.toBeNull();
@@ -124,6 +128,26 @@ describe('ExamplesPage', () => {
     await flushExamples([]);
     expect(headerAction().textContent).toContain('Marcar mi lote');
     expect(headerAction().getAttribute('href')).toBe('/mapa/nuevo');
+  });
+
+  it('"Ver su historia" abre el lote en el popup, encima de la lista y de solo lectura', async () => {
+    await setup();
+    await flushExamples([LOT], [EVENT]);
+
+    el().querySelector<HTMLAnchorElement>('.example h2 a')!.click();
+    await fixture.whenStable();
+    expect(TestBed.inject(Router).url).toBe('/?lote=1');
+    const dialog = el().querySelector('dialog.lot-dialog');
+    expect(dialog?.hasAttribute('open')).toBe(true);
+
+    http.expectOne('/api/lots/1/').flush({ ...LOT, is_example: true, owned: false, campaigns: [] });
+    await fixture.whenStable();
+    http.expectOne('/api/lots/1/events/').flush({ lot: 1, count: 0, message: null, events: [] });
+    await fixture.whenStable();
+    expect(dialog?.querySelector('h2#lot-title-1')?.textContent).toContain(LOT.name);
+    expect(dialog?.textContent).toContain('Lote de ejemplo · solo lectura');
+    // la lista sigue detrás
+    expect(el().querySelectorAll('li.example')).toHaveLength(1);
   });
 
   it('si no se pudieron cargar lo dice y deja reintentar', async () => {

@@ -25,6 +25,8 @@ import { Icon } from '../../../shared/ui/icon/icon';
 import { MoreMenu } from '../../../shared/ui/more-menu/more-menu';
 import { PageHeader } from '../../../shared/ui/page-header/page-header';
 import { SectionCard } from '../../../shared/ui/section-card/section-card';
+import { LotDialog } from '../../lot/lot-workspace/lot-dialog';
+import { openLot } from '../../lot/lot-workspace/lot-link';
 import { LocationError, locateOnce, roundCoord } from '../my-location';
 import { SatelliteLot, SatelliteView, satelliteLotOf } from '../satellite-view/satellite-view';
 import { ListedLot, LotList } from './lot-list';
@@ -38,6 +40,9 @@ type ViewMode = 'maqueta' | 'satelital';
  * los de su cuenta). sin lotes, una bienvenida que ofrece usar la ubicación para encontrar el
  * campo más rápido o buscarlo en el mapa. con lotes, la maqueta isométrica es la protagonista,
  * con la lista al costado y el resumen del lote elegido con una sola acción: "Ver lote"
+ *
+ * "Ver lote", tocar un lote de la lista o abrir uno en la maqueta lo muestran en el popup del
+ * lote, encima de Mi campo (/mapa?lote=12&seccion=huella; atrás lo cierra)
  */
 @Component({
   selector: 'app-map-page',
@@ -53,6 +58,7 @@ type ViewMode = 'maqueta' | 'satelital';
     MoreMenu,
     LotList,
     LotSummary,
+    LotDialog,
     MaquetaLegend,
   ],
   templateUrl: './map-page.html',
@@ -230,9 +236,16 @@ export class MapPage {
     if (id && this.view() === 'maqueta') this.scene()?.focusLot(id);
   }
 
+  /** abre el lote en el popup; uno guardado solo en el dispositivo todavía no tiene ficha */
   protected open(id: string): void {
     if (id.startsWith('pendiente:')) return;
-    void this.router.navigate(['/lotes', Number(id)]);
+    openLot(this.router, Number(id));
+  }
+
+  /** tocar un lote de la lista lo elige (queda marcado detrás) y lo abre en el popup */
+  protected openFromList(id: string): void {
+    this.select(id);
+    this.open(id);
   }
 
   protected zoom(factor: number): void {

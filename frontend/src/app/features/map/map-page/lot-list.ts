@@ -11,11 +11,8 @@ import {
 import { formatHectares } from '../../../core/insights';
 import { CampaignDetail, EventLogItem } from '../../../core/models';
 import { EventGlyph } from '../../../shared/iso/event-glyph';
-import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
-import { SimulatedNotice } from '../../../shared/simulated-notice/simulated-notice';
 import { Icon } from '../../../shared/ui/icon/icon';
 import { SectionCard } from '../../../shared/ui/section-card/section-card';
-import { formatDate } from '../../lot/labels';
 
 /** un lote en la lista de Mi campo: de la cuenta o guardado solo en el dispositivo */
 export interface ListedLot {
@@ -73,14 +70,15 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
 }
 
 /**
- * lista de lotes de Mi campo como tarjetas: nombre, hectáreas, cultivo y último evento con su
- * fecha y su origen. con más de 6 lotes aparecen la búsqueda (por nombre o localidad) y el
- * orden; en escritorio la lista se desplaza por dentro
+ * lista de lotes de Mi campo: una línea por lote (nombre, y hectáreas con su localidad), con el
+ * ícono de su último evento. tocar un lote lo abre (Mi campo decide cómo). con más de 6 lotes
+ * aparecen la búsqueda (por nombre o localidad) y el orden; en escritorio la lista se desplaza
+ * por dentro
  */
 @Component({
   selector: 'app-lot-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SectionCard, EventGlyph, OriginBadge, SimulatedNotice, Icon],
+  imports: [SectionCard, EventGlyph, Icon],
   template: `
     <app-section-card heading="Tus lotes" [subtitle]="subtitle()">
       @if (tools()) {
@@ -125,6 +123,7 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
                 [class.is-selected]="selectedId() === lot.id"
                 [class.is-pending]="lot.pending"
                 [attr.aria-pressed]="selectedId() === lot.id"
+                [attr.aria-haspopup]="lot.pending ? null : 'dialog'"
                 (click)="lotSelect.emit(lot.id)"
               >
                 <span class="glyph">
@@ -145,23 +144,9 @@ function describeCounts(lots: readonly ListedLot[]): string | null {
                     <span class="line">Guardado en este dispositivo</span>
                   } @else {
                     <span class="line">
-                      {{ lot.hectares === null ? 'Sin área' : formatHectares(lot.hectares) }}
-                      @if (lot.crop; as campaign) {
-                        · {{ campaign.crop_label }}
-                        <app-origin-badge [origin]="campaign.crop_origin" />
-                      }
+                      {{ lot.hectares === null ? 'Sin área' : formatHectares(lot.hectares)
+                      }}{{ lot.locality ? ' · ' + lot.locality : '' }}
                     </span>
-                    @if (lot.last; as event) {
-                      <span class="line">
-                        {{ event.type_label }} · {{ formatDate(event.date) }}
-                        <app-origin-badge [origin]="event.origin" />
-                      </span>
-                      @if (event.is_simulated) {
-                        <app-simulated-notice />
-                      }
-                    } @else {
-                      <span class="line">Sin eventos detectados todavía</span>
-                    }
                   }
                 </span>
               </button>
@@ -305,7 +290,7 @@ export class LotList {
   readonly selectedId = input<string | null>(null);
   /** la lista del backend todavía no llegó */
   readonly loading = input(false, { transform: booleanAttribute });
-  /** tocar un lote lo elige */
+  /** tocar un lote lo elige (y Mi campo lo abre) */
   readonly lotSelect = output<string>();
 
   protected readonly query = signal('');
@@ -327,7 +312,6 @@ export class LotList {
   });
 
   protected readonly formatHectares = formatHectares;
-  protected readonly formatDate = formatDate;
 
   protected onQuery(event: Event): void {
     this.query.set((event.target as HTMLInputElement).value);

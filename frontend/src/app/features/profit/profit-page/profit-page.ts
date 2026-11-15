@@ -1,9 +1,11 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  booleanAttribute,
   computed,
   effect,
   inject,
+  input,
   signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -15,6 +17,7 @@ import { AuthSession } from '../../../core/auth/auth-session';
 import { formatHectares } from '../../../core/insights';
 import { Footprint, LotDetail, Origin } from '../../../core/models';
 import { WaterfallChart, WaterfallStep } from '../../../shared/charts';
+import { InfoTip } from '../../lot/lot-workspace/info-tip';
 import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
 import { Disclosure } from '../../../shared/ui/disclosure/disclosure';
 import { KpiCard } from '../../../shared/ui/kpi-card/kpi-card';
@@ -40,12 +43,22 @@ type FieldKey = 'price' | 'yield' | 'commercial' | CostKey;
 /** flete y comercialización más los costos directos */
 const COST_COUNT = COST_KEYS.length + 1;
 
+/** id del lote de un input o de la ruta: un número o su texto; vacío = no llegó */
+function toLotId(value: unknown): number | undefined {
+  if (value === null || value === undefined || value === '') return undefined;
+  return Number(value);
+}
+
 /**
  * rentabilidad del lote, una sola pregunta: ¿cuánto te deja? el margen bruto por hectárea y del
  * lote entero se recalcula mientras se cargan el precio y el rinde (el área sale del polígono).
  * los costos detallados, el desglose y la sensibilidad quedan plegados. el rinde viene de la
  * huella (declarado o de referencia, con su origen) y el productor puede poner el suyo; precio,
  * rinde propio y costos son datos declarados y se guardan por cuenta en ProfitStore
+ *
+ * sirve como página (/lotes/:id/rentabilidad, con el encabezado y las pestañas del lote) y
+ * adentro del popup del lote: `<app-profit-page [id]="lot.id" [embedded]="true" />`. embebida
+ * no muestra app-lot-tabs ni su encabezado: el popup ya los muestra
  */
 @Component({
   selector: 'app-profit-page',
@@ -60,7 +73,9 @@ const COST_COUNT = COST_KEYS.length + 1;
     SectionCard,
     Disclosure,
     LoginInvite,
+    InfoTip,
   ],
+  host: { '[class.is-embedded]': 'embedded()' },
   templateUrl: './profit-page.html',
   styleUrl: './profit-page.css',
 })
@@ -69,10 +84,17 @@ export class ProfitPage {
   private readonly store = inject(ProfitStore);
   private readonly session = inject(AuthSession);
 
-  protected readonly lotId = toSignal(
-    inject(ActivatedRoute).paramMap.pipe(map((params) => Number(params.get('id')))),
-    { initialValue: NaN },
+  /** id del lote; si no llega, sale del parámetro :id de la ruta */
+  readonly id = input<number | undefined, unknown>(undefined, { transform: toLotId });
+  /** adentro del popup del lote: sin app-lot-tabs ni encabezado propio */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
+  private readonly routeId = toSignal(
+    inject(ActivatedRoute).paramMap.pipe(map((params) => toLotId(params.get('id')))),
+    { initialValue: undefined },
   );
+  /** el id en uso: el del input o el de la ruta (NaN si ninguno sirve) */
+  protected readonly lotId = computed(() => this.id() ?? this.routeId() ?? NaN);
   protected readonly lot = signal<LotDetail | null>(null);
   protected readonly footprint = signal<Footprint | null>(null);
   /** la huella no respondió: se calcula igual, sin el rinde de la huella */
@@ -108,26 +130,28 @@ export class ProfitPage {
   protected readonly yieldOrigin = computed<Origin | null>(() =>
     this.inputs().yieldTHa !== null ? 'DECLARED' : (this.footprint()?.yield.origin ?? null),
   );
-  /** de dónde sale el rinde, en una línea */
+  /** de dónde sale el rinde, en pocas palabras (la fuente de la referencia va en la ayuda) */
   protected readonly yieldNote = computed(() => {
     const huella = this.huellaYield();
     if (this.inputs().yieldTHa !== null) {
-      return huella === null
-        ? 'Lo cargaste vos.'
-        : `Lo cargaste vos. Si lo borrás, vuelve a ${this.tons(huella)} de la huella.`;
+      return huella === null ? 'Lo cargaste vos' : `Lo cargaste vos · huella: ${this.tons(huella)}`;
     }
     const fp = this.footprint();
     if (huella !== null && fp) {
-      if (fp.yield.reference) {
-        return `Referencia regional, no es de tu lote. Fuente: ${fp.yield.reference}.`;
-      }
-      return fp.yield.origin === 'DECLARED' ? 'De tu declaración en la huella.' : '';
+      if (fp.yield.reference) return 'Referencia regional, no de tu lote';
+      return fp.yield.origin === 'DECLARED' ? 'De tu declaración en la huella' : '';
     }
-    if (!fp) return 'Sin dato: no se pudo leer la huella del lote. Cargalo vos.';
+    if (!fp) return 'Sin dato de la huella: cargalo vos';
     return fp.campaign
-      ? `Sin dato: no hay rinde declarado para ${fp.campaign.label}. Cargalo vos.`
-      : 'Sin dato: el lote todavía no tiene campañas. Cargalo vos.';
+      ? `Sin rinde declarado en ${fp.campaign.label}: cargalo vos`
+      : 'Sin campañas todavía: cargalo vos';
   });
+  /** fuente del rinde de referencia, solo cuando se usa */
+  protected readonly yieldReference = computed(() =>
+    this.inputs().yieldTHa === null && this.huellaYield() !== null
+      ? (this.footprint()?.yield.reference ?? null)
+      : null,
+  );
 
   protected readonly result = computed(() =>
     computeProfit(this.inputs(), this.yieldTHa(), this.area()),

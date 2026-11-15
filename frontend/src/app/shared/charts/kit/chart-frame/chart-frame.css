@@ -38,6 +38,16 @@ summary {
   cursor: pointer;
 }
 
+/* en el celular "Ver datos" mide lo que un dedo: 44 px de alto */
+@media (max-width: 40rem) {
+  summary {
+    box-sizing: border-box;
+    min-height: var(--tap, 2.75rem);
+    padding-block: calc((var(--tap, 2.75rem) - 1.25em) / 2);
+    line-height: 1.25;
+  }
+}
+
 summary:focus-visible,
 .frame__scroll:focus-visible {
   outline: 2px solid var(--ck-focus);

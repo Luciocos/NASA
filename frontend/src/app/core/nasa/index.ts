@@ -9,7 +9,14 @@ export {
   type NasaResponse,
   type NasaServiceId,
 } from './http';
-export { bbox, centroid, cmrPolygon, pointInPolygon, sinusoidalToLatLng } from './geo';
+export {
+  bbox,
+  centroid,
+  cmrPolygon,
+  latLngToSinusoidal,
+  pointInPolygon,
+  sinusoidalToLatLng,
+} from './geo';
 export {
   PowerClient,
   lastDaysRain,
@@ -21,15 +28,37 @@ export {
 export {
   ModisClient,
   batchDates,
+  cellAt,
+  cellCenter,
+  cellRing,
   compositeBatches,
   compositeFromIndex,
   compositeIndexAt,
+  landCoverWindow,
+  parseLandCoverSubset,
   parseNdviSubset,
   windowKm,
+  type LandCoverGrid,
+  type LandCoverGridYear,
   type ModisDate,
   type ModisProduct,
   type ModisWindow,
+  type SubsetGrid,
 } from './modis';
+export {
+  LAND_USE_BASELINE_YEAR,
+  LAND_USE_CHANGED_SHARE,
+  LAND_USE_GROUP_LABELS,
+  landUseEvidence,
+  landUseGroup,
+  lotLandUse,
+  lotPixelIndexes,
+  type LandUseEvidence,
+  type LandUseGroup,
+  type LandUseInput,
+  type LandUseSource,
+  type LandUseYear,
+} from './land-use';
 export { SceneCatalog, parseScene } from './scenes';
 export {
   GIBS_LAYERS,
@@ -45,6 +74,7 @@ export { createNasaClients, type NasaClients } from './clients';
 export {
   LotSatellite,
   NASA_CLIENTS,
+  STALLED_MS,
   clusterLots,
   describeError,
   idleState,

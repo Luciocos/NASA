@@ -1,0 +1,129 @@
+/* la tarjeta del resultado: el número a la izquierda y la acción a la derecha. el borde
+   izquierdo verde (o ámbar si no se puede calcular) acompaña al texto, no lo reemplaza */
+:host {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3) var(--space-6);
+  min-width: 0;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--field-700);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+:host(.is-missing) {
+  border-left-color: var(--warn);
+}
+
+p {
+  margin: 0;
+}
+
+.result {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+
+.eyebrow {
+  margin: 0;
+}
+
+.campaign-text {
+  color: var(--ink-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* el selector de campaña va en la misma línea del rótulo, chico */
+.campaign select {
+  width: auto;
+  min-width: 9.5rem;
+  min-height: 2.25rem;
+  padding-block: 0;
+  font-size: var(--text-sm);
+}
+
+.value {
+  color: var(--ink);
+  font-size: var(--text-kpi);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+}
+
+.unit {
+  color: var(--ink-3);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.value--missing {
+  font-size: var(--text-2xl);
+  letter-spacing: -0.01em;
+}
+
+/* chips en una fila; la ayuda (i) cierra la fila */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-width: 0;
+}
+
+.chips__label {
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.chips app-help-tip {
+  margin-block: calc(var(--space-2) * -1);
+}
+
+.actions {
+  display: grid;
+  justify-items: end;
+  gap: var(--space-2);
+}
+
+.actions:empty {
+  display: none;
+}
+
+@media (max-width: 40rem) {
+  :host {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  /* en el celular el chip dice "Provisional"; "prueba de concepto" queda en la ayuda */
+  .wide-only {
+    display: none;
+  }
+
+  .value--missing {
+    font-size: var(--text-xl);
+  }
+
+  /* la acción a todo el ancho y el enlace pegado debajo */
+  .actions {
+    justify-items: stretch;
+    gap: 0;
+  }
+}

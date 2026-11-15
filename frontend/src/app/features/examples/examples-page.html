@@ -1,6 +1,6 @@
 <app-page-header
   heading="Lotes de ejemplo"
-  subtitle="Lotes reales de Casilda, Santa Fe, procesados con el radar NISAR de la NASA. Son de solo lectura."
+  subtitle="Lotes reales de Casilda, Santa Fe, con el radar NISAR de la NASA. Solo lectura."
 >
   <a
     actions
@@ -58,7 +58,7 @@
               }
               <div class="example__title">
                 <h2>
-                  <a [routerLink]="['/lotes', card.id]">{{ card.name }}</a>
+                  <a [appLotLink]="card.id">{{ card.name }}</a>
                 </h2>
                 <p class="muted small">
                   {{ card.place }} · <span class="num">{{ card.area }}</span>
@@ -94,3 +94,5 @@
     }
   }
 }
+
+<app-lot-dialog />

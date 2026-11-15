@@ -1,130 +1,123 @@
 :host {
-  display: block;
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
   min-width: 0;
 }
 
-h1 {
-  margin: 0 0 var(--space-3);
-  overflow-wrap: anywhere;
+/* la pestaña del lote trae su propio margen inferior: en la grilla manda el gap */
+app-lot-tabs {
+  margin-bottom: 0;
 }
 
-.lot-name {
-  color: var(--ink-3);
-  font-weight: 600;
-}
-
-/* aviso de estimación con el tono informativo de la app (como .alert--info) */
-.notice {
-  margin: 0 0 var(--space-5);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid color-mix(in srgb, var(--info) 22%, transparent);
-  border-radius: var(--radius-md);
-  background: var(--info-bg);
-  color: var(--info);
-  font-size: var(--text-sm);
-  font-weight: 600;
-}
-
-/* campaña con el mismo campo que el resto de la app (como .field) */
-.campaign {
-  display: inline-grid;
-  gap: var(--space-1);
-  color: var(--ink-2);
-  font-size: var(--text-sm);
-  font-weight: 600;
-}
-
-.campaign select {
-  min-width: 12rem;
-  min-height: var(--tap);
-  padding: var(--space-2) 2.25rem var(--space-2) var(--space-3);
-  border: 1px solid var(--line-control);
-  border-radius: var(--radius-md);
-  background-color: var(--surface);
-  background-image:
-    linear-gradient(45deg, transparent 50%, currentColor 50%),
-    linear-gradient(135deg, currentColor 50%, transparent 50%);
-  background-position:
-    calc(100% - 1.125rem) 50%,
-    calc(100% - 0.8125rem) 50%;
-  background-size: 0.3125rem 0.3125rem;
-  background-repeat: no-repeat;
-  color: var(--ink);
-  font: inherit;
-  font-size: var(--text-md);
-  font-weight: 400;
-  appearance: none;
-}
-
-.campaign select:focus-visible {
-  border-color: var(--focus-ring);
-  outline-offset: 1px;
-}
-
-/* cada bloque es una tarjeta, como app-section-card */
-section {
-  min-width: 0;
-  margin-top: var(--space-5);
-  padding: var(--space-5);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-1);
-}
-
-h2 {
-  margin: 0 0 var(--space-4);
-  font-size: var(--text-lg);
-}
-
-section > p {
-  margin: var(--space-3) 0 0;
-}
-
-section > h2 + p {
-  margin-top: 0;
-  color: var(--ink-3);
-}
-
-.muted {
-  color: var(--ink-3);
-}
-
-.small {
-  font-size: var(--text-sm);
-}
-
-.error {
+p {
   margin: 0;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid color-mix(in srgb, var(--danger) 22%, transparent);
-  border-radius: var(--radius-md);
-  background: var(--danger-bg);
-  color: var(--danger);
-  font-size: var(--text-sm);
 }
 
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
+/* enlace secundario de la tarjeta de resumen: texto con flecha, con lugar para el dedo */
+.more-link {
+  --icon-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--tap);
+  color: var(--field-800);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.more-link:hover {
+  text-decoration: underline;
+}
+
+.more-link:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* las vistas: control segmentado de la app (.seg) con pestañas accesibles */
+.views {
+  justify-self: start;
+  max-width: 100%;
+}
+
+.views > [role='tab'] {
+  min-height: 2.5rem;
+  padding-inline: var(--space-4);
+}
+
+.views > [aria-selected='true'] {
+  background: var(--seg-on, var(--surface));
+  color: var(--seg-on-ink, var(--ink));
+  box-shadow: var(--shadow-1);
+  font-weight: 700;
+}
+
+.views > [role='tab']:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.view {
+  min-width: 0;
+  border-radius: var(--radius-lg);
+}
+
+.view[hidden] {
+  display: none;
+}
+
+.view:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.alert p {
+  flex: 1;
+  margin: 0;
+}
+
+/* esqueleto del resultado mientras llega la huella */
+.loading {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.loading__label {
+  width: 9rem;
+  height: 0.75rem;
+}
+
+.loading__value {
+  width: min(18rem, 70%);
+  height: 2rem;
+}
+
+.loading__line {
+  width: min(28rem, 90%);
+  height: 0.875rem;
 }
 
 @media (max-width: 40rem) {
-  .notice {
-    margin-bottom: var(--space-4);
+  :host {
+    gap: var(--space-3);
   }
 
-  .campaign,
-  .campaign select {
-    width: 100%;
+  /* las cuatro vistas entran en una fila de punta a punta */
+  .views {
+    justify-self: stretch;
   }
 
-  section {
-    margin-top: var(--space-4);
-    padding: var(--space-4);
+  .views > [role='tab'] {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: var(--space-2);
+  }
+
+  .more-link {
+    justify-content: center;
   }
 }

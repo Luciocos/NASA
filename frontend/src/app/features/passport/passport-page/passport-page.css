@@ -166,6 +166,18 @@ section {
   font-size: var(--text-sm);
 }
 
+/* "Ver los 12 eventos": la acción secundaria de siempre, debajo de la tabla */
+.button--quiet {
+  margin-top: var(--space-3);
+}
+
+/* en pantalla, los eventos de más quedan ocultos hasta pedirlos; al imprimir salen todos */
+@media screen {
+  .table tr.extra {
+    display: none;
+  }
+}
+
 /* en el celular cada fila de tabla es un renglón: el primer dato arriba y el resto en línea */
 @media (max-width: 40rem) {
   :host,

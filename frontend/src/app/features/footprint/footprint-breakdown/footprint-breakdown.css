@@ -278,3 +278,42 @@ app-simulated-notice {
     white-space: normal;
   }
 }
+
+.sources {
+  margin: var(--space-4) 0 0;
+}
+
+/* "Ver el desglose por componente": un renglón con lugar para el dedo; la tabla, debajo */
+.fold > summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--field-800);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fold > summary:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.sources li {
+  overflow-wrap: anywhere;
+}
+
+/* pasaporte: en pantalla, la versión corta; al imprimir, la de siempre */
+@media screen {
+  .print-only {
+    display: none;
+  }
+}
+
+@media print {
+  .screen-only,
+  .fold > summary {
+    display: none;
+  }
+}

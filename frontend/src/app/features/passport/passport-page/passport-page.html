@@ -46,7 +46,7 @@
                 <td>{{ c.crop_label }} <app-origin-badge [origin]="c.crop_origin" /></td>
                 <td>
                   @if (c.yield_t_ha !== null) {
-                    {{ c.yield_t_ha }} t/ha
+                    {{ formatNumber(c.yield_t_ha, 2) }} t/ha
                     @if (c.yield_origin) {
                       <app-origin-badge [origin]="c.yield_origin" />
                     }
@@ -76,8 +76,8 @@
             </tr>
           </thead>
           <tbody>
-            @for (e of p.events; track e.id) {
-              <tr>
+            @for (e of p.events; track e.id; let i = $index) {
+              <tr [class.extra]="i >= eventsOnScreen && !showAllEvents()">
                 <td>{{ formatEventDate(e) }}</td>
                 <td>
                   {{ e.type_label }}
@@ -96,6 +96,16 @@
             }
           </tbody>
         </table>
+        @if (p.events.length > eventsOnScreen) {
+          <button
+            type="button"
+            class="button button--quiet no-print"
+            [attr.aria-expanded]="showAllEvents()"
+            (click)="showAllEvents.set(!showAllEvents())"
+          >
+            {{ showAllEvents() ? 'Ver menos' : 'Ver los ' + p.events.length + ' eventos' }}
+          </button>
+        }
       }
     </section>
 

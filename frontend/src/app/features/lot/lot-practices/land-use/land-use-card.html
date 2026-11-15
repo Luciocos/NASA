@@ -1,0 +1,174 @@
+<app-section-card heading="Uso del suelo desde 2020">
+  @if (canDeclare() || current()) {
+    @if (asking()) {
+      <div class="ask" role="group" [attr.aria-labelledby]="askId">
+        <div class="ask__head">
+          <p class="ask__question" [id]="askId">¿Cambió el uso del suelo desde 2020?</p>
+          <app-practice-tip label="Qué cuenta como cambio de uso">
+            <p>Por ejemplo, un monte, un pastizal o un bañado que pasó a cultivo.</p>
+            <p>
+              Tu respuesta queda guardada en el lote como dato declarado y se compara con lo que vio
+              MODIS año por año.
+            </p>
+          </app-practice-tip>
+        </div>
+        <div class="ask__options">
+          <button
+            #firstOption
+            type="button"
+            class="btn option"
+            [attr.aria-pressed]="changing() ? current()?.unchanged === true : null"
+            [attr.aria-disabled]="sending() !== null ? 'true' : null"
+            (click)="declare(true)"
+          >
+            <app-icon name="check" />
+            {{ sending() === true ? 'Guardando…' : 'No cambié el uso' }}
+          </button>
+          <button
+            type="button"
+            class="btn option"
+            [attr.aria-pressed]="changing() ? current()?.unchanged === false : null"
+            [attr.aria-disabled]="sending() !== null ? 'true' : null"
+            (click)="declare(false)"
+          >
+            <app-icon name="sync" />
+            {{ sending() === false ? 'Guardando…' : 'Sí, hubo un cambio' }}
+          </button>
+        </div>
+        @if (changing()) {
+          <button type="button" class="btn btn--sm btn--ghost ask__cancel" (click)="cancelChange()">
+            Cancelar
+          </button>
+        }
+      </div>
+    } @else if (current(); as declared) {
+      <div class="declared">
+        <app-icon class="declared__icon" [name]="declared.unchanged ? 'check' : 'sync'" />
+        <p class="declared__what">
+          {{ declared.unchanged ? 'Sin cambio desde 2020' : 'Hubo un cambio desde 2020' }}
+        </p>
+        <p class="declared__meta">
+          <span>{{ mine() ? 'Declarado por vos' : 'Declarado' }} el {{ declaredOn() }}</span>
+          <app-origin-badge origin="DECLARED" />
+        </p>
+        @if (canDeclare()) {
+          <button
+            #changeButton
+            type="button"
+            class="btn btn--sm declared__change"
+            (click)="startChange()"
+          >
+            Cambiar
+          </button>
+        }
+      </div>
+    }
+
+    @if (failed() !== null) {
+      <div class="alert alert--error failure" role="alert">
+        <span>No se pudo guardar tu declaración.</span>
+        <button type="button" class="btn btn--sm" (click)="retryDeclare()">Reintentar</button>
+      </div>
+    }
+    <p class="visually-hidden" role="status">{{ announcement() }}</p>
+
+    @if (comparison(); as line) {
+      <div class="line line--match" [attr.data-tone]="line.tone" aria-live="polite">
+        <app-icon class="line__icon" [name]="line.icon" />
+        <p class="line__title">{{ line.title }}</p>
+        @if (line.detail) {
+          <app-practice-tip label="Más sobre la comparación con MODIS">
+            <p>{{ line.detail }}</p>
+          </app-practice-tip>
+        }
+      </div>
+    }
+  }
+
+  <section
+    class="modis"
+    [class.modis--split]="canDeclare() || current() !== null"
+    [attr.aria-labelledby]="modisId"
+    [attr.aria-busy]="status() === 'loading'"
+  >
+    <div class="modis__head">
+      <h3 class="modis__title" [id]="modisId">Lo que vio MODIS</h3>
+      <app-origin-badge origin="VERIFIED" />
+      <app-practice-tip class="modis__tip" label="Cómo lo mide MODIS">
+        @if (reason()) {
+          <p>{{ reason() }}</p>
+        }
+        @if (status() === 'error' && modis().error) {
+          <p>{{ modis().error }}</p>
+        }
+        @if (pixels()) {
+          <p>{{ pixels() }}</p>
+        }
+        @if (yearLines().length > 0) {
+          <ul class="help-years">
+            @for (line of yearLines(); track $index) {
+              <li>{{ line }}</li>
+            }
+          </ul>
+        }
+        <p>{{ sourceNote() }}</p>
+        <p class="help-source">{{ sourceText() }}</p>
+      </app-practice-tip>
+    </div>
+
+    @switch (status()) {
+      @case ('loading') {
+        <div class="years" aria-hidden="true">
+          @for (cell of skeletonCells; track cell) {
+            <span class="skeleton year-skeleton"></span>
+          }
+        </div>
+        <p class="note" role="status">MODIS puede tardar hasta un minuto.</p>
+      }
+      @case ('error') {
+        <div class="none">
+          <app-icon name="minus" />
+          <p><strong>Sin dato</strong> · {{ errorShort() }}</p>
+          <button type="button" class="btn btn--sm" (click)="retryModis()">Reintentar</button>
+        </div>
+      }
+      @default {
+        @if (years().length > 0) {
+          <ol class="years" aria-label="Uso del suelo por año según MODIS">
+            @for (year of years(); track year.year) {
+              <li
+                class="year"
+                [attr.data-group]="year.pixels ? (year.group ?? 'mixed') : 'none'"
+                [class.is-different]="isDifferent(year)"
+              >
+                <span class="year__num">{{ year.year }}</span>
+                <app-icon class="year__icon" [name]="yearIcon(year)" />
+                <span class="year__label">{{ yearLabel(year) }}</span>
+                @if (isDifferent(year)) {
+                  <app-icon class="year__flag" name="alert" />
+                  <span class="visually-hidden">, distinto de {{ evidence()?.baselineYear }}</span>
+                }
+              </li>
+            }
+          </ol>
+        }
+        @if (noData()) {
+          <div class="none">
+            <app-icon name="minus" />
+            <p><strong>Sin dato</strong> · {{ noData() }}</p>
+          </div>
+        }
+        @if (changeLine(); as line) {
+          <div class="line" [attr.data-tone]="line.tone">
+            <app-icon class="line__icon" [name]="line.icon" />
+            <p class="line__title">{{ line.title }}</p>
+            <app-practice-tip label="Más sobre lo que vio MODIS">
+              <p>{{ line.detail }}</p>
+            </app-practice-tip>
+          </div>
+        }
+        <p class="note">{{ note() }}</p>
+      }
+    }
+  </section>
+</app-section-card>

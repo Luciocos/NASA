@@ -4,9 +4,11 @@ import {
   ElementRef,
   Injector,
   afterNextRender,
+  booleanAttribute,
   computed,
   effect,
   inject,
+  input,
   signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -35,6 +37,7 @@ import { LotTabs } from '../../shared/ui/lot-tabs/lot-tabs';
 import { PageHeader } from '../../shared/ui/page-header/page-header';
 import { SectionCard } from '../../shared/ui/section-card/section-card';
 import { formatDate } from '../lot/labels';
+import { InfoTip } from '../lot/lot-workspace/info-tip';
 import { ZONE_STYLE, ZonesMap } from './zones-map';
 
 // las dosis van a nombre del usuario: lotestigo:u<id>:fertilization:v1 (se borran al salir).
@@ -43,11 +46,21 @@ const STORAGE_NAME = 'fertilization:v1';
 const LEVELS: NdviZoneLevel[] = ['alto', 'medio', 'bajo'];
 type Doses = Record<NdviZoneLevel, number | null>;
 
+/** id del lote de un input o de la ruta: un número o su texto; vacío = no llegó */
+function toLotId(value: unknown): number | undefined {
+  if (value === null || value === undefined || value === '') return undefined;
+  return Number(value);
+}
+
 /**
  * fertilización: el mapa de ambientes del lote según el NDVI de MODIS (tercios del rango, sin
  * umbrales inventados) es lo principal, con la superficie de cada ambiente. la planilla de dosis
  * variable de nitrógeno la completa el productor (dato declarado) y queda plegada hasta que la
  * pide. las emisiones salen de los factores con fuente del backend (los mismos de la huella)
+ *
+ * sirve como página (/lotes/:id/fertilizacion, con el encabezado y las pestañas del lote) y
+ * adentro del popup del lote: `<app-fertilization-page [id]="lot.id" [embedded]="true" />`.
+ * embebida no muestra app-lot-tabs ni su encabezado (la acción principal pasa a la planilla)
  */
 @Component({
   selector: 'app-fertilization-page',
@@ -63,7 +76,9 @@ type Doses = Record<NdviZoneLevel, number | null>;
     Disclosure,
     Icon,
     LoginInvite,
+    InfoTip,
   ],
+  host: { '[class.is-embedded]': 'embedded()' },
   templateUrl: './fertilization-page.html',
   styleUrl: './fertilization-page.css',
 })
@@ -75,10 +90,17 @@ export class FertilizationPage {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
 
-  protected readonly lotId = toSignal(
-    inject(ActivatedRoute).paramMap.pipe(map((params) => Number(params.get('id')))),
-    { initialValue: NaN },
+  /** id del lote; si no llega, sale del parámetro :id de la ruta */
+  readonly id = input<number | undefined, unknown>(undefined, { transform: toLotId });
+  /** adentro del popup del lote: sin app-lot-tabs ni encabezado propio */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
+  private readonly routeId = toSignal(
+    inject(ActivatedRoute).paramMap.pipe(map((params) => toLotId(params.get('id')))),
+    { initialValue: undefined },
   );
+  /** el id en uso: el del input o el de la ruta (NaN si ninguno sirve) */
+  protected readonly lotId = computed(() => this.id() ?? this.routeId() ?? NaN);
   protected readonly lot = signal<LotDetail | null>(null);
   protected readonly footprint = signal<Footprint | null>(null);
   /** el lote no existe o es de otra cuenta (404) */

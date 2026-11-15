@@ -1,71 +1,121 @@
-<app-section-card [heading]="heading()" [subtitle]="subtitle()">
-  @switch (state().status) {
-    @case ('loading') {
-      <div class="loading" aria-busy="true">
-        <span class="skeleton loading__line"></span>
-        <span class="skeleton loading__line"></span>
-        <span class="skeleton loading__line loading__line--short"></span>
-        <p class="visually-hidden" role="status">Cargando las buenas prácticas…</p>
-      </div>
-    }
-    @case ('error') {
-      <p class="alert alert--error failure" role="alert">
-        No se pudieron cargar las buenas prácticas. Revisá la conexión y probá de nuevo.
-        <button type="button" class="btn btn--sm" (click)="retry()">Reintentar</button>
+<div class="layout">
+  <app-section-card class="practices-card" heading="Buenas prácticas" [subtitle]="subtitle()">
+    @if (score(); as s) {
+      <p actions class="stat score">
+        <span class="stat__label">Puntaje provisional</span>
+        @if (scoreValue(); as value) {
+          <span class="stat__value">
+            {{ value }} <span class="stat__unit">de {{ s.max_score }}</span>
+          </span>
+        } @else {
+          <span class="score__none">Sin calcular</span>
+          <span class="stat__hint">{{ scoreHint() }}</span>
+        }
       </p>
     }
-    @case ('ready') {
-      @if (score(); as s) {
-        <p class="score"><app-icon name="chart" /> {{ scoreText() }}</p>
 
+    @switch (state().status) {
+      @case ('loading') {
+        <div class="loading" aria-busy="true">
+          <span class="skeleton loading__line"></span>
+          <span class="skeleton loading__line"></span>
+          <span class="skeleton loading__line loading__line--short"></span>
+          <p class="visually-hidden" role="status">Cargando las buenas prácticas…</p>
+        </div>
+      }
+      @case ('error') {
+        <p class="alert alert--error failure" role="alert">
+          No se pudieron cargar las buenas prácticas.
+          <button type="button" class="btn btn--sm" (click)="retry()">Reintentar</button>
+        </p>
+      }
+      @case ('ready') {
         @if (recommendations().length > 0) {
-          <h3 class="sub">Qué conviene hacer</h3>
-          <ol class="recs">
-            @for (rec of recommendations(); track rec.key) {
-              <li class="rec" [attr.data-status]="rec.status">
-                <span class="chip" [class]="tone(rec.status)">
-                  <app-icon [name]="statusIcons[rec.status]" /> {{ rec.statusLabel }}
-                </span>
-                <p class="rec__action">{{ rec.action }}</p>
-                <p class="rec__why">{{ rec.why }}</p>
-                @if (rec.link; as link) {
-                  @if (link.kind === 'log') {
-                    <a class="rec__link" [routerLink]="route(link.kind)" fragment="bitacora">
-                      {{ link.text }} <app-icon name="arrow-right" />
-                    </a>
-                  } @else {
-                    <a class="rec__link" [routerLink]="route(link.kind)">
-                      {{ link.text }} <app-icon name="arrow-right" />
-                    </a>
-                  }
-                }
-              </li>
-            }
-          </ol>
+          <section
+            class="recs-block"
+            [attr.aria-labelledby]="recsId"
+            [attr.aria-roledescription]="slides.overflowing() ? 'carrusel' : null"
+          >
+            <div class="bar">
+              <h3 class="sub" [id]="recsId">Qué conviene hacer</h3>
+              @if (slides.overflowing()) {
+                <div class="nav">
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--icon"
+                    aria-label="Recomendación anterior"
+                    [attr.aria-disabled]="slides.current() === 0 ? 'true' : null"
+                    (click)="slides.go(-1)"
+                  >
+                    <app-icon name="chevron-left" />
+                  </button>
+                  <p class="count" aria-live="polite">
+                    {{ slides.current() + 1 }} de {{ recommendations().length }}
+                  </p>
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--icon"
+                    aria-label="Recomendación siguiente"
+                    [attr.aria-disabled]="
+                      slides.current() === recommendations().length - 1 ? 'true' : null
+                    "
+                    (click)="slides.go(1)"
+                  >
+                    <app-icon name="chevron-right" />
+                  </button>
+                </div>
+              }
+            </div>
+            <ol
+              class="recs"
+              [appSlides]="recommendations().length"
+              #slides="slides"
+              [attr.aria-labelledby]="recsId"
+            >
+              @for (rec of recommendations(); track rec.key; let i = $index) {
+                <li class="rec" [attr.data-status]="rec.status">
+                  <span class="rec__num" aria-hidden="true">{{ i + 1 }}</span>
+                  <p class="rec__action">{{ rec.action }}</p>
+                  <app-practice-tip class="rec__tip" [label]="'Por qué: ' + rec.action">
+                    <p>{{ rec.why }}</p>
+                    <p>{{ rec.now }}</p>
+                    @if (rec.where) {
+                      <p>{{ rec.where }}</p>
+                    }
+                  </app-practice-tip>
+                </li>
+              }
+            </ol>
+          </section>
         } @else {
           <p class="all-good">
-            <app-icon name="check" /> Por ahora la bitácora no muestra prácticas para mejorar.
+            <app-icon name="check" /> Por ahora la bitácora no muestra nada para mejorar.
           </p>
         }
 
-        <h3 class="sub">Cómo está cada práctica</h3>
-        <ul class="practices">
-          @for (criterion of s.criteria; track criterion.key) {
-            <li>
-              <span class="chip state" [class]="tone(criterion.status)">
-                <app-icon [name]="statusIcons[criterion.status]" /> {{ statusLabel(criterion) }}
+        <h3 class="sub" [id]="listId">Cómo está cada práctica</h3>
+        <ul class="practices" [attr.aria-labelledby]="listId">
+          @for (row of rows(); track row.key) {
+            <li [class.is-declared]="row.declared">
+              <span class="chip state" [class]="chip(row.tone)">
+                <app-icon [name]="row.icon" /> {{ row.chip }}
               </span>
               <span class="name">
                 <span>
-                  {{ criterion.label }}
-                  @if (criterion.hypothetical) {
+                  {{ row.label }}
+                  @if (row.hypothetical) {
                     <span class="muted">(supuesto)</span>
                   }
                 </span>
-                @if (criterion.origin) {
-                  <app-origin-badge [origin]="criterion.origin" />
+                @if (row.origin) {
+                  <app-origin-badge [origin]="row.origin" />
                 }
               </span>
+              @if (row.note) {
+                <app-practice-tip label="Tu declaración y el puntaje">
+                  <p>{{ row.note }}</p>
+                </app-practice-tip>
+              }
             </li>
           }
         </ul>
@@ -74,34 +124,91 @@
         }
       }
     }
-  }
 
-  @if (score(); as s) {
-    <app-disclosure
-      footer
-      flat
-      icon="info"
-      label="Cómo se calcula"
-      hint="Por qué cada estado y cuánto vale"
-    >
-      <div class="how">
-        <p>{{ s.disclaimer }}</p>
-        @if (s.message) {
-          <p>{{ s.message }}</p>
-        }
-        <dl class="how__list">
-          @for (criterion of s.criteria; track criterion.key) {
-            <div>
-              <dt>
-                {{ criterion.label }}
-                <span class="muted">· {{ weightText(criterion.weight, s.max_score) }}</span>
-              </dt>
-              <dd>{{ criterion.reason }}</dd>
-            </div>
+    @if (score(); as s) {
+      <app-disclosure
+        footer
+        flat
+        icon="info"
+        label="Cómo se calcula"
+        hint="Pesos, motivos, confianza y evidencia"
+      >
+        <div class="how">
+          <p class="how__lead"><app-icon name="alert" /> {{ s.disclaimer }}</p>
+          <p>
+            El puntaje suma los puntos de las prácticas que se cumplen, sobre {{ s.max_score }}. Si
+            falta el dato de alguna, no hay número.
+            @if (s.weights_defined) {
+              Los pesos son una regla simple del equipo, no salen de una norma: por eso es
+              provisional.
+            } @else {
+              Todavía no hay pesos definidos: por eso es provisional.
+            }
+          </p>
+          @if (s.message) {
+            <p>{{ s.message }}</p>
           }
-        </dl>
-        <p>Confianza: {{ confidenceLabel() }}. {{ s.confidence.rule }}</p>
-      </div>
-    </app-disclosure>
-  }
-</app-section-card>
+          <ul class="how__list">
+            @for (criterion of s.criteria; track criterion.key) {
+              <li class="how__item">
+                <p class="how__head">
+                  <strong>{{ criterion.label }}</strong>
+                  <span class="chip" [class]="tone(criterion.status)">
+                    <app-icon [name]="statusIcons[criterion.status]" />
+                    {{ statusLabel(criterion) }}
+                  </span>
+                  @if (criterion.origin) {
+                    <app-origin-badge [origin]="criterion.origin" />
+                  }
+                  <span class="muted">{{ weightText(criterion.weight, s.max_score) }}</span>
+                </p>
+                <p>{{ criterion.reason }}</p>
+                @if (criterion.key === landUseKey && declaration()) {
+                  <p>Tu declaración del {{ declaredOn() }} todavía no entra en este cálculo.</p>
+                }
+                @if (criterion.hypothetical) {
+                  <p class="muted">Incluye un supuesto.</p>
+                }
+                @if (criterion.is_simulated) {
+                  <app-simulated-notice />
+                }
+                @if (criterion.evidence.length > 0) {
+                  <ul class="how__evidence" [attr.aria-label]="'Evidencia: ' + criterion.label">
+                    @for (item of criterion.evidence; track $index) {
+                      <li>
+                        {{ eventLabel(item.type) }} del {{ formatDate(item.date) }}
+                        <app-origin-badge [origin]="item.origin" />
+                        @if (item.hypothetical) {
+                          <span class="muted">(supuesto)</span>
+                        }
+                        @if (item.is_simulated) {
+                          <app-simulated-notice />
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </li>
+            }
+          </ul>
+          <p>Confianza {{ confidenceText() }}. {{ s.confidence.rule }}</p>
+          <p class="how__counts">
+            <span>Datos que usa el puntaje:</span>
+            @for (origin of origins; track origin) {
+              <span class="how__count">
+                <app-origin-badge [origin]="origin" /> {{ s.confidence.counts[origin] ?? 0 }}
+              </span>
+            }
+          </p>
+        </div>
+      </app-disclosure>
+    }
+  </app-section-card>
+
+  <app-land-use-card
+    class="land-use"
+    [lot]="lot()"
+    [editable]="canEdit()"
+    [(declaration)]="declaration"
+  />
+</div>

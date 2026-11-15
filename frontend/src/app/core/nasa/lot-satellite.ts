@@ -11,6 +11,7 @@ import type { PolygonGeometry } from '../models';
 import { type NasaClients, createNasaClients } from './clients';
 import { bbox, centroid, geometryKey, halfExtentKm } from './geo';
 import { NasaServiceError } from './http';
+import { LAND_USE_BASELINE_YEAR, type LandUseEvidence, lotLandUse } from './land-use';
 import type {
   ClimateDay,
   DateRange,
@@ -29,6 +30,7 @@ import {
   compositeBatches,
   compositeFromIndex,
   compositeIndexAt,
+  landCoverWindow,
   windowKm,
 } from './modis';
 import { NO_DATA_REASONS } from './sources';
@@ -46,6 +48,13 @@ const CLUSTER_MAX_HALF_KM = 6;
 const HLS_LOOKBACK_DAYS = 120;
 /** tras dos tandas seguidas sin respuesta se deja de insistir hasta un retry() */
 const MAX_FAILED_IN_A_ROW = 2;
+/**
+ * sin novedades en este tiempo una consulta deja de mostrarse como "cargando": pasa a error (o a
+ * parcial terminado, si ya llegó algo) con su motivo y se puede reintentar. el pedido no se corta:
+ * si llega, se muestra. alcanza para dos intentos a ORNL, que corta los suyos a los 60 o 70 s, y
+ * para esperar un lugar en la cola de ORNL (dos pedidos a la vez)
+ */
+export const STALLED_MS = 150_000;
 
 export function idleState<T>(): LoadState<T> {
   return { status: 'idle', data: null, progress: 0, stale: false, updatedAt: null, error: null };
@@ -53,6 +62,11 @@ export function idleState<T>(): LoadState<T> {
 
 function loadingState<T>(data: T | null = null): LoadState<T> {
   return { status: 'loading', data, progress: 0, stale: false, updatedAt: null, error: null };
+}
+
+/** todavía esperando respuesta, como lo mira la interfaz: cargando, o parcial sin terminar */
+function isPending(state: LoadState<unknown>): boolean {
+  return state.status === 'loading' || (state.status === 'partial' && state.progress < 1);
 }
 
 /** motivo para el usuario, en castellano, a partir de un error de red */
@@ -115,6 +129,8 @@ interface Entry {
   state: WritableSignal<LoadState<unknown>>;
   view: Signal<LoadState<unknown>>;
   run: () => Promise<void>;
+  /** vuelve a dar STALLED_MS de espera antes de avisar que tarda */
+  watch: () => void;
   ids: string[];
   running: boolean;
 }
@@ -369,6 +385,32 @@ export class LotSatellite {
     });
   }
 
+  /**
+   * uso del suelo desde fromYear según MODIS (MCD12Q1, píxeles de unos 460 m): la clase de cada
+   * píxel que cubre el lote, año por año, y si el uso se mantuvo (el dominante y el de cada píxel,
+   * ver landUseEvidence). es orientativo, y un veredicto no_data igual llega como 'ready' con su
+   * motivo en data.reason
+   */
+  landUse(lot: LotRef, fromYear = LAND_USE_BASELINE_YEAR): Signal<LoadState<LandUseEvidence>> {
+    return this.shared(`landuse:${fromYear}:${lotKey(lot)}`, [lot], async (set) => {
+      const window = landCoverWindow(lot.geometry);
+      const res = await this.clients.modis.landCoverGrid?.(window, fromYear);
+      if (!res) throw new Error('el cliente de MODIS no lee la grilla de cobertura');
+      set({
+        status: 'ready',
+        data: lotLandUse(res.data, lot.geometry, {
+          baselineYear: fromYear,
+          retrievedAt: res.savedAt,
+          clipped: window.clipped,
+        }),
+        progress: 1,
+        stale: res.stale,
+        updatedAt: res.savedAt,
+        error: null,
+      });
+    });
+  }
+
   /** rangos de fechas publicadas de una capa GIBS, como señal (copia de 6 h) */
   layerDates(layerId: string): Signal<LoadState<DateRange[]>> {
     return this.shared(`gibs:${layerId}`, [], async (set) => {
@@ -384,12 +426,22 @@ export class LotSatellite {
     });
   }
 
-  /** vuelve a pedir lo que falló o quedó incompleto (de un lote, o de todos) */
+  /**
+   * vuelve a pedir lo que falló o quedó incompleto (de un lote, o de todos). lo que se dejó de
+   * esperar porque tardaba y sigue en vuelo no se pide de nuevo: vuelve a "cargando" y se espera
+   */
   retry(lot?: LotRef): void {
     for (const entry of this.entries.values()) {
       const state = entry.state();
-      if (entry.running || (state.status === 'ready' && !state.stale)) continue;
+      if (state.status === 'ready' && !state.stale) continue;
       if (lot && !entry.ids.includes(String(lot.id))) continue;
+      if (entry.running) {
+        if (!isPending(state)) {
+          entry.state.set(loadingState(state.data));
+          entry.watch();
+        }
+        continue;
+      }
       entry.state.set(loadingState(state.data));
       void entry.run();
     }
@@ -404,11 +456,32 @@ export class LotSatellite {
     if (existing) return existing.view as Signal<LoadState<T>>;
     const state = signal<LoadState<unknown>>(loadingState());
     const typed = state as unknown as WritableSignal<LoadState<T>>;
+    let stalled: ReturnType<typeof setTimeout> | undefined;
+    // si en STALLED_MS no llega nada nuevo se avisa que tarda; lo que llegue después igual se muestra
+    const watch = () => {
+      clearTimeout(stalled);
+      stalled = setTimeout(() => {
+        state.update((s) =>
+          isPending(s)
+            ? {
+                ...s,
+                status: s.data === null ? 'error' : 'partial',
+                progress: 1,
+                error: NO_DATA_REASONS.slow,
+              }
+            : s,
+        );
+      }, STALLED_MS);
+    };
     const run = async () => {
       entry.running = true;
+      watch();
       try {
         await load(
-          (s) => typed.set(s),
+          (s) => {
+            typed.set(s);
+            if (isPending(s)) watch();
+          },
           () => typed(),
         );
       } catch (error) {
@@ -420,12 +493,14 @@ export class LotSatellite {
         }));
       } finally {
         entry.running = false;
+        clearTimeout(stalled);
       }
     };
     const entry: Entry = {
       state,
       view: state.asReadonly(),
       run,
+      watch,
       ids: lots.map((l) => String(l.id)),
       running: true,
     };

@@ -1,0 +1,107 @@
+@let fp = footprint();
+
+<app-card-slides label="Resumen de la huella">
+  <div class="slide">
+    <app-section-card
+      heading="Qué pesa más"
+      [level]="level()"
+      [subtitle]="perTonne() ? 'kg CO2e por tonelada' : 'Sin rinde: kg CO2e por hectárea'"
+    >
+      @if (weights().length > 0) {
+        <ol class="weights">
+          @for (w of weights(); track w.key) {
+            <li class="weight">
+              <span class="weight__name">{{ w.label }}</span>
+              <span class="weight__value"
+                >{{ w.amount }}<span class="visually-hidden"> {{ w.unit }}</span>
+                @if (w.percent) {
+                  <span class="weight__percent">{{ ' · ' + w.percent }}</span>
+                }
+              </span>
+              <span class="weight__bar" aria-hidden="true">
+                <span [style.width.%]="w.width" [attr.data-origin]="w.origin"></span>
+              </span>
+              <span class="weight__origin">
+                @if (w.origin) {
+                  <app-origin-badge [origin]="w.origin" />
+                }
+                @if (w.simulated) {
+                  <app-simulated-notice />
+                }
+              </span>
+            </li>
+          }
+        </ol>
+      } @else {
+        <p class="empty-text">Todavía no hay ningún componente calculado.</p>
+      }
+      <button footer type="button" class="more-btn" (click)="showBreakdown.emit()">
+        @if (missingCount() > 0) {
+          Faltan {{ missingCount() }} de {{ fp.components.length }}: ver Desglose
+        } @else {
+          Ver los {{ fp.components.length }} en Desglose
+        }
+        <app-icon name="arrow-right" />
+      </button>
+    </app-section-card>
+  </div>
+
+  <div class="slide">
+    <app-kpi-card
+      icon="chart"
+      label="Rinde"
+      [value]="fp.yield.value"
+      unit="t/ha"
+      caption="Divide la huella: más rinde, menos CO2e por tonelada."
+      [emptyReason]="fp.yield.reason"
+    >
+      @if (fp.yield.origin) {
+        <app-origin-badge [origin]="fp.yield.origin" />
+      }
+      @if (fp.yield.reference) {
+        <span class="source">Referencia regional</span>
+        <app-help-tip label="De dónde sale el rinde">
+          <p>Valor de referencia regional: no es un dato del lote ni una observación satelital.</p>
+          <p>Fuente: {{ fp.yield.reference }}</p>
+        </app-help-tip>
+      }
+    </app-kpi-card>
+  </div>
+
+  <div class="slide">
+    <app-section-card heading="De dónde salen los datos" [level]="level()">
+      <app-help-tip actions label="Qué significa cada origen">
+        <ul>
+          <li><strong>Verificado:</strong> observado por satélite (NISAR, HLS).</li>
+          <li><strong>Declarado:</strong> cargado por el productor.</li>
+          <li>
+            <strong>Estimado:</strong> valor de referencia cargado por el equipo con su fuente. No
+            es un dato del lote ni una observación satelital.
+          </li>
+        </ul>
+        <p>
+          Nivel de confianza: <strong>{{ confidenceLabels[fp.confidence.level] }}</strong>.
+          {{ fp.confidence.rule }}
+        </p>
+        <p>Los factores de emisión son constantes publicadas, con su fuente en cada componente.</p>
+      </app-help-tip>
+      <ul class="origins">
+        <li>
+          <span class="origins__count">{{ fp.confidence.counts.VERIFIED }}</span>
+          <app-origin-badge origin="VERIFIED" />
+          <span>por satélite (NISAR, HLS)</span>
+        </li>
+        <li>
+          <span class="origins__count">{{ fp.confidence.counts.DECLARED }}</span>
+          <app-origin-badge origin="DECLARED" />
+          <span>cargados por el productor</span>
+        </li>
+        <li>
+          <span class="origins__count">{{ fp.confidence.counts.ESTIMATED }}</span>
+          <app-origin-badge origin="ESTIMATED" />
+          <span>referencias con fuente</span>
+        </li>
+      </ul>
+    </app-section-card>
+  </div>
+</app-card-slides>

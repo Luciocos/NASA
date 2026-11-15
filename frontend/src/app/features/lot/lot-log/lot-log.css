@@ -1,0 +1,498 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+p {
+  margin: 0;
+}
+
+/*
+ * la lista y, con un evento abierto en la compu, su detalle al costado. el detalle se pega
+ * arriba de la zona que se desplaza (el contenido del popup o la página)
+ */
+.log {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.log--split {
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 26rem);
+}
+
+/* las filas se acomodan al ancho de la lista, no al de la pantalla */
+.log__list {
+  container-type: inline-size;
+}
+
+/* "Filtrar" con la cantidad de filtros activos */
+.filter-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.3rem;
+  border-radius: var(--radius-pill);
+  background: var(--field-700);
+  color: var(--surface);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+/* cultivo y rinde de una campaña, en una línea: en el encabezado del grupo o en su ficha */
+.campaign__fact {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.campaign__key {
+  color: var(--ink-3);
+}
+
+/* campañas en fichas, cuando la lista no se agrupa por campaña */
+.campaigns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.campaign {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  min-height: 2.25rem;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.campaign__label {
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  align-items: end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.filters .btn {
+  justify-self: start;
+}
+
+.result,
+.sim-all {
+  margin-bottom: var(--space-2);
+  color: var(--ink-3);
+  font-size: var(--text-sm);
+}
+
+.sim-all {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.failure {
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* sin eventos: una línea con de dónde salen; el resto, en la ayuda del pie */
+.log-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+}
+
+.log-empty .icon-mark {
+  flex: none;
+}
+
+.log-empty__title {
+  font-weight: 700;
+}
+
+.log-empty__line {
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.no-match {
+  padding: var(--space-4);
+}
+
+/* grupos por campaña (o por mes): el encabezado es una línea con el cultivo y el rinde */
+.group + .group {
+  margin-top: var(--space-3);
+}
+
+.group__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  margin-bottom: var(--space-1);
+  padding-block: var(--space-1);
+}
+
+.group__title {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.group__count {
+  margin-left: auto;
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+/* la línea del tiempo: une los íconos de los eventos de un grupo */
+.timeline {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 1.5rem;
+  bottom: 1.5rem;
+  left: calc(var(--space-2) + 1.125rem - 1px);
+  width: 2px;
+  border-radius: 1px;
+  background: var(--line-strong);
+}
+
+/* ícono del tipo de evento en un círculo con el color de lo que pasó (el texto lo nombra) */
+.glyph {
+  --glyph-size: 1.125rem;
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-2);
+}
+
+.glyph[data-type='SOWING'],
+.glyph[data-type='COVER_CROP'] {
+  border-color: var(--field-300);
+  background: var(--field-50);
+  color: var(--field-800);
+}
+
+.glyph[data-type='HARVEST'] {
+  border-color: var(--straw-500);
+  background: color-mix(in srgb, var(--straw-200) 45%, var(--surface));
+  color: var(--soil-700);
+}
+
+.glyph[data-type='TILLAGE'] {
+  border-color: var(--soil-300);
+  background: color-mix(in srgb, var(--soil-300) 18%, var(--surface));
+  color: var(--soil-700);
+}
+
+.glyph[data-type='FLOODING'] {
+  border-color: var(--water-300);
+  background: var(--info-bg);
+  color: var(--water-600);
+}
+
+.glyph[data-type='BURN'] {
+  border-color: var(--fire-200);
+  background: var(--danger-bg);
+  color: var(--fire-600);
+}
+
+.glyph[data-type='LAND_USE_CHANGE'] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+/* cada evento, una fila de una línea: ícono, qué pasó, fecha, sensor, origen */
+.row {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(9.5rem, 3fr) 9rem minmax(6.5rem, 2fr) 6.5rem 1rem;
+  grid-template-areas: 'glyph what date sensor origin chevron';
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 3rem;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease-out);
+}
+
+.row:hover,
+.row--open {
+  background: var(--paper-2);
+}
+
+.row--open {
+  box-shadow: inset 3px 0 0 var(--field-700);
+}
+
+.row__glyph {
+  grid-area: glyph;
+}
+
+.row__what {
+  display: flex;
+  flex-wrap: wrap;
+  grid-area: what;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-width: 0;
+}
+
+.row__type {
+  font-weight: 600;
+}
+
+.row__meta {
+  display: contents;
+}
+
+.row__date,
+.row__sensor {
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.row__date {
+  grid-area: date;
+}
+
+.row__margin {
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.row__sensor {
+  grid-area: sensor;
+}
+
+.row__origin {
+  grid-area: origin;
+  justify-self: start;
+}
+
+.row__chevron {
+  grid-area: chevron;
+  color: var(--ink-3);
+}
+
+.more {
+  margin-top: var(--space-2);
+}
+
+.loading {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.loading__row {
+  height: 3rem;
+  border-radius: var(--radius-md);
+}
+
+/* la ayuda del pie: de dónde sale cada evento y qué significa cada origen */
+.help {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  list-style: none;
+}
+
+/* detalle del evento: panel al costado en la compu, hoja desde abajo en el celular */
+.panel {
+  --sheet-pad: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.panel:focus {
+  outline: none;
+}
+
+/*
+ * al costado: se pega arriba de lo que se desplaza y entra entero en lo que se ve. lot-log.ts
+ * mide la zona del popup (--log-visible-h, sin sus rellenos, y --log-sticky-top en 0); en la
+ * página valen la ventana y la barra de arriba, que también queda pegada
+ */
+.panel--side {
+  --sticky-top: var(--log-sticky-top, calc(var(--topbar-h) + var(--space-3)));
+  position: sticky;
+  top: var(--sticky-top);
+  max-height: calc(var(--log-visible-h, 100dvh) - var(--sticky-top) - var(--space-3));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
+}
+
+/* la hoja del celular tapa lo de atrás con un velo; tocarlo la cierra */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: rgb(21 33 26 / 42%);
+  touch-action: none;
+}
+
+.panel--sheet {
+  --sheet-pad: var(--space-4);
+  position: fixed;
+  inset: auto 0 0;
+  z-index: var(--z-overlay);
+  max-height: 88dvh;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  box-shadow: var(--shadow-3);
+}
+
+/* asa de la hoja: solo dibujo */
+.panel--sheet::before {
+  content: '';
+  flex: none;
+  width: 2.5rem;
+  height: 4px;
+  margin: var(--space-2) auto 0;
+  border-radius: var(--radius-pill);
+  background: var(--line-strong);
+}
+
+.panel__head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--sheet-pad);
+  border-bottom: 1px solid var(--line);
+}
+
+.panel--sheet .panel__head {
+  padding-block: var(--space-2);
+}
+
+.panel__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.panel__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--space-4) var(--sheet-pad) 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* entrada sutil: el panel se corre desde la derecha, la hoja sube desde abajo */
+.panel-enter {
+  animation: panel-in var(--dur-3) var(--ease-out) both;
+}
+
+.panel--sheet.panel-enter {
+  animation-name: sheet-in;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    translate: 1.25rem 0;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    translate: 0 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-enter {
+    animation: none;
+  }
+}
+
+/* la lista angosta (celular, o con el detalle al costado): dos líneas por fila */
+@container (max-width: 40rem) {
+  .row {
+    grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+    grid-template-areas:
+      'glyph what origin'
+      'glyph meta meta';
+    gap: 0.125rem var(--space-3);
+  }
+
+  .row__meta {
+    display: flex;
+    flex-wrap: wrap;
+    grid-area: meta;
+    gap: 0 var(--space-2);
+  }
+
+  .row__date,
+  .row__sensor {
+    font-size: var(--text-xs);
+  }
+
+  .row__sensor::before {
+    content: '·';
+    content: '·' / '';
+    margin-right: var(--space-2);
+    color: var(--ink-3);
+  }
+
+  .row__chevron {
+    display: none;
+  }
+}

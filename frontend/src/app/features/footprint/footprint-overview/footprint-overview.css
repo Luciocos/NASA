@@ -1,0 +1,147 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+p {
+  margin: 0;
+}
+
+/* cada tarjeta llena el alto de la fila: las tres quedan parejas */
+.slide {
+  display: grid;
+}
+
+/* lo que más pesa, en dos líneas parejas: el nombre y el valor arriba; la barra (relativa al
+   mayor) y el origen abajo */
+.weights {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.weight {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.125rem var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.weight__name {
+  min-width: 0;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.weight__value {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.weight__percent {
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.weight__bar {
+  display: block;
+  height: 0.375rem;
+  border-radius: var(--radius-pill);
+  background: var(--paper-2);
+  overflow: hidden;
+}
+
+.weight__origin {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+/* el color sigue al origen del dato; el texto del sello lo dice igual */
+.weight__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ink-3);
+}
+
+.weight__bar > [data-origin='VERIFIED'] {
+  background: var(--origin-verified);
+}
+
+.weight__bar > [data-origin='DECLARED'] {
+  background: var(--origin-declared);
+}
+
+.weight__bar > [data-origin='ESTIMATED'] {
+  background: var(--origin-estimated);
+}
+
+.empty-text {
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.origins {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  list-style: none;
+}
+
+.origins li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.origins__count {
+  min-width: 1.5rem;
+  color: var(--ink);
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* "Faltan 2 de 7 componentes: ver Desglose", un enlace que cambia de vista */
+.more-btn {
+  --icon-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--field-800);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.more-btn:hover {
+  text-decoration: underline;
+}
+
+.more-btn:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+app-kpi-card app-help-tip {
+  margin-block: calc(var(--space-2) * -1);
+}

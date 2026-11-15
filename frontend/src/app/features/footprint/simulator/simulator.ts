@@ -1,15 +1,20 @@
 import { Component, inject, input, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { Api } from '../../../core/api';
 import { SimulationResult } from '../../../core/models';
-import { CRITERION_STATUS, formatKgPerTonne, formatNumber } from '../format';
+import { Disclosure } from '../../../shared/ui/disclosure/disclosure';
+import { Icon } from '../../../shared/ui/icon/icon';
+import { SectionCard } from '../../../shared/ui/section-card/section-card';
+import { CRITERION_STATUS, formatKgPerTonne, formatNumber, plainError } from '../format';
 
 /**
- * Simulador (CLAUDE.md, sección 11, pantalla 5): un control, cultivo de cobertura,
- * y el resultado antes y después. El backend no guarda nada.
+ * Simulador (CLAUDE.md, sección 11, pantalla 5): un control, cultivo de cobertura, y el
+ * resultado antes y después en dos tarjetas (huella y puntaje) con los criterios que cambian.
+ * La tabla de todos los criterios y las notas quedan plegadas. El backend no guarda nada.
  */
 @Component({
-  imports: [],
+  imports: [Disclosure, Icon, SectionCard],
   selector: 'app-simulator',
   styleUrl: './simulator.css',
   templateUrl: './simulator.html',
@@ -18,6 +23,8 @@ export class Simulator {
   private readonly api = inject(Api);
 
   readonly lotId = input.required<number>();
+  /** nivel de los títulos: 2 como página; 3 adentro del popup del lote, debajo de su nombre */
+  readonly level = input<2 | 3>(2);
   /** Id de la campaña para la huella; null usa la última del lote. */
   readonly campaign = input<number | null>(null);
 
@@ -44,11 +51,15 @@ export class Simulator {
           this.result.set(result);
           this.loading.set(false);
         },
-        error: () => {
-          this.error.set('No se pudo correr la simulación.');
+        error: (err: HttpErrorResponse) => {
+          this.error.set(plainError(err.status, 'la simulación'));
           this.loading.set(false);
         },
       });
+  }
+
+  protected footprintText(value: number | null): string {
+    return value === null ? 'Todavía no se puede calcular' : formatKgPerTonne(value);
   }
 
   protected scoreLabel(score: number | null): string {

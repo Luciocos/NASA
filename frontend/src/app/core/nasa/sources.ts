@@ -1,6 +1,7 @@
 import type { DataSourceInfo } from './models';
 
-export type NasaSourceId = 'power' | 'modisNdvi' | 'modisLandCover' | 'nisar' | 'hls' | 'gibs';
+export type NasaSourceId =
+  'power' | 'modisNdvi' | 'modisLandCover' | 'modisLandUse' | 'nisar' | 'hls' | 'gibs';
 
 /** de dónde sale cada dato, con su resolución real y sus límites */
 export const DATA_SOURCES: Record<NasaSourceId, DataSourceInfo> = {
@@ -27,6 +28,14 @@ export const DATA_SOURCES: Record<NasaSourceId, DataSourceInfo> = {
     cadence: 'anual',
     origin: 'VERIFIED',
     note: 'Es una clasificación automática de un píxel de 500 m en el centro del lote: sirve para ver cambios de uso, no para identificar el cultivo.',
+  },
+  modisLandUse: {
+    name: 'MODIS Terra y Aqua (ORNL DAAC)',
+    product: 'MCD12Q1 v6.1, clasificación IGBP (LC_Type1) de los píxeles que cubren el lote',
+    resolution: '500 m (463,31 m de lado, unas 21 ha por píxel)',
+    cadence: 'anual; el mapa de cada año se publica durante el año siguiente',
+    origin: 'VERIFIED',
+    note: 'Es orientativo: cada píxel mide unas 21 ha y mezcla tu lote con lo que lo rodea, así que muestra cambios grandes, como un desmonte o un bañado que pasa a cultivo, y no los chicos. Cultivo y mosaico de cultivo con vegetación natural cuentan como uso agrícola, porque la clasificación salta entre los dos sin que cambie nada.',
   },
   nisar: {
     name: 'NISAR (catálogo CMR de Earthdata)',
@@ -78,6 +87,7 @@ export const IGBP_LABELS: Record<number, string> = {
 /** motivos para acompañar un "Sin dato" */
 export const NO_DATA_REASONS = {
   noResponse: 'Sin respuesta del servicio de la NASA. Probá de nuevo en unos minutos.',
+  slow: 'El servicio de la NASA está tardando más de lo normal. Probá de nuevo en unos minutos.',
   offline: 'Sin conexión y sin una copia guardada en este dispositivo.',
   cloudy: 'El compuesto vino nublado sobre el lote.',
   noPixel: 'El satélite no tiene un valor válido para ese período.',

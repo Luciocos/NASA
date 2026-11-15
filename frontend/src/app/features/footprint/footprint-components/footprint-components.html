@@ -1,0 +1,129 @@
+@let fp = footprint();
+
+<app-section-card heading="Desglose" subtitle="Tocá una fila para ver su fuente." [level]="level()">
+  <app-help-tip actions label="¿De dónde sale cada dato?">
+    <ul>
+      <li><strong>Verificado:</strong> observado por satélite (NISAR, HLS).</li>
+      <li><strong>Declarado:</strong> cargado por el productor.</li>
+      <li>
+        <strong>Estimado:</strong> valor de referencia cargado por el equipo con su fuente. No es un
+        dato del lote ni una observación satelital.
+      </li>
+    </ul>
+    <p>Los factores de emisión son constantes publicadas, con su fuente en cada fila.</p>
+    <p>La huella por tonelada es la suma de los componentes por hectárea dividida por el rinde.</p>
+  </app-help-tip>
+
+  <ul class="rows">
+    <!-- el rinde primero: divide la suma de los componentes -->
+    <li class="row" [class.row--missing]="fp.yield.value === null">
+      <details>
+        <summary>
+          <span
+            class="chip status"
+            [class.chip--ok]="fp.yield.value !== null"
+            [class.chip--warn]="fp.yield.value === null"
+          >
+            <app-icon [name]="fp.yield.value !== null ? 'check' : 'alert'" />
+            {{ fp.yield.value !== null ? 'Con dato' : 'Sin dato' }}
+          </span>
+          <span class="name">Rinde</span>
+          @if (fp.yield.value === null) {
+            <span class="why">Falta el rinde</span>
+          }
+          @if (fp.yield.value !== null) {
+            <span class="value">{{ formatNumber(fp.yield.value, 2) }} t/ha</span>
+          }
+          @if (fp.yield.origin) {
+            <span class="badges"><app-origin-badge [origin]="fp.yield.origin" /></span>
+          }
+          <app-icon class="chevron" name="chevron-down" />
+        </summary>
+        <div class="body">
+          <p>Divide la suma de los componentes: más rinde, menos CO2e por tonelada.</p>
+          @if (fp.yield.reason) {
+            <p>{{ fp.yield.reason }}</p>
+          }
+          @if (fp.yield.reference) {
+            <p class="source-text">
+              Valor de referencia regional, no observado por satélite. Fuente:
+              {{ fp.yield.reference }}
+            </p>
+          }
+        </div>
+      </details>
+    </li>
+
+    @for (c of fp.components; track c.key) {
+      @let value = contribution(c);
+      @let factor = factorValue(c);
+      @let why = shortReason(c);
+      <li class="row" [class.row--missing]="c.status === 'sin_dato'">
+        <details>
+          <summary>
+            <span
+              class="chip status"
+              [class.chip--ok]="c.status === 'calculado'"
+              [class.chip--warn]="c.status !== 'calculado'"
+            >
+              <app-icon [name]="c.status === 'calculado' ? 'check' : 'alert'" />
+              {{ c.status === 'calculado' ? 'Calculado' : 'Sin dato' }}
+            </span>
+            <span class="name">{{ shortLabel(c) }}</span>
+            @if (why) {
+              <span class="why">{{ why }}</span>
+            }
+            @if (value) {
+              <span class="value">{{ value }}</span>
+            }
+            @if (c.activity.origin || c.is_simulated) {
+              <span class="badges">
+                @if (c.activity.origin) {
+                  <app-origin-badge [origin]="c.activity.origin" />
+                }
+                @if (c.is_simulated) {
+                  <app-simulated-notice />
+                }
+              </span>
+            }
+            <app-icon class="chevron" name="chevron-down" />
+          </summary>
+          <div class="body">
+            @if (c.label !== shortLabel(c)) {
+              <p class="full-name">{{ c.label }}</p>
+            }
+            @if (c.reason) {
+              <p>{{ c.reason }}</p>
+            }
+            <dl class="facts">
+              <div>
+                <dt>Dato de actividad</dt>
+                <dd>
+                  {{ activity(c) }}
+                  @if (c.activity.origin) {
+                    <app-origin-badge [origin]="c.activity.origin" />
+                  }
+                </dd>
+              </div>
+              <div>
+                <dt>Factor de emisión</dt>
+                <dd>{{ factor ?? 'Sin factor con fuente' }}</dd>
+              </div>
+            </dl>
+            @if (factor && c.factor.source) {
+              <p class="source-text">Fuente del factor: {{ c.factor.source }}</p>
+            }
+            @if (c.activity.reference) {
+              <p class="source-text">
+                Valor de referencia, no observado por satélite. Fuente: {{ c.activity.reference }}
+              </p>
+            }
+            @if (c.note) {
+              <p>{{ c.note }}</p>
+            }
+          </div>
+        </details>
+      </li>
+    }
+  </ul>
+</app-section-card>

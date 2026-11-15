@@ -1,7 +1,74 @@
-import { Footprint, ScoreCriterion, SustainabilityScore } from '../../core/models';
+import {
+  Footprint,
+  FootprintComponent,
+  LotDetail,
+  ScoreCriterion,
+  SustainabilityScore,
+} from '../../core/models';
 
 // Respuestas armadas para las pruebas: no representan un lote real. Con factores y
 // pesos nulos, como devuelve hoy el backend.
+
+/** Ficha de un lote propio, sin campañas. */
+export function makeLot(overrides: Partial<LotDetail> = {}): LotDetail {
+  return {
+    id: 1,
+    name: 'Lote de prueba',
+    renspa: '',
+    locality: 'Casilda',
+    province: 'Santa Fe',
+    geometry: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-61.2, -33.05],
+          [-61.19, -33.05],
+          [-61.19, -33.04],
+          [-61.2, -33.05],
+        ],
+      ],
+    },
+    area_ha: 55,
+    created_at: '2026-11-14T10:00:00Z',
+    event_count: 0,
+    is_example: false,
+    owned: true,
+    campaigns: [],
+    land_use_declaration: null,
+    ...overrides,
+  };
+}
+
+/** Un componente calculado con un factor con fuente (valores armados, no del lote). */
+export function makeComponent(overrides: Partial<FootprintComponent> = {}): FootprintComponent {
+  return {
+    key: 'seed',
+    label: 'Semilla',
+    status: 'calculado',
+    reason: null,
+    note: null,
+    activity: {
+      quantity: 34,
+      unit: 'kg/ha',
+      origin: 'ESTIMATED',
+      origins: ['ESTIMATED'],
+      records: 1,
+      reference: 'Tabla de referencia de prueba',
+    },
+    factor: {
+      key: 'seed_corn',
+      value: 1.772,
+      unit: 'kg CO2e/kg',
+      source: 'Fuente de prueba, tabla 1',
+      validated: true,
+    },
+    kg_co2e_per_ha: 60.2,
+    kg_co2e_per_t: 7.5,
+    is_simulated: false,
+    hypothetical: false,
+    ...overrides,
+  };
+}
 
 export function makeFootprint(overrides: Partial<Footprint> = {}): Footprint {
   return {

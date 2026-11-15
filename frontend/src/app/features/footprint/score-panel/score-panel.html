@@ -12,26 +12,35 @@
   <p class="message">{{ s.message }}</p>
 }
 
-<ul class="criteria">
-  @for (c of s.criteria; track c.key) {
-    <li class="criterion" [class]="'criterion criterion--' + c.status">
-      <span class="criterion__status">
-        <span aria-hidden="true">{{ status[c.status].icon }}</span>
-        {{ status[c.status].label }}
-      </span>
-      <span class="criterion__body">
-        <strong>{{ c.label }}</strong>
-        @if (c.origin) {
-          <app-origin-badge [origin]="c.origin" />
-        }
-        @if (c.hypothetical) {
-          <span class="tag">Hipotético</span>
-        }
-        @if (c.is_simulated) {
-          <app-simulated-notice />
-        }
-        <span class="reason">{{ c.reason }}</span>
-      </span>
-    </li>
-  }
-</ul>
+<!-- en pantalla los criterios se piden; al imprimir salen abiertos (PassportPage) y sin el
+     renglón "Ver" -->
+<details class="fold" data-print-open>
+  <summary>
+    {{
+      s.criteria.length === 1 ? 'Ver el criterio' : 'Ver los ' + s.criteria.length + ' criterios'
+    }}
+  </summary>
+  <ul class="criteria">
+    @for (c of s.criteria; track c.key) {
+      <li class="criterion" [class]="'criterion criterion--' + c.status">
+        <span class="criterion__status">
+          <span aria-hidden="true">{{ status[c.status].icon }}</span>
+          {{ status[c.status].label }}
+        </span>
+        <span class="criterion__body">
+          <strong>{{ c.label }}</strong>
+          @if (c.origin) {
+            <app-origin-badge [origin]="c.origin" />
+          }
+          @if (c.hypothetical) {
+            <span class="tag">Hipotético</span>
+          }
+          @if (c.is_simulated) {
+            <app-simulated-notice />
+          }
+          <span class="reason">{{ c.reason }}</span>
+        </span>
+      </li>
+    }
+  </ul>
+</details>

@@ -1,135 +1,145 @@
-<article class="item" [class.item--selected]="selected()">
-  <div class="item__body">
-    <header class="item__header">
-      <h3>{{ event().type_label }}</h3>
-      <app-origin-badge [origin]="event().origin" />
-      @if (event().is_simulated) {
-        <app-simulated-notice />
-      }
-    </header>
+<div class="detail" [class.detail--last]="!editable()">
+  <p class="tags">
+    <app-origin-badge [origin]="event().origin" />
+    @if (event().is_simulated) {
+      <app-simulated-notice />
+    }
+    @if (detected()) {
+      <span class="chip">Prueba de concepto</span>
+    }
+  </p>
 
-    <dl class="facts">
-      <div>
-        <dt>Fecha</dt>
-        <dd>{{ dateLabel() }}</dd>
-      </div>
-      <div>
-        <dt>Sensor</dt>
-        <dd>{{ sensorLabel() }}</dd>
-      </div>
+  <dl class="facts">
+    <div>
+      <dt>Fecha</dt>
+      <dd>{{ dateLabel() }}</dd>
+    </div>
+    <div>
+      <dt>Sensor</dt>
+      <dd>{{ sensorLabel() }}</dd>
+    </div>
+    <div>
+      <dt>Confianza</dt>
       @if (confidence(); as value) {
-        <div>
-          <dt>Confianza</dt>
-          <dd>{{ value }}</dd>
-        </div>
+        <dd>{{ value }}</dd>
+      } @else {
+        <dd>Sin dato <span class="facts__why">(no la informó el procesamiento)</span></dd>
       }
-      @if (event().campaign_label; as label) {
-        <div>
-          <dt>Campaña</dt>
-          <dd>{{ label }}</dd>
-        </div>
-      }
-    </dl>
+    </div>
+    <div>
+      <dt>Campaña</dt>
+      <dd>{{ event().campaign_label ?? 'Sin campaña' }}</dd>
+    </div>
+  </dl>
 
+  <section class="evidence" [attr.aria-labelledby]="ids.evidence">
+    <h3 class="visually-hidden" [id]="ids.evidence">Evidencia</h3>
+    <app-radar-optical-compare [event]="event()" />
+  </section>
+
+  <app-disclosure
+    flat
+    icon="info"
+    [label]="event().notes ? 'Notas y cómo leer este evento' : 'Cómo leer este evento'"
+  >
     @if (event().notes) {
+      <p class="help__title">Notas</p>
       <p class="notes">{{ event().notes }}</p>
     }
-
-    @if (hasEvidence() || editable()) {
-      <div class="actions">
-        @if (hasEvidence()) {
-          <button type="button" class="btn btn--sm compare" (click)="compare.emit(event())">
-            <app-icon name="eye" /> Ver radar contra óptico
-          </button>
+    <ul class="help">
+      <li>
+        <app-origin-badge [origin]="event().origin" />
+        {{ originMeaning() }}
+      </li>
+      @if (detected()) {
+        <li>Es una prueba de concepto: la detección no está validada en campo.</li>
+      }
+      @if (bothImages()) {
+        <li>Mové la línea sobre la imagen para pasar del radar al óptico.</li>
+      }
+      @if (editable()) {
+        <li>
+          Si confirmás un dato estimado o corregís el tipo o la fecha, pasa a figurar como declarado
+          por vos.
+        </li>
+      }
+    </ul>
+    @if (metrics().length > 0) {
+      <p class="help__title">Métricas del procesamiento</p>
+      <dl class="metrics">
+        @for (metric of metrics(); track metric.key) {
+          <dt>{{ metric.key }}</dt>
+          <dd>{{ metric.value }}</dd>
         }
-        @if (editable()) {
-          <button
-            type="button"
-            class="btn btn--sm btn--ghost"
-            [disabled]="saving()"
-            (click)="confirm()"
-          >
-            <app-icon name="check" /> Confirmar
-          </button>
-          <button
-            type="button"
-            class="btn btn--sm btn--ghost"
-            [disabled]="saving()"
-            [attr.aria-expanded]="editing()"
-            (click)="editing.set(!editing())"
-          >
-            {{ editing() ? 'Cancelar corrección' : 'Corregir' }}
-          </button>
-        }
-      </div>
+      </dl>
     }
+  </app-disclosure>
 
-    @if (editing() && editable()) {
-      <form
-        class="review"
-        (submit)="
-          $event.preventDefault();
-          submitCorrection(
-            typeInput.value,
-            dateInput.value,
-            uncertaintyInput.value,
-            notesInput.value
-          )
-        "
-      >
-        <label class="field">
-          Tipo
-          <select #typeInput [value]="event().type">
-            @for (type of eventTypes; track type) {
-              <option [value]="type" [selected]="type === event().type">
-                {{ eventTypeLabels[type] }}
-              </option>
-            }
-          </select>
-        </label>
-        <label class="field">
-          Fecha
-          <input #dateInput type="date" [value]="event().date" required />
-        </label>
-        <label class="field">
-          Incertidumbre (días)
-          <input
-            #uncertaintyInput
-            type="number"
-            min="0"
-            inputmode="numeric"
-            [value]="event().date_uncertainty_days ?? ''"
-          />
-        </label>
-        <label class="field review__wide">
-          Notas
-          <textarea #notesInput rows="2" [value]="event().notes"></textarea>
-        </label>
-        <p class="review__hint review__wide">
-          Si cambiás el tipo o la fecha, el dato pasa a figurar como declarado por vos.
-        </p>
-        <button type="submit" class="btn btn--primary btn--sm" [disabled]="saving()">
-          Guardar corrección
-        </button>
-      </form>
-    }
-
-    @if (message(); as text) {
-      <p class="message" role="status">{{ text }}</p>
-    }
-  </div>
-
-  @if (event().evidence_image_url; as url) {
-    @if (!thumbnailFailed()) {
-      <img
-        class="thumb"
-        [src]="url"
-        [alt]="'Evidencia ' + sensorLabel()"
-        loading="lazy"
-        (error)="thumbnailFailed.set(true)"
-      />
-    }
-  } @else {
-    <p class="thumb thumb--empty">Sin imagen de evidencia</p>
+  @if (editing() && editable()) {
+    <form
+      class="review"
+      [id]="ids.form"
+      (submit)="
+        $event.preventDefault();
+        submitCorrection(typeInput.value, dateInput.value, uncertaintyInput.value, notesInput.value)
+      "
+    >
+      <p class="review__hint review__wide">
+        Si cambiás el tipo o la fecha, pasa a figurar como declarado por vos.
+      </p>
+      <label class="field">
+        Tipo
+        <select #typeInput [value]="event().type">
+          @for (type of eventTypes; track type) {
+            <option [value]="type" [selected]="type === event().type">
+              {{ eventTypeLabels[type] }}
+            </option>
+          }
+        </select>
+      </label>
+      <label class="field">
+        Fecha
+        <input #dateInput type="date" [value]="event().date" required />
+      </label>
+      <label class="field">
+        Margen (± días)
+        <input
+          #uncertaintyInput
+          type="number"
+          min="0"
+          inputmode="numeric"
+          [value]="event().date_uncertainty_days ?? ''"
+        />
+      </label>
+      <label class="field review__wide">
+        Notas
+        <textarea #notesInput rows="2" [value]="event().notes"></textarea>
+      </label>
+      <button type="submit" class="btn btn--primary review__wide" [disabled]="saving()">
+        Guardar corrección
+      </button>
+    </form>
   }
-</article>
+</div>
+
+@if (editable()) {
+  <div class="actions">
+    <p class="message" role="status">{{ message() }}</p>
+    @if (canConfirm() && !editing()) {
+      <button type="button" class="btn btn--primary" [disabled]="saving()" (click)="confirm()">
+        <app-icon name="check" /> Confirmar
+      </button>
+    }
+    <button
+      #toggle
+      type="button"
+      class="btn"
+      [disabled]="saving()"
+      [attr.aria-expanded]="editing()"
+      [attr.aria-controls]="editing() ? ids.form : null"
+      (click)="toggleCorrection()"
+    >
+      {{ editing() ? 'Cancelar corrección' : 'Corregir' }}
+    </button>
+  </div>
+}

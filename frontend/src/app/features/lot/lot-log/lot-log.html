@@ -1,0 +1,277 @@
+<!-- cultivo y rinde de una campaña, con su origen: en su encabezado o en su ficha -->
+<ng-template #campaignFacts let-campaign>
+  <span class="campaign__fact">
+    {{ campaign.crop_label }} <app-origin-badge [origin]="campaign.crop_origin" />
+  </span>
+  <span class="campaign__fact">
+    <span class="campaign__key">Rinde</span>
+    @if (campaign.yield_t_ha !== null) {
+      {{ yieldLabel(campaign.yield_t_ha) }}
+      @if (campaign.yield_origin) {
+        <app-origin-badge [origin]="campaign.yield_origin" />
+      }
+    } @else {
+      Sin dato <span class="campaign__key">(no declarado)</span>
+    }
+  </span>
+</ng-template>
+
+<div class="log" [class.log--split]="sideOpen()">
+  <app-section-card
+    class="log__list"
+    heading="Eventos y campañas"
+    [subtitle]="subtitle()"
+    [attr.inert]="sheetOpen() ? '' : null"
+  >
+    @if (canFilter()) {
+      <button
+        actions
+        type="button"
+        class="btn btn--sm"
+        [attr.aria-expanded]="filtersOpen()"
+        [attr.aria-controls]="filtersOpen() ? uid + '-filters' : null"
+        (click)="filtersOpen.set(!filtersOpen())"
+      >
+        <app-icon name="filter" /> Filtrar
+        @if (activeFilters() > 0) {
+          <span class="filter-count" aria-hidden="true">{{ activeFilters() }}</span>
+          <span class="visually-hidden">
+            ({{ activeFilters() === 1 ? '1 filtro activo' : activeFilters() + ' filtros activos' }})
+          </span>
+        }
+      </button>
+    }
+
+    @if (campaignChips().length > 0) {
+      <ul class="campaigns" aria-label="Campañas del lote">
+        @for (campaign of campaignChips(); track campaign.id) {
+          <li class="campaign">
+            <span class="campaign__label">{{ campaign.label }}</span>
+            <ng-container
+              [ngTemplateOutlet]="campaignFacts"
+              [ngTemplateOutletContext]="{ $implicit: campaign }"
+            />
+          </li>
+        }
+      </ul>
+    }
+
+    @if (filtersOpen() && canFilter()) {
+      <div class="filters" role="group" aria-label="Filtros de la bitácora" [id]="uid + '-filters'">
+        <label class="field">
+          Tipo
+          <select (change)="onTypeFilter($any($event.target).value)">
+            <option value="" [selected]="typeFilter() === ''">Todos</option>
+            @for (type of typeOptions(); track type) {
+              <option [value]="type" [selected]="type === typeFilter()">
+                {{ eventTypeLabels[type] }}
+              </option>
+            }
+          </select>
+        </label>
+        <label class="field">
+          Sensor
+          <select (change)="onSensorFilter($any($event.target).value)">
+            <option value="" [selected]="sensorFilter() === ''">Todos</option>
+            @for (sensor of sensorOptions(); track sensor) {
+              <option [value]="sensor" [selected]="sensor === sensorFilter()">
+                {{ sensorShort[sensor] }}
+              </option>
+            }
+          </select>
+        </label>
+        @if (campaignOptions().length > 1) {
+          <label class="field">
+            Campaña
+            <select (change)="onCampaignFilter($any($event.target).value)">
+              <option value="" [selected]="campaignFilter() === ''">Todas</option>
+              @for (campaign of campaignOptions(); track campaign.id) {
+                <option [value]="campaign.id" [selected]="campaign.id === campaignFilter()">
+                  {{ campaign.label }}
+                </option>
+              }
+            </select>
+          </label>
+        }
+        @if (activeFilters() > 0) {
+          <button type="button" class="btn btn--sm btn--ghost" (click)="clearFilters()">
+            Quitar filtros
+          </button>
+        }
+      </div>
+    }
+
+    @if (failed()) {
+      <div class="alert alert--error failure" role="alert">
+        <p>No se pudo cargar la bitácora.</p>
+        <button type="button" class="btn btn--sm" (click)="retry()">Reintentar</button>
+      </div>
+    } @else if (events(); as all) {
+      @if (all.length === 0) {
+        <div class="log-empty">
+          <span class="icon-mark"><app-icon name="satellite" /></span>
+          <div class="log-empty__text">
+            <p class="log-empty__title">Todavía no hay eventos</p>
+            <p class="log-empty__line">Salen de observaciones satelitales procesadas.</p>
+          </div>
+        </div>
+      } @else {
+        @if (allSimulated()) {
+          <p class="sim-all"><app-simulated-notice /> <span>en todos los eventos</span></p>
+        }
+        @if (activeFilters() > 0) {
+          <p class="result" role="status">
+            {{ visible().length }} de {{ all.length }} eventos con los filtros elegidos.
+          </p>
+        }
+        @for (group of shownGroups(); track group.key) {
+          <section class="group" [attr.aria-labelledby]="uid + '-' + group.key">
+            <header class="group__head">
+              <h3 class="group__title" [id]="uid + '-' + group.key">{{ group.title }}</h3>
+              @if (group.campaign; as campaign) {
+                <ng-container
+                  [ngTemplateOutlet]="campaignFacts"
+                  [ngTemplateOutletContext]="{ $implicit: campaign }"
+                />
+              }
+              <span class="group__count">
+                {{ group.total === 0 ? 'Sin eventos' : countLabel(group.total) }}
+              </span>
+            </header>
+            @if (group.events.length > 0) {
+              <ol class="timeline">
+                @for (event of group.events; track event.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="row"
+                      aria-haspopup="dialog"
+                      [attr.aria-expanded]="event.id === selectedId()"
+                      [attr.aria-controls]="event.id === selectedId() ? uid + '-detail' : null"
+                      [attr.data-event-id]="event.id"
+                      [class.row--open]="event.id === selectedId()"
+                      (click)="open(event)"
+                    >
+                      <span class="glyph row__glyph" [attr.data-type]="event.type">
+                        <app-event-glyph [type]="event.type" />
+                      </span>
+                      <span class="row__what">
+                        <span class="row__type">{{ event.type_label }}</span>
+                        @if (event.is_simulated) {
+                          @if (allSimulated()) {
+                            <span class="visually-hidden">(dato simulado)</span>
+                          } @else {
+                            <app-simulated-notice />
+                          }
+                        }
+                      </span>
+                      <span class="row__meta">
+                        <span class="row__date">
+                          {{ shortDate(event.date) }}
+                          @if (uncertainty(event.date_uncertainty_days); as margin) {
+                            <span class="row__margin">{{ margin }}</span>
+                          }
+                        </span>
+                        <span class="row__sensor">{{ sensorShort[event.sensor] }}</span>
+                      </span>
+                      <span class="row__origin"><app-origin-badge [origin]="event.origin" /></span>
+                      <app-icon class="row__chevron" name="chevron-right" />
+                    </button>
+                  </li>
+                }
+              </ol>
+            }
+          </section>
+        } @empty {
+          <div class="empty no-match">
+            <p>Ningún evento coincide con los filtros.</p>
+            <button type="button" class="btn btn--sm" (click)="clearFilters()">
+              Quitar filtros
+            </button>
+          </div>
+        }
+        @if (folds()) {
+          <button
+            type="button"
+            class="btn btn--sm btn--ghost more"
+            [attr.aria-expanded]="showAll()"
+            (click)="showAll.set(!showAll())"
+          >
+            {{ showAll() ? 'Ver menos' : 'Ver los ' + visible().length + ' eventos' }}
+          </button>
+        }
+      }
+    } @else {
+      <div class="loading" aria-busy="true">
+        <span class="skeleton loading__row"></span>
+        <span class="skeleton loading__row"></span>
+        <span class="skeleton loading__row"></span>
+        <p class="visually-hidden" role="status">Cargando la bitácora…</p>
+      </div>
+    }
+
+    <app-disclosure footer flat icon="info" label="Cómo se arma la bitácora">
+      <ul class="help">
+        <li>
+          Los eventos salen de observaciones satelitales procesadas para este lote, o los informa
+          una persona (sensor Manual). No se inventan.
+        </li>
+        @if (events()?.length === 0) {
+          <li>
+            Acá van a aparecer la siembra, la cosecha, las labores y otros cambios que se detecten.
+            Todavía no hay observaciones procesadas para este lote.
+          </li>
+        }
+        @for (origin of origins; track origin) {
+          <li><app-origin-badge [origin]="origin" /> {{ originMeaning[origin] }}</li>
+        }
+        <li>La detección es una prueba de concepto: no está validada en campo.</li>
+        @if (usesSentinel()) {
+          <li>Sentinel-1 es de la ESA y se usa de respaldo: no es dato NASA.</li>
+        }
+        @if (canEdit()) {
+          <li>
+            Podés confirmar o corregir cada evento. Si confirmás uno estimado o le cambiás el tipo o
+            la fecha, pasa a figurar como declarado por vos.
+          </li>
+        }
+      </ul>
+    </app-disclosure>
+  </app-section-card>
+
+  @if (selected(); as event) {
+    @if (sheetOpen()) {
+      <div class="scrim" aria-hidden="true" animate.enter="enter-fade" (click)="close()"></div>
+    }
+    <section
+      #panel
+      class="panel"
+      role="dialog"
+      tabindex="-1"
+      animate.enter="panel-enter"
+      [class.panel--side]="wide()"
+      [class.panel--sheet]="!wide()"
+      [attr.aria-modal]="wide() ? null : 'true'"
+      [attr.aria-labelledby]="uid + '-title'"
+      [id]="uid + '-detail'"
+    >
+      <header class="panel__head">
+        <span class="glyph" [attr.data-type]="event.type">
+          <app-event-glyph [type]="event.type" />
+        </span>
+        <h2 class="panel__title" [id]="uid + '-title'">{{ event.type_label }}</h2>
+        <button #closeButton type="button" class="btn btn--ghost btn--icon" (click)="close()">
+          <app-icon name="close" />
+          <span class="visually-hidden">Cerrar el detalle</span>
+        </button>
+      </header>
+      <div class="panel__body">
+        <app-event-log-item
+          [event]="event"
+          [editable]="canEdit()"
+          (reviewed)="onReviewed($event)"
+        />
+      </div>
+    </section>
+  }
+</div>

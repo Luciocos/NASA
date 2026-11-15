@@ -14,6 +14,8 @@ import { SimulatedNotice } from '../../shared/simulated-notice/simulated-notice'
 import { Icon } from '../../shared/ui/icon/icon';
 import { PageHeader } from '../../shared/ui/page-header/page-header';
 import { formatEventDate } from '../lot/labels';
+import { LotDialog } from '../lot/lot-workspace/lot-dialog';
+import { LotLink } from '../lot/lot-workspace/lot-link';
 import { OUTLINE_BOX, outlinePath } from './outline';
 
 type ExamplesState =
@@ -32,12 +34,22 @@ interface ExampleCard {
 
 /**
  * /ejemplos (pública): los lotes de ejemplo de la NASA, con su último evento, para ver qué
- * arma LoTestigo sin crear una cuenta. cada tarjeta abre la ficha del lote, de solo lectura
+ * arma LoTestigo sin crear una cuenta. "Ver su historia" abre el lote en el popup, encima de la
+ * lista y de solo lectura (/ejemplos?lote=3; atrás lo cierra)
  */
 @Component({
   selector: 'app-examples-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, PageHeader, OriginBadge, SimulatedNotice, EventGlyph, Icon],
+  imports: [
+    RouterLink,
+    PageHeader,
+    OriginBadge,
+    SimulatedNotice,
+    EventGlyph,
+    Icon,
+    LotDialog,
+    LotLink,
+  ],
   templateUrl: './examples-page.html',
   styleUrl: './examples-page.css',
 })

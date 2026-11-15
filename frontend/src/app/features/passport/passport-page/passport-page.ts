@@ -17,11 +17,18 @@ import { PublicPassport } from '../../../core/models';
 import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
 import { SimulatedNotice } from '../../../shared/simulated-notice/simulated-notice';
 import { FootprintBreakdown } from '../../footprint/footprint-breakdown/footprint-breakdown';
-import { ESTIMATE_NOTICE, formatDateTime } from '../../footprint/format';
+import { ESTIMATE_NOTICE, formatDateTime, formatNumber, plainError } from '../../footprint/format';
 import { ScorePanel } from '../../footprint/score-panel/score-panel';
 import { formatEventDate } from '../../lot/labels';
 
-/** Pasaporte del lote (CLAUDE.md, sección 11, pantalla 6): vista pública e imprimible. */
+/** en pantalla se ven los primeros eventos de la bitácora; al imprimir van todos */
+const EVENTS_ON_SCREEN = 6;
+
+/**
+ * Pasaporte del lote (CLAUDE.md, sección 11, pantalla 6): vista pública e imprimible. En pantalla
+ * muestra menos texto (los primeros eventos; el desglose, los criterios y las fuentes largas,
+ * plegados); al imprimir sale completo, como siempre.
+ */
 @Component({
   imports: [OriginBadge, SimulatedNotice, FootprintBreakdown, ScorePanel],
   selector: 'app-passport-page',
@@ -38,11 +45,15 @@ export class PassportPage {
     { initialValue: '' },
   );
   protected readonly passport = signal<PublicPassport | null>(null);
+  protected readonly eventsOnScreen = EVENTS_ON_SCREEN;
+  protected readonly showAllEvents = signal(false);
   protected readonly error = signal<string | null>(null);
 
   protected readonly notice = ESTIMATE_NOTICE;
   protected readonly formatDateTime = formatDateTime;
   protected readonly formatEventDate = formatEventDate;
+  /** rinde con coma decimal: 3,2 t/ha y no 3.2 */
+  protected readonly formatNumber = formatNumber;
 
   constructor() {
     effect((onCleanup) => {
@@ -59,7 +70,7 @@ export class PassportPage {
               ? 'Este pasaporte venció y ya no está disponible.'
               : error.status === 404
                 ? 'No existe un pasaporte con este enlace. Revisá que esté completo.'
-                : 'No se pudo cargar el pasaporte.',
+                : plainError(error.status, 'este pasaporte'),
           ),
       });
       onCleanup(() => subscription.unsubscribe());
@@ -73,7 +84,26 @@ export class PassportPage {
       }
     });
 
-    inject(DestroyRef).onDestroy(() => this.leafletMap?.remove());
+    // lo plegado en pantalla (desglose de la huella, criterios del puntaje) sale abierto al
+    // imprimir, con el botón o con el menú del navegador, y vuelve a plegarse después
+    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+    const opened: HTMLDetailsElement[] = [];
+    const beforePrint = () => {
+      host.querySelectorAll<HTMLDetailsElement>('details[data-print-open]').forEach((details) => {
+        if (details.open) return;
+        details.open = true;
+        opened.push(details);
+      });
+    };
+    const afterPrint = () => opened.splice(0).forEach((details) => (details.open = false));
+    window.addEventListener('beforeprint', beforePrint);
+    window.addEventListener('afterprint', afterPrint);
+
+    inject(DestroyRef).onDestroy(() => {
+      window.removeEventListener('beforeprint', beforePrint);
+      window.removeEventListener('afterprint', afterPrint);
+      this.leafletMap?.remove();
+    });
   }
 
   protected print(): void {

@@ -1,0 +1,89 @@
+@let fp = footprint();
+@let conf = confidence();
+
+<div class="result">
+  <div class="head">
+    @if (level() === 3) {
+      <h3 class="eyebrow">Huella de carbono</h3>
+    } @else {
+      <h2 class="eyebrow">Huella de carbono</h2>
+    }
+    @if (fp.available_campaigns.length > 1) {
+      <label class="campaign">
+        <span class="visually-hidden">Campaña</span>
+        <select (change)="onCampaign($any($event.target).value)">
+          @for (c of fp.available_campaigns; track c.id) {
+            <option [value]="c.id" [selected]="c.id === fp.campaign?.id">
+              Campaña {{ c.label }}
+            </option>
+          }
+        </select>
+      </label>
+    } @else if (fp.campaign) {
+      <span class="campaign-text">Campaña {{ fp.campaign.label }}</span>
+    }
+  </div>
+
+  @if (fp.total_kg_co2e_per_t !== null) {
+    <p class="value">
+      <span class="amount">{{ formatNumber(fp.total_kg_co2e_per_t) }}</span><span class="unit">
+        kg CO2e/t</span
+      >
+    </p>
+  } @else {
+    <p class="value value--missing">Todavía no se puede calcular</p>
+  }
+
+  @if (missing().length > 0) {
+    <div class="chips">
+      <span class="chips__label">Falta</span>
+      @for (item of missing(); track item.kind) {
+        <span class="chip chip--warn">{{ item.chip }}</span>
+      }
+      <app-help-tip label="Qué falta para calcularla">
+        @if (why(); as text) {
+          <p>{{ text }}</p>
+        }
+        <ul>
+          @for (item of missing(); track item.kind) {
+            <li>
+              <strong>{{ item.title }}</strong> {{ item.detail }}: {{ item.who }}.
+            </li>
+          }
+        </ul>
+      </app-help-tip>
+    </div>
+  }
+
+  <div class="chips">
+    <span
+      class="chip"
+      [class.chip--ok]="conf.tone === 'ok'"
+      [class.chip--warn]="conf.tone === 'warn'"
+    >
+      <app-icon [name]="conf.icon" /> {{ conf.text }}
+    </span>
+    <span class="chip chip--info"
+      ><app-icon name="info" /> Provisional<span class="wide-only">
+        · prueba de concepto</span
+      ></span
+    >
+    @if (fp.uses_simulated_data) {
+      <app-simulated-notice />
+    }
+    <app-help-tip label="Sobre esta estimación">
+      <p>{{ notice }} Los valores son provisionales.</p>
+      <p>
+        Nivel de confianza: <strong>{{ confidenceLabels[fp.confidence.level] }}</strong> ({{
+          fp.confidence.counts.VERIFIED
+        }}
+        verificados, {{ fp.confidence.counts.DECLARED }} declarados,
+        {{ fp.confidence.counts.ESTIMATED }} estimados).
+      </p>
+      <p>{{ fp.confidence.rule }}</p>
+      <p>{{ fp.disclaimer }}</p>
+    </app-help-tip>
+  </div>
+</div>
+
+<div class="actions"><ng-content select="[actions]" /></div>

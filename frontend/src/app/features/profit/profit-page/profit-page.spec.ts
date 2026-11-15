@@ -59,17 +59,20 @@ describe('ProfitPage', () => {
       el.textContent?.trim(),
     );
 
-  async function start(): Promise<void> {
+  /** como página toma el id de la ruta; embebida (en el popup del lote), del input */
+  async function start(inputs: Record<string, unknown> = {}): Promise<void> {
+    const params = 'id' in inputs ? {} : { id: '1' };
     await TestBed.configureTestingModule({
       imports: [ProfitPage],
       providers: [
         provideRouter([]),
         provideHttpClientTesting(),
         provideOfflineTesting(),
-        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: '1' })) } },
+        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap(params)) } },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(ProfitPage);
+    for (const [name, value] of Object.entries(inputs)) fixture.componentRef.setInput(name, value);
     await fixture.whenStable();
     http = TestBed.inject(HttpTestingController);
   }
@@ -118,16 +121,16 @@ describe('ProfitPage', () => {
     page().setYield('4,5');
     await fixture.whenStable();
     expect(amounts()).toEqual(['450', '4.500']);
-    expect(text()).toContain('Lo cargaste vos.');
+    expect(text()).toContain('Lo cargaste vos · huella: 3 t/ha');
     page().setYield('');
     await fixture.whenStable();
     expect(amounts()).toEqual(['300', '3.000']);
-    expect(text()).toContain('De tu declaración en la huella.');
+    expect(text()).toContain('De tu declaración en la huella');
   });
 
   it('sin campañas igual calcula con el rinde que se carga a mano', async () => {
     await setup(null, false);
-    expect(text()).toContain('el lote todavía no tiene campañas');
+    expect(text()).toContain('Sin campañas todavía: cargalo vos');
     page().setPrice('200');
     page().setYield('2');
     await fixture.whenStable();
@@ -142,5 +145,25 @@ describe('ProfitPage', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('app-login-invite')).not.toBeNull();
     expect(el.querySelector('app-lot-tabs')).toBeNull();
+  });
+
+  it('como página muestra las pestañas del lote y su encabezado', async () => {
+    await setup(3);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('app-lot-tabs')).not.toBeNull();
+    expect(el.querySelector('app-page-header h1')?.textContent).toContain('Rentabilidad');
+  });
+
+  it('embebida en el popup toma el id del input y no repite las pestañas ni el encabezado', async () => {
+    await start({ id: 1, embedded: true });
+    http.expectOne('/api/lots/1/').flush(LOT);
+    http.expectOne('/api/lots/1/footprint/').flush(footprint(3));
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.classList).toContain('is-embedded');
+    expect(el.querySelector('app-lot-tabs')).toBeNull();
+    expect(el.querySelector('app-page-header')).toBeNull();
+    expect(el.querySelector('.hero app-kpi-card')).not.toBeNull();
+    expect(text()).toContain('Tus números');
   });
 });

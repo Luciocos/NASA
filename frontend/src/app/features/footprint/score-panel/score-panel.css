@@ -118,3 +118,26 @@ app-simulated-notice,
     min-width: 0;
   }
 }
+
+/* "Ver los 5 criterios": un renglón con lugar para el dedo; la lista, debajo */
+.fold > summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--field-800);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fold > summary:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media print {
+  .fold > summary {
+    display: none;
+  }
+}

@@ -288,3 +288,24 @@ p {
     gap: 0;
   }
 }
+
+/*
+ * adentro del popup del lote: el mapa un poco más bajo, los tres ambientes en fila debajo y la
+ * planilla al costado, así todo entra en lo visible del popup
+ */
+@media (min-width: 64.0625rem) {
+  :host(.is-embedded) .layout {
+    grid-template-areas:
+      'map planner'
+      'zones planner';
+    grid-template-rows: auto 1fr;
+  }
+
+  :host(.is-embedded) .zones {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  :host(.is-embedded) .zones-map {
+    height: clamp(16rem, 40vh, 26rem);
+  }
+}

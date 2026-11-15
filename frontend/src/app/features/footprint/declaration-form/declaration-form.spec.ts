@@ -43,6 +43,50 @@ describe('DeclarationForm', () => {
     expect(declared.length).toBe(1);
   });
 
+  it('cada campo tiene un rótulo corto y su aclaración, en la ayuda (i), unida al control', () => {
+    const nitrogen = input('Sin declarar', 0);
+    const label = el().querySelector(`label[for="${nitrogen.id}"]`)?.textContent ?? '';
+    expect(label).toContain('Nitrógeno');
+    expect(label).toContain('kg N/ha');
+    const hint = el().querySelector(`#${nitrogen.getAttribute('aria-describedby')}`);
+    expect(hint?.textContent).toContain('100 kg de urea son 46 kg de N');
+    expect(hint?.closest('app-help-tip')).not.toBeNull();
+    // a la vista no quedan párrafos: la explicación también va en la ayuda
+    expect(el().querySelector('form p')).toBeNull();
+    expect(el().querySelector('app-help-tip')?.textContent).toContain(
+      'Lo que cargues queda como Declarado',
+    );
+  });
+
+  it('no manda nada si un campo no es un número y lo marca', async () => {
+    const diesel = input('Sin declarar', 2);
+    diesel.value = 'veinte';
+    diesel.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    el().querySelector<HTMLButtonElement>('button[type=submit]')!.click();
+    await fixture.whenStable();
+
+    http.expectNone('/api/lots/5/declaration/');
+    expect(diesel.getAttribute('aria-invalid')).toBe('true');
+    expect(el().querySelector('[role="alert"]')?.textContent).toContain(
+      'Revisá los campos marcados',
+    );
+  });
+
+  it('explica en lenguaje llano lo que objeta el servidor', async () => {
+    el().querySelector<HTMLButtonElement>('button[type=submit]')!.click();
+    http
+      .expectOne('/api/lots/5/declaration/')
+      .flush(
+        { yield_t_ha: ['Asegúrese de que este valor sea mayor o igual a 0.'] },
+        { status: 400, statusText: 'Bad Request' },
+      );
+    await fixture.whenStable();
+    const alert = el().querySelector('[role="alert"]')?.textContent ?? '';
+    expect(alert).toContain('Rinde: Asegúrese de que este valor sea mayor o igual a 0.');
+    expect(alert).not.toContain('yield_t_ha');
+  });
+
   it('precarga solo valores declarados, no las referencias', async () => {
     const fp = makeFootprint();
     fixture.componentRef.setInput('footprint', fp);

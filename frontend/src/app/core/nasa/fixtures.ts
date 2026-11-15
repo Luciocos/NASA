@@ -1,3 +1,6 @@
+import { latLngToSinusoidal } from './geo';
+import { LANDCOVER_CELL_M, type ModisWindow, type SubsetGrid } from './modis';
+
 // respuestas reales recortadas, obtenidas el 2026-11-14 para el lote 3 de Casilda
 // y para el río Paraná frente a Rosario (lat -32.95, lon -60.62)
 export const POWER_FIXTURE = {
@@ -257,6 +260,108 @@ export const LOT3 = {
       [-61.182322, -33.086169],
       [-61.189497, -33.09009],
       [-61.19583, -33.081878],
+    ],
+  ],
+};
+/**
+ * cobertura MCD12Q1 real de 2020 y 2025 en la costa de Rosario, pedida el 2026-11-15 con
+ * kmAboveBelow=2 y kmLeftRight=2 alrededor de (-32.9468, -60.6393): 9 x 9 píxeles de 463 m
+ */
+export const LANDCOVER_ROSARIO_FIXTURE = {
+  xllcorner: '-5660291.43',
+  yllcorner: '-3665730.25',
+  cellsize: 463.312716528,
+  nrows: 9,
+  ncols: 9,
+  band: 'LC_Type1',
+  scale: 'Not Available',
+  latitude: -32.9468,
+  longitude: -60.6393,
+  subset: [
+    {
+      modis_date: 'A2020001',
+      calendar_date: '2020-01-01',
+      band: 'LC_Type1',
+      data: [
+        16, 17, 11, 11, 11, 11, 11, 11, 11, 13, 13, 11, 17, 11, 11, 17, 11, 11, 13, 13, 13, 13, 17,
+        17, 11, 17, 11, 13, 13, 13, 13, 13, 16, 17, 17, 11, 13, 13, 13, 13, 13, 13, 16, 17, 17, 13,
+        13, 13, 13, 13, 13, 13, 13, 17, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13,
+        13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13,
+      ],
+    },
+    {
+      modis_date: 'A2025001',
+      calendar_date: '2025-01-01',
+      band: 'LC_Type1',
+      data: [
+        16, 17, 11, 11, 11, 11, 11, 11, 11, 13, 13, 11, 17, 11, 11, 17, 10, 10, 13, 13, 13, 13, 17,
+        17, 11, 17, 10, 13, 13, 13, 13, 13, 16, 17, 17, 11, 13, 13, 13, 13, 13, 13, 16, 17, 17, 13,
+        13, 13, 13, 13, 13, 13, 13, 17, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13,
+        13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13,
+      ],
+    },
+  ],
+};
+/**
+ * pedidos reales de un solo píxel (kmAboveBelow=0 y kmLeftRight=0, año 2020) en dos lugares de
+ * esa grilla que se ven distintos según cómo se lea data: el centro de la fila 0 y columna 4, y
+ * el de la fila 4 y columna 7, ubicados leyendo las filas de norte a sur y las columnas de oeste
+ * a este. con las filas al revés, el primero caería en la ciudad (13); con las columnas al revés,
+ * el segundo también
+ */
+export const LANDCOVER_ROSARIO_SINGLE_PIXELS = [
+  { latitude: -32.93125, longitude: -60.6267, calendar_date: '2020-01-01', data: [11] },
+  { latitude: -32.94792, longitude: -60.62324, calendar_date: '2020-01-01', data: [17] },
+];
+
+/**
+ * clases MCD12Q1 reales de 3 x 3 píxeles del Chaco: filas 7 a 9 y columnas 0 a 2 de la grilla de
+ * 21 x 21 pedida el 2026-11-15 con kmAboveBelow=5 y kmLeftRight=5 alrededor de (-26.1234,
+ * -62.4321), fila por fila de norte a sur. sabana (9) y sabana arbolada (8) en 2020, y dos
+ * píxeles que MODIS vio como cultivo (12) en 2022 y 2023 antes de pasar a pastizal (10)
+ */
+export const LANDCOVER_CHACO_BLOCK: { year: number; classes: number[] }[] = [
+  { year: 2020, classes: [9, 9, 8, 9, 9, 8, 9, 9, 8] },
+  { year: 2021, classes: [9, 9, 8, 9, 9, 8, 9, 9, 8] },
+  { year: 2022, classes: [10, 9, 8, 12, 9, 8, 12, 9, 8] },
+  { year: 2023, classes: [10, 9, 8, 12, 9, 8, 12, 10, 8] },
+  { year: 2024, classes: [10, 9, 8, 10, 9, 8, 10, 9, 9] },
+  { year: 2025, classes: [9, 9, 8, 10, 9, 8, 10, 9, 8] },
+];
+
+/** esquina de arriba a la izquierda de la grilla sinusoidal global de MODIS, en metros */
+const MODIS_GRID_ORIGIN = { x: -20015109.354, y: 10007554.677 };
+
+/**
+ * grilla como la arma ORNL para una ventana: el píxel que contiene el centro y
+ * floor(km * 1000 / lado) píxeles más a cada lado, alineados a la grilla global. coincide al
+ * centímetro con los xllcorner e yllcorner reales de los fixtures (ver modis.spec.ts)
+ */
+export function ornlGrid(window: ModisWindow, cellM = LANDCOVER_CELL_M): SubsetGrid {
+  const [x, y] = latLngToSinusoidal(window.center);
+  const col = Math.floor((x - MODIS_GRID_ORIGIN.x) / cellM);
+  const row = Math.floor((MODIS_GRID_ORIGIN.y - y) / cellM);
+  const nx = Math.floor((window.kmEw * 1000) / cellM);
+  const ny = Math.floor((window.kmNs * 1000) / cellM);
+  return {
+    xll: MODIS_GRID_ORIGIN.x + (col - nx) * cellM,
+    yll: MODIS_GRID_ORIGIN.y - (row + ny + 1) * cellM,
+    cellSizeM: cellM,
+    nrows: 2 * ny + 1,
+    ncols: 2 * nx + 1,
+  };
+}
+
+/** lote de ejemplo 1 de Casilda (GET /api/lots/1/), de 23,4 ha */
+export const LOT1 = {
+  type: 'Polygon' as const,
+  coordinates: [
+    [
+      [-61.216504, -33.043694],
+      [-61.212117, -33.04019],
+      [-61.209065, -33.0429],
+      [-61.213452, -33.046404],
+      [-61.216504, -33.043694],
     ],
   ],
 };

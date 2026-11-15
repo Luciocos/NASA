@@ -3,15 +3,17 @@
 } @else if (error(); as message) {
   <p class="alert alert--error" role="alert">{{ message }}</p>
 } @else {
-  @if (lot(); as lot) {
-    <app-lot-tabs [lotId]="lot.id" [example]="lot.is_example ?? false" />
-  }
+  @if (!embedded()) {
+    @if (lot(); as lot) {
+      <app-lot-tabs [lotId]="lot.id" [example]="lot.is_example ?? false" />
+    }
 
-  <app-page-header
-    [kicker]="lot()?.name ?? null"
-    heading="Rentabilidad"
-    subtitle="¿Cuánto te deja este lote? Cargá el precio y el rinde y lo ves al instante."
-  />
+    <app-page-header
+      [kicker]="lot()?.name ?? null"
+      heading="Rentabilidad"
+      subtitle="¿Cuánto te deja este lote? Cargá el precio y el rinde."
+    />
+  }
 
   @if (ready()) {
     <div class="layout">
@@ -105,6 +107,12 @@
                 <app-origin-badge [origin]="origin" />
               }
               {{ yieldNote() }}
+              @if (yieldReference(); as reference) {
+                <app-info-tip label="De dónde sale el rinde">
+                  <p>Valor de referencia regional: no es un dato de tu lote.</p>
+                  <p>Fuente: {{ reference }}.</p>
+                </app-info-tip>
+              }
             </span>
           </label>
 
@@ -157,7 +165,7 @@
         <app-section-card
           class="chart"
           heading="De dónde sale el margen"
-          subtitle="Por hectárea: lo que entra y cada costo que cargaste."
+          subtitle="Por hectárea, en US$."
         >
           <app-waterfall
             description="Ingreso bruto por hectárea, cada costo cargado y el margen bruto que queda"

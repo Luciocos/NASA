@@ -8,10 +8,14 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { EventLogItem, LotDetail } from '../../../core/models';
 import {
   DATA_SOURCES,
+  LAND_USE_GROUP_LABELS,
+  LandUseEvidence,
+  LandUseYear,
   LoadState,
   LotSatellite,
   NasaSourceId,
@@ -29,13 +33,32 @@ import {
   SeriesMarker,
 } from '../../../shared/charts';
 import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
-import { Disclosure } from '../../../shared/ui/disclosure/disclosure';
+import { Icon } from '../../../shared/ui/icon/icon';
 import { KpiCard, KpiTrend } from '../../../shared/ui/kpi-card/kpi-card';
 import { SectionCard } from '../../../shared/ui/section-card/section-card';
 import { formatDate } from '../labels';
+import { InfoTip } from '../lot-workspace/info-tip';
+import { SlideTrack } from './slide-track';
 
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-const SOURCE_IDS: NasaSourceId[] = ['modisNdvi', 'power', 'nisar', 'hls', 'modisLandCover'];
+const SOURCE_IDS: NasaSourceId[] = ['modisNdvi', 'power', 'nisar', 'hls', 'modisLandUse'];
+
+/** las tarjetas deslizables del detalle, en orden: su título es también su nombre accesible */
+export const SATELLITE_SLIDES = [
+  'Lluvia por mes',
+  'Uso del suelo desde 2020',
+  'Pasadas de NISAR',
+  'Imágenes HLS',
+  'Verdor y humedad',
+  'Fuentes y opciones',
+] as const;
+
+/** cómo quedó el uso del suelo según MODIS, en pocas palabras y con su tono */
+const LAND_USE_VERDICTS: Record<LandUseEvidence['verdict'], { text: string; tone: string }> = {
+  unchanged: { text: 'Sin cambios grandes', tone: 'chip--ok' },
+  possible_change: { text: 'Posible cambio: conviene revisarlo', tone: 'chip--warn' },
+  no_data: { text: 'Sin dato para comparar', tone: '' },
+};
 
 interface KpiView {
   value: string | number;
@@ -45,17 +68,28 @@ interface KpiView {
 }
 
 /**
- * lo que ve la NASA de un lote, consultado en vivo para su polígono. a la vista, tres
- * indicadores en lenguaje llano (verdor NDVI de MODIS con su tendencia, lluvia y humedad del
- * suelo de NASA POWER) y el verdor en el tiempo como protagonista. lo demás (lluvia por mes,
- * pasadas de NISAR y HLS, cobertura del suelo por año, fuentes y opciones) queda plegado en
- * "Ver detalle técnico". cada dato con su fuente real; lo que no llega queda como "Sin dato"
- * con el motivo
+ * pestaña Satélite: lo que ve la NASA de un lote, consultado en vivo para su polígono. a la
+ * vista, tres indicadores con un número cada uno (verdor NDVI de MODIS con su tendencia, lluvia
+ * y humedad del suelo de NASA POWER) y el verdor en el tiempo como protagonista. el detalle
+ * (lluvia por mes, uso del suelo desde 2020, pasadas de NISAR, imágenes HLS, el detalle del
+ * verdor y la humedad, y las fuentes con sus opciones) va en tarjetas deslizables; las
+ * explicaciones, detrás de un (i). cada dato con su fuente real y su origen; lo que no llega
+ * queda como "Sin dato" con el motivo, y sin conexión sale de la copia guardada en el dispositivo
  */
 @Component({
   selector: 'app-lot-nasa',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SeriesChart, ColumnChart, OriginBadge, SectionCard, KpiCard, Disclosure],
+  imports: [
+    RouterLink,
+    SeriesChart,
+    ColumnChart,
+    OriginBadge,
+    SectionCard,
+    KpiCard,
+    Icon,
+    InfoTip,
+    SlideTrack,
+  ],
   templateUrl: './lot-nasa.html',
   styleUrl: './lot-nasa.css',
 })
@@ -87,7 +121,10 @@ export class LotNasa {
     this.satellite.climate(this.ref(), this.climateSince)(),
   );
   protected readonly scenes = computed(() => this.satellite.scenes(this.ref())());
-  protected readonly landCover = computed(() => this.satellite.landCover(this.ref())());
+  /** uso del suelo de los píxeles del lote desde 2020 (MODIS): el mismo pedido que usa Prácticas */
+  protected readonly landUse = computed(() => this.satellite.landUse(this.ref())());
+  protected readonly landUseVerdicts = LAND_USE_VERDICTS;
+  protected readonly slides = SATELLITE_SLIDES;
 
   protected readonly sources = SOURCE_IDS.map((id) => DATA_SOURCES[id]);
 
@@ -131,7 +168,7 @@ export class LotNasa {
     const versus = changeVsLastYear !== null ? 'hace un año' : 'la imagen anterior';
     return {
       value: decimal(latest.mean),
-      caption: `Imagen de 16 días desde el ${formatDate(latest.date)}. Cuanto más cerca de 1, más verde.`,
+      caption: `Imagen del ${formatDate(latest.date)}`,
       trend: change === null ? null : change > 0 ? 'up' : change < 0 ? 'down' : 'flat',
       trendText:
         change === null
@@ -144,10 +181,10 @@ export class LotNasa {
   protected readonly rainKpi = computed<KpiView | null>(() => {
     const rain = this.rainLast30();
     if (!rain || rain.rainMm === null) return null;
-    const missing = rain.missingDays > 0 ? ` ${capitalize(missingText(rain.missingDays))}.` : '';
+    const missing = rain.missingDays > 0 ? ` · ${missingText(rain.missingDays)}` : '';
     return {
       value: Math.round(rain.rainMm),
-      caption: `En la zona del lote, hasta el ${formatDate(rain.to)}.${missing}`,
+      caption: `Hasta el ${formatDate(rain.to).slice(0, 5)}${missing}`,
     };
   });
   protected readonly soilKpi = computed<KpiView | null>(() => {
@@ -158,7 +195,7 @@ export class LotNasa {
     if (value === null) return null;
     return {
       value: Math.round(value * 100),
-      caption: `${root ? 'Zona de raíces' : 'Superficie'} al ${formatDate(soil.date)} (100 es saturado).`,
+      caption: `${root ? 'Zona de raíces' : 'Superficie'} · 100 es saturado`,
     };
   });
 
@@ -179,7 +216,7 @@ export class LotNasa {
       return {
         month,
         note: 'mes en curso: todavía sin dato',
-        aside: `* ${label} es el mes en curso: todavía sin dato.`,
+        aside: `* ${label}: mes en curso, todavía sin dato.`,
       };
     }
     const until = `${lastRain.slice(8, 10)}/${lastRain.slice(5, 7)}`;
@@ -187,7 +224,7 @@ export class LotNasa {
     return {
       month,
       note: `mes en curso: hasta el ${until}${gaps ? `, ${missingText(gaps)}` : ''}`,
-      aside: `* ${label} es el mes en curso: suma la lluvia hasta el ${until}, no la del mes completo.`,
+      aside: `* ${label}: mes en curso, suma hasta el ${until}.`,
     };
   });
   protected readonly rainColumns = computed<ColumnItem[]>(() => {
@@ -231,7 +268,7 @@ export class LotNasa {
   );
   /** algo terminó sin llegar (o llegó en parte): se ofrece volver a pedirlo, una sola vez */
   protected readonly anyFailed = computed(() =>
-    [this.ndvi(), this.climate(), this.scenes(), this.landCover()].some(
+    [this.ndvi(), this.climate(), this.scenes(), this.landUse()].some(
       (state) => !this.pending(state) && (state.status === 'error' || state.status === 'partial'),
     ),
   );
@@ -285,6 +322,20 @@ export class LotNasa {
   protected percent(value: number | null): string {
     return value === null ? 'Sin dato' : `${Math.round(value * 100)} %`;
   }
+
+  /** "2 de 6: Pasadas de NISAR", el nombre de cada tarjeta deslizable */
+  protected slideLabel(index: number): string {
+    return `${index + 1} de ${this.slides.length}: ${this.slides[index]}`;
+  }
+
+  /** lo que vio MODIS un año: "Agrícola", "Natural (pastizal)", "Agua", "Uso mixto" o "Sin dato" */
+  protected landUseYear(year: LandUseYear): string {
+    if (!year.pixels) return 'Sin dato';
+    if (!year.group) return 'Uso mixto';
+    const label = LAND_USE_GROUP_LABELS[year.group];
+    if (year.group === 'agricultural' || year.group === 'urban' || !year.classLabel) return label;
+    return year.group === 'other' ? year.classLabel : `${label} (${year.classLabel.toLowerCase()})`;
+  }
 }
 
 /** primer día del mes, n meses atrás, en AAAA-MM-DD */
@@ -308,10 +359,6 @@ function monthLabel(month: string): string {
 
 function missingText(days: number): string {
   return days === 1 ? '1 día sin dato' : `${days} días sin dato`;
-}
-
-function capitalize(text: string): string {
-  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 /** 0.6234 -> '0,62' */
