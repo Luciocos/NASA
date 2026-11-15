@@ -1,6 +1,8 @@
 // lotestigo en cloudflare workers: worker/index.js publica el build de angular y reenvía /api y /media al backend
 {
   "name": "lotestigo",
+  // cuenta de cloudflare donde vive el worker (no es un dato secreto): así el deploy automático solo necesita el token
+  "account_id": "7086fc4f42991c5eaebc5655c1ba268d",
   "main": "worker/index.js",
   // la más nueva que soporta wrangler 4.155.0: con una posterior, wrangler dev no arranca
   "compatibility_date": "2026-10-30",

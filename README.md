@@ -87,7 +87,7 @@ npm install
 npx ng serve
 ```
 
-Para comprobar que todo está conectado: `http://localhost:8000/api/health/` responde `{"status": "ok"}` y el encabezado del frontend dice "Backend conectado".
+Para comprobar que todo está conectado: `http://localhost:8000/api/health/` responde `{"status": "ok"}` y el encabezado del frontend dice "Conectado".
 
 Las credenciales (Earthdata, base de datos) van solo en un archivo `.env`, que no se sube al repositorio. Hay un `.env.example` de referencia.
 
@@ -99,7 +99,7 @@ Corre en Cloudflare Workers (`wrangler.jsonc` y `worker/index.js`):
 
 - El Worker publica el build de Angular. Las rutas de la app (`/mapa`, `/lotes/1`, `/pasaporte/<token>`) devuelven `index.html` y las resuelve el router de Angular.
 - `/api/` y `/media/` van al backend de Django, igual que el proxy de `ng serve`. Los archivos de `/media/` que genera el build los sirve el propio Worker: los íconos de Leaflet y las imágenes de `data/evidence/`, que el build copia a `/media/evidence/`.
-- Django y PostgreSQL corren en Railway (proyecto `lotestigo`, servicios `backend` y `Postgres`). El Worker le pasa los pedidos a la dirección pública del backend, `API_ORIGIN` en `wrangler.jsonc`. Si el backend no responde, `/api/` devuelve 502 y el encabezado muestra "Backend sin conexión".
+- Django y PostgreSQL corren en Railway (proyecto `lotestigo`, servicios `backend` y `Postgres`). El Worker le pasa los pedidos a la dirección pública del backend, `API_ORIGIN` en `wrangler.jsonc`. Si el backend no responde, `/api/` devuelve 502 y el encabezado muestra "Sin conexión con el servidor".
 
 El backend se construye con `backend/Dockerfile` (la variable `RAILWAY_DOCKERFILE_PATH` del servicio apunta a ese archivo). Cada vez que arranca aplica las migraciones e importa los lotes nuevos de `data/demo/`; los que ya están cargados se saltean, así no se pierden las correcciones ni los pasaportes. Para publicar cambios del backend, con acceso al proyecto de Railway:
 
@@ -130,19 +130,17 @@ Cada push a `main` corre `.github/workflows/deploy.yml`, que publica solo:
 1. **Backend:** si el push cambió algo en `backend/` o `data/`, lo sube a Railway con `railway up`. Al correr el workflow a mano (Actions → Deploy → Run workflow) se puede elegir publicarlo igual.
 2. **Frontend:** después del backend, compila Angular y lo publica en Cloudflare Workers. Si el backend falló, el frontend no se publica.
 
-Necesita tres secrets en el repositorio (Settings → Secrets and variables → Actions). Sin ellos, el workflow solo compila:
+Necesita dos secrets en el repositorio (Settings → Secrets and variables → Actions). Sin ellos, el workflow solo compila. El id de la cuenta de Cloudflare no es secreto y está en `wrangler.jsonc` (`account_id`):
 
 | Secret | Qué es | Dónde se crea |
 |---|---|---|
 | `CLOUDFLARE_API_TOKEN` | Token de API con la plantilla "Edit Cloudflare Workers" | Cloudflare → My Profile → API Tokens |
-| `CLOUDFLARE_ACCOUNT_ID` | Id de la cuenta de Cloudflare donde vive el Worker `lotestigo` | Cloudflare → Workers & Pages (columna derecha) |
 | `RAILWAY_TOKEN` | Token del proyecto `lotestigo`, entorno `production` | Railway → proyecto → Settings → Tokens |
 
-Cargarlos requiere permiso de administrador del repositorio. Con la CLI de GitHub:
+Con la CLI de GitHub (cada comando pide el valor y no lo muestra):
 
 ```bash
 gh secret set CLOUDFLARE_API_TOKEN -R Luciocos/NASA
-gh secret set CLOUDFLARE_ACCOUNT_ID -R Luciocos/NASA
 gh secret set RAILWAY_TOKEN -R Luciocos/NASA
 ```
 
