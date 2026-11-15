@@ -1,5 +1,7 @@
 # LoTestigo
 
+*[Read in English](README.en.md) · [Submission text and checklist](docs/SUBMISSION.md)*
+
 Bitácora de manejo de un lote agrícola, detectada por satélite.
 
 LoTestigo es una **prueba de concepto** desarrollada en 48 horas para el NASA Space Apps Challenge 2026 (sede Rosario). Usa datos abiertos de la NASA, con radar NISAR (banda L) como sensor principal, para registrar qué pasó en un lote: siembra, cosecha, remoción de suelo, cobertura, anegamiento, quema o cambio de uso. Sobre esa bitácora estima una huella de carbono y permite simular mejoras de manejo.
@@ -180,6 +182,14 @@ Quién es dueño de cada parte está en [docs/EQUIPO.md](docs/EQUIPO.md). Las re
 | Sentinel-1 (ESA), banda C | Respaldo cuando no hay escenas NISAR; no es dato NASA |
 
 Este proyecto usa datos abiertos de la NASA. No está afiliado a la NASA ni cuenta con su aval.
+
+## Uso de herramientas de SI
+
+Según las reglas del NASA Space Apps Challenge 2026 sobre herramientas de Super Intelligence (SI):
+
+- **Código y documentación:** parte del código, de las pruebas y de la documentación de este repositorio se escribió con la asistencia de Claude Code (Anthropic), un asistente de programación basado en un modelo de lenguaje, y fue revisada por el equipo. Las instrucciones que se le dieron están en [CLAUDE.md](CLAUDE.md).
+- **Datos:** ningún dato satelital, evento, imagen de evidencia, factor de emisión ni métrica fue generado con SI. Salen de las fuentes citadas arriba.
+- **Idea y método:** la idea del proyecto, la elección de las fuentes y el método de detección los definió el equipo.
 
 ## Licencia
 
