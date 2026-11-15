@@ -1,0 +1,367 @@
+/* documentación: los dos caminos de los datos, una pestaña por fuente con su recorrido en tres
+   pasos y la tecnología con sus logos. lo técnico va corto, en fichas y con flechas */
+:host {
+  display: grid;
+  gap: var(--space-7);
+}
+
+h3 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-xl);
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+p {
+  margin: 0;
+}
+
+/* los dos caminos, uno debajo del otro como dos carriles: verde en vivo y azul procesado aparte,
+   como sus fichas. a la izquierda qué es y a la derecha el recorrido */
+.paths {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.path {
+  --tone: var(--water-600);
+  --tone-bg: var(--info-bg);
+  display: grid;
+  grid-template: 'head nodes' auto 'note nodes' auto / minmax(0, 23rem) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2) var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(90deg, var(--tone-bg), var(--surface) 60%);
+}
+
+.path--live {
+  --tone: var(--field-700);
+  --tone-bg: var(--field-50);
+}
+
+.path__head {
+  grid-area: head;
+}
+
+.path__note {
+  grid-area: note;
+  align-self: start;
+  color: var(--ink-3);
+  font-size: var(--text-sm);
+}
+
+.path__head,
+.path__nodes,
+.path__nodes li,
+.step__label,
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.path__nodes {
+  --icon-size: 1rem;
+  grid-area: nodes;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.path__nodes .icon {
+  color: var(--tone);
+}
+
+.path__nodes span {
+  padding: 0.25rem 0.625rem;
+  border: 1px solid color-mix(in srgb, var(--tone) 30%, transparent);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+}
+
+/* una pestaña por fuente, como el control segmentado de la app; el ícono dice el camino */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: var(--space-3);
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper-2);
+}
+
+.tab {
+  --icon-size: 1.125rem;
+  display: inline-flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  background: none;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tab .icon {
+  color: var(--water-600);
+}
+
+.tab--live .icon {
+  color: var(--field-700);
+}
+
+.tab:hover,
+.tab[aria-selected='true'] {
+  color: var(--ink);
+}
+
+.tab[aria-selected='true'] {
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  font-weight: 700;
+}
+
+.tab:focus-visible,
+.panel:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* el recorrido de la fuente elegida: tres pasos con flechas */
+.panel {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.panel__head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+h4 {
+  margin: 0;
+  font-size: var(--text-lg);
+  line-height: 1.3;
+}
+
+.panel__head p,
+.tool p {
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.flow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+  counter-reset: step;
+}
+
+.step {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  counter-increment: step;
+  transition:
+    opacity var(--dur-3) var(--ease-out) calc(var(--i) * var(--stagger) * 2),
+    translate var(--dur-3) var(--ease-out) calc(var(--i) * var(--stagger) * 2);
+}
+
+/* al cambiar de pestaña, los pasos entran uno detrás del otro (con menos movimiento, de golpe) */
+@starting-style {
+  .step {
+    opacity: 0;
+    translate: 0 0.5rem;
+  }
+}
+
+.step__label {
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.step__label::before {
+  content: counter(step);
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--field-700);
+  color: #fff;
+  letter-spacing: 0;
+}
+
+.step__text {
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.tags {
+  gap: var(--space-1);
+}
+
+/* servicio, protocolo y formato en fichas grises; en la app, la pantalla en verde */
+.tags li {
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.tags--app li {
+  border-color: transparent;
+  background: var(--field-100);
+  color: var(--field-800);
+}
+
+.step__arrow {
+  --icon-size: 1.25rem;
+  position: absolute;
+  top: 50%;
+  right: calc(var(--space-6) / -2 - 0.625rem);
+  translate: 0 -50%;
+  color: var(--field-500);
+}
+
+/* la tecnología: cada logo en su color de marca, sobre una ficha blanca como un ícono de app */
+.stack {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+  gap: var(--space-3);
+}
+
+.tool {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+}
+
+.tool__logos {
+  display: flex;
+  margin-bottom: var(--space-3);
+}
+
+.logo {
+  width: var(--logo, 3rem);
+  height: var(--logo, 3rem);
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+/* dos logos se apilan, el segundo un poco encima del primero */
+.logo + .logo {
+  margin-left: -0.625rem;
+}
+
+h4 + p {
+  margin-top: 0.125rem;
+}
+
+/* el enlace a la guía se toca con el dedo: 44 px de alto (.link-arrow) */
+.more {
+  justify-self: start;
+  margin-top: calc(var(--space-7) / -2);
+}
+
+/* sin lugar para los carriles: qué es, el recorrido y la nota, uno debajo del otro */
+@media (max-width: 60rem) {
+  .path {
+    grid-template: 'head' 'nodes' 'note' / minmax(0, 1fr);
+    background: linear-gradient(var(--tone-bg), var(--surface) 75%);
+  }
+}
+
+/* en el celular los pasos se apilan, con la flecha hacia abajo, y cada tecnología va en una fila */
+@media (max-width: 40rem) {
+  .path,
+  .panel,
+  .tool {
+    padding: var(--space-4);
+  }
+
+  .path__nodes,
+  .path__nodes li {
+    gap: 0.375rem;
+  }
+
+  .path__nodes {
+    font-size: var(--text-xs);
+  }
+
+  .panel__head {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .panel__head .chip {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .flow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+  }
+
+  .step__arrow {
+    top: auto;
+    right: auto;
+    bottom: calc(var(--space-5) / -2 - 0.625rem);
+    left: 50%;
+    translate: -50% 0;
+    rotate: 90deg;
+  }
+
+  .tool {
+    --logo: 2.75rem;
+    grid-template-columns: 5rem minmax(0, 1fr);
+    column-gap: var(--space-3);
+  }
+
+  .tool__logos {
+    grid-row: span 2;
+    margin: 0;
+  }
+}

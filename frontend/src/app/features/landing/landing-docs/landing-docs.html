@@ -1,0 +1,135 @@
+<section aria-labelledby="docs-nasa">
+  <h3 id="docs-nasa">Cómo nos conectamos con la NASA</h3>
+
+  <ul class="paths">
+    @for (path of paths; track path.title) {
+      <li class="path reveal-scroll" [class.path--live]="path.live">
+        <p class="path__head">
+          <span class="chip" [class.chip--ok]="path.live" [class.chip--info]="!path.live">{{
+            path.live ? 'En vivo' : 'Procesado aparte'
+          }}</span>
+          <strong>{{ path.title }}</strong>
+        </p>
+        <ol class="path__nodes">
+          @for (node of path.nodes; track node; let last = $last) {
+            <li>
+              <span>{{ node }}</span>
+              @if (!last) {
+                <app-icon name="arrow-right" />
+              }
+            </li>
+          }
+        </ol>
+        <p class="path__note">{{ path.note }}</p>
+      </li>
+    }
+  </ul>
+
+  <div class="tabs" role="tablist" aria-label="Fuentes de la NASA">
+    @for (source of nasa; track source.id) {
+      <button
+        type="button"
+        role="tab"
+        class="tab"
+        [class.tab--live]="source.live"
+        [id]="'docs-tab-' + source.id"
+        [attr.aria-selected]="selected() === source.id"
+        [attr.aria-controls]="'docs-panel-' + source.id"
+        [tabIndex]="selected() === source.id ? 0 : -1"
+        (click)="selected.set(source.id)"
+        (keydown)="onTabKey($event)"
+      >
+        <app-icon [name]="source.icon" />
+        {{ source.tab }}
+      </button>
+    }
+  </div>
+
+  @for (source of nasa; track source.id) {
+    <div
+      class="panel"
+      role="tabpanel"
+      tabindex="0"
+      [id]="'docs-panel-' + source.id"
+      [attr.aria-labelledby]="'docs-tab-' + source.id"
+      [hidden]="selected() !== source.id"
+    >
+      <div class="panel__head">
+        <span class="icon-mark" aria-hidden="true"><app-icon [name]="source.icon" /></span>
+        <div>
+          <h4>{{ source.name }}</h4>
+          <p>{{ source.what }}</p>
+        </div>
+        <span class="chip" [class.chip--ok]="source.live" [class.chip--info]="!source.live">{{
+          source.live ? 'En vivo' : 'Procesado aparte'
+        }}</span>
+      </div>
+
+      <ol class="flow">
+        @for (step of source.steps; track $index; let i = $index, last = $last) {
+          <li class="step" [style.--i]="i">
+            <p class="step__label">
+              <span class="step__name">{{ labels[i] }}</span>
+              @if (step.origin) {
+                <app-origin-badge [origin]="step.origin" />
+              }
+              @if (step.note) {
+                <span class="chip">{{ step.note }}</span>
+              }
+            </p>
+            <p class="step__text">{{ step.text }}</p>
+            <ul class="tags" [class.tags--app]="last">
+              @for (tag of step.tags; track tag) {
+                <li>{{ tag }}</li>
+              }
+            </ul>
+            @if (!last) {
+              <app-icon class="step__arrow" name="arrow-right" />
+            }
+          </li>
+        }
+      </ol>
+    </div>
+  }
+</section>
+
+<section aria-labelledby="docs-stack">
+  <h3 id="docs-stack">Tecnología para escalar</h3>
+  <ul class="stack">
+    @for (tool of stack; track tool.name) {
+      <li class="tool card reveal-scroll">
+        <span class="tool__logos">
+          @for (logo of tool.logos; track logo.name) {
+            <svg class="logo" role="img" viewBox="0 0 24 24" [attr.aria-label]="logo.name">
+              @if (logo.gradient; as gradient) {
+                <defs>
+                  <linearGradient
+                    gradientUnits="userSpaceOnUse"
+                    [attr.id]="gradient.id"
+                    [attr.x1]="gradient.from[0]"
+                    [attr.y1]="gradient.from[1]"
+                    [attr.x2]="gradient.to[0]"
+                    [attr.y2]="gradient.to[1]"
+                  >
+                    @for (stop of gradient.stops; track stop[0]) {
+                      <stop [attr.offset]="stop[0]" [attr.stop-color]="stop[1]" />
+                    }
+                  </linearGradient>
+                </defs>
+              }
+              @for (path of logo.paths; track path.d) {
+                <path [attr.d]="path.d" [attr.fill]="path.fill" />
+              }
+            </svg>
+          }
+        </span>
+        <h4>{{ tool.name }}</h4>
+        <p>{{ tool.why }}</p>
+      </li>
+    }
+  </ul>
+</section>
+
+<a class="link-arrow more" routerLink="/ayuda">
+  Cómo se carga cada dato: la guía con imágenes <app-icon name="arrow-right" />
+</a>

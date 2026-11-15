@@ -402,32 +402,236 @@ describe('LandingPage', () => {
     expect(credit).toContain('NASA EOSDIS GIBS');
   });
 
-  it('la documentación cuenta cómo se conecta con la NASA y con qué tecnología escala', async () => {
-    await setup();
+  describe('la documentación', () => {
+    const docs = () => el().querySelector<HTMLElement>('app-landing-docs')!;
+    /** cada grupo de la documentación, por el id de su título */
+    const group = (id: string) => docs().querySelector(`#${id}`)!.closest('section')!;
+    const tabs = () => [...docs().querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const panels = () => [...docs().querySelectorAll<HTMLElement>('[role="tabpanel"]')];
+    const clean = (node: Element | null | undefined) =>
+      node?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+    /** los tres pasos del recorrido de una fuente, cada uno como texto corrido */
+    const flow = (id: string) =>
+      [...docs().querySelectorAll(`#docs-panel-${id} .flow > li`)].map((step) => clean(step));
 
-    expect(el().querySelector('#docs-title')?.textContent).toContain('Documentación');
-    expect(el().querySelector('img[src*="lotestigo-datos-nasa"]')).toBeNull();
-    const groups = [...el().querySelectorAll('.docs__group')];
-    expect(groups).toHaveLength(2);
+    it('arranca con los dos caminos: en vivo desde el navegador y procesado aparte en Python', async () => {
+      await setup();
 
-    const sources = [...groups[0].querySelectorAll('.doc')];
-    expect(sources).toHaveLength(6);
-    const sourceText = groups[0].textContent!;
-    for (const name of ['NISAR', 'HLS', 'MODIS', 'NASA POWER', 'CMR', 'IMERG']) {
-      expect(sourceText).toContain(name);
-    }
-    // cada fuente dice cómo llega: en vivo desde el navegador o procesada aparte
-    for (const card of sources) {
-      expect(card.querySelector('.chip')?.textContent?.trim()).toMatch(
-        /^(En vivo|Procesado aparte)$/,
+      expect(el().querySelector('#docs-title')?.textContent).toContain('Documentación');
+      expect(el().querySelector('img[src*="lotestigo-datos-nasa"]')).toBeNull();
+      const paths = [...docs().querySelectorAll('.path')];
+      expect(paths.map((path) => clean(path.querySelector('.chip')))).toEqual([
+        'En vivo',
+        'Procesado aparte',
+      ]);
+      expect(paths.map((path) => [...path.querySelectorAll('.path__nodes li')].map(clean))).toEqual(
+        [
+          ['NASA, sin login', 'Navegador', 'Copia en el dispositivo', 'Pantalla'],
+          ['Earthdata, con login', 'Pipeline en Python', 'Django y PostgreSQL', 'App'],
+        ],
       );
-    }
+      // las flechas entre uno y otro son dibujo: el lector de pantalla no las lee
+      for (const path of paths) {
+        expect(path.querySelectorAll('.path__nodes app-icon[aria-hidden="true"]')).toHaveLength(3);
+      }
+      expect(clean(paths[0].querySelector('.path__note'))).toBe(
+        'MODIS, NASA POWER y CMR, por HTTPS y JSON. No pasan por el backend.',
+      );
+      expect(clean(paths[1].querySelector('.path__note'))).toContain(
+        'NISAR, HLS, IMERG, SMAP y MOD16',
+      );
+    });
 
-    const stackText = groups[1].textContent!;
-    for (const name of ['Angular 22', 'Cloudflare', 'Railway', 'PostgreSQL', 'Django']) {
-      expect(stackText).toContain(name);
-    }
-    expect(el().querySelector('.docs__more')?.getAttribute('href')).toBe('/ayuda');
+    it('cada fuente de la NASA cuenta en tres pasos de dónde sale, cómo llega y qué muestra la app', async () => {
+      await setup();
+
+      expect(docs().querySelector('[role="tablist"]')?.getAttribute('aria-label')).toBe(
+        'Fuentes de la NASA',
+      );
+      expect(tabs().map(clean)).toEqual([
+        'NISAR',
+        'HLS',
+        'MODIS',
+        'NASA POWER',
+        'CMR',
+        'IMERG · SMAP · MOD16',
+      ]);
+      expect(panels()).toHaveLength(6);
+      tabs().forEach((tab, i) => {
+        const panel = panels()[i];
+        expect(tab.getAttribute('aria-controls')).toBe(panel.id);
+        expect(panel.getAttribute('aria-labelledby')).toBe(tab.id);
+        const steps = [...panel.querySelectorAll('.flow > li')];
+        expect(steps.map((step) => clean(step.querySelector('.step__name')))).toEqual([
+          'De dónde sale',
+          'Cómo llega',
+          'En la app',
+        ]);
+        // poco texto a la vista: una línea corta por paso y lo técnico en fichas
+        for (const step of steps) {
+          expect(clean(step.querySelector('.step__text')).length).toBeLessThanOrEqual(50);
+          const tags = [...step.querySelectorAll('.tags li')].map(clean);
+          expect(tags.length).toBeGreaterThan(0);
+          for (const tag of tags) expect(tag.length).toBeLessThanOrEqual(24);
+        }
+        // el último paso dice con qué origen lo muestra la app, o por qué no lleva uno
+        expect(steps[2].querySelector('app-origin-badge, .chip')).toBeTruthy();
+      });
+
+      // cada una dice su camino: en vivo desde el navegador o procesada aparte
+      const live = (id: string) =>
+        clean(docs().querySelector(`#docs-panel-${id} .panel__head .chip`));
+      expect(['nisar', 'hls', 'modis', 'power', 'cmr', 'hydrology'].map(live)).toEqual([
+        'Procesado aparte',
+        'Procesado aparte',
+        'En vivo',
+        'En vivo',
+        'En vivo',
+        'Procesado aparte',
+      ]);
+
+      // NASA POWER: el navegador pide la API por HTTPS, guarda una copia y Satélite lo muestra estimado
+      const power = flow('power');
+      expect(power[1]).toContain('El navegador pide el clima del centro del lote');
+      for (const tag of ['API REST', 'HTTPS · JSON', 'Copia en el dispositivo']) {
+        expect(power[1]).toContain(tag);
+      }
+      expect(power[2]).toContain('Lluvia de 30 días y humedad del suelo');
+      expect(power[2]).toContain('Satélite');
+      expect(power[2]).toContain('Estimado');
+
+      // NISAR: de Earthdata al pipeline, de ahí a la base con import_events y a la bitácora
+      const nisar = flow('nisar');
+      expect(nisar[0]).toContain('ASF DAAC');
+      expect(nisar[1]).toContain('Earthdata Login');
+      expect(nisar[1]).toContain('import_events');
+      expect(nisar[2]).toContain('Bitácora');
+      expect(nisar[2]).toContain('Verificado');
+
+      // MODIS va en vivo por el ORNL DAAC a cuatro pantallas
+      const modis = flow('modis');
+      expect(modis[0]).toContain('ORNL DAAC');
+      for (const place of ['Satélite', 'Mi campo', 'Fertilización', 'Prácticas']) {
+        expect(modis[2]).toContain(place);
+      }
+
+      // el catálogo solo lista pasadas; la hidrología entra a un modelo sin validar
+      expect(flow('cmr')[1]).toContain('Sin bajar imágenes');
+      expect(flow('cmr')[2]).toContain('Solo un listado');
+      const water = flow('hydrology');
+      expect(water[1]).toContain('forcing.json');
+      expect(water[1]).toContain('OPeNDAP');
+      expect(water[2]).toContain('Cuenca y Caudal');
+      expect(water[2]).toContain('Modelo sin validar');
+    });
+
+    it('las fuentes van en pestañas: una a la vista, que cambia con un toque o con las flechas', async () => {
+      await setup();
+      const selected = () =>
+        tabs()
+          .filter((tab) => tab.getAttribute('aria-selected') === 'true')
+          .map(clean);
+      const visible = () =>
+        panels()
+          .filter((panel) => !panel.hidden)
+          .map((panel) => panel.id);
+      const press = async (key: string) => {
+        tabs()
+          .find((tab) => tab.tabIndex === 0)!
+          .dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+        await fixture.whenStable();
+      };
+
+      // arranca en NISAR, el sensor principal, y solo esa pestaña entra con Tab
+      expect(selected()).toEqual(['NISAR']);
+      expect(visible()).toEqual(['docs-panel-nisar']);
+      expect(tabs().map((tab) => tab.tabIndex)).toEqual([0, -1, -1, -1, -1, -1]);
+
+      tabs()[3].click();
+      await fixture.whenStable();
+      expect(selected()).toEqual(['NASA POWER']);
+      expect(visible()).toEqual(['docs-panel-power']);
+
+      await press('ArrowRight');
+      expect(selected()).toEqual(['CMR']);
+      expect(document.activeElement).toBe(tabs()[4]);
+      await press('End');
+      expect(selected()).toEqual(['IMERG · SMAP · MOD16']);
+      // al final da la vuelta
+      await press('ArrowRight');
+      expect(selected()).toEqual(['NISAR']);
+      await press('ArrowLeft');
+      expect(selected()).toEqual(['IMERG · SMAP · MOD16']);
+      await press('Home');
+      expect(selected()).toEqual(['NISAR']);
+      expect(visible()).toEqual(['docs-panel-nisar']);
+      expect(document.activeElement).toBe(tabs()[0]);
+    });
+
+    it('la tecnología lleva sus logos en sus colores, con nombre accesible, y ninguno es de la NASA', async () => {
+      await setup();
+
+      const stack = group('docs-stack');
+      const cards = [...stack.querySelectorAll('.tool')];
+      expect(cards.map((card) => clean(card.querySelector('h4')))).toEqual([
+        'Angular 22 · PWA',
+        'Cloudflare Workers',
+        'Railway + GitHub Actions',
+        'PostgreSQL',
+        'Python · Django y DRF',
+        'Pipeline en Python',
+      ]);
+      expect(
+        cards.map((card) =>
+          [...card.querySelectorAll('svg[role="img"]')].map((logo) =>
+            logo.getAttribute('aria-label'),
+          ),
+        ),
+      ).toEqual([
+        ['Angular', 'PWA'],
+        ['Cloudflare'],
+        ['Railway', 'GitHub Actions'],
+        ['PostgreSQL'],
+        ['Python', 'Django'],
+        ['Python', 'NumPy'],
+      ]);
+
+      // dibujados en la página con el color de marca: nada se pide a terceros
+      const fills = (name: string) =>
+        [...stack.querySelectorAll(`svg[aria-label="${name}"] path`)].map((path) =>
+          path.getAttribute('fill'),
+        );
+      expect(fills('PostgreSQL')).toEqual(['#4169E1']);
+      expect(fills('Cloudflare')).toEqual(['#F38020']);
+      expect(fills('GitHub Actions')).toEqual(['#2088FF']);
+      // python con sus dos serpientes, azul y amarilla, en las dos tarjetas
+      expect(fills('Python')).toEqual(['#3776AB', '#FFD43B', '#3776AB', '#FFD43B']);
+      // angular con el degradé de su logo y el rojo de respaldo
+      expect(fills('Angular')).toEqual(['url(#landing-logo-angular) #E40035']);
+      const stops = [...stack.querySelectorAll('#landing-logo-angular stop')];
+      expect(stops.map((stop) => stop.getAttribute('stop-color'))).toContain('#6C00F5');
+      for (const logo of stack.querySelectorAll('svg[role="img"]')) {
+        expect(logo.getAttribute('viewBox')).toBe('0 0 24 24');
+        expect(logo.querySelector('path')?.getAttribute('d')).toMatch(/^M/);
+      }
+      expect(docs().querySelectorAll('img, image, use, [src]')).toHaveLength(0);
+
+      // de la NASA, los datos sí y los logos no: sus fuentes llevan los íconos de la app, que son
+      // dibujo, y ningún nombre accesible de la página es el de la NASA o el de una misión
+      const nasa = group('docs-nasa');
+      expect(nasa.querySelectorAll('[role="img"], img')).toHaveLength(0);
+      for (const drawing of nasa.querySelectorAll('svg')) {
+        expect(drawing.closest('app-icon')?.getAttribute('aria-hidden')).toBe('true');
+      }
+      const names = [...el().querySelectorAll('[role="img"], img')].map(
+        (node) => node.getAttribute('aria-label') ?? node.getAttribute('alt') ?? '',
+      );
+      expect(
+        names.filter((name) => /nasa|nisar|isro|earthdata|landsat|modis|smap|gpm/i.test(name)),
+      ).toEqual([]);
+
+      expect(docs().querySelector('a.link-arrow')?.getAttribute('href')).toBe('/ayuda');
+    });
   });
 
   it('es honesta: usa datos abiertos de la NASA, sin aval ni certificados', async () => {
