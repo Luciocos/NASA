@@ -19,6 +19,7 @@ urlpatterns = [
     path('api/', include('passports.urls')),
     path('api/', include('territory.urls')),
     path('api/', include('market.urls')),
+    path('api/', include('hydrology.urls')),
 ]
 
 if settings.DEBUG:

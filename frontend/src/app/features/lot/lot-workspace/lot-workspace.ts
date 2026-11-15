@@ -21,6 +21,7 @@ import { EventLogItem, LotDetail } from '../../../core/models';
 import { Icon } from '../../../shared/ui/icon/icon';
 import { LotTabKey, LotTabs, lotTabFromPath } from '../../../shared/ui/lot-tabs/lot-tabs';
 import { FertilizationPage } from '../../fertilization/fertilization-page';
+import { WaterPage } from '../../water/water-page';
 import { FootprintPage } from '../../footprint/footprint-page/footprint-page';
 import { ProfitPage } from '../../profit/profit-page/profit-page';
 import { LotLog } from '../lot-log/lot-log';
@@ -61,6 +62,7 @@ export interface LotTabChange {
     LotPractices,
     FootprintPage,
     FertilizationPage,
+    WaterPage,
     ProfitPage,
   ],
   host: { '[class.is-dialog]': 'dialog()' },
@@ -111,6 +113,13 @@ export interface LotTabChange {
           @case ('fertilization') {
             @defer (on immediate) {
               <app-fertilization-page [id]="lot.id" [embedded]="true" />
+            } @placeholder {
+              <div class="skeleton tab-skeleton" aria-hidden="true"></div>
+            }
+          }
+          @case ('water') {
+            @defer (on immediate) {
+              <app-water-page [id]="lot.id" [embedded]="true" />
             } @placeholder {
               <div class="skeleton tab-skeleton" aria-hidden="true"></div>
             }

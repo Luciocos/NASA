@@ -24,4 +24,8 @@ export default [
     path: ':id/rentabilidad',
     loadComponent: () => import('../profit/profit-page/profit-page').then((m) => m.ProfitPage),
   },
+  {
+    path: ':id/cuenca',
+    loadComponent: () => import('../water/water-page').then((m) => m.WaterPage),
+  },
 ] satisfies Routes;

@@ -103,6 +103,7 @@ lotestigo/
     events/            # Event, importador
     carbon/            # InputRecord, factores, cálculo, simulador, puntaje
     passports/         # enlace público
+    hydrology/         # Cuenca y Caudal: cuenca, SCS-CN, hidrograma unitario (lee data/hydrology)
     requirements.txt
     Dockerfile         # imagen del backend para Railway (se construye desde la raíz)
   frontend/
@@ -117,12 +118,14 @@ lotestigo/
         footprint/     # huella y simulador
         fertilization/ # ambientes por NDVI y dosis variable
         profit/        # margen bruto
+        water/         # Cuenca y Caudal: cuenca aportante, historial, simulador e impacto
         passport/      # vista pública
       shared/          # componentes reutilizables, etiquetas de confianza
   pipeline/            # notebooks y scripts de teledetección (offline)
   data/
     demo/              # lotes y eventos de demostración
     evidence/          # imágenes de respaldo
+    hydrology/         # grillas del DEM, lluvia IMERG y capas de la cuenca del Lote 3 (ver su README)
 ```
 
 ## 7. Modelo de datos
@@ -242,6 +245,9 @@ Prefijo `/api/`. JSON. Autenticación por token de DRF (`Authorization: Token <k
 | POST | `/lots/{id}/land-use/` | Dueño | El productor declara con `unchanged` si el lote cambió de uso del suelo desde 2020 (`true` si no cambió). Queda como dato DECLARED con la fecha, pisa la declaración anterior y la ficha la muestra en `land_use_declaration` |
 | POST | `/lots/{id}/passport/` | Dueño | Genera enlace público |
 | GET | `/passports/{token}/` | Pública | Vista pública de solo lectura |
+| GET | `/lots/{id}/hydrology/?lat=&lng=` | Dueño o ejemplo | Cuenca aportante al lote y al punto de salida, subcuencas, ingresos, salidas y sectores a inspeccionar. Solo para lotes dentro de la zona procesada (Lote 3, Casilda); fuera de ella, 404 con `available: false` |
+| GET | `/lots/{id}/hydrology/history/?lat=&lng=` | Dueño o ejemplo | Eventos de lluvia IMERG desde 2020 con escorrentía, volumen y caudal simulados |
+| POST | `/lots/{id}/hydrology/simulate/` | Dueño o ejemplo | Simulador de lluvia (`rain_mm`, `duration_h`, `arc`, `hsg`, `residue`). No guarda nada |
 
 Un lote creado por POST sin eventos importados devuelve bitácora vacía con un mensaje claro. No generar eventos falsos automáticamente.
 
@@ -259,6 +265,7 @@ Pantallas, en orden de prioridad:
 4. **Huella:** valor por tonelada, desglose por componente y etiqueta de origen por dato.
 5. **Simulador:** un control (cultivo de cobertura) y el resultado antes y después.
 6. **Pasaporte:** vista pública imprimible.
+7. **Cuenca y Caudal:** cuenca aportante, historial de lluvias, simulador y zonas a inspeccionar, para el Lote 3. Todo resultado es estimación sin validar (no hay caudales medidos). Ver `data/hydrology/README.md`.
 
 Componente compartido obligatorio: `origin-badge`, que muestra VERIFICADO, DECLARADO o ESTIMADO con color y texto. Se usa en todo dato mostrado. El significado no puede depender solo del color.
 
