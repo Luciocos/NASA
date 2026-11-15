@@ -6,6 +6,15 @@ Bitácora de manejo de un lote agrícola, detectada por satélite.
 
 LoTestigo es una **prueba de concepto** desarrollada en 48 horas para el NASA Space Apps Challenge 2026 (sede Rosario). Usa datos abiertos de la NASA, con radar NISAR (banda L) como sensor principal, para registrar qué pasó en un lote: siembra, cosecha, remoción de suelo, cobertura, anegamiento, quema o cambio de uso. Sobre esa bitácora estima una huella de carbono y permite simular mejoras de manejo.
 
+### [▶ Ver la demo de 30 s (subtítulos en inglés)](https://lotestigo.1mj0t4h.workers.dev/landing/demo-en-subs.mp4) · [Abrir la app](https://lotestigo.1mj0t4h.workers.dev/)
+
+[![Demo de 30 s de LoTestigo: marcar un lote, ver los datos de la NASA, la huella, la fertilización, el margen, la cuenca y el pasaporte](assets/demo-video.jpg)](https://lotestigo.1mj0t4h.workers.dev/landing/demo-en-subs.mp4)
+
+- **App:** https://lotestigo.1mj0t4h.workers.dev/ (el lote de ejemplo se ve sin cuenta en [/ejemplos](https://lotestigo.1mj0t4h.workers.dev/ejemplos))
+- **Video de la demo (28 s, subtítulos en inglés):** https://lotestigo.1mj0t4h.workers.dev/landing/demo-en-subs.mp4
+
+La interfaz de la app está en inglés.
+
 ## Desafíos
 
 - **Desafío oficial:** visualización de datos de radar NISAR y detección de cambios en la superficie.
@@ -40,7 +49,7 @@ La app funciona sin conexión: un service worker guarda la interfaz y cada respu
 
 ## Cómo funciona
 
-![Cómo LoTestigo usa los datos abiertos de la NASA: qué datos, cómo llegan a la app y para qué le sirven al productor](assets/lotestigo-datos-nasa.png)
+![Cómo se conecta LoTestigo con los datos de la NASA: un camino offline para el radar y otro en vivo desde el celular](assets/VALIDATION_TECH.png)
 
 ```
 [Procesamiento satelital offline]  -->  JSON de eventos + imágenes PNG

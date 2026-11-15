@@ -6,11 +6,16 @@ The field's logbook, written by satellite.
 
 LoTestigo is a **proof of concept** built in 48 hours for the NASA Space Apps Challenge 2026 (Rosario, Argentina). It uses NASA open data, with NISAR L-band radar as the main sensor, to record what happened in a farm field: sowing, harvest, tillage, cover crop, flooding, burning or land-use change. On top of that logbook it estimates a carbon footprint and lets the grower simulate management improvements.
 
-- **Live demo:** https://lotestigo.1mj0t4h.workers.dev (the example field opens without an account at [/ejemplos](https://lotestigo.1mj0t4h.workers.dev/ejemplos))
+### [▶ Watch the 30-second demo (English subtitles)](https://lotestigo.1mj0t4h.workers.dev/landing/demo-en-subs.mp4) · [Open the app](https://lotestigo.1mj0t4h.workers.dev/)
+
+[![30-second demo of LoTestigo: mark a field, see NASA data, footprint, fertilization, margin, watershed and passport](assets/demo-video.jpg)](https://lotestigo.1mj0t4h.workers.dev/landing/demo-en-subs.mp4)
+
+- **App:** https://lotestigo.1mj0t4h.workers.dev/ (the example field opens without an account at [/ejemplos](https://lotestigo.1mj0t4h.workers.dev/ejemplos))
+- **Demo video (28 s, English subtitles):** https://lotestigo.1mj0t4h.workers.dev/landing/demo-en-subs.mp4
 - **Submission text and checklist:** [docs/SUBMISSION.md](docs/SUBMISSION.md)
 - **How every number is calculated (Spanish):** [INFO.md](INFO.md)
 
-The user interface is in Spanish (Argentina), the language of its intended users: small and mid-size soybean growers and the cooperative advisors who assist them. This document describes every screen in English.
+The app interface is in English. It is built for small and mid-size soybean growers and the cooperative advisors who assist them.
 
 ## Challenges
 

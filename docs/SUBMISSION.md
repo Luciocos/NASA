@@ -29,7 +29,7 @@ It matters because small and mid-size soybean growers are increasingly asked to 
 ## 3. Link to Project Demo
 
 ```
-[PUBLIC LINK TO THE 7-SLIDE DECK OR THE 30-SECOND VIDEO]
+https://lotestigo.1mj0t4h.workers.dev/landing/demo-en-subs.mp4
 ```
 
 Rules: at most 7 slides (title and intro slides included) or a video of 30 seconds or less. Exceeding either limit makes the project ineligible for Global Judging. Slides must be in English. A video may be spoken in Spanish only if it has English subtitles. The link must open without login, password or permission request. Content for both formats is in section 9.
@@ -82,7 +82,7 @@ We want a grower with 80 hectares to have a record of their field that they did 
 
 LIMITATIONS
 
-This is a 48-hour proof of concept. Detection accuracy has not been measured or validated in the field, and the detection threshold is a proposal by the team. The pipeline has detected a single event (sowing in the test field). Nine of the ten NISAR scenes used are provisional products. Emission factors are US averages and IPCC defaults, not local factors. Watershed and flow results are unvalidated simulations because there are no measured flows in the basin. The user interface is in Spanish (Argentina) because that is the language of its intended users; this description and the English README in the repository explain every screen.
+This is a 48-hour proof of concept. Detection accuracy has not been measured or validated in the field, and the detection threshold is a proposal by the team. The pipeline has detected a single event (sowing in the test field). Nine of the ten NISAR scenes used are provisional products. Emission factors are US averages and IPCC defaults, not local factors. Watershed and flow results are unvalidated simulations because there are no measured flows in the basin. The app interface is in English; the detailed guide to every screen and calculation in the repository (INFO.md) is in Spanish.
 
 TOOLS
 
@@ -229,4 +229,4 @@ The existing walkthrough video on the landing page cannot be used as is: it woul
 
 **Language**
 
-- [ ] Linked materials are in English. The repository has `README.en.md`. The app interface is in Spanish: this is stated in the project description.
+- [ ] Linked materials are in English. The repository has `README.en.md`. The app interface is in English.
