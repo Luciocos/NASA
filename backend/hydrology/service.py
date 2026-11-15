@@ -73,7 +73,7 @@ def _terrain_or_fail(lot: Lot) -> terrain_mod.Terrain:
     west, south, east, north = t.meta['grid']['bounds']
     if not box(west, south, east, north).contains(shape(lot.geometry)):
         raise NotAvailable(
-            'El análisis de Cuenca y Caudal está configurado para el Lote 3 (Casilda) y su '
+            'El análisis de Cuenca y Caudal está configurado para el lote de prueba (Casilda) y su '
             'entorno. Este lote queda fuera de la zona procesada.'
         )
     return t
