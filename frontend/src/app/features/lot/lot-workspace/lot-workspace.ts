@@ -33,6 +33,7 @@ import { FootprintPage } from '../../footprint/footprint-page/footprint-page';
 import { ProfitPage } from '../../profit/profit-page/profit-page';
 import { LotLog } from '../lot-log/lot-log';
 import { LotNasa } from '../lot-nasa/lot-nasa';
+import { LotPassport } from '../lot-passport/lot-passport';
 import { LotPractices } from '../lot-practices/lot-practices';
 import { LotLoadError, LotStatus } from './lot-status';
 
@@ -41,7 +42,7 @@ export type { LotTabChange } from '../../../shared/ui/lot-tabs/lot-tabs';
 
 /**
  * el espacio de un lote: su encabezado (nombre, superficie, lugar, la marca de ejemplo y el
- * menú ⋯) con la fila de pestañas, y el contenido de la pestaña abierta. sirve en el popup del
+ * menú ⋯ con el RENSPA) con la fila de pestañas, y el contenido de la pestaña abierta. sirve en el popup del
  * lote (`mode="dialog"`: el encabezado queda fijo y el contenido se desplaza adentro) y como
  * página en las rutas del lote (`mode="page"`)
  *
@@ -70,6 +71,7 @@ export type { LotTabChange } from '../../../shared/ui/lot-tabs/lot-tabs';
     FertilizationPage,
     WaterPage,
     ProfitPage,
+    LotPassport,
   ],
   host: { '[class.is-dialog]': 'dialog()' },
   template: `
@@ -141,6 +143,13 @@ export type { LotTabChange } from '../../../shared/ui/lot-tabs/lot-tabs';
           @case ('profit') {
             @defer (on immediate) {
               <app-profit-page [id]="lot.id" [lotDetail]="lot" [embedded]="true" />
+            } @placeholder {
+              <div class="skeleton tab-skeleton" aria-hidden="true"></div>
+            }
+          }
+          @case ('passport') {
+            @defer (on immediate) {
+              <app-lot-passport [lot]="lot" />
             } @placeholder {
               <div class="skeleton tab-skeleton" aria-hidden="true"></div>
             }

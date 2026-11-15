@@ -243,7 +243,7 @@ Prefijo `/api/`. JSON. Autenticación por token de DRF (`Authorization: Token <k
 | GET | `/lots/{id}/score/` | Dueño o ejemplo | Puntaje de sustentabilidad |
 | POST | `/lots/{id}/declaration/` | Dueño | El productor declara rendimiento e insumos |
 | POST | `/lots/{id}/land-use/` | Dueño | El productor declara con `unchanged` si el lote cambió de uso del suelo desde 2020 (`true` si no cambió). Queda como dato DECLARED con la fecha, pisa la declaración anterior y la ficha la muestra en `land_use_declaration` |
-| POST | `/lots/{id}/passport/` | Dueño | Genera enlace público |
+| POST | `/lots/{id}/passport/` | Dueño o ejemplo | Genera enlace público. En un ejemplo, cualquiera (sin cuenta) recibe siempre el mismo, sin vencimiento |
 | GET | `/passports/{token}/` | Pública | Vista pública de solo lectura |
 | GET | `/lots/{id}/hydrology/?lat=&lng=` | Dueño o ejemplo | Cuenca aportante al lote y al punto de salida, subcuencas, ingresos, salidas y sectores a inspeccionar. Solo para lotes dentro de la zona procesada (Lote 3, Casilda); fuera de ella, 404 con `available: false` |
 | GET | `/lots/{id}/hydrology/history/?lat=&lng=` | Dueño o ejemplo | Eventos de lluvia IMERG desde 2020 con escorrentía, volumen y caudal simulados |

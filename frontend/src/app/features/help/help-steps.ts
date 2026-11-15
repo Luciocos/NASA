@@ -3,7 +3,7 @@ import type { LotTabKey } from '../../shared/ui/lot-tabs/lot-tabs';
 /**
  * los pasos de la guía de ayuda, en el orden de la app: marcar el lote, abrirlo y sus pestañas
  * de izquierda a derecha, como en la fila del popup (así Siguiente lleva a la pestaña de al
- * lado), y al final el pasaporte. cuando el paso pasa en una pestaña del popup del lote, su
+ * lado), con el pasaporte al final. cuando el paso pasa en una pestaña del popup del lote, su
  * clave es la misma que esa sección en la dirección (?seccion=huella)
  */
 export type HelpStepKey =
@@ -88,8 +88,8 @@ export const HELP_STEPS: readonly HelpStep[] = [
     key: 'pasaporte',
     caption: 'Compartí el pasaporte del lote',
     description:
-      'Arriba a la derecha de la ficha, el menú de tres puntos tiene Compartir pasaporte, que copia un enlace para mandar.',
-    tab: null,
+      'Pestaña Pasaporte: el botón verde Compartir pasaporte copia un enlace para mandar.',
+    tab: 'passport',
   },
 ];
 

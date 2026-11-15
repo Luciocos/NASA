@@ -8,9 +8,9 @@ import { LotWorkspace } from '../lot-workspace/lot-workspace';
 
 /**
  * el espacio del lote como página, para los enlaces directos: /lotes/:id (Satélite),
- * /lotes/:id/bitacora y /lotes/:id/practicas. la pestaña sale de `data.tab` de la ruta. es el
- * mismo encabezado y las mismas pestañas que el popup de Mi campo, con la vuelta a Mi campo (o
- * a Ejemplos) y las pestañas como enlaces a sus rutas
+ * /lotes/:id/bitacora, /lotes/:id/practicas y /lotes/:id/pasaporte. la pestaña sale de
+ * `data.tab` de la ruta. es el mismo encabezado y las mismas pestañas que el popup de Mi campo,
+ * con la vuelta a Mi campo (o a Ejemplos) y las pestañas como enlaces a sus rutas
  */
 @Component({
   selector: 'app-lot-page',

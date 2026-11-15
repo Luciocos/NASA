@@ -47,7 +47,7 @@ describe('HELP_STEPS', () => {
       bitacora: 'log',
       marcar: null,
       abrir: null,
-      pasaporte: null,
+      pasaporte: 'passport',
     });
   });
 });
@@ -65,6 +65,7 @@ describe('helpStepIndex', () => {
     expect(helpStepIndex('log')).toBe(3);
     expect(helpStepIndex('practices')).toBe(4);
     expect(helpStepIndex('profit')).toBe(7);
+    expect(helpStepIndex('passport')).toBe(8);
   });
 
   it('sin paso, o con uno que no existe, arranca en el primero', () => {

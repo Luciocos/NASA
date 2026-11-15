@@ -67,9 +67,6 @@ text {
   fill: var(--surface);
   filter: drop-shadow(0 1px 1.5px rgb(21 33 26 / 22%));
 }
-.pressed {
-  fill: var(--paper-2);
-}
 
 /* rayitas y barras en lugar de textos y valores */
 .ink {
@@ -205,11 +202,6 @@ text {
   stroke-width: 1;
 }
 
-/* Pasaporte: la sombra del menú */
-.menu-shadow {
-  fill: rgb(21 33 26 / 10%);
-}
-
 /* íconos de la app, con el mismo trazo que app-icon */
 .ico {
   fill: none;
@@ -296,21 +288,9 @@ text {
   translate: 244px 149px;
 }
 .s1-ring1,
-.s9-ring1,
 .seq-ring1,
 .seq3-ring2 {
   opacity: 0;
-}
-.s9-hand {
-  translate: 234px 46px;
-}
-.s9-menu {
-  transform-box: fill-box;
-  transform-origin: 100% 0;
-}
-.s9-pressed {
-  transform-box: fill-box;
-  transform-origin: center;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -383,24 +363,6 @@ text {
   }
   .s1-save {
     animation: s1-save 7s linear 3;
-  }
-
-  /* pasaporte: ⋯ y después Compartir pasaporte */
-  .s9-hand {
-    animation: s9-hand 5s var(--ease-in-out) 3;
-  }
-  .s9-press {
-    animation: s9-press 5s linear 3;
-  }
-  .s9-menu,
-  .s9-pressed {
-    animation: s9-menu 5s var(--ease-out) 3;
-  }
-  .s9-ring1 {
-    animation: s9-ring1 5s linear 3;
-  }
-  .s9-ring2 {
-    animation: s9-ring2 5s linear 3;
   }
 }
 
@@ -744,79 +706,5 @@ text {
   64%,
   100% {
     opacity: 1;
-  }
-}
-
-@keyframes s9-hand {
-  0% {
-    translate: 221px 20px;
-    opacity: 0;
-  }
-  4%,
-  26% {
-    translate: 221px 20px;
-    opacity: 1;
-  }
-  40%,
-  94% {
-    translate: 234px 46px;
-    opacity: 1;
-  }
-  100% {
-    translate: 234px 46px;
-    opacity: 0;
-  }
-}
-@keyframes s9-press {
-  0%,
-  10%,
-  18%,
-  44%,
-  52%,
-  100% {
-    scale: 1;
-  }
-  14%,
-  48% {
-    scale: 0.86;
-  }
-}
-@keyframes s9-menu {
-  0%,
-  15% {
-    opacity: 0;
-    scale: 0.92;
-  }
-  22%,
-  95% {
-    opacity: 1;
-    scale: 1;
-  }
-  100% {
-    opacity: 0;
-    scale: 1;
-  }
-}
-@keyframes s9-ring1 {
-  0%,
-  18% {
-    opacity: 1;
-  }
-  22%,
-  100% {
-    opacity: 0;
-  }
-}
-@keyframes s9-ring2 {
-  0%,
-  38% {
-    opacity: 0;
-  }
-  42%,
-  95% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
   }
 }

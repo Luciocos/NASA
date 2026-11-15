@@ -96,15 +96,16 @@ describe('LotPage', () => {
     expect((log.componentInstance as LotLog).editable()).toBe(true);
   });
 
-  it('en un lote propio, el menú ⋯ ofrece compartir el pasaporte', async () => {
-    await setup('log');
-    await load(LOT);
+  it('en /lotes/:id/pasaporte abre la pestaña Pasaporte, también en un ejemplo', async () => {
+    await setup('passport');
+    await load(EXAMPLE);
 
-    expect(el().querySelector('app-more-menu button')?.getAttribute('aria-label')).toBe(
-      'Más opciones del lote',
-    );
-    expect(button('Compartir pasaporte')).toBeDefined();
-    expect(text()).not.toContain('solo lectura');
+    const current = el().querySelector('nav a[aria-current="page"]');
+    expect(current?.textContent?.trim()).toBe('Pasaporte');
+    expect(current?.getAttribute('href')).toBe('/lotes/1/pasaporte');
+    expect(el().querySelector('app-more-menu')).toBeNull();
+    button('Compartir pasaporte')?.click();
+    expect(http.expectOne('/api/lots/1/passport/').request.method).toBe('POST');
   });
 
   it('en un ejemplo avisa que es de solo lectura, vuelve a Ejemplos y no deja escribir', async () => {

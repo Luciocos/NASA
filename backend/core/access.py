@@ -6,6 +6,8 @@ Es el único lugar con estas reglas: lo usan las vistas de lots, events, carbon 
   cualquiera si es un ejemplo público.
 - Editar (corregir eventos, declarar, generar el pasaporte): solo el dueño. Un ejemplo público
   responde 403. Un lote ajeno responde 404, igual que uno que no existe, para no revelarlo.
+  La excepción es el pasaporte de un ejemplo: cualquiera lo comparte, y es siempre el mismo
+  (passports/views.py).
 """
 
 from django.contrib.auth.models import AnonymousUser, User

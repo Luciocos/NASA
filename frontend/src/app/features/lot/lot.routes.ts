@@ -28,4 +28,9 @@ export default [
     path: ':id/cuenca',
     loadComponent: () => import('../water/water-page').then((m) => m.WaterPage),
   },
+  {
+    path: ':id/pasaporte',
+    loadComponent: lotPage,
+    data: { tab: 'passport' satisfies LotTabKey },
+  },
 ] satisfies Routes;

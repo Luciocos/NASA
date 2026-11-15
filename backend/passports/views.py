@@ -3,8 +3,10 @@
 POST /api/lots/{id}/passport/
     Crea un pasaporte con token UUID. Cuerpo opcional: {"expires_in_days": 30}.
     Responde 201 con el token y la ruta pública del frontend (/pasaporte/<token>).
-    Solo el dueño del lote: exige token, un ejemplo público da 403 y un lote ajeno, 404
-    (core/access.py).
+    El dueño del lote genera uno nuevo cada vez: exige token y un lote ajeno da 404
+    (core/access.py). Un ejemplo público ya es visible para cualquiera, así que cualquiera
+    (con o sin cuenta) comparte su pasaporte: siempre el mismo, sin vencimiento, para no
+    sumar uno por visita. Ahí no se lee expires_in_days, y responde 200 si ya existía.
 
 GET /api/passports/{token}/
     Vista pública: lote, campañas, bitácora, resumen de huella y puntaje, fecha de
@@ -19,6 +21,7 @@ from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.exceptions import NotAuthenticated
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -43,8 +46,26 @@ def public_path(passport: Passport) -> str:
     return f'/pasaporte/{passport.token}'
 
 
+def link_payload(passport: Passport) -> dict[str, object]:
+    return {
+        'token': str(passport.token),
+        'lot': passport.lot_id,
+        'url': public_path(passport),
+        'created_at': passport.created_at,
+        'expires_at': passport.expires_at,
+    }
+
+
 class LotPassportCreate(APIView):
+    # Un ejemplo se comparte sin cuenta; para un lote propio, el token se pide abajo
+    permission_classes = [AllowAny]
+
     def post(self, request: Request, lot_id: int) -> Response:
+        example = Lot.objects.filter(pk=lot_id, public_example=True).first()
+        if example is not None:
+            return self.example_passport(example)
+        if not request.user.is_authenticated:
+            raise NotAuthenticated()
         lot = get_owned_lot(request, lot_id)
         days = request.data.get('expires_in_days') if isinstance(request.data, dict) else None
         expires_at = None
@@ -56,16 +77,16 @@ class LotPassportCreate(APIView):
                 )
             expires_at = timezone.now() + datetime.timedelta(days=days)
         passport = Passport.objects.create(lot=lot, expires_at=expires_at)
-        return Response(
-            {
-                'token': str(passport.token),
-                'lot': lot.pk,
-                'url': public_path(passport),
-                'created_at': passport.created_at,
-                'expires_at': passport.expires_at,
-            },
-            status=status.HTTP_201_CREATED,
-        )
+        return Response(link_payload(passport), status=status.HTTP_201_CREATED)
+
+    @staticmethod
+    def example_passport(lot: Lot) -> Response:
+        """El pasaporte del ejemplo: el primero sin vencimiento, o uno nuevo si no hay."""
+        passport = lot.passports.filter(expires_at__isnull=True).order_by('created_at').first()
+        if passport is not None:
+            return Response(link_payload(passport))
+        passport = Passport.objects.create(lot=lot)
+        return Response(link_payload(passport), status=status.HTTP_201_CREATED)
 
 
 class PassportPublic(APIView):

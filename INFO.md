@@ -47,8 +47,8 @@ Para empezar alcanza con marcar el perímetro del lote. Todo lo demás es opcion
    - Tocar una tarjeta de "Tus lotes" o un bloque de la maqueta marca el lote. La lupa de la tarjeta lo abre en el popup. En la maqueta también lo abre el doble clic sobre el bloque (o Enter con el lote marcado).
    - Con un lote elegido, la barra de la maqueta suma accesos a Datos (pestaña Satélite), Huella, Fertilización y Rentabilidad. Bitácora y Prácticas quedan en "Más". Cuenca y Caudal no tiene acceso en la barra: se abre desde el popup.
    - El botón NDVI pinta cada bloque con el verdor actual de MODIS. También hay una vista "Satélite".
-6. **El popup del lote.** En la compu ocupa casi toda la pantalla; en el celular, la pantalla entera. Arriba muestra el nombre, las hectáreas y el lugar. A la derecha están el botón "?" de ayuda (abre la guía en el paso de la pestaña abierta), ⋯ (solo en lotes propios) y la X. Se cierra con la X, con Escape, tocando afuera o con "atrás". Tiene siete pestañas: Satélite, Bitácora, Prácticas, Huella, Fertilización, Rentabilidad y Cuenca y Caudal (tabla de abajo). Cuenca y Caudal aparece en todos los lotes, pero solo tiene análisis en la zona procesada alrededor del Lote 3.
-7. **Compartir el pasaporte.** En ⋯, "Compartir pasaporte" crea un enlace público y lo copia ("Enlace copiado. Pegalo en un mensaje para compartir el pasaporte."). También ofrece "Abrir el pasaporte". Quien lo abre no necesita cuenta.
+6. **El popup del lote.** En la compu ocupa casi toda la pantalla; en el celular, la pantalla entera. Arriba muestra el nombre, las hectáreas y el lugar. A la derecha están el botón "?" de ayuda (abre la guía en el paso de la pestaña abierta), ⋯ (solo en lotes propios con RENSPA, que lo muestra) y la X. Se cierra con la X, con Escape, tocando afuera o con "atrás". Tiene ocho pestañas: Satélite, Bitácora, Prácticas, Huella, Fertilización, Rentabilidad, Cuenca y Caudal y Pasaporte (tabla de abajo). Cuenca y Caudal aparece en todos los lotes, pero solo tiene análisis en la zona procesada alrededor del Lote 3.
+7. **Compartir el pasaporte.** En la pestaña Pasaporte, el botón verde "Compartir pasaporte" crea un enlace público y lo copia ("Enlace copiado. Pegalo en un mensaje para compartirlo."). También ofrece "Abrir el pasaporte". Quien lo abre no necesita cuenta. Anda también en el lote de ejemplo.
 8. **Los lotes de ejemplo (`/ejemplos`).** Se ven sin cuenta. Son cuatro lotes reales de Casilda (Santa Fe), procesados con datos abiertos de la NASA. "Ver su historia" abre el lote en el mismo popup, de solo lectura.
 
 ### Qué se mira y qué se carga en cada pestaña
@@ -62,8 +62,9 @@ Para empezar alcanza con marcar el perímetro del lote. Todo lo demás es opcion
 | Fertilización | Los ambientes por NDVI (alto, medio y bajo) en un mapa recortado al borde del lote, con un degradado entre los cuadros de 250 m y una tarjeta por ambiente. Los píxeles mixtos se ven más claros. | "Armar dosis" (en la página, "Armar dosis variable"): una dosis de nitrógeno en kg N/ha por ambiente. | Solo en el dispositivo. |
 | Rentabilidad | El margen bruto por hectárea y del lote, "De dónde sale el margen" y "Ver detalle". | Precio del grano (US$/t), a mano o, en soja, con "Usar precio sugerido de Rofex"; rinde (t/ha, opcional) y, en "Costos y gastos", flete y comercialización (US$/t) y siete costos (US$/ha). | Solo en el dispositivo, con el precio de Rofex si se usó. |
 | Cuenca y Caudal | En la zona del Lote 3, cuatro secciones con mapa: A · Cuenca aportante, B · Historial hidrológico, C · Simulador de lluvia y D · Impacto sobre el lote. Fuera de esa zona, un aviso. | Nada que se guarde. Un clic en el mapa elige otro punto de salida. El simulador pide una lluvia (mm) y su duración (h). | No va a la base: lo calcula el servidor en cada pedido. |
+| Pasaporte | Qué muestra el enlace (campañas, bitácora, huella y puntaje) y el botón "Compartir pasaporte". | Nada: el botón genera el enlace y lo copia. | El pasaporte queda en la base (ver Pasaporte, más abajo). |
 
-En un lote de ejemplo se puede mirar todo y usar el Simulador de la Huella, Rentabilidad (también el precio de Rofex), la planilla de Fertilización y Cuenca y Caudal con su simulador. No se puede Confirmar, Corregir, cargar "Tus datos", declarar el uso del suelo ni la adhesión a BPA, ni compartir el pasaporte.
+En un lote de ejemplo se puede mirar todo y usar el Simulador de la Huella, Rentabilidad (también el precio de Rofex), la planilla de Fertilización y Cuenca y Caudal con su simulador. No se puede Confirmar, Corregir, cargar "Tus datos", declarar el uso del suelo ni la adhesión a BPA. Sí se puede compartir su pasaporte, que es siempre el mismo enlace.
 
 ### Antes de la demo
 
@@ -402,7 +403,7 @@ rinde de indiferencia (t/ha) = costos directos ÷ (precio − flete y comerciali
 
 ### Pasaporte
 
-- **Cómo se genera:** en un lote propio, ⋯ y "Compartir pasaporte". Crea un enlace `/pasaporte/<token>` con un código único (UUID) y lo copia. En un lote de ejemplo no se puede.
+- **Cómo se genera:** en la pestaña Pasaporte del popup, "Compartir pasaporte". En un lote propio crea un enlace `/pasaporte/<token>` con un código único (UUID) y lo copia. En un lote de ejemplo, cualquiera (con o sin cuenta) copia siempre el mismo enlace, sin vencimiento: el backend lo crea la primera vez y después lo reusa.
 - **Qué muestra:** nombre, localidad y provincia, hectáreas (calculadas del polígono), el RENSPA si se cargó, el polígono sobre un mapa de OpenStreetMap, las campañas con cultivo, rinde y origen, la bitácora (6 eventos en pantalla, todos al imprimir), la huella de la última campaña, el puntaje provisional con sus criterios, el descargo "Estimación con respaldo satelital. Prueba de concepto. Vista pública de solo lectura." y "Usa datos abiertos de la NASA."
 - **Qué no muestra:** quién es el dueño. Tampoco Rentabilidad ni Fertilización, que viven solo en el dispositivo.
 - **Siempre al día:** se recalcula cada vez que alguien lo abre. Si el productor carga datos nuevos, el mismo enlace los muestra. "Generado el" es el momento en que se abrió la página.

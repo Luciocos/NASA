@@ -30,9 +30,6 @@
     <!-- encabezado del popup del lote: nombre, lugar, el menú ⋯ y cerrar -->
     <rect class="ink" x="12" y="10" width="58" height="7" rx="3.5" />
     <rect class="soft" x="76" y="11.25" width="30" height="4.5" rx="2.25" />
-    @if (step() === 'pasaporte') {
-      <rect class="pressed s9-pressed" x="209" y="4.5" width="18" height="18" rx="5" />
-    }
     <path class="ico c-link" [attr.d]="icons.more" transform="translate(212 7.5) scale(0.5)" />
     <path class="ico c-link" [attr.d]="icons.close" transform="translate(234 7.5) scale(0.5)" />
     <line class="rule" x1="0" y1="40.5" x2="260" y2="40.5" />
@@ -559,39 +556,47 @@
     }
 
     @case ('pasaporte') {
-      <!-- la ficha de atrás, sin detalle -->
-      <rect class="card" x="8" y="46" width="160" height="124" rx="9" />
-      <rect class="ink" x="18" y="56" width="62" height="6" rx="3" />
-      @for (back of backCards; track back) {
-        <rect class="card-2" [attr.x]="back" y="70" width="44" height="40" rx="6" />
-        <rect class="ink" [attr.x]="back + 6" y="88" width="22" height="7" rx="2" />
-      }
-      <rect class="soft" x="18" y="122" width="140" height="3.5" rx="1.75" />
-      <rect class="soft" x="18" y="132" width="110" height="3.5" rx="1.75" />
-      <rect class="card" x="174" y="62" width="78" height="108" rx="9" />
-      <rect class="ink" x="182" y="72" width="40" height="5" rx="2.5" />
-      <rect class="soft" x="182" y="84" width="58" height="3" rx="1.5" />
-
-      <!-- el menú ⋯ abierto con Compartir pasaporte -->
-      <g class="s9-menu">
-        <rect class="menu-shadow" x="132" y="28" width="124" height="30" rx="7" />
-        <rect class="card" x="130" y="25" width="124" height="30" rx="7" />
-        <path
-          class="ico c-muted"
-          [attr.d]="icons.passport"
-          transform="translate(137 34) scale(0.5)"
+      <!-- el pasaporte: título, qué muestra el enlace y Compartir pasaporte -->
+      <rect class="card" x="8" y="46" width="244" height="98" rx="9" />
+      <rect class="field-50" x="18" y="56" width="13" height="13" rx="4" />
+      <path
+        class="ico c-green"
+        [attr.d]="icons.passport"
+        transform="translate(19.5 57.5) scale(0.42)"
+      />
+      <rect class="ink" x="36" y="60.5" width="70" height="5" rx="2.5" />
+      <rect class="soft" x="18" y="77" width="150" height="3.5" rx="1.75" />
+      @for (chip of includeChips; track chip.x) {
+        <rect
+          class="card-2"
+          [attr.x]="chip.x"
+          y="87"
+          [attr.width]="chip.width"
+          height="11"
+          rx="5.5"
         />
-        <text class="t-ink" x="152" y="42.9" font-size="8">Compartir pasaporte</text>
-      </g>
+        <rect
+          class="soft"
+          [attr.x]="chip.x + 6"
+          y="91"
+          [attr.width]="chip.width - 12"
+          height="3"
+          rx="1.5"
+        />
+      }
+      <rect class="green" x="18" y="108" width="124" height="19" rx="5" />
+      <path
+        class="ico c-white"
+        [attr.d]="icons.passport"
+        transform="translate(23 111.5) scale(0.5)"
+      />
+      <text class="t-white" x="37" y="120.6" font-size="9">Compartir pasaporte</text>
 
-      <g class="s9-ring1">
-        <circle class="ring-halo" cx="218" cy="13.5" r="11" />
-        <circle class="ring" cx="218" cy="13.5" r="11" />
+      <g class="seq-ring2">
+        <rect class="ring-halo" x="15" y="105" width="130" height="25" rx="8" />
+        <rect class="ring" x="15" y="105" width="130" height="25" rx="8" />
       </g>
-      <g class="s9-ring2">
-        <rect class="ring-halo" x="133" y="28" width="118" height="24" rx="6" />
-        <rect class="ring" x="133" y="28" width="118" height="24" rx="6" />
-      </g>
+      <rect class="flash seq-flash" x="12" y="102" width="136" height="31" rx="10" />
     }
   }
   <!-- la mano que toca: una sola, encima de todo. la punta del índice queda en el 0,0 y cada paso

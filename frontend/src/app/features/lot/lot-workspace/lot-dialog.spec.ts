@@ -366,14 +366,16 @@ describe('LotDialog', () => {
     ).toEqual(['DECLARED']);
   });
 
-  it('en un lote propio el menú ⋯ comparte el pasaporte; un ejemplo es de solo lectura', async () => {
+  it('el pasaporte es una pestaña, también en un ejemplo de solo lectura', async () => {
     await open();
     await flushLot();
-    expect(dialog().querySelector('app-more-menu button')?.getAttribute('aria-label')).toBe(
-      'Más opciones del lote',
-    );
-    expect(dialog().textContent).toContain('Compartir pasaporte');
+    expect(dialog().querySelector('app-more-menu')).toBeNull();
     expect(dialog().textContent).not.toContain('solo lectura');
+    tab('Pasaporte').click();
+    await fixture.whenStable();
+    expect(location.path()).toBe('/?lote=1&seccion=pasaporte');
+    expect(tab('Pasaporte').getAttribute('aria-selected')).toBe('true');
+    expect(button('Compartir pasaporte')).toBeDefined();
 
     closeButton().click();
     await settle();
@@ -383,6 +385,10 @@ describe('LotDialog', () => {
       'Lote de ejemplo · solo lectura',
     );
     expect(dialog().querySelector('app-more-menu')).toBeNull();
+    tab('Pasaporte').click();
+    await fixture.whenStable();
+    button('Compartir pasaporte')?.click();
+    expect(http.expectOne('/api/lots/2/passport/').request.method).toBe('POST');
     // en el popup no hay vuelta a Mi campo: se cierra
     expect(dialog().querySelector('a.back')).toBeNull();
     expect(closeButton()).toBeTruthy();

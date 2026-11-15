@@ -6,7 +6,6 @@ from django.contrib.auth.models import User
 from django.test import Client
 from django.utils import timezone
 
-from core.access import EXAMPLE_READ_ONLY
 from events.models import Event
 from lots.models import Campaign, Lot
 from passports.models import Passport
@@ -133,9 +132,33 @@ def test_solo_el_duenio_genera_el_pasaporte(
 
 
 @pytest.mark.django_db
-def test_pasaporte_de_un_ejemplo_da_403(owner_client: Client) -> None:
+def test_un_ejemplo_comparte_siempre_el_mismo_pasaporte(
+    client: Client, owner_client: Client
+) -> None:
     example = Lot.objects.create(name='Lote de ejemplo', geometry=SQUARE, public_example=True)
-    response = owner_client.post(f'/api/lots/{example.pk}/passport/')
-    assert response.status_code == 403
-    assert response.json() == {'detail': EXAMPLE_READ_ONLY}
-    assert not Passport.objects.exists()
+    # Sin cuenta: el ejemplo ya es público, así que su pasaporte también
+    first = client.post(f'/api/lots/{example.pk}/passport/')
+    assert first.status_code == 201
+    passport = Passport.objects.get()
+    assert first.json()['url'] == f'/pasaporte/{passport.token}'
+    assert first.json()['expires_at'] is None
+    # Con cuenta y pidiendo vencimiento: el mismo enlace, sin sumar otro
+    again = owner_client.post(
+        f'/api/lots/{example.pk}/passport/', {'expires_in_days': 1}, content_type='application/json'
+    )
+    assert again.status_code == 200
+    assert again.json()['token'] == str(passport.token)
+    assert Passport.objects.count() == 1
+    assert client.get(f'/api/passports/{passport.token}/').status_code == 200
+
+
+@pytest.mark.django_db
+def test_el_ejemplo_no_reusa_un_pasaporte_con_vencimiento(client: Client) -> None:
+    example = Lot.objects.create(name='Lote de ejemplo', geometry=SQUARE, public_example=True)
+    dated = Passport.objects.create(
+        lot=example, expires_at=timezone.now() + datetime.timedelta(days=1)
+    )
+    response = client.post(f'/api/lots/{example.pk}/passport/')
+    assert response.status_code == 201
+    assert response.json()['token'] != str(dated.token)
+    assert response.json()['expires_at'] is None

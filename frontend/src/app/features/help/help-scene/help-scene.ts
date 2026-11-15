@@ -19,8 +19,8 @@ interface SceneTab {
 }
 
 /**
- * las seis pestañas del popup del lote, con el rótulo y el ícono de la interfaz real (los de
- * lot-tabs). `labelWidth` es lo que ocupa el rótulo en negrita a 9 unidades, con un 10 % de
+ * las pestañas del popup del lote que tienen un paso en la guía (todas menos Cuenca y Caudal),
+ * con el rótulo y el ícono de la interfaz real (los de lot-tabs). `labelWidth` es lo que ocupa el rótulo en negrita a 9 unidades, con un 10 % de
  * aire para las fuentes del sistema de cada equipo
  */
 const TABS: readonly { key: LotTabKey; label: string; icon: string; labelWidth: number }[] = [
@@ -30,6 +30,7 @@ const TABS: readonly { key: LotTabKey; label: string; icon: string; labelWidth: 
   { key: 'footprint', label: 'Huella', icon: ICON_PATHS.footprint, labelWidth: 32 },
   { key: 'fertilization', label: 'Fertilización', icon: ICON_PATHS.leaf, labelWidth: 62 },
   { key: 'profit', label: 'Rentabilidad', icon: ICON_PATHS.coins, labelWidth: 63 },
+  { key: 'passport', label: 'Pasaporte', icon: ICON_PATHS.passport, labelWidth: 50 },
 ];
 /**
  * la mano que toca, con el índice para arriba, dibujada en una caja de 24: la punta del dedo está
@@ -75,6 +76,7 @@ const SEQUENCE_STEPS = new Set<HelpStepKey>([
   'rentabilidad',
   'fertilizacion',
   'bitacora',
+  'pasaporte',
 ]);
 
 /** una pestaña sin rótulo: solo su ícono */
@@ -159,8 +161,12 @@ export class HelpScene {
   protected readonly marginCards = [46, 110];
   /** Fertilización: los cuadros por ambiente sobre el lote */
   protected readonly zoneCells = ZONE_CELLS;
-  /** Pasaporte: las tarjetas de la ficha de atrás */
-  protected readonly backCards = [18, 70, 122];
+  /** Pasaporte: lo que muestra el enlace, en chips (dónde empieza cada uno y su largo) */
+  protected readonly includeChips = [
+    { x: 18, width: 40 },
+    { x: 62, width: 40 },
+    { x: 106, width: 56 },
+  ];
 
   protected readonly description = computed(
     () => HELP_STEPS.find((item) => item.key === this.step())?.description ?? '',
@@ -211,7 +217,7 @@ export class HelpScene {
         // la punta alta en Confirmar: así la mano entera entra en el dibujo
         return sequence([onTab, [228, 99], [89, 152]]);
       case 'pasaporte':
-        return { outer: 'hand s9-hand', inner: 'press s9-press', transform: null, style: null };
+        return sequence([onTab, [135, 120]]);
     }
   });
 

@@ -1,5 +1,5 @@
 import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
@@ -28,7 +28,6 @@ const LOT: LotDetail = {
 
 describe('LotTabs', () => {
   let fixture: ComponentFixture<LotTabs>;
-  let http: HttpTestingController;
   const el = () => fixture.nativeElement as HTMLElement;
   const tabs = () => [...el().querySelectorAll<HTMLAnchorElement>('nav a')];
   const back = () => el().querySelector<HTMLAnchorElement>('a.back');
@@ -45,7 +44,6 @@ describe('LotTabs', () => {
       ],
     }).compileComponents();
     await TestBed.inject(Router).navigateByUrl(url);
-    http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(LotTabs);
     fixture.componentRef.setInput('lotId', 7);
     for (const [name, value] of Object.entries(inputs)) fixture.componentRef.setInput(name, value);
@@ -62,6 +60,7 @@ describe('LotTabs', () => {
       'Fertilización',
       'Rentabilidad',
       'Cuenca y Caudal',
+      'Pasaporte',
     ]);
     expect(tabs().map((tab) => tab.getAttribute('href'))).toEqual([
       '/lotes/7',
@@ -71,6 +70,7 @@ describe('LotTabs', () => {
       '/lotes/7/fertilizacion',
       '/lotes/7/rentabilidad',
       '/lotes/7/cuenca',
+      '/lotes/7/pasaporte',
     ]);
     expect(el().querySelector('nav')?.getAttribute('aria-label')).toBe('Secciones del lote');
     // sin el lote, el encabezado es solo la vuelta: nada más arriba
@@ -93,15 +93,15 @@ describe('LotTabs', () => {
     expect(el().querySelector('[aria-current="page"]')?.textContent?.trim()).toBe('Satélite');
   });
 
-  it('con el lote, el encabezado muestra nombre, superficie, lugar y el menú del dueño', async () => {
+  it('con el lote, el encabezado muestra nombre, superficie y lugar, sin menú ⋯ ni pasaporte', async () => {
     await setup('/lotes/7', { lot: LOT });
     expect(el().querySelector('h1')?.textContent?.trim()).toBe('Lote de prueba');
     expect(el().querySelector('h1')?.id).toBe('lot-title-7');
     expect(el().querySelector('.meta')?.textContent?.trim()).toBe('24,9 ha · Casilda, Santa Fe');
     expect(el().textContent).not.toContain('solo lectura');
-    const menu = el().querySelector('app-more-menu button');
-    expect(menu?.getAttribute('aria-label')).toBe('Más opciones del lote');
-    expect(button('Compartir pasaporte')).toBeDefined();
+    // compartir el pasaporte es su pestaña: el menú ⋯ queda solo para el RENSPA
+    expect(el().querySelector('app-more-menu')).toBeNull();
+    expect(button('Compartir pasaporte')).toBeUndefined();
   });
 
   it('el RENSPA que cargó el productor va en el menú ⋯, con su origen, y no en el encabezado', async () => {
@@ -109,11 +109,16 @@ describe('LotTabs', () => {
     const note = el().querySelector('app-more-menu .menu-note');
     expect(note?.textContent).toContain('RENSPA 01.234.5.67890/00');
     expect(note?.querySelector('app-origin-badge')?.textContent).toContain('Declarado');
+    expect(el().querySelector('app-more-menu button')?.getAttribute('aria-label')).toBe(
+      'Más opciones del lote',
+    );
     expect(el().querySelector('.meta')?.textContent).not.toContain('RENSPA');
   });
 
   it('en un ejemplo vuelve a Ejemplos, avisa que es de solo lectura y no ofrece el menú', async () => {
-    await setup('/lotes/7', { lot: { ...LOT, is_example: true, owned: false } });
+    await setup('/lotes/7', {
+      lot: { ...LOT, is_example: true, owned: false, renspa: '01.234.5.67890/00' },
+    });
     expect(back()?.textContent?.trim()).toBe('Ejemplos');
     expect(back()?.getAttribute('href')).toBe('/ejemplos');
     expect(el().querySelector('.example')?.textContent).toContain('Lote de ejemplo · solo lectura');
@@ -146,6 +151,7 @@ describe('LotTabs', () => {
         'Fertilización',
         'Rentabilidad',
         'Cuenca y Caudal',
+        'Pasaporte',
       ]);
       const selected = roleTabs().filter((tab) => tab.getAttribute('aria-selected') === 'true');
       expect(selected.map((tab) => tab.textContent?.trim())).toEqual(['Huella']);
@@ -177,8 +183,8 @@ describe('LotTabs', () => {
       key('ArrowRight');
       key('ArrowLeft');
       key('End');
-      expect(picked).toEqual(['profit', 'log', 'water', 'water']);
-      expect(document.activeElement?.id).toBe('lot-tab-7-water');
+      expect(picked).toEqual(['profit', 'log', 'passport', 'passport']);
+      expect(document.activeElement?.id).toBe('lot-tab-7-passport');
 
       button('Cerrar')?.click();
       expect(closed).toBe(1);
@@ -220,83 +226,6 @@ describe('LotTabs', () => {
       } finally {
         vi.unstubAllGlobals();
       }
-    });
-  });
-
-  describe('compartir el pasaporte', () => {
-    const original = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
-    afterEach(() => {
-      if (original) Object.defineProperty(navigator, 'clipboard', original);
-      else delete (navigator as { clipboard?: unknown }).clipboard;
-    });
-
-    it('genera el enlace, lo copia y deja abrirlo', async () => {
-      const writeText = vi.fn().mockResolvedValue(undefined);
-      Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
-      await setup('/lotes/7', { lot: LOT });
-
-      button('Compartir pasaporte')?.click();
-      fixture.detectChanges();
-      expect(el().textContent).toContain('Generando el enlace…');
-      const request = http.expectOne('/api/lots/7/passport/');
-      expect(request.request.method).toBe('POST');
-      request.flush({
-        token: 'abc',
-        lot: 7,
-        url: '/pasaporte/abc',
-        created_at: '2026-11-15T10:00:00Z',
-        expires_at: null,
-      });
-      await fixture.whenStable();
-
-      expect(writeText).toHaveBeenCalledWith(new URL('/pasaporte/abc', document.baseURI).href);
-      expect(el().textContent).toContain('Enlace copiado');
-      const open = [...el().querySelectorAll('a')].find((a) =>
-        a.textContent?.includes('Abrir el pasaporte'),
-      );
-      expect(open?.getAttribute('href')).toBe('/pasaporte/abc');
-
-      // la segunda vez copia el mismo enlace, sin generar otro
-      button('Compartir pasaporte')?.click();
-      await fixture.whenStable();
-      http.expectNone('/api/lots/7/passport/');
-      expect(writeText).toHaveBeenCalledTimes(2);
-    });
-
-    it('si el navegador no deja copiar, muestra el enlace para copiarlo a mano', async () => {
-      const writeText = vi.fn().mockRejectedValue(new Error('sin permiso'));
-      Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
-      await setup('/lotes/7', { lot: LOT });
-
-      button('Compartir pasaporte')?.click();
-      http.expectOne('/api/lots/7/passport/').flush({
-        token: 'abc',
-        lot: 7,
-        url: '/pasaporte/abc',
-        created_at: '2026-11-15T10:00:00Z',
-        expires_at: null,
-      });
-      await fixture.whenStable();
-
-      expect(el().textContent).toContain('Copiá el enlace');
-      const field = el().querySelector<HTMLInputElement>('input.share__url');
-      expect(field?.value).toBe(new URL('/pasaporte/abc', document.baseURI).href);
-      expect(field?.readOnly).toBe(true);
-    });
-
-    it('si falla, lo dice y deja probar de nuevo', async () => {
-      await setup('/lotes/7', { lot: LOT });
-
-      button('Compartir pasaporte')?.click();
-      http
-        .expectOne('/api/lots/7/passport/')
-        .flush('', { status: 500, statusText: 'Server Error' });
-      await fixture.whenStable();
-
-      const alert = el().querySelector('[role="alert"]');
-      expect(alert?.textContent).toContain('No se pudo generar el pasaporte');
-      button('Compartir pasaporte')?.click();
-      http.expectOne('/api/lots/7/passport/');
     });
   });
 });

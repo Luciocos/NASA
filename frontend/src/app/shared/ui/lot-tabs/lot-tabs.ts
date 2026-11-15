@@ -5,7 +5,6 @@ import {
   DestroyRef,
   ElementRef,
   Injector,
-  PendingTasks,
   afterNextRender,
   booleanAttribute,
   computed,
@@ -18,9 +17,8 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Params, Router, RouterLink } from '@angular/router';
-import { filter, firstValueFrom, map } from 'rxjs';
+import { filter, map } from 'rxjs';
 
-import { Api } from '../../../core/api';
 import { formatHectares } from '../../../core/insights';
 import { LotDetail, LotSummary } from '../../../core/models';
 import { OriginBadge } from '../../origin-badge/origin-badge';
@@ -30,7 +28,14 @@ import { HelpButton } from '../../../features/help/help-button/help-button';
 import { MoreMenu } from '../more-menu/more-menu';
 
 export type LotTabKey =
-  'satellite' | 'log' | 'practices' | 'footprint' | 'fertilization' | 'profit' | 'water';
+  | 'satellite'
+  | 'log'
+  | 'practices'
+  | 'footprint'
+  | 'fertilization'
+  | 'profit'
+  | 'water'
+  | 'passport';
 
 /** otra pestaña del lote pedida desde su contenido: la clave y, si hace falta, la consulta de su vista */
 export interface LotTabChange {
@@ -62,6 +67,7 @@ export function lotTabs(lotId: number): LotTab[] {
     },
     { key: 'profit', label: 'Rentabilidad', icon: 'coins', path: `/lotes/${lotId}/rentabilidad` },
     { key: 'water', label: 'Cuenca y Caudal', icon: 'water', path: `/lotes/${lotId}/cuenca` },
+    { key: 'passport', label: 'Pasaporte', icon: 'passport', path: `/lotes/${lotId}/pasaporte` },
   ];
 }
 
@@ -77,6 +83,7 @@ export const LOT_TAB_SLUGS: Record<LotTabKey, string> = {
   fertilization: 'fertilizacion',
   profit: 'rentabilidad',
   water: 'cuenca',
+  passport: 'pasaporte',
 };
 
 /** la pestaña de un nombre de la dirección; cualquier otro valor abre Satélite */
@@ -91,11 +98,6 @@ export function lotTabFromPath(path: string, lotId: number): LotTabKey | null {
   return lotTabs(lotId).find((tab) => tab.path === clean)?.key ?? null;
 }
 
-/** lo que pasó al compartir el pasaporte: copiado, para copiar a mano o con error */
-type ShareState =
-  | { status: 'copied' | 'manual'; url: string; path: string }
-  | { status: 'error'; url?: undefined; path?: undefined };
-
 /** la ruta sin consulta, fragmento, parámetros de matriz ni barra final */
 function pathOf(url: string): string {
   return url.split(/[?#;]/)[0].replace(/\/+$/, '') || '/';
@@ -103,9 +105,9 @@ function pathOf(url: string): string {
 
 /**
  * encabezado y pestañas de un lote, iguales en todas sus pantallas: el nombre con su superficie
- * y su lugar, la marca de ejemplo de solo lectura y un menú ⋯ con lo poco frecuente (en un lote
- * propio, compartir el pasaporte). debajo, una sola fila de pestañas: Satélite, Bitácora,
- * Prácticas, Huella, Fertilización, Rentabilidad y Cuenca y Caudal
+ * y su lugar, la marca de ejemplo de solo lectura y, en un lote propio con RENSPA, un menú ⋯
+ * que lo muestra. debajo, una sola fila de pestañas: Satélite, Bitácora, Prácticas, Huella,
+ * Fertilización, Rentabilidad, Cuenca y Caudal y Pasaporte
  *
  * dos modos:
  * - `page` (el de siempre, en las rutas del lote): suma la vuelta a Mi campo (o a Ejemplos) y
@@ -159,54 +161,12 @@ function pathOf(url: string): string {
           </div>
           <!-- la guía con imágenes para cargar datos, abierta en el paso de la pestaña -->
           <app-help-button class="help" [step]="active()" />
-          @if (canShare()) {
+          @if (renspa(); as renspaText) {
             <app-more-menu class="more" label="Más opciones del lote">
-              @if (l.renspa) {
-                <!-- lo cargó el productor al marcar el lote: a mano, sin sumarlo al encabezado -->
-                <p class="menu-note">
-                  RENSPA {{ l.renspa }} <app-origin-badge origin="DECLARED" />
-                </p>
-              }
-              <button
-                type="button"
-                class="menu-item"
-                data-keep-open
-                [attr.aria-disabled]="sharing() || null"
-                (click)="sharePassport()"
-              >
-                <app-icon name="passport" />
-                {{ sharing() ? 'Generando el enlace…' : 'Compartir pasaporte' }}
-              </button>
-              <div class="share" aria-live="polite">
-                @if (share(); as s) {
-                  @if (s.status === 'error') {
-                    <p class="share__msg share__msg--error" role="alert">
-                      <app-icon name="alert" /> No se pudo generar el pasaporte. Probá de nuevo en
-                      un rato.
-                    </p>
-                  } @else {
-                    @if (s.status === 'copied') {
-                      <p class="share__msg">
-                        <app-icon name="check" /> Enlace copiado. Pegalo en un mensaje para
-                        compartir el pasaporte.
-                      </p>
-                    } @else {
-                      <p class="share__msg">No se pudo copiar solo. Copiá el enlace:</p>
-                      <input
-                        class="share__url"
-                        type="text"
-                        readonly
-                        aria-label="Enlace del pasaporte"
-                        [value]="s.url"
-                        (focus)="selectAll($event)"
-                      />
-                    }
-                    <a class="menu-item" [routerLink]="s.path"
-                      ><app-icon name="link" /> Abrir el pasaporte</a
-                    >
-                  }
-                }
-              </div>
+              <!-- lo cargó el productor al marcar el lote: a mano, sin sumarlo al encabezado -->
+              <p class="menu-note">
+                RENSPA {{ renspaText }} <app-origin-badge origin="DECLARED" />
+              </p>
             </app-more-menu>
           }
           @if (dialog()) {
@@ -387,58 +347,16 @@ function pathOf(url: string): string {
       margin-left: calc(-1 * var(--space-3));
     }
 
-    /* el resultado de compartir queda en el mismo menú, donde se pidió */
-    .share:empty {
-      display: none;
-    }
-    .share {
-      display: grid;
-      gap: var(--space-2);
-      padding: var(--space-2) var(--space-1) 0;
-      border-top: 1px solid var(--line);
-      margin-top: var(--space-1);
-    }
-    .share__msg {
-      --icon-size: 1rem;
-      display: flex;
-      gap: var(--space-2);
-      align-items: flex-start;
-      margin: 0;
-      padding: 0 var(--space-2);
-      color: var(--ink-2);
-      font-size: var(--text-sm);
-      line-height: 1.4;
-    }
     .menu-note {
       display: flex;
       flex-wrap: wrap;
       gap: var(--space-1) var(--space-2);
       align-items: center;
       margin: 0;
-      padding: var(--space-1) var(--space-2) var(--space-2);
-      border-bottom: 1px solid var(--line);
+      padding: var(--space-1) var(--space-2);
       color: var(--ink-2);
       font-size: var(--text-sm);
       overflow-wrap: anywhere;
-    }
-    .share__msg app-icon {
-      flex: none;
-      margin-top: 0.125rem;
-      color: var(--ok);
-    }
-    .share__msg--error,
-    .share__msg--error app-icon {
-      color: var(--danger);
-    }
-    .share__url {
-      width: 100%;
-      min-height: var(--tap);
-      padding: 0 var(--space-3);
-      border: 1px solid var(--line-control);
-      border-radius: var(--radius-sm);
-      background: var(--surface-2);
-      color: var(--ink);
-      font-size: var(--text-sm);
     }
 
     /* fila de pestañas: raya fina abajo y la activa con su raya verde */
@@ -606,12 +524,9 @@ function pathOf(url: string): string {
   `,
 })
 export class LotTabs {
-  private readonly api = inject(Api);
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
-  private readonly pendingTasks = inject(PendingTasks);
-
   private readonly injector = inject(Injector);
 
   readonly lotId = input.required<number>();
@@ -640,8 +555,11 @@ export class LotTabs {
     const place = [lot.locality, lot.province].filter(Boolean).join(', ');
     return [formatHectares(lot.area_ha), place].filter(Boolean).join(' · ');
   });
-  /** solo el dueño comparte el pasaporte; un ejemplo no es de nadie */
-  protected readonly canShare = computed(() => this.lot()?.owned === true && !this.isExample());
+  /** el RENSPA que cargó el dueño, para el menú ⋯; un ejemplo no es de nadie */
+  protected readonly renspa = computed(() => {
+    const lot = this.lot();
+    return lot?.owned === true && !this.isExample() ? lot.renspa || null : null;
+  });
 
   protected readonly tabs = computed(() => lotTabs(this.lotId()));
   private readonly path = toSignal(
@@ -668,9 +586,6 @@ export class LotTabs {
   protected readonly stuck = signal(false);
   protected readonly fadeStart = signal(false);
   protected readonly fadeEnd = signal(false);
-
-  protected readonly sharing = signal(false);
-  protected readonly share = signal<ShareState | null>(null);
 
   constructor() {
     const destroyRef = inject(DestroyRef);
@@ -763,66 +678,5 @@ export class LotTabs {
     const tab = track.querySelector<HTMLElement>('[aria-current="page"], [aria-selected="true"]');
     if (!tab || track.scrollWidth <= track.clientWidth) return;
     track.scrollLeft = Math.max(0, tab.offsetLeft - (track.clientWidth - tab.offsetWidth) / 2);
-  }
-
-  /**
-   * genera el enlace público del pasaporte y lo copia. el pedido al portapapeles sale en el
-   * mismo toque (Safari lo exige) y el texto llega cuando responde el backend. si el navegador
-   * no deja copiar, el enlace queda a la vista para copiarlo a mano
-   */
-  protected sharePassport(): void {
-    const lot = this.lot();
-    if (!lot || !this.canShare() || this.sharing()) return;
-    // la app no está estable hasta que termina: las pruebas y el render esperan el resultado
-    const done = this.pendingTasks.add();
-    const known = this.share();
-    if (known?.url) {
-      const { url, path } = known;
-      void this.copy(Promise.resolve(url))
-        .then((copied) => this.share.set({ status: copied ? 'copied' : 'manual', url, path }))
-        .finally(done);
-      return;
-    }
-    this.sharing.set(true);
-    this.share.set(null);
-    const link = firstValueFrom(this.api.createPassport(lot.id)).then((passport) => ({
-      path: passport.url,
-      url: new URL(passport.url, this.document.baseURI).href,
-    }));
-    const url = link.then((value) => value.url);
-    // si el pedido falla, el error se informa una sola vez, abajo
-    url.catch(() => undefined);
-    const copied = this.copy(url);
-    link
-      .then(
-        async (value) => this.share.set({ status: (await copied) ? 'copied' : 'manual', ...value }),
-        () => this.share.set({ status: 'error' }),
-      )
-      .finally(() => {
-        this.sharing.set(false);
-        done();
-      });
-  }
-
-  protected selectAll(event: Event): void {
-    (event.target as HTMLInputElement | null)?.select();
-  }
-
-  private async copy(text: Promise<string>): Promise<boolean> {
-    const clipboard = this.document.defaultView?.navigator.clipboard;
-    if (!clipboard) return false;
-    try {
-      if (typeof ClipboardItem === 'undefined' || !clipboard.write) throw new Error('sin write');
-      const blob = text.then((value) => new Blob([value], { type: 'text/plain' }));
-      await clipboard.write([new ClipboardItem({ 'text/plain': blob })]);
-      return true;
-    } catch {
-      try {
-        await clipboard.writeText(await text);
-        return true;
-      } catch {
-        return false;
-      }
-    }
   }
 }
