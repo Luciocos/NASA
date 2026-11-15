@@ -1,0 +1,61 @@
+{
+  "lot": "Lote 3",
+  "generated_at": "2026-11-15T14:38:32+00:00",
+  "grid": {
+    "rows": 648,
+    "cols": 720,
+    "bounds": [
+      -61.289076170257424,
+      -33.17402355180329,
+      -61.08907617025742,
+      -32.99402355180329
+    ],
+    "cell_deg": [
+      0.0002777777777777778,
+      0.0002777777777777778
+    ],
+    "crs": "EPSG:4326"
+  },
+  "sources": {
+    "dem": {
+      "name": "Copernicus DEM GLO-30 (DSM)",
+      "provider": "ESA / Copernicus, distribuido por AWS Open Data",
+      "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_<tile>_DEM/Copernicus_DSM_COG_10_<tile>_DEM.tif",
+      "note": "Modelo digital de superficie: incluye árboles, edificios y terraplenes."
+    },
+    "osm": {
+      "name": "OpenStreetMap, cursos de agua mapeados",
+      "kinds": [
+        "canal",
+        "ditch",
+        "drain",
+        "stream",
+        "river"
+      ],
+      "count": 72,
+      "downloaded": "2026-11-15",
+      "license": "ODbL"
+    }
+  },
+  "parameters": {
+    "burn_m": 3.0,
+    "epsilon_m": 0.0001,
+    "min_tan_slope": 0.001,
+    "note": "Criterios de modelado, no mediciones. burn_m solo fuerza que el flujo siga los cursos de OSM."
+  },
+  "methods": {
+    "fill": "Priority-Flood+epsilon (Barnes, Lehman y Mulla 2014)",
+    "flow_direction": "D8 por máxima pendiente (O'Callaghan y Mark 1984)",
+    "twi": "ln(a / tan b) (Beven y Kirkby 1979), pendiente sobre DEM suavizado 3x3"
+  },
+  "layers": {
+    "flow_accumulation": "flow_accumulation.png",
+    "twi": "twi.png",
+    "depressions": "depressions.png"
+  },
+  "stats": {
+    "dem_min_m": 48.9,
+    "dem_max_m": 106.27,
+    "burned_cells": 3002
+  }
+}

@@ -3,7 +3,7 @@
   "private": true,
   "description": "Despliegue de LoTestigo: frontend en Cloudflare Workers y backend en Railway",
   "scripts": {
-    "build": "npm --prefix frontend ci && npm --prefix frontend run build && node -e \"require('node:fs').cpSync('data/evidence', 'frontend/dist/frontend/browser/media/evidence', { recursive: true, filter: (path) => !path.endsWith('.gitkeep') })\"",
+    "build": "npm --prefix frontend ci && npm --prefix frontend run build && node -e \"require('node:fs').cpSync('data/evidence', 'frontend/dist/frontend/browser/media/evidence', { recursive: true, filter: (path) => !path.endsWith('.gitkeep') }); require('node:fs').cpSync('data/hydrology', 'frontend/dist/frontend/browser/media/hydrology', { recursive: true, filter: (path) => !/\\.(npz|json|geojson)$/.test(path) })\"",
     "deploy": "npm run build && npx --yes wrangler@4.155.0 deploy",
     "deploy:backend": "npx --yes @railway/cli@5.71.0 up --project 873a9e75-eb2a-42fa-bb44-76f8cc157ac2 --environment production --service backend --ci"
   }

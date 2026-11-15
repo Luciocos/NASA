@@ -52,7 +52,7 @@ describe('LotTabs', () => {
     await fixture.whenStable();
   }
 
-  it('lleva a las seis pestañas del lote, en una sola fila', async () => {
+  it('lleva a las pestañas del lote, en una sola fila', async () => {
     await setup();
     expect(tabs().map((tab) => tab.textContent?.trim())).toEqual([
       'Satélite',
@@ -61,6 +61,7 @@ describe('LotTabs', () => {
       'Huella',
       'Fertilización',
       'Rentabilidad',
+      'Cuenca y Caudal',
     ]);
     expect(tabs().map((tab) => tab.getAttribute('href'))).toEqual([
       '/lotes/7',
@@ -69,6 +70,7 @@ describe('LotTabs', () => {
       '/huella/7',
       '/lotes/7/fertilizacion',
       '/lotes/7/rentabilidad',
+      '/lotes/7/cuenca',
     ]);
     expect(el().querySelector('nav')?.getAttribute('aria-label')).toBe('Secciones del lote');
     // sin el lote, el encabezado es solo la vuelta: nada más arriba
@@ -143,6 +145,7 @@ describe('LotTabs', () => {
         'Huella',
         'Fertilización',
         'Rentabilidad',
+        'Cuenca y Caudal',
       ]);
       const selected = roleTabs().filter((tab) => tab.getAttribute('aria-selected') === 'true');
       expect(selected.map((tab) => tab.textContent?.trim())).toEqual(['Huella']);
@@ -174,8 +177,8 @@ describe('LotTabs', () => {
       key('ArrowRight');
       key('ArrowLeft');
       key('End');
-      expect(picked).toEqual(['profit', 'log', 'profit', 'profit']);
-      expect(document.activeElement?.id).toBe('lot-tab-7-profit');
+      expect(picked).toEqual(['profit', 'log', 'water', 'water']);
+      expect(document.activeElement?.id).toBe('lot-tab-7-water');
 
       button('Cerrar')?.click();
       expect(closed).toBe(1);

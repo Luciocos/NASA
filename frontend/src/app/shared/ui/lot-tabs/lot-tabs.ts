@@ -29,7 +29,7 @@ import { IconName } from '../icon/icons';
 import { MoreMenu } from '../more-menu/more-menu';
 
 export type LotTabKey =
-  'satellite' | 'log' | 'practices' | 'footprint' | 'fertilization' | 'profit';
+  'satellite' | 'log' | 'practices' | 'footprint' | 'fertilization' | 'profit' | 'water';
 
 /** otra pestaña del lote pedida desde su contenido: la clave y, si hace falta, la consulta de su vista */
 export interface LotTabChange {
@@ -46,7 +46,7 @@ export interface LotTab {
   path: string;
 }
 
-/** las seis pestañas del lote, en el orden de la fila */
+/** las pestañas del lote, en el orden de la fila */
 export function lotTabs(lotId: number): LotTab[] {
   return [
     { key: 'satellite', label: 'Satélite', icon: 'satellite', path: `/lotes/${lotId}` },
@@ -60,6 +60,7 @@ export function lotTabs(lotId: number): LotTab[] {
       path: `/lotes/${lotId}/fertilizacion`,
     },
     { key: 'profit', label: 'Rentabilidad', icon: 'coins', path: `/lotes/${lotId}/rentabilidad` },
+    { key: 'water', label: 'Cuenca y Caudal', icon: 'water', path: `/lotes/${lotId}/cuenca` },
   ];
 }
 
@@ -74,6 +75,7 @@ export const LOT_TAB_SLUGS: Record<LotTabKey, string> = {
   footprint: 'huella',
   fertilization: 'fertilizacion',
   profit: 'rentabilidad',
+  water: 'cuenca',
 };
 
 /** la pestaña de un nombre de la dirección; cualquier otro valor abre Satélite */
@@ -102,7 +104,7 @@ function pathOf(url: string): string {
  * encabezado y pestañas de un lote, iguales en todas sus pantallas: el nombre con su superficie
  * y su lugar, la marca de ejemplo de solo lectura y un menú ⋯ con lo poco frecuente (en un lote
  * propio, compartir el pasaporte). debajo, una sola fila de pestañas: Satélite, Bitácora,
- * Prácticas, Huella, Fertilización y Rentabilidad
+ * Prácticas, Huella, Fertilización, Rentabilidad y Cuenca y Caudal
  *
  * dos modos:
  * - `page` (el de siempre, en las rutas del lote): suma la vuelta a Mi campo (o a Ejemplos) y
