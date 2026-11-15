@@ -134,6 +134,8 @@ lotestigo/
 - `created_at`
 - `owner` (FK al usuario, opcional): el productor que lo marcó. Solo él lo ve y lo edita
 - `public_example` (bool): lote del pipeline que cualquiera ve y nadie edita. No tiene dueño
+- `land_use_unchanged` (bool, opcional): lo que declara el productor sobre el uso del suelo desde 2020. `true` si no cambió, `false` si cambió y `null` si no lo declaró. Es un dato DECLARED
+- `land_use_declared_at` (fecha y hora, opcional): cuándo lo declaró. Declarar otra vez pisa la declaración anterior
 
 **Campaign**
 - `lot` (FK), `label` (por ejemplo "2025/26"), `crop` (SOY, CORN, WHEAT, OTHER)
@@ -237,6 +239,7 @@ Prefijo `/api/`. JSON. Autenticación por token de DRF (`Authorization: Token <k
 | POST | `/lots/{id}/simulate/` | Dueño o ejemplo | Simulador (no guarda nada) |
 | GET | `/lots/{id}/score/` | Dueño o ejemplo | Puntaje de sustentabilidad |
 | POST | `/lots/{id}/declaration/` | Dueño | El productor declara rendimiento e insumos |
+| POST | `/lots/{id}/land-use/` | Dueño | El productor declara con `unchanged` si el lote cambió de uso del suelo desde 2020 (`true` si no cambió). Queda como dato DECLARED con la fecha, pisa la declaración anterior y la ficha la muestra en `land_use_declaration` |
 | POST | `/lots/{id}/passport/` | Dueño | Genera enlace público |
 | GET | `/passports/{token}/` | Pública | Vista pública de solo lectura |
 

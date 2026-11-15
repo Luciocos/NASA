@@ -79,6 +79,21 @@ describe('LandingPage', () => {
     expect(el().querySelector('a[href="/ingresar"]')).toBeNull();
   });
 
+  it('la marca muestra las tres capas, nítidas en 2x y 3x, sin repetir el nombre ni saltar al cargar', async () => {
+    await setup();
+
+    const brand = el().querySelector<HTMLAnchorElement>('.bar .brand')!;
+    expect(brand.textContent?.trim()).toBe('LoTestigo');
+    expect(brand.querySelector('svg')).toBeNull();
+    const logo = brand.querySelector<HTMLImageElement>('img.brand-logo')!;
+    expect(logo.getAttribute('src')).toBe('/lotestigo-mark-32.png');
+    expect(logo.getAttribute('srcset')).toBe(
+      '/lotestigo-mark-32.png 1x, /lotestigo-mark-64.png 2x, /lotestigo-mark-96.png 3x',
+    );
+    expect(logo.getAttribute('alt')).toBe('');
+    expect([logo.getAttribute('width'), logo.getAttribute('height')]).toEqual(['28', '32']);
+  });
+
   it('la imagen satelital dice qué es, de cuándo y de dónde sale, sin saltos al cargar', async () => {
     await setup();
 

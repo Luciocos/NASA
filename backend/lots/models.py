@@ -35,6 +35,12 @@ class Lot(models.Model):
     )
     # Lotes del pipeline (import_events): cualquiera los ve, nadie los edita
     public_example = models.BooleanField(default=False)
+    # Lo que declara el productor sobre el uso del suelo desde 2020, con origen DECLARED:
+    # True si no cambió, False si cambió y None si no lo declaró. Lo guarda
+    # POST /api/lots/{id}/land-use/, siempre junto con la fecha.
+    land_use_unchanged = models.BooleanField(null=True, blank=True)
+    # Cuándo lo declaró. Declarar otra vez pisa la declaración anterior y esta fecha.
+    land_use_declared_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['name']

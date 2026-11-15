@@ -106,9 +106,28 @@ export interface CampaignDetail extends Campaign {
   crop_label: string;
 }
 
+/**
+ * Lo que el productor declaró sobre el uso del suelo de su lote desde 2020. Es la respuesta de
+ * POST /api/lots/{id}/land-use/ y el campo land_use_declaration de la ficha. Declarar otra vez
+ * pisa la declaración anterior y su fecha.
+ */
+export interface LandUseDeclaration {
+  /** true: declara que el lote no cambió de uso desde 2020. false: declara que sí cambió. */
+  unchanged: boolean;
+  /** Fecha y hora de la declaración, en ISO 8601 con zona horaria. */
+  declared_at: string;
+  origin: 'DECLARED';
+}
+
 /** GET /api/lots/{id}/. */
 export interface LotDetail extends LotSummary {
   campaigns: CampaignDetail[];
+  /**
+   * null mientras el productor no declare (los lotes de ejemplo no se pueden declarar). El
+   * backend la manda siempre; es opcional en el tipo para que un lote armado sin ella cuente
+   * como sin declarar.
+   */
+  land_use_declaration?: LandUseDeclaration | null;
 }
 
 /** Cuerpo de POST /api/lots/. El área la calcula el backend. */

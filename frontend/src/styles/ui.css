@@ -956,7 +956,8 @@
 
 /* sumado con la landing y el acceso: la marca y el enlace chico con flecha, compartidos */
 @layer ui {
-  /* marca de la app: logo isométrico y nombre. la usan la barra del marco y la de la landing */
+  /* marca de la app: las tres capas (azul, blanca y verde) y el nombre. la usan la barra del marco
+     y la de la landing */
   .brand {
     display: inline-flex;
     align-items: center;
@@ -970,38 +971,14 @@
     text-decoration: none;
   }
 
+  /* el dibujo es un png de 28x32 con srcset 1x, 2x y 3x (lotestigo-mark-*.png en public). tamaño
+     fijo, igual en la compu y en el celular: cada píxel del png cae en uno de la pantalla y se ve
+     nítido */
   .brand-logo {
+    display: block;
     flex: none;
-    width: 2rem;
+    width: 1.75rem;
     height: 2rem;
-  }
-
-  .brand-logo__top {
-    fill: var(--field-500);
-  }
-
-  .brand-logo__left {
-    fill: var(--soil-700);
-  }
-
-  .brand-logo__right {
-    fill: var(--soil-500);
-  }
-
-  .brand-logo__rows,
-  .brand-logo__pole {
-    fill: none;
-    stroke: var(--field-300);
-    stroke-width: 1.3;
-    stroke-linecap: round;
-  }
-
-  .brand-logo__pole {
-    stroke: var(--ink);
-  }
-
-  .brand-logo__flag {
-    fill: var(--accent);
   }
 
   /* ícono en un círculo verde suave: encabeza la tarjeta de ingreso, la invitación a ingresar y

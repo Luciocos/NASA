@@ -10,6 +10,7 @@ import {
   EventReview,
   Footprint,
   Health,
+  LandUseDeclaration,
   LotCreate,
   LotDetail,
   LotSummary,
@@ -47,6 +48,14 @@ export class Api {
 
   createLot(body: LotCreate): Observable<LotDetail> {
     return this.http.post<LotDetail>('/api/lots/', body);
+  }
+
+  /**
+   * El dueño declara si el lote cambió de uso del suelo desde 2020 (unchanged true: no cambió).
+   * Queda como dato DECLARED y pisa la declaración anterior. Un lote de ejemplo responde 403.
+   */
+  declareLandUse(lotId: number, unchanged: boolean): Observable<LandUseDeclaration> {
+    return this.http.post<LandUseDeclaration>(`/api/lots/${lotId}/land-use/`, { unchanged });
   }
 
   lotEvents(lotId: number, filters: EventFilters = {}): Observable<EventLog> {

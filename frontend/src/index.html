@@ -5,9 +5,13 @@
     <title>LoTestigo</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#0b1622" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <link rel="icon" type="image/svg+xml" href="icon.svg" />
+    <!-- blanco como la barra de arriba: el navegador del celular sigue a la app sin un corte -->
+    <meta name="theme-color" content="#ffffff" />
+    <!-- las tres capas de LoTestigo: el .ico trae 16, 32 y 48 px; el png de 32, para quien lo prefiera -->
+    <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" type="image/png" href="favicon-32.png" sizes="32x32" />
+    <!-- con fondo claro: iOS pone negro donde hay transparencia -->
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <link rel="manifest" href="manifest.webmanifest" />
   </head>
   <body>
