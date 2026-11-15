@@ -1,0 +1,44 @@
+.col {
+  fill: var(--tone);
+}
+
+/* las tramas son más claras que el relleno liso: el contorno les marca el borde */
+.col--textured {
+  stroke: var(--tone);
+}
+
+.dim {
+  opacity: 0.45;
+}
+
+.missing {
+  stroke: var(--ck-grid);
+}
+
+.missing__plate {
+  fill: var(--ck-surface);
+}
+
+/* la columna crece desde el eje cero: hacia arriba, o hacia abajo si es negativa */
+.grow-y {
+  animation: col-grow var(--dur-3) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
+  transform-box: fill-box;
+  transform-origin: bottom;
+}
+
+.grow-y--down {
+  transform-origin: top;
+}
+
+@keyframes col-grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grow-y {
+    animation: none;
+  }
+}

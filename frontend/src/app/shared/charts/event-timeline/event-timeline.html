@@ -1,0 +1,167 @@
+<app-chart-frame [title]="title()" [empty]="empty()" [emptyText]="emptyText()" [table]="table()">
+  @if (!empty()) {
+    @let v = view();
+    <div class="stage">
+      <svg
+        #plot
+        class="plot"
+        [attr.viewBox]="'0 0 ' + v.width + ' ' + v.height"
+        [attr.width]="v.width"
+        [attr.height]="v.height"
+      >
+        <g role="img" [attr.aria-label]="label()">
+          @for (line of v.axis.lines; track line.key) {
+            <line
+              class="grid"
+              [attr.x1]="line.x"
+              [attr.x2]="line.x"
+              [attr.y1]="v.top - 6"
+              [attr.y2]="v.axisY"
+            />
+          }
+          @for (tick of v.axis.labels; track tick.key) {
+            <text
+              class="t-num"
+              [class.t-ink]="tick.major"
+              text-anchor="middle"
+              [attr.x]="tick.x"
+              [attr.y]="v.axisY + 17"
+            >
+              {{ tick.text }}
+            </text>
+          }
+          @for (lane of v.lanes; track lane.key) {
+            <line
+              class="lane"
+              [attr.x1]="v.left"
+              [attr.x2]="v.right"
+              [attr.y1]="lane.y"
+              [attr.y2]="lane.y"
+            />
+            <text class="lane__label t-ink" x="0" [attr.y]="lane.labelY">{{ lane.label }}</text>
+          }
+          <line
+            class="axis"
+            [attr.x1]="v.left"
+            [attr.x2]="v.right"
+            [attr.y1]="v.axisY"
+            [attr.y2]="v.axisY"
+          />
+          @if (v.today; as today) {
+            <line
+              class="today"
+              [attr.x1]="today.x"
+              [attr.x2]="today.x"
+              y1="16"
+              [attr.y2]="v.axisY"
+            />
+            <text class="t-strong" y="12" [attr.x]="today.x" [attr.text-anchor]="today.anchor">
+              Hoy
+            </text>
+          }
+          @for (mark of v.marks; track mark.key; let i = $index) {
+            @if (mark.whisker; as w) {
+              <g class="whisker fade" [class]="'tone-' + mark.tone" [style.--i]="i">
+                <line [attr.x1]="w.x1" [attr.x2]="w.x2" [attr.y1]="mark.y" [attr.y2]="mark.y" />
+                <line
+                  [attr.x1]="w.x1"
+                  [attr.x2]="w.x1"
+                  [attr.y1]="mark.y - 4"
+                  [attr.y2]="mark.y + 4"
+                />
+                <line
+                  [attr.x1]="w.x2"
+                  [attr.x2]="w.x2"
+                  [attr.y1]="mark.y - 4"
+                  [attr.y2]="mark.y + 4"
+                />
+              </g>
+            }
+          }
+        </g>
+        <g
+          role="group"
+          aria-label="Eventos: las flechas los recorren y Enter o Espacio selecciona uno"
+        >
+          @for (mark of v.marks; track mark.key; let i = $index) {
+            <g
+              class="mark"
+              role="button"
+              [class]="'tone-' + mark.tone"
+              [class.mark--selected]="mark.id === selectedId()"
+              [attr.transform]="'translate(' + mark.x + ' ' + mark.y + ')'"
+              [attr.tabindex]="i === tabStop() ? 0 : -1"
+              [attr.aria-label]="mark.label"
+              [attr.aria-pressed]="mark.id === selectedId()"
+              (click)="select(i)"
+              (keydown)="onKey($event, i)"
+              (focus)="focusIndex.set(i)"
+              (blur)="focusIndex.set(null)"
+              (pointerenter)="hoverIndex.set(i)"
+              (pointerleave)="hoverIndex.set(null)"
+            >
+              <circle class="mark__hit" r="15" />
+              <path class="mark__ring" [attr.d]="mark.ring" />
+              @if (mark.halo; as halo) {
+                <path class="mark__halo" [attr.d]="halo" />
+              }
+              <path
+                class="mark__shape pop"
+                [class.mark__shape--hollow]="mark.hollow"
+                [style.--i]="i"
+                [attr.d]="mark.shape"
+              />
+            </g>
+          }
+        </g>
+      </svg>
+      @if (tip(); as t) {
+        <div
+          class="tip"
+          aria-hidden="true"
+          [class.tip--below]="t.below"
+          [class.tip--start]="t.align === 'start'"
+          [class.tip--end]="t.align === 'end'"
+          [style.left.%]="t.left"
+          [style.top.%]="t.top"
+        >
+          <strong>{{ t.title }}</strong>
+          @for (line of t.lines; track $index) {
+            <span>{{ line }}</span>
+          }
+        </div>
+      }
+    </div>
+    <ul class="legend">
+      @for (item of legend(); track item.key) {
+        <li>
+          <svg
+            width="18"
+            height="16"
+            viewBox="-9 -8 18 16"
+            aria-hidden="true"
+            [class]="'tone-' + item.tone"
+          >
+            @switch (item.kind) {
+              @case ('whisker') {
+                <path class="lg-whisker" d="M-8,0H8M-8,-4V4M8,-4V4" />
+                <circle class="lg-dot" r="2.5" />
+              }
+              @case ('halo') {
+                <path class="lg-halo" [attr.d]="item.shape" />
+              }
+              @default {
+                <path
+                  class="lg-shape"
+                  [class.lg-shape--hollow]="item.hollow"
+                  [attr.d]="item.shape"
+                />
+              }
+            }
+          </svg>
+          {{ item.label }}
+        </li>
+      }
+    </ul>
+  }
+</app-chart-frame>

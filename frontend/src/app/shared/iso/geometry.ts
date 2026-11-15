@@ -193,8 +193,7 @@ export function dominantAngle(ring: IsoRing): number {
   for (let b = 0; b < ANGLE_BINS; b++) {
     // cada franja suma la mitad de sus vecinas: un lado justo en el límite no se reparte en dos
     const weight =
-      bins[b] +
-      0.5 * (bins[(b + 1) % ANGLE_BINS] + bins[(b + ANGLE_BINS - 1) % ANGLE_BINS]);
+      bins[b] + 0.5 * (bins[(b + 1) % ANGLE_BINS] + bins[(b + ANGLE_BINS - 1) % ANGLE_BINS]);
     if (weight > bestWeight + 1e-9) {
       bestWeight = weight;
       best = b;

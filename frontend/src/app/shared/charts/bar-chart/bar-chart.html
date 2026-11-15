@@ -1,0 +1,141 @@
+<app-chart-frame [title]="title()" [empty]="empty()" [emptyText]="emptyText()" [table]="table()">
+  @if (!empty()) {
+    @let v = view();
+    <svg
+      class="plot"
+      role="img"
+      [attr.aria-label]="label()"
+      [attr.viewBox]="'0 0 ' + v.width + ' ' + v.height"
+      [attr.width]="v.width"
+      [attr.height]="v.height"
+    >
+      <defs>
+        <pattern
+          [attr.id]="uid + '-declared'"
+          width="6"
+          height="6"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <rect class="tx-declared-bg" width="6" height="6" />
+          <rect class="tx-declared" width="2.5" height="6" />
+        </pattern>
+        <pattern [attr.id]="uid + '-estimated'" width="5" height="5" patternUnits="userSpaceOnUse">
+          <rect class="tx-estimated-bg" width="5" height="5" />
+          <circle class="tx-estimated" cx="2.5" cy="2.5" r="1.1" />
+        </pattern>
+        <pattern
+          [attr.id]="uid + '-nodata'"
+          width="6"
+          height="6"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(-45)"
+        >
+          <rect class="tx-nodata" width="1.5" height="6" />
+        </pattern>
+      </defs>
+
+      @for (tick of v.ticks; track tick.label) {
+        @for (span of v.spans; track $index) {
+          <line
+            class="grid"
+            [attr.x1]="tick.x"
+            [attr.x2]="tick.x"
+            [attr.y1]="span.y1"
+            [attr.y2]="span.y2"
+          />
+        }
+        <text class="t-num" text-anchor="middle" [attr.x]="tick.x" [attr.y]="v.tickY">
+          {{ tick.label }}
+        </text>
+      }
+
+      @for (row of v.rows; track row.key) {
+        @for (line of row.labelLines; track $index) {
+          <text class="t-ink" x="0" [attr.y]="line.y">{{ line.text }}</text>
+        }
+        @if (row.note; as note) {
+          <text x="0" [attr.y]="note.y">{{ note.text }}</text>
+        }
+        @if (row.missing; as missing) {
+          <rect
+            class="missing fade"
+            rx="3"
+            [style.--i]="row.key"
+            [style.fill]="v.noData"
+            [attr.x]="missing.x"
+            [attr.y]="missing.y"
+            [attr.width]="missing.width"
+            height="16"
+          />
+          <rect
+            class="missing__plate"
+            rx="2"
+            [attr.x]="missing.textX - 5"
+            [attr.y]="missing.y + 1"
+            [attr.width]="missing.textWidth + 10"
+            height="14"
+          />
+          <text [attr.x]="missing.textX" [attr.y]="missing.textY">Sin dato</text>
+        } @else {
+          @if (row.bar; as bar) {
+            <path
+              class="bar grow"
+              [class]="'tone-' + row.tone"
+              [class.grow--back]="row.back"
+              [class.bar--textured]="row.fill !== null"
+              [style.--i]="row.key"
+              [style.fill]="row.fill"
+              [attr.d]="bar"
+            >
+              <title>{{ row.hint }}</title>
+            </path>
+          }
+          <text
+            class="t-strong t-num fade"
+            [style.--i]="row.key + 2"
+            [attr.x]="row.valueX"
+            [attr.y]="row.valueY"
+            [attr.text-anchor]="row.valueAnchor"
+          >
+            {{ row.valueText }}
+          </text>
+        }
+      }
+
+      @if (v.zeroX !== null) {
+        @for (span of v.spans; track $index) {
+          <line
+            class="axis"
+            [attr.x1]="v.zeroX"
+            [attr.x2]="v.zeroX"
+            [attr.y1]="span.y1"
+            [attr.y2]="span.y2"
+          />
+        }
+      }
+
+      @for (line of v.thresholds; track line.key) {
+        @for (span of line.spans; track $index) {
+          <line
+            class="threshold"
+            [attr.x1]="line.x"
+            [attr.x2]="line.x"
+            [attr.y1]="span.y1"
+            [attr.y2]="span.y2"
+          />
+        }
+        @if (line.label; as text) {
+          <text
+            class="t-ink"
+            [attr.x]="line.labelX"
+            [attr.y]="line.labelY"
+            [attr.text-anchor]="line.anchor"
+          >
+            {{ text }}
+          </text>
+        }
+      }
+    </svg>
+  }
+</app-chart-frame>

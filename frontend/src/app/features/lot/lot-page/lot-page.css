@@ -1,6 +1,6 @@
 :host {
   display: block;
-  max-width: 64rem;
+  max-width: 76rem;
 }
 
 .back {
@@ -136,6 +136,20 @@ h2 {
   gap: 0.75rem;
 }
 
+.button--primary {
+  background: var(--field-700);
+  border-color: var(--field-700);
+  color: #fff;
+}
+
 .lot-actions a.button {
   text-decoration: none;
+}
+
+.timeline-chart {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: var(--shadow-1);
 }

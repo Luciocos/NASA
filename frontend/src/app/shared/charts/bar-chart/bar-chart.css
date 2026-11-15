@@ -1,0 +1,22 @@
+.bar {
+  fill: var(--tone);
+}
+
+/* las tramas son más claras que el relleno liso: el contorno les marca el borde */
+.bar--textured {
+  stroke: var(--tone);
+}
+
+.missing {
+  stroke: var(--ck-grid);
+}
+
+.missing__plate {
+  fill: var(--ck-surface);
+}
+
+/* la línea de referencia va discontinua para no confundirse con la grilla */
+.threshold {
+  stroke: var(--ck-ink);
+  stroke-dasharray: 4 3;
+}

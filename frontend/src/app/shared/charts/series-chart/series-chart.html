@@ -1,0 +1,193 @@
+<app-chart-frame [title]="title()" [empty]="empty()" [emptyText]="emptyText()" [table]="table()">
+  @if (!empty()) {
+    @let v = view();
+    <div class="stage">
+      <svg
+        #plot
+        class="plot"
+        role="img"
+        tabindex="0"
+        [attr.aria-label]="label()"
+        [attr.viewBox]="'0 0 ' + v.width + ' ' + v.height"
+        [attr.width]="v.width"
+        [attr.height]="v.height"
+        (pointermove)="onPointer($event)"
+        (pointerleave)="hoverIndex.set(null)"
+        (keydown)="onKey($event)"
+        (focus)="onFocus()"
+        (blur)="keyIndex.set(null)"
+      >
+        @if (v.yTitle; as yTitle) {
+          <text class="t-ink" x="0" y="12">{{ yTitle }}</text>
+        }
+        @if (v.band; as band) {
+          <rect
+            class="band"
+            [attr.x]="v.left"
+            [attr.y]="band.y"
+            [attr.width]="v.right - v.left"
+            [attr.height]="band.height"
+          />
+          <text class="t-ink" [attr.x]="v.left + 6" [attr.y]="band.labelY">{{ band.label }}</text>
+        }
+        @for (tick of v.yTicks; track tick.key) {
+          <line
+            class="grid"
+            [attr.x1]="v.left"
+            [attr.x2]="v.right"
+            [attr.y1]="tick.y"
+            [attr.y2]="tick.y"
+          />
+          <text class="t-num" text-anchor="end" [attr.x]="v.left - 6" [attr.y]="tick.y + 4">
+            {{ tick.label }}
+          </text>
+        }
+        @for (line of v.axis.lines; track line.key) {
+          <line
+            class="tick"
+            [attr.x1]="line.x"
+            [attr.x2]="line.x"
+            [attr.y1]="v.bottom"
+            [attr.y2]="v.bottom + 4"
+          />
+        }
+        @for (tick of v.axis.labels; track tick.key) {
+          <text
+            class="t-num"
+            [class.t-ink]="tick.major"
+            text-anchor="middle"
+            [attr.x]="tick.x"
+            [attr.y]="v.bottom + 28"
+          >
+            {{ tick.text }}
+          </text>
+        }
+        <line
+          class="axis"
+          [attr.x1]="v.left"
+          [attr.x2]="v.right"
+          [attr.y1]="v.bottom"
+          [attr.y2]="v.bottom"
+        />
+        @for (gap of v.gaps; track gap.key) {
+          <rect
+            class="gap"
+            rx="1"
+            [attr.x]="gap.x"
+            [attr.y]="v.bottom + 6"
+            [attr.width]="gap.width"
+            height="5"
+          />
+        }
+        @for (marker of v.markers; track marker.key) {
+          <line
+            class="marker"
+            [attr.x1]="marker.x"
+            [attr.x2]="marker.x"
+            [attr.y1]="marker.label ? marker.labelY - 10 : v.top"
+            [attr.y2]="v.bottom"
+          />
+          @if (marker.label; as text) {
+            <text
+              class="t-ink"
+              [attr.x]="marker.labelX"
+              [attr.y]="marker.labelY"
+              [attr.text-anchor]="marker.anchor"
+            >
+              {{ text }}
+            </text>
+          }
+        }
+        @for (line of v.lines; track line.key; let s = $index) {
+          <g class="series fade" [class]="'tone-' + line.tone" [style.--i]="s">
+            @for (d of line.paths; track $index) {
+              <path class="line" [attr.d]="d" [attr.stroke-dasharray]="line.dash" />
+            }
+            @for (dot of line.dots; track dot.key) {
+              <circle class="dot" [attr.cx]="dot.x" [attr.cy]="dot.y" [attr.r]="dot.r" />
+            }
+          </g>
+        }
+        @for (value of v.values; track value.key) {
+          <text
+            class="t-strong t-num"
+            [attr.text-anchor]="value.anchor"
+            [attr.x]="value.x"
+            [attr.y]="value.y"
+          >
+            {{ value.text }}
+          </text>
+        }
+        @if (v.allMissing) {
+          <text
+            class="t-ink"
+            text-anchor="middle"
+            [attr.x]="(v.left + v.right) / 2"
+            [attr.y]="(v.top + v.bottom) / 2"
+          >
+            Sin dato en ninguna fecha
+          </text>
+        }
+        @if (cursor(); as c) {
+          <g class="cursor">
+            <line [attr.x1]="c.x" [attr.x2]="c.x" [attr.y1]="v.top" [attr.y2]="v.bottom" />
+            @for (dot of c.dots; track dot.key) {
+              <circle [class]="'tone-' + dot.tone" r="4.5" [attr.cx]="c.x" [attr.cy]="dot.y" />
+            }
+          </g>
+        }
+      </svg>
+      @if (cursor(); as c) {
+        <div
+          class="tip"
+          aria-hidden="true"
+          [class.tip--end]="c.end"
+          [style.left.%]="c.left"
+          [style.top.%]="c.top"
+        >
+          <strong>{{ c.title }}</strong>
+          @for (line of c.lines; track $index) {
+            <span>{{ line }}</span>
+          }
+        </div>
+      }
+    </div>
+    <p class="visually-hidden" aria-live="polite">{{ liveText() }}</p>
+    @let lg = legend();
+    @if (lg.series.length || lg.band || lg.gaps) {
+      <ul class="legend">
+        @for (item of lg.series; track item.key) {
+          <li>
+            <svg width="22" height="10" aria-hidden="true" [class]="'tone-' + item.tone">
+              <line
+                class="lg-line"
+                x1="1"
+                x2="21"
+                y1="5"
+                y2="5"
+                [attr.stroke-dasharray]="item.dash"
+              />
+            </svg>
+            {{ item.name }}
+          </li>
+        }
+        @if (lg.band; as text) {
+          <li>
+            <svg width="16" height="10" aria-hidden="true">
+              <rect class="band" width="16" height="10" rx="2" />
+            </svg>
+            {{ text }}
+          </li>
+        }
+        @if (lg.gaps) {
+          <li>
+            <svg width="16" height="10" aria-hidden="true">
+              <rect class="gap" y="3" width="16" height="5" rx="1" />
+            </svg>
+            Sin dato: la línea se corta, no se rellena
+          </li>
+        }
+      </ul>
+    }
+  }
+</app-chart-frame>

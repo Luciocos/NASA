@@ -9,10 +9,24 @@ import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
 import { EventLogItemCard } from '../event-log-item/event-log-item';
 import { EVENT_TYPES, EVENT_TYPE_LABELS, SENSORS, SENSOR_LABELS } from '../labels';
 import { RadarOpticalCompare } from '../radar-optical-compare/radar-optical-compare';
+import { LotHero } from '../lot-hero/lot-hero';
+import { LotNasa } from '../lot-nasa/lot-nasa';
+import { EventTimelineChart, TimelineEvent } from '../../../shared/charts';
+import { LotTabs } from '../../../shared/ui/lot-tabs/lot-tabs';
+import { DemoAccount } from '../../../core/account/demo-account';
 
 /** Ficha del lote con su bitácora (CLAUDE.md, sección 11, pantallas 2 y 3). */
 @Component({
-  imports: [RouterLink, OriginBadge, EventLogItemCard, RadarOpticalCompare],
+  imports: [
+    RouterLink,
+    OriginBadge,
+    EventLogItemCard,
+    RadarOpticalCompare,
+    LotHero,
+    LotTabs,
+    LotNasa,
+    EventTimelineChart,
+  ],
   selector: 'app-lot-page',
   styleUrl: './lot-page.css',
   templateUrl: './lot-page.html',
@@ -28,6 +42,23 @@ export class LotPage {
   protected readonly lot = signal<LotDetail | null>(null);
   protected readonly lotError = signal<string | null>(null);
   protected readonly log = signal<EventLog | null>(null);
+  /** bitácora completa, sin filtros: la usan el encabezado y las gráficas */
+  protected readonly allEvents = signal<EventLogItem[]>([]);
+  private readonly account = inject(DemoAccount);
+  protected readonly owned = computed(() => this.account.owns(this.lotId()));
+  protected readonly timelineEvents = computed<TimelineEvent[]>(() =>
+    this.allEvents().map((event) => ({
+      id: event.id,
+      type: event.type,
+      typeLabel: event.type_label,
+      date: event.date,
+      uncertaintyDays: event.date_uncertainty_days,
+      origin: event.origin,
+      sensorLabel: event.sensor_label,
+      simulated: event.is_simulated,
+      campaignLabel: event.campaign_label,
+    })),
+  );
   protected readonly logError = signal<string | null>(null);
 
   protected readonly typeFilter = signal<EventType | ''>('');
@@ -84,8 +115,13 @@ export class LotPage {
         campaign: this.campaignFilter(),
       };
       this.logError.set(null);
+      // sin filtros la bitácora es la completa: la usan también el encabezado y las gráficas
+      const unfiltered = !filters.type && !filters.sensor && filters.campaign === '';
       const subscription = this.api.lotEvents(id, filters).subscribe({
-        next: (log) => this.log.set(log),
+        next: (log) => {
+          this.log.set(log);
+          if (unfiltered) this.allEvents.set(log.events);
+        },
         error: () => this.logError.set('No se pudo cargar la bitácora.'),
       });
       onCleanup(() => subscription.unsubscribe());
@@ -108,6 +144,23 @@ export class LotPage {
     this.typeFilter.set('');
     this.sensorFilter.set('');
     this.campaignFilter.set('');
+  }
+
+  /** clic en la línea de tiempo: abre la comparación si hay evidencia, o lleva a la tarjeta */
+  protected onTimelineSelect(id: number | string): void {
+    const event = this.allEvents().find((item) => item.id === id);
+    if (!event) return;
+    if (event.evidence_image_url || event.evidence_optical_image_url) {
+      this.clearFilters();
+      this.openCompare(event);
+      return;
+    }
+    this.selectedEventId.set(event.id);
+    queueMicrotask(() =>
+      document
+        .getElementById(`evento-${event.id}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+    );
   }
 
   protected openCompare(event: EventLogItem): void {
@@ -136,6 +189,9 @@ export class LotPage {
   }
 
   protected onReviewed(updated: EventLogItem): void {
+    this.allEvents.update((events) =>
+      events.map((event) => (event.id === updated.id ? updated : event)),
+    );
     this.log.update((log) =>
       log
         ? {

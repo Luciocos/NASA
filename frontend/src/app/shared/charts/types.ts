@@ -64,8 +64,9 @@ export interface BarThreshold {
 export interface SeriesPoint {
   /** AAAA-MM-DD */
   date: string;
-  value: number;
-  /** aclaración corta que acompaña al valor ("antes", "última imagen") */
+  /** null: no hay dato en esa fecha (nubes, sin pasada). corta la línea, nunca se interpola */
+  value: number | null;
+  /** aclaración corta que acompaña al valor ("antes", "última imagen", "nubes") */
   label?: string;
 }
 
@@ -75,6 +76,30 @@ export interface ChartSeries {
   /** por defecto se asigna en orden fijo: water, accent, soil y después neutral */
   tone?: ChartTone;
   points: readonly SeriesPoint[];
+}
+
+/** línea vertical rotulada de app-series-chart (por ejemplo un evento de la bitácora) */
+export interface SeriesMarker {
+  /** AAAA-MM-DD */
+  date: string;
+  label: string;
+}
+
+/** franja horizontal de referencia de app-series-chart */
+export interface SeriesBand {
+  from: number;
+  to: number;
+  label: string;
+}
+
+/** columna de app-column-chart. value null se dibuja con trama y "Sin dato" */
+export interface ColumnItem {
+  label: string;
+  value: number | null;
+  /** por defecto 'neutral' */
+  tone?: ChartTone;
+  /** aclaración que va al globo y a la tabla ("2 días sin registro") */
+  note?: string;
 }
 
 /** tramo de app-stacked-bar. con value 0 no se dibuja pero figura en la leyenda */

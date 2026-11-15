@@ -1,0 +1,70 @@
+<app-chart-frame [title]="title()" [empty]="empty()" [emptyText]="emptyText()" [table]="table()">
+  @if (!empty()) {
+    @let v = view();
+    <svg
+      class="plot"
+      role="img"
+      [attr.aria-label]="label()"
+      [attr.viewBox]="'0 0 ' + v.width + ' ' + v.height"
+      [attr.width]="v.width"
+      [attr.height]="v.height"
+    >
+      @for (tick of v.ticks; track tick.label) {
+        <line
+          class="grid"
+          [attr.x1]="tick.x"
+          [attr.x2]="tick.x"
+          [attr.y1]="v.top"
+          [attr.y2]="v.bottom"
+        />
+        <text class="t-num" text-anchor="middle" [attr.x]="tick.x" [attr.y]="v.tickY">
+          {{ tick.label }}
+        </text>
+      }
+      <line
+        class="axis"
+        [attr.x1]="v.zeroX"
+        [attr.x2]="v.zeroX"
+        [attr.y1]="v.top"
+        [attr.y2]="v.bottom"
+      />
+      @for (link of v.connectors; track link.key) {
+        <line
+          class="link"
+          [attr.x1]="link.x"
+          [attr.x2]="link.x"
+          [attr.y1]="link.y1"
+          [attr.y2]="link.y2"
+        />
+      }
+      @for (row of v.rows; track row.key) {
+        @for (line of row.labelLines; track $index) {
+          <text x="0" [class.t-ink]="!row.final" [class.t-strong]="row.final" [attr.y]="line.y">
+            {{ line.text }}
+          </text>
+        }
+        @if (row.d; as d) {
+          <path
+            class="step grow"
+            [class]="'tone-' + row.tone"
+            [class.grow--back]="row.back"
+            [class.step--final]="row.final"
+            [style.--i]="row.key"
+            [attr.d]="d"
+          >
+            <title>{{ row.hint }}</title>
+          </path>
+        }
+        <text
+          class="t-strong t-num fade"
+          [style.--i]="row.key + 2"
+          [attr.x]="row.valueX"
+          [attr.y]="row.valueY"
+          [attr.text-anchor]="row.anchor"
+        >
+          {{ row.valueText }}
+        </text>
+      }
+    </svg>
+  }
+</app-chart-frame>

@@ -1,0 +1,151 @@
+.nasa {
+  display: grid;
+  gap: var(--space-4);
+  margin: var(--space-5) 0;
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--night-900);
+  color: var(--night-ink);
+  --ink: var(--night-ink);
+  --ink-3: var(--night-ink-2);
+}
+
+.nasa .btn {
+  --btn-bg: var(--night-700);
+  --btn-ink: var(--night-ink);
+  --btn-line: var(--night-600);
+}
+
+.nasa .skeleton {
+  opacity: 0.25;
+}
+
+.nasa__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+h2 {
+  margin: 0 0 var(--space-1);
+}
+
+h3 {
+  margin: 0 0 var(--space-2);
+  color: var(--night-ink-2);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.muted {
+  margin: 0;
+  color: var(--night-ink-2);
+}
+
+.small {
+  color: var(--night-ink-2);
+  font-size: var(--text-xs);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-3);
+}
+
+.tile {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--night-800);
+  box-shadow: inset 0 0 0 1px var(--night-600);
+}
+
+.tile__value {
+  color: var(--accent);
+  font-size: var(--text-2xl);
+  font-variant-numeric: tabular-nums;
+}
+
+.delta {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.bar {
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.chart-card {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-light, #fff);
+  color: var(--ink-light, #16241b);
+  --ink: #16241b;
+  --ink-3: #56645a;
+}
+
+.chart-card .small {
+  color: #56645a;
+}
+
+.lists {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-4);
+}
+
+.scenes,
+.years,
+.sources ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.scenes li {
+  display: grid;
+}
+
+.scenes span {
+  color: var(--night-ink-2);
+  font-size: var(--text-xs);
+}
+
+.sources summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.sources li {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--night-600);
+}
+
+@media (max-width: 60rem) {
+  .charts {
+    grid-template-columns: 1fr;
+  }
+}
+
+.load-more {
+  margin-top: var(--space-2);
+  --btn-bg: var(--surface-light, #fff);
+  --btn-ink: #16241b;
+  --btn-line: #b0a88f;
+}

@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { LotDetail } from '../../../core/models';
 import { makeEvent } from '../testing';
 import { LotPage } from './lot-page';
+import { provideNasaTesting } from '../../../core/nasa/testing';
 
 // Lote armado para la prueba: no representa un lote real.
 const LOT: LotDetail = {
@@ -42,6 +43,7 @@ describe('LotPage', () => {
       imports: [LotPage],
       providers: [
         provideRouter([]),
+        ...provideNasaTesting(),
         provideHttpClientTesting(),
         { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ id: '1' })) } },
       ],

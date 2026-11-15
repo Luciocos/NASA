@@ -80,6 +80,14 @@
           <button
             type="button"
             class="hud__btn"
+            [attr.aria-pressed]="layer() === 'ndvi'"
+            (click)="layer.set(layer() === 'ndvi' ? 'estado' : 'ndvi')"
+          >
+            <app-icon name="leaf" /><span>NDVI</span>
+          </button>
+          <button
+            type="button"
+            class="hud__btn"
             [attr.aria-pressed]="showGrid()"
             (click)="showGrid.set(!showGrid())"
           >
@@ -98,6 +106,17 @@
         (lotSelect)="select($event)"
         (lotOpen)="open($event)"
       />
+    }
+    @if (layer() === 'ndvi') {
+      <div class="ndvi-legend" role="note">
+        <strong>NDVI actual (MODIS, 250 m)</strong>
+        @if (ndvi()?.status === 'loading' || ndvi()?.status === 'partial') {
+          <span>Consultando a la NASA… puede tardar un minuto la primera vez.</span>
+        }
+        <span class="ndvi-legend__bar" [style.background]="ndviGradient" aria-hidden="true"></span>
+        <span class="ndvi-legend__scale"><span>0 suelo</span><span>0,85 cultivo denso</span></span>
+        <span class="small">Rayado: sin dato (nubes o sin compuesto publicado).</span>
+      </div>
     }
     <p class="stage__note small muted">
       La textura de cada bloque ilustra el último evento registrado del lote; no es una foto de hoy.
@@ -146,6 +165,14 @@
           <p class="muted small">
             Todavía no hay eventos detectados para este lote. Los datos de la NASA de su polígono se
             consultan en vivo en la ficha.
+          </p>
+        }
+        @if (selectedNdvi(); as obs) {
+          <p class="row">
+            <span
+              >NDVI {{ obs.mean === null ? 'sin dato' : obs.mean.toLocaleString('es-AR') }} ·
+              compuesto del {{ formatDate(obs.date) }}</span
+            >
           </p>
         }
         <div class="cluster">

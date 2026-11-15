@@ -1,0 +1,85 @@
+.stage {
+  position: relative;
+}
+
+.plot {
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+
+.plot:focus-visible {
+  outline: 2px solid var(--ck-focus);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.tick {
+  stroke: var(--ck-axis);
+}
+
+.band {
+  fill: var(--ck-track);
+}
+
+.gap {
+  fill: var(--ck-axis);
+}
+
+.marker {
+  stroke: var(--ck-ink-2);
+  stroke-dasharray: 3 3;
+}
+
+.line,
+.lg-line {
+  fill: none;
+  stroke: var(--tone);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.dot {
+  fill: var(--tone);
+}
+
+.cursor line {
+  stroke: var(--ck-ink);
+  stroke-width: 1;
+}
+
+/* el borde del color del fondo separa el punto de la línea */
+.cursor circle {
+  fill: var(--tone);
+  stroke: var(--ck-surface);
+  stroke-width: 2;
+}
+
+.tip {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  gap: 2px;
+  max-width: 220px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--ck-axis);
+  border-radius: var(--radius-sm);
+  background: var(--ck-surface);
+  box-shadow: var(--shadow-2);
+  color: var(--ck-ink-2);
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(10px);
+}
+
+.tip--end {
+  transform: translateX(calc(-100% - 10px));
+}
+
+.tip strong {
+  color: var(--ck-ink);
+  font-size: var(--text-sm);
+}

@@ -1,0 +1,16 @@
+.seg {
+  fill: var(--tone);
+}
+
+/* las tramas son más claras que el relleno liso: el contorno les marca el borde */
+.seg--textured {
+  stroke: var(--tone);
+}
+
+.missing {
+  stroke: var(--ck-grid);
+}
+
+.missing__plate {
+  fill: var(--ck-surface);
+}

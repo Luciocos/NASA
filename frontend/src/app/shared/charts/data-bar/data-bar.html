@@ -1,0 +1,59 @@
+<app-chart-frame [title]="title()" [table]="table()">
+  @let v = view();
+  <svg
+    class="plot"
+    role="img"
+    [attr.aria-label]="ariaLabel()"
+    [attr.viewBox]="'0 0 ' + v.width + ' ' + v.height"
+    [attr.width]="v.width"
+    [attr.height]="v.height"
+  >
+    <defs>
+      <pattern
+        [attr.id]="uid + '-declared'"
+        width="6"
+        height="6"
+        patternUnits="userSpaceOnUse"
+        patternTransform="rotate(45)"
+      >
+        <rect class="tx-declared-bg" width="6" height="6" />
+        <rect class="tx-declared" width="2.5" height="6" />
+      </pattern>
+      <pattern [attr.id]="uid + '-estimated'" width="5" height="5" patternUnits="userSpaceOnUse">
+        <rect class="tx-estimated-bg" width="5" height="5" />
+        <circle class="tx-estimated" cx="2.5" cy="2.5" r="1.1" />
+      </pattern>
+      <pattern
+        [attr.id]="uid + '-nodata'"
+        width="6"
+        height="6"
+        patternUnits="userSpaceOnUse"
+        patternTransform="rotate(-45)"
+      >
+        <rect class="tx-nodata" width="1.5" height="6" />
+      </pattern>
+    </defs>
+    @if (v.labelText; as text) {
+      <text class="t-ink" x="0" y="12">{{ text }}</text>
+    }
+    <text class="t-strong t-num" text-anchor="end" y="12" [attr.x]="v.width">{{ v.text }}</text>
+    <rect
+      class="track"
+      [class.track--missing]="v.missing"
+      rx="5"
+      y="20"
+      height="10"
+      [attr.width]="v.width"
+      [style.fill]="v.missing ? v.noData : null"
+    />
+    @if (v.bar; as bar) {
+      <path
+        class="fill grow"
+        [class]="'tone-' + v.tone"
+        [class.fill--textured]="v.fill !== null"
+        [style.fill]="v.fill"
+        [attr.d]="bar"
+      />
+    }
+  </svg>
+</app-chart-frame>

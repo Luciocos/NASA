@@ -1,0 +1,82 @@
+<app-chart-frame [title]="title()" [empty]="empty()" [emptyText]="emptyText()" [table]="table()">
+  @if (!empty()) {
+    @let v = view();
+    <div class="ring" [class.ring--stacked]="v.stacked">
+      <svg
+        class="ring__svg"
+        role="img"
+        [attr.aria-label]="label()"
+        [attr.viewBox]="'0 0 ' + v.size + ' ' + v.size"
+        [attr.width]="v.size"
+        [attr.height]="v.size"
+      >
+        <defs>
+          <pattern
+            [attr.id]="uid + '-no'"
+            width="6"
+            height="6"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
+          >
+            <rect class="tx-no-bg" width="6" height="6" />
+            <rect class="tx-no" width="2.5" height="6" />
+          </pattern>
+          <pattern
+            [attr.id]="uid + '-nodata'"
+            width="6"
+            height="6"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(-45)"
+          >
+            <rect class="tx-nodata" width="1.5" height="6" />
+          </pattern>
+        </defs>
+        @for (segment of v.segments; track segment.key) {
+          <path
+            class="seg fade"
+            [class]="'tone-' + segment.tone"
+            [class.seg--textured]="segment.fill !== null"
+            [style.--i]="segment.key"
+            [style.fill]="segment.fill"
+            [attr.d]="segment.d"
+          />
+          @if (v.showSymbols) {
+            <g class="fade" [class]="'tone-' + segment.tone" [style.--i]="segment.key + 1">
+              <circle class="plate" r="8" [attr.cx]="segment.x" [attr.cy]="segment.y" />
+              <text class="sym" text-anchor="middle" [attr.x]="segment.x" [attr.y]="segment.y + 4">
+                {{ segment.symbol }}
+              </text>
+            </g>
+          }
+        }
+        <text
+          class="center t-num"
+          text-anchor="middle"
+          [attr.x]="v.c"
+          [attr.y]="v.caption ? v.c + 2 : v.c + 7"
+        >
+          {{ v.center }}
+        </text>
+        @if (v.caption; as caption) {
+          <text text-anchor="middle" [attr.x]="v.c" [attr.y]="v.c + 18">{{ caption }}</text>
+        }
+      </svg>
+      <ul class="ring__list">
+        @for (item of list(); track item.key) {
+          <li>
+            <span
+              class="badge"
+              aria-hidden="true"
+              [class]="'tone-' + item.tone"
+              [class.badge--solid]="item.status === 'cumple'"
+              >{{ item.symbol }}</span
+            >
+            <span
+              >{{ item.label }} <span class="status">· {{ item.text }}</span></span
+            >
+          </li>
+        }
+      </ul>
+    </div>
+  }
+</app-chart-frame>

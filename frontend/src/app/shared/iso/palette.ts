@@ -33,7 +33,10 @@ function channels(hex: string): [number, number, number] {
 }
 
 function toHex(r: number, g: number, b: number): string {
-  const part = (v: number) => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0');
+  const part = (v: number) =>
+    Math.round(Math.min(255, Math.max(0, v)))
+      .toString(16)
+      .padStart(2, '0');
   return `#${part(r)}${part(g)}${part(b)}`;
 }
 

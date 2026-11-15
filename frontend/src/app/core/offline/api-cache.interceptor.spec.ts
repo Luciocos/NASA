@@ -102,7 +102,9 @@ describe('apiCacheInterceptor', () => {
       error: (value: HttpErrorResponse) => (error = value),
     });
 
-    http.expectOne('/api/passports/abc/').flush({ detail: 'No encontrado.' }, { status, statusText: 'Error' });
+    http
+      .expectOne('/api/passports/abc/')
+      .flush({ detail: 'No encontrado.' }, { status, statusText: 'Error' });
 
     expect(received).toBeUndefined();
     expect(error?.status).toBe(status);

@@ -1,29 +1,13 @@
-<p class="back"><a routerLink="/mapa">← Volver al mapa</a></p>
+@if (lot(); as lot) {
+  <app-lot-tabs [lotId]="lot.id" />
+}
 
 @if (lotError(); as message) {
   <p class="error" role="alert">{{ message }}</p>
 } @else if (lot(); as lot) {
-  <header class="lot">
-    <h1>{{ lot.name }}</h1>
-    <dl class="facts">
-      <div>
-        <dt>Ubicación</dt>
-        <dd>{{ lot.locality || 'Sin localidad' }}{{ lot.province ? ', ' + lot.province : '' }}</dd>
-      </div>
-      <div>
-        <dt>Superficie</dt>
-        <dd>{{ areaLabel() }} <span class="small">(calculada del polígono)</span></dd>
-      </div>
-      @if (lot.renspa) {
-        <div>
-          <dt>RENSPA</dt>
-          <dd>{{ lot.renspa }}</dd>
-        </div>
-      }
-    </dl>
-    <!-- Enlaces a huella y pasaporte (Dev C). -->
+  <app-lot-hero [lot]="lot" [events]="allEvents()" [owned]="owned()">
     <p class="lot-actions">
-      <a class="button" [routerLink]="['/huella', lot.id]">Ver huella estimada</a>
+      <a class="button button--primary" [routerLink]="['/huella', lot.id]">Ver huella estimada</a>
       <button
         type="button"
         class="button"
@@ -36,7 +20,9 @@
         <span class="error" role="alert">{{ message }}</span>
       }
     </p>
-  </header>
+  </app-lot-hero>
+
+  <app-lot-nasa [lot]="lot" [events]="allEvents()" />
 
   <section aria-labelledby="campaigns-title">
     <h2 id="campaigns-title">Campañas</h2>
@@ -83,6 +69,18 @@
 
   <section aria-labelledby="log-title">
     <h2 id="log-title">Bitácora de eventos</h2>
+
+    @if (allEvents().length > 0) {
+      <div class="timeline-chart">
+        <app-event-timeline
+          title="Eventos en el tiempo"
+          description="Cada evento de la bitácora en su fecha, con su incertidumbre y su origen"
+          [events]="timelineEvents()"
+          [selectedId]="selectedEventId()"
+          (eventSelect)="onTimelineSelect($event)"
+        />
+      </div>
+    }
 
     <div class="filters" role="group" aria-label="Filtros de la bitácora">
       <label>
@@ -131,7 +129,7 @@
       }
       <ol class="timeline">
         @for (event of log.events; track event.id) {
-          <li class="timeline__entry">
+          <li class="timeline__entry" [id]="'evento-' + event.id">
             <span class="timeline__dot" aria-hidden="true"></span>
             <app-event-log-item
               [event]="event"

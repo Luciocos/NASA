@@ -140,7 +140,10 @@ export function fitScale(
     hi -= Math.max(0, overflowEnd);
     if (hi - lo < MIN_PLOT_SPAN) {
       // sin lugar para todo: se conserva un tramo mínimo de barras antes que los rótulos
-      const middle = Math.min(right - MIN_PLOT_SPAN / 2, Math.max(left + MIN_PLOT_SPAN / 2, (lo + hi) / 2));
+      const middle = Math.min(
+        right - MIN_PLOT_SPAN / 2,
+        Math.max(left + MIN_PLOT_SPAN / 2, (lo + hi) / 2),
+      );
       return linearScale(domain, [middle - MIN_PLOT_SPAN / 2, middle + MIN_PLOT_SPAN / 2], true);
     }
     scale = linearScale(domain, [lo, hi], true);

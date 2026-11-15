@@ -1,0 +1,201 @@
+<section class="nasa" aria-labelledby="nasa-title">
+  <header class="nasa__head">
+    <div>
+      <h2 id="nasa-title">Lo que ve la NASA de este lote</h2>
+      <p class="muted">
+        Datos abiertos consultados en vivo para el polígono. Quedan guardados en este dispositivo
+        para verlos sin conexión.
+      </p>
+    </div>
+    <button type="button" class="btn btn--sm" (click)="retry()">Actualizar</button>
+  </header>
+
+  <div class="tiles">
+    <article class="tile">
+      <h3>NDVI actual</h3>
+      @if (summary().latest; as latest) {
+        <strong class="tile__value">{{ number(latest.mean) }}</strong>
+        <span class="small"
+          >Compuesto del {{ formatDate(latest.date) }} · MODIS {{ latest.satellite }}</span
+        >
+        @if (summary().changeVsPrevious !== null) {
+          <span class="delta">{{ signed(summary().changeVsPrevious) }} vs. el anterior</span>
+        }
+        @if (summary().changeVsLastYear !== null) {
+          <span class="delta">{{ signed(summary().changeVsLastYear) }} vs. hace un año</span>
+        }
+        @if (latest.centroidOnly) {
+          <span class="small">El lote es más chico que un píxel: se usa el del centro.</span>
+        }
+      } @else if (ndvi().status === 'loading' || ndvi().status === 'partial') {
+        <span class="skeleton bar" aria-hidden="true"></span>
+        <span class="small" role="status">Consultando MODIS…</span>
+      } @else {
+        <strong class="tile__value">Sin dato</strong>
+        <span class="small">{{ ndvi().error }}</span>
+      }
+    </article>
+
+    <article class="tile">
+      <h3>Lluvia, últimos 30 días</h3>
+      @if (rainLast30(); as rain) {
+        <strong class="tile__value">{{ number(rain.rainMm, 0) }} mm</strong>
+        <span class="small">Hasta el {{ formatDate(rain.to) }} · NASA POWER</span>
+        @if (rain.missingDays > 0) {
+          <span class="small">{{ rain.missingDays }} días todavía sin dato</span>
+        }
+      } @else if (climate().status === 'loading') {
+        <span class="skeleton bar" aria-hidden="true"></span>
+      } @else {
+        <strong class="tile__value">Sin dato</strong>
+        <span class="small">{{ climate().error }}</span>
+      }
+    </article>
+
+    <article class="tile">
+      <h3>Humedad del suelo</h3>
+      @if (soil(); as s) {
+        <strong class="tile__value">{{ percent(s.soilRoot) }}</strong>
+        <span class="small"
+          >Zona de raíces, de seco (0) a saturado (100) · {{ formatDate(s.date) }}</span
+        >
+        <span class="small">Superficie: {{ percent(s.soilTop) }}</span>
+      } @else if (climate().status === 'loading') {
+        <span class="skeleton bar" aria-hidden="true"></span>
+      } @else {
+        <strong class="tile__value">Sin dato</strong>
+      }
+    </article>
+
+    <article class="tile">
+      <h3>Pasadas de satélite</h3>
+      @if (scenes().data; as list) {
+        <strong class="tile__value">{{ nisar().length }} NISAR</strong>
+        @if (nisar()[0]; as last) {
+          <span class="small">Última: {{ day(last.start) }} · {{ last.maturity }}</span>
+        }
+        <span class="small">{{ hls().length }} imágenes HLS en el catálogo</span>
+        @if (lastClearHls(); as clear) {
+          <span class="small"
+            >Última despejada: {{ day(clear.start) }} ({{ clear.cloudCover }} % nubes)</span
+          >
+        }
+      } @else if (scenes().status === 'loading') {
+        <span class="skeleton bar" aria-hidden="true"></span>
+      } @else {
+        <strong class="tile__value">Sin dato</strong>
+        <span class="small">{{ scenes().error }}</span>
+      }
+    </article>
+  </div>
+
+  <div class="charts">
+    <div class="chart-card">
+      <app-series-chart
+        [title]="
+          fullHistory()
+            ? 'Verdor del cultivo (NDVI) desde 2020'
+            : 'Verdor del cultivo (NDVI), últimos 12 meses'
+        "
+        description="NDVI medio del lote en cada compuesto de 16 días de MODIS Terra, con los eventos de la bitácora marcados"
+        [series]="ndviSeries()"
+        [markers]="markers()"
+        [yDomain]="[0, 1]"
+        [decimals]="2"
+        emptyText="Todavía no llegó la serie de NDVI"
+      />
+      @if (ndvi().status === 'partial' || ndvi().status === 'loading') {
+        <p class="small" role="status">
+          Cargando el historial: {{ percent(ndvi().progress) }}. El servicio de la NASA puede tardar
+          un minuto la primera vez.
+        </p>
+      }
+      @if (!fullHistory()) {
+        <button type="button" class="btn btn--sm load-more" (click)="ndviSince.set('2020-01-01')">
+          Traer el historial desde 2020
+        </button>
+      }
+      @if (ndvi().stale) {
+        <p class="small">Copia guardada: no se pudo actualizar.</p>
+      }
+    </div>
+    <div class="chart-card">
+      <app-column-chart
+        title="Lluvia por mes"
+        description="Lluvia mensual de NASA POWER en el centro del lote, últimos 12 meses"
+        [items]="rainColumns()"
+        unit="mm"
+        emptyText="Todavía no llegó la lluvia de NASA POWER"
+      />
+    </div>
+  </div>
+
+  <div class="lists">
+    <div>
+      <h3>Pasadas NISAR sobre el lote</h3>
+      @if (nisar().length === 0) {
+        <p class="small muted">Sin pasadas en el catálogo por ahora.</p>
+      } @else {
+        <ul class="scenes">
+          @for (scene of nisar().slice(0, 6); track scene.title) {
+            <li>
+              <strong>{{ day(scene.start) }}</strong>
+              <span>
+                Órbita {{ scene.track ?? 'sin dato' }} · {{ scene.direction ?? 'sin dato' }} ·
+                {{ scene.maturity ?? 'sin dato' }}
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+    <div>
+      <h3>Imágenes HLS recientes</h3>
+      @if (hls().length === 0) {
+        <p class="small muted">Sin imágenes en el catálogo por ahora.</p>
+      } @else {
+        <ul class="scenes">
+          @for (scene of hls().slice(0, 6); track scene.title) {
+            <li>
+              <strong>{{ day(scene.start) }}</strong>
+              <span
+                >{{ scene.sensorLabel }} · {{ scene.cloudCover ?? '?' }} % de nubes en la
+                escena</span
+              >
+            </li>
+          }
+        </ul>
+      }
+    </div>
+    <div>
+      <h3>Cobertura del suelo por año</h3>
+      @if (landCover().data; as years) {
+        <ul class="years">
+          @for (year of years; track year.year) {
+            <li>
+              <strong>{{ year.year }}</strong> {{ year.label }}
+            </li>
+          }
+        </ul>
+      } @else if (landCover().status === 'loading') {
+        <span class="skeleton bar" aria-hidden="true"></span>
+      } @else {
+        <p class="small muted">{{ landCover().error ?? 'Sin dato' }}</p>
+      }
+    </div>
+  </div>
+
+  <details class="sources">
+    <summary>De dónde sale cada dato</summary>
+    <ul>
+      @for (source of sources; track source.name) {
+        <li>
+          <app-origin-badge [origin]="source.origin" />
+          <strong>{{ source.name }}</strong> · {{ source.product }} · {{ source.resolution }} ·
+          {{ source.cadence }}.
+          <span class="muted">{{ source.note }}</span>
+        </li>
+      }
+    </ul>
+  </details>
+</section>

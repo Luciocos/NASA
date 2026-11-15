@@ -573,8 +573,8 @@ export class IsoRenderer {
     const micro = entry.size < MICRO_SIZE;
     const style = coverStyle(lot.cover, lot.crop);
     const tint = lot.tint ?? null;
-    const flat = tint !== null || lot.hatched === true || status === 'draft';
-    const fade = (entry.rise < 1 ? clamp01(entry.rise * 2.5) : 1) * (status === 'pending' ? 0.62 : 1);
+    const fade =
+      (entry.rise < 1 ? clamp01(entry.rise * 2.5) : 1) * (status === 'pending' ? 0.62 : 1);
     ctx.globalAlpha = fade;
 
     if (h >= 0.75) this.drawWalls(ctx, entry, style, h, tint, status === 'draft', fade < 1);
@@ -862,7 +862,8 @@ export class IsoRenderer {
       if (count >= MAX_LABELS) break;
       const selected = entry.id === this.selectedId;
       const strong = selected || entry.id === this.hoverId;
-      if (entry.labelWidth < 0) this.measureLabel(ctx, entry);
+      // el segundo rótulo también se vuelve a medir cuando cambia (por ejemplo al activar el ndvi)
+      if (entry.labelWidth < 0 || entry.sublabelWidth < 0) this.measureLabel(ctx, entry);
       const lotWidth = entry.maxSx - entry.minSx;
       const full = LABEL_PAD * 2 + entry.labelWidth + LABEL_GAP + entry.sublabelWidth;
       const withSub = entry.sublabelText !== '' && (strong || full <= lotWidth - 6);
@@ -930,7 +931,6 @@ export class IsoRenderer {
     entry.labelText = text;
     entry.labelWidth = width;
     ctx.font = SUBLABEL_FONT;
-    entry.sublabelWidth =
-      entry.sublabelText === '' ? 0 : ctx.measureText(entry.sublabelText).width;
+    entry.sublabelWidth = entry.sublabelText === '' ? 0 : ctx.measureText(entry.sublabelText).width;
   }
 }

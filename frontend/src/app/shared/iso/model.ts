@@ -13,15 +13,7 @@ export type IsoRing = readonly IsoPoint[];
  * decorativas y no representan densidad, altura ni ningún otro dato medido
  */
 export type IsoCover =
-  | 'bare'
-  | 'tilled'
-  | 'sown'
-  | 'crop'
-  | 'cover'
-  | 'stubble'
-  | 'flooded'
-  | 'burnt'
-  | 'unknown';
+  'bare' | 'tilled' | 'sown' | 'crop' | 'cover' | 'stubble' | 'flooded' | 'burnt' | 'unknown';
 
 /** todas las texturas, en el orden en que conviene listarlas en una leyenda */
 export const ISO_COVERS: readonly IsoCover[] = [

@@ -94,7 +94,12 @@ export function shapePath(shape: MarkShape, radius: number): string {
 }
 
 /** punto sobre una circunferencia. el ángulo va en grados, desde las 12 y en sentido horario */
-export function polarPoint(cx: number, cy: number, radius: number, degrees: number): [number, number] {
+export function polarPoint(
+  cx: number,
+  cy: number,
+  radius: number,
+  degrees: number,
+): [number, number] {
   const radians = ((degrees - 90) * Math.PI) / 180;
   return [cx + radius * Math.cos(radians), cy + radius * Math.sin(radians)];
 }
@@ -121,6 +126,26 @@ export function ringSegmentPath(
     `A${n(outer)},${n(outer)} 0 ${large} 1 ${n(x1)},${n(y1)}`,
     `L${n(x2)},${n(y2)}`,
     `A${n(inner)},${n(inner)} 0 ${large} 0 ${n(x3)},${n(y3)}`,
+    'Z',
+  ].join('');
+}
+
+/**
+ * columna vertical que va de la línea de base `y0` hasta el dato `y1`: solo se redondea el
+ * extremo del dato. sirve para los dos sentidos (`y1` mayor que `y0` dibuja hacia abajo)
+ */
+export function columnPath(x: number, width: number, y0: number, y1: number, radius = 4): string {
+  const up = y1 <= y0;
+  const r = Math.min(radius, Math.abs(y1 - y0), width / 2);
+  const edge = up ? y1 + r : y1 - r;
+  const sweep = up ? 1 : 0;
+  return [
+    `M${n(x)},${n(y0)}`,
+    `V${n(edge)}`,
+    `A${n(r)},${n(r)} 0 0 ${sweep} ${n(x + r)},${n(y1)}`,
+    `H${n(x + width - r)}`,
+    `A${n(r)},${n(r)} 0 0 ${sweep} ${n(x + width)},${n(edge)}`,
+    `V${n(y0)}`,
     'Z',
   ].join('');
 }

@@ -137,8 +137,8 @@ export function prepareGeometry(entry: LotEntry, rings: readonly IsoRing[]): voi
   entry.rings = [];
   entry.screen = [];
   let area = 0;
-  for (let r = 0; r < rings.length; r++) {
-    const flat = flattenRing(rings[r]);
+  for (const ring of rings) {
+    const flat = flattenRing(ring);
     if (flat.length < 6) continue;
     const signed = flatSignedArea(flat);
     // sentido de giro fijo: con el exterior antihorario y los huecos al revés, un lateral se

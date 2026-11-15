@@ -179,7 +179,10 @@ export function fitCamera(
   const top = pad.top * shrinkY;
   const bottom = pad.bottom * shrinkY;
 
-  let zoom = Math.min((width - left - right) / (maxU - minU), (height - top - bottom) / (maxV - minV));
+  let zoom = Math.min(
+    (width - left - right) / (maxU - minU),
+    (height - top - bottom) / (maxV - minV),
+  );
   // un solo punto no tiene tamaño: se acerca todo lo permitido
   if (!Number.isFinite(zoom)) zoom = maxZoom;
   zoom = Math.min(Math.max(zoom, ISO_MIN_ZOOM), maxZoom);
@@ -236,7 +239,6 @@ export function scaleBar(zoom: number, maxPx = 110): IsoScaleBar {
   for (const step of SCALE_STEPS) {
     if (step * pxPerMeter <= maxPx) meters = step;
   }
-  const label =
-    meters >= 1000 ? `${(meters / 1000).toLocaleString('es-AR')} km` : `${meters} m`;
+  const label = meters >= 1000 ? `${(meters / 1000).toLocaleString('es-AR')} km` : `${meters} m`;
   return { meters, px: meters * pxPerMeter, label };
 }

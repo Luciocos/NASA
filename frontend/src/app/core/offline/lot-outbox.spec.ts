@@ -115,22 +115,25 @@ describe('LotOutbox', () => {
       expect(storage.getItem(STORAGE_KEY)).toBeNull();
     });
 
-    it.each([0, 502, 503, 504])('con error %i lo encola y lo guarda en el dispositivo', (status) => {
-      setup();
-      let result: LotSaveResult | undefined;
-      outbox.createOrQueue(BODY).subscribe((value) => (result = value));
+    it.each([0, 502, 503, 504])(
+      'con error %i lo encola y lo guarda en el dispositivo',
+      (status) => {
+        setup();
+        let result: LotSaveResult | undefined;
+        outbox.createOrQueue(BODY).subscribe((value) => (result = value));
 
-      failUpload(status);
+        failUpload(status);
 
-      const [pending] = outbox.pending();
-      expect(result).toEqual({ kind: 'queued', pending });
-      expect(pending.localId).toMatch(/\S{8,}/);
-      expect(pending.body).toEqual(BODY);
-      expect(new Date(pending.createdAt).toISOString()).toBe(pending.createdAt);
-      expect(pending).toMatchObject({ attempts: 1, rejected: false, error: null });
-      expect(storedQueue()).toEqual([pending]);
-      expect(outbox.unsaved()).toBe(false);
-    });
+        const [pending] = outbox.pending();
+        expect(result).toEqual({ kind: 'queued', pending });
+        expect(pending.localId).toMatch(/\S{8,}/);
+        expect(pending.body).toEqual(BODY);
+        expect(new Date(pending.createdAt).toISOString()).toBe(pending.createdAt);
+        expect(pending).toMatchObject({ attempts: 1, rejected: false, error: null });
+        expect(storedQueue()).toEqual([pending]);
+        expect(outbox.unsaved()).toBe(false);
+      },
+    );
 
     it('propaga el 400 de validación para que el formulario lo muestre, sin encolar', () => {
       setup();
@@ -193,7 +196,10 @@ describe('LotOutbox', () => {
 
   describe('lo guardado en el dispositivo', () => {
     it('al iniciar retoma la cola guardada', () => {
-      const stored = [makePending('a'), makePending('b', { rejected: true, error: 'Nombre: falta.' })];
+      const stored = [
+        makePending('a'),
+        makePending('b', { rejected: true, error: 'Nombre: falta.' }),
+      ];
       setup(stored);
 
       expect(outbox.pending()).toEqual(stored);
@@ -319,19 +325,22 @@ describe('LotOutbox', () => {
       });
     });
 
-    it.each([0, 502, 503, 504])('un error %i corta la pasada y deja todo en la cola', async (status) => {
-      setup([makePending('a'), makePending('b')]);
+    it.each([0, 502, 503, 504])(
+      'un error %i corta la pasada y deja todo en la cola',
+      async (status) => {
+        setup([makePending('a'), makePending('b')]);
 
-      const done = outbox.sync();
-      failUpload(status);
-      await done;
+        const done = outbox.sync();
+        failUpload(status);
+        await done;
 
-      // el segundo ni se intentó
-      http.expectNone(UPLOAD);
-      expect(outbox.pending()).toEqual([makePending('a', { attempts: 2 }), makePending('b')]);
-      expect(outbox.syncing()).toBe(false);
-      expect(outbox.lastSynced()).toEqual([]);
-    });
+        // el segundo ni se intentó
+        http.expectNone(UPLOAD);
+        expect(outbox.pending()).toEqual([makePending('a', { attempts: 2 }), makePending('b')]);
+        expect(outbox.syncing()).toBe(false);
+        expect(outbox.lastSynced()).toEqual([]);
+      },
+    );
 
     it('nunca corren dos pasadas a la vez', async () => {
       setup([makePending('a')]);

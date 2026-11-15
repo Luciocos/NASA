@@ -2,7 +2,7 @@
 // propósito: la estimación solo reserva lugar y decide si dos rótulos chocan, así que
 // conviene que sobre espacio antes que un texto quede cortado. se estima en vez de medir
 // porque el dibujo tiene que salir igual sin navegador (pruebas en jsdom)
-const NARROW = new Set([...'iljtfrI.,:;|!\'()[] ']);
+const NARROW = new Set([..."iljtfrI.,:;|!'()[] "]);
 const WIDE = new Set([...'mwMW%@']);
 const UPPER = /[A-ZÁÉÍÓÚÑÜ]/;
 const DIGIT = /[0-9±+\-−=<>~]/;

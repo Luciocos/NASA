@@ -1,0 +1,123 @@
+<app-chart-frame [title]="title()" [empty]="empty()" [emptyText]="emptyText()" [table]="table()">
+  @if (!empty()) {
+    @let v = view();
+    <svg
+      class="plot"
+      role="img"
+      [attr.aria-label]="label()"
+      [attr.viewBox]="'0 0 ' + v.width + ' ' + v.height"
+      [attr.width]="v.width"
+      [attr.height]="v.height"
+    >
+      <defs>
+        <pattern
+          [attr.id]="uid + '-declared'"
+          width="6"
+          height="6"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <rect class="tx-declared-bg" width="6" height="6" />
+          <rect class="tx-declared" width="2.5" height="6" />
+        </pattern>
+        <pattern [attr.id]="uid + '-estimated'" width="5" height="5" patternUnits="userSpaceOnUse">
+          <rect class="tx-estimated-bg" width="5" height="5" />
+          <circle class="tx-estimated" cx="2.5" cy="2.5" r="1.1" />
+        </pattern>
+        <pattern
+          [attr.id]="uid + '-nodata'"
+          width="6"
+          height="6"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(-45)"
+        >
+          <rect class="tx-nodata" width="1.5" height="6" />
+        </pattern>
+      </defs>
+
+      @for (tick of v.yTicks; track tick.key) {
+        <line
+          class="grid"
+          [attr.x1]="v.left"
+          [attr.x2]="v.right"
+          [attr.y1]="tick.y"
+          [attr.y2]="tick.y"
+        />
+        <text class="t-num" text-anchor="end" [attr.x]="v.left - 6" [attr.y]="tick.y + 4">
+          {{ tick.label }}
+        </text>
+      }
+
+      @for (col of v.columns; track col.key) {
+        @if (col.missing; as m) {
+          <rect
+            class="missing fade"
+            rx="2"
+            [class.dim]="col.dim"
+            [style.--i]="col.key"
+            [style.fill]="v.noData"
+            [attr.x]="m.x"
+            [attr.y]="m.y"
+            [attr.width]="m.width"
+            [attr.height]="m.height"
+          >
+            <title>{{ col.hint }}</title>
+          </rect>
+          <g [attr.transform]="m.rotate ? 'rotate(-90 ' + m.cx + ' ' + m.cy + ')' : null">
+            <rect
+              class="missing__plate"
+              rx="2"
+              height="15"
+              [attr.x]="m.cx - m.textWidth / 2 - 4"
+              [attr.y]="m.cy - 8"
+              [attr.width]="m.textWidth + 8"
+            />
+            <text text-anchor="middle" [attr.x]="m.cx" [attr.y]="m.cy + 4">Sin dato</text>
+          </g>
+        } @else if (col.d) {
+          <path
+            class="col grow-y"
+            [class]="'tone-' + col.tone"
+            [class.grow-y--down]="col.down"
+            [class.col--textured]="col.fill !== null"
+            [class.dim]="col.dim"
+            [style.--i]="col.key"
+            [style.fill]="col.fill"
+            [attr.d]="col.d"
+          >
+            <title>{{ col.hint }}</title>
+          </path>
+        }
+        @if (col.value; as value) {
+          <text
+            class="t-strong t-num fade"
+            text-anchor="middle"
+            [style.--i]="col.key + 2"
+            [attr.x]="value.x"
+            [attr.y]="value.y"
+          >
+            {{ value.text }}
+          </text>
+        }
+        @if (col.label; as label) {
+          <text
+            text-anchor="middle"
+            [class.t-strong]="col.highlighted"
+            [attr.x]="label.x"
+            [attr.y]="v.labelY"
+          >
+            {{ label.text }}
+          </text>
+        }
+      }
+
+      <line
+        class="axis"
+        [attr.x1]="v.left"
+        [attr.x2]="v.right"
+        [attr.y1]="v.zeroY"
+        [attr.y2]="v.zeroY"
+      />
+    </svg>
+  }
+</app-chart-frame>

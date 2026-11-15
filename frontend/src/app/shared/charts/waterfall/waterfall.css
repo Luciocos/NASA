@@ -1,0 +1,13 @@
+.step {
+  fill: var(--tone);
+}
+
+/* el resultado final pesa más que los subtotales */
+.step--final {
+  fill: var(--ck-ink);
+}
+
+.link {
+  stroke: var(--ck-axis);
+  stroke-dasharray: 2 2;
+}

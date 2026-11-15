@@ -40,20 +40,29 @@ export function linearScale(
   return Object.assign(scale, { domain, range, invert });
 }
 
+const NICE_FACTORS = [1, 2, 5, 10];
+
 /**
- * paso "redondo" para cubrir un tramo con cerca de `targetCount` marcas:
+ * paso "redondo" más chico que cubre un tramo con `maxCount` intervalos como máximo:
  * siempre 1, 2 o 5 por una potencia de 10
  */
-export function niceStep(span: number, targetCount = 5): number {
+export function niceStep(span: number, maxCount = 5): number {
   const size = Math.abs(span);
   if (!Number.isFinite(size) || size === 0) {
     return 1;
   }
-  const raw = size / Math.max(1, targetCount);
+  const raw = size / Math.max(1, Math.floor(maxCount));
   const magnitude = 10 ** Math.floor(Math.log10(raw));
-  const normalized = raw / magnitude;
-  const factor = normalized < 1.5 ? 1 : normalized < 3.5 ? 2 : normalized < 7.5 ? 5 : 10;
-  return factor * magnitude;
+  // la tolerancia evita saltar de paso por un error de coma flotante (0.6 / 6)
+  const factor = NICE_FACTORS.find((candidate) => candidate * magnitude >= raw * (1 - 1e-9));
+  return (factor ?? 10) * magnitude;
+}
+
+// siguiente paso redondo: 1 -> 2 -> 5 -> 10
+function nextNiceStep(step: number): number {
+  const magnitude = 10 ** Math.floor(Math.log10(step) + 1e-9);
+  const mantissa = step / magnitude;
+  return (mantissa < 1.5 ? 2 : mantissa < 3.5 ? 5 : 10) * magnitude;
 }
 
 /** decimales que hacen falta para escribir sin ruido los múltiplos de un paso */
@@ -76,11 +85,12 @@ export interface NiceTicks {
 }
 
 /**
- * marcas "redondas" que cubren [min, max]. el dominio se amplía hasta el múltiplo del paso
- * más cercano hacia afuera. si min y max coinciden se abre un tramo alrededor del valor
- * (o [0, 1] si el valor es cero) para que la escala no quede degenerada
+ * marcas "redondas" que cubren [min, max] con `maxCount` intervalos como máximo. el
+ * dominio se amplía hasta el múltiplo del paso más cercano hacia afuera. si min y max
+ * coinciden se abre un tramo alrededor del valor (o [0, 1] si el valor es cero) para que
+ * la escala no quede degenerada
  */
-export function niceTicks(min: number, max: number, targetCount = 5): NiceTicks {
+export function niceTicks(min: number, max: number, maxCount = 5): NiceTicks {
   let lo = Number.isFinite(min) ? min : 0;
   let hi = Number.isFinite(max) ? max : 1;
   if (lo > hi) {
@@ -95,11 +105,18 @@ export function niceTicks(min: number, max: number, targetCount = 5): NiceTicks 
       hi += pad;
     }
   }
-  const step = niceStep(hi - lo, targetCount);
-  const decimals = stepDecimals(step);
+  const limit = Math.max(1, Math.floor(maxCount));
+  let step = niceStep(hi - lo, limit);
   // el épsilon evita que 0.30000000000000004 / 0.1 sume una marca de más
-  const first = Math.floor(lo / step + 1e-9);
-  const last = Math.ceil(hi / step - 1e-9);
+  let first = Math.floor(lo / step + 1e-9);
+  let last = Math.ceil(hi / step - 1e-9);
+  // ampliar hacia afuera puede sumar intervalos: se agranda el paso hasta respetar el máximo
+  while (last - first > limit) {
+    step = nextNiceStep(step);
+    first = Math.floor(lo / step + 1e-9);
+    last = Math.ceil(hi / step - 1e-9);
+  }
+  const decimals = stepDecimals(step);
   const values: number[] = [];
   for (let i = first; i <= last; i++) {
     const value = Number((i * step).toFixed(decimals));

@@ -4,6 +4,11 @@ import { Routes } from '@angular/router';
 export default [
   { path: ':id', loadComponent: () => import('./lot-page/lot-page').then((m) => m.LotPage) },
   {
+    path: ':id/fertilizacion',
+    loadComponent: () =>
+      import('../fertilization/fertilization-page').then((m) => m.FertilizationPage),
+  },
+  {
     path: ':id/rentabilidad',
     loadComponent: () => import('../profit/profit-page/profit-page').then((m) => m.ProfitPage),
   },

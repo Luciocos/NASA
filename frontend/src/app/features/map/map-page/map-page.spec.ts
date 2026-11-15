@@ -6,6 +6,7 @@ import { DemoAccount } from '../../../core/account/demo-account';
 import { LotSummary } from '../../../core/models';
 import { provideOfflineTesting } from '../../../core/offline/testing';
 import { MapPage } from './map-page';
+import { provideNasaTesting } from '../../../core/nasa/testing';
 
 // lotes armados para la prueba: no representan lotes reales
 const GEOMETRY: LotSummary['geometry'] = {
@@ -41,7 +42,12 @@ describe('MapPage', () => {
   async function setup(owned: number[]): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [MapPage],
-      providers: [provideRouter([]), provideHttpClientTesting(), provideOfflineTesting()],
+      providers: [
+        provideRouter([]),
+        ...provideNasaTesting(),
+        provideHttpClientTesting(),
+        provideOfflineTesting(),
+      ],
     }).compileComponents();
     const account = TestBed.inject(DemoAccount);
     owned.forEach((id) => account.addLot(id));

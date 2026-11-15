@@ -18,6 +18,8 @@ import { formatHectares, latestCampaign } from '../../../core/insights';
 import { LotOverview, buildIsoScene, loadOverviews } from '../../../core/lot-scene';
 import { LotSummary } from '../../../core/models';
 import { LotOutbox } from '../../../core/offline/lot-outbox';
+import { LotSatellite } from '../../../core/nasa';
+import { NDVI_LEGEND_GRADIENT, ndviTint } from '../../../shared/iso/ndvi-tint';
 import { EventGlyph } from '../../../shared/iso/event-glyph';
 import { IsoScene } from '../../../shared/iso/iso-scene';
 import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
@@ -48,6 +50,10 @@ export class MapPage {
 
   protected readonly view = signal<ViewMode>('maqueta');
   protected readonly showGrid = signal(true);
+  /** capa de la maqueta: textura del último evento o NDVI actual de MODIS */
+  protected readonly layer = signal<'estado' | 'ndvi'>('estado');
+  protected readonly ndviGradient = NDVI_LEGEND_GRADIENT;
+  private readonly satellite = inject(LotSatellite);
   protected readonly selectedId = signal<string | null>(null);
 
   protected readonly lots = signal<LotSummary[] | null>(null);
@@ -69,9 +75,31 @@ export class MapPage {
   protected readonly examples = computed(() =>
     this.overviews().filter((item) => !this.account.owns(item.lot.id)),
   );
-  protected readonly isoLots = computed(
-    () => buildIsoScene(this.overviews(), this.outbox.pending()).lots,
-  );
+  /** NDVI actual de cada lote, solo mientras la capa está activa */
+  protected readonly ndvi = computed(() => {
+    if (this.layer() !== 'ndvi') return null;
+    const refs = this.shown().map((lot) => ({ id: lot.id, geometry: lot.geometry }));
+    return refs.length > 0 ? this.satellite.latestNdviForLots(refs)() : null;
+  });
+  protected readonly isoLots = computed(() => {
+    const lots = buildIsoScene(this.overviews(), this.outbox.pending()).lots;
+    const ndvi = this.ndvi();
+    if (!ndvi) return lots;
+    return lots.map((lot) => {
+      const obs = ndvi.data?.[lot.id] ?? null;
+      const value = obs?.mean ?? null;
+      return {
+        ...lot,
+        tint: value === null ? null : ndviTint(value),
+        hatched: ndvi.status !== 'loading' && value === null,
+        sublabel: value === null ? lot.sublabel : `NDVI ${value.toLocaleString('es-AR')}`,
+      };
+    });
+  });
+  protected readonly selectedNdvi = computed(() => {
+    const id = this.selectedId();
+    return id ? (this.ndvi()?.data?.[id] ?? null) : null;
+  });
   protected readonly satelliteLots = computed<SatelliteLot[]>(() => [
     ...this.overviews().map((item) => satelliteLotOf(item.lot)),
     ...this.outbox.pending().map((item) => ({

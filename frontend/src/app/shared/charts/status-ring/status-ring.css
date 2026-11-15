@@ -1,0 +1,86 @@
+.ring {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.ring--stacked {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.ring__svg {
+  flex: none;
+}
+
+.seg {
+  fill: var(--tone);
+}
+
+.seg--textured {
+  stroke: var(--tone);
+}
+
+.tx-no {
+  fill: var(--ck-negative);
+}
+
+.tx-no-bg {
+  fill: var(--ck-surface);
+}
+
+.plate {
+  fill: var(--ck-surface);
+  stroke: var(--tone);
+  stroke-width: 1.5;
+}
+
+.sym {
+  fill: var(--ck-ink);
+  font-weight: 700;
+}
+
+.center {
+  fill: var(--ck-ink);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.ring__list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ck-ink);
+  font-size: var(--text-sm);
+  line-height: 1.35;
+}
+
+.ring__list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.badge {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--tone);
+  border-radius: 50%;
+  background: var(--ck-surface);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge--solid {
+  background: var(--tone);
+  color: var(--ck-surface);
+}
+
+.status {
+  color: var(--ck-ink-2);
+}

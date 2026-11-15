@@ -86,7 +86,10 @@ export class ApiCacheStore {
   private trim(justWritten: string): void {
     const excess = this.keys().length - API_CACHE_MAX_ENTRIES;
     if (excess <= 0) return;
-    const victims = this.oldestFirst(justWritten).slice(0, API_CACHE_MAX_ENTRIES + excess - TRIM_TO);
+    const victims = this.oldestFirst(justWritten).slice(
+      0,
+      API_CACHE_MAX_ENTRIES + excess - TRIM_TO,
+    );
     for (const key of victims) this.remove(key);
   }
 
