@@ -20,12 +20,12 @@
       >
         <source src="/landing/demo.webm" type="video/webm" />
         <source src="/landing/demo.mp4" type="video/mp4" (error)="failed.set(true)" />
-        <track kind="captions" src="/landing/demo.es.vtt" srclang="es" label="Español" default />
+        <track kind="captions" src="/landing/demo.en.vtt" srclang="en" label="English" default />
         <track
           kind="chapters"
           src="/landing/demo.chapters.vtt"
-          srclang="es"
-          label="Partes del recorrido"
+          srclang="en"
+          label="Tour chapters"
           (load)="readChapters()"
         />
       </video>
@@ -41,14 +41,10 @@
           decoding="async"
           [alt]="fallback().alt"
         />
-        <p class="demo__credit">
-          <app-icon name="satellite" />
-          <span>{{ fallback().caption }}</span>
-        </p>
       } @else if (askToPlay() && !playing()) {
         <button type="button" class="demo__start" (click)="watch()">
           <span class="demo__start-icon"><app-icon name="play" /></span>
-          Ver el recorrido
+          Watch the tour
         </button>
       }
     </div>
@@ -60,13 +56,13 @@
         #toggleButton
         type="button"
         class="btn btn--icon demo__toggle"
-        [attr.aria-label]="playing() ? 'Pausar el recorrido' : 'Reproducir el recorrido'"
+        [attr.aria-label]="playing() ? 'Pause the tour' : 'Play the tour'"
         (click)="toggle()"
       >
         <app-icon [name]="playing() ? 'pause' : 'play'" />
       </button>
       @if (chapters().length) {
-        <ol #list class="demo__chapters" aria-label="Partes del recorrido">
+        <ol #list class="demo__chapters" aria-label="Tour chapters">
           @for (chapter of chapters(); track chapter.start; let i = $index) {
             <li>
               <button
@@ -86,8 +82,7 @@
   }
 
   <figcaption class="visually-hidden">
-    Recorrido por la app, sin sonido y con subtítulos: marcar un lote y ver los datos de la NASA
-    simplificados, la historia del lote, las prácticas, la huella, la fertilización y la
-    rentabilidad.
+    A quick tour of the app, with no sound and with English captions: mark a field and see what
+    LoTestigo shows about it, step by step.
   </figcaption>
 </figure>

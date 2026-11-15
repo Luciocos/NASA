@@ -21,12 +21,11 @@ export interface DemoChapter {
   end: number;
 }
 
-/** imagen que ocupa el lugar del video si no carga */
+/** imagen que ocupa el lugar del video si no carga; lo que muestra lo dice el alt */
 export interface DemoFallback {
   src: string;
   srcset: string;
   alt: string;
-  caption: string;
 }
 
 /** parte del video que tiene que verse para que arranque solo */
@@ -60,10 +59,11 @@ function savesData(): boolean {
 }
 
 /**
- * recorrido en video por la app, sin sonido y con subtítulos. arranca solo cuando se ve en
- * pantalla y se pausa cuando sale; con menos movimiento o ahorro de datos espera a que se toque
- * "Ver el recorrido". los capítulos salen de la pista del video (no se repiten los tiempos acá) y
- * cada uno salta a su parte. si el video no carga, queda la imagen satelital
+ * recorrido en video por la app, sin sonido y con subtítulos en inglés (demo.en.vtt), como el
+ * resto de la landing. arranca solo cuando se ve en pantalla y se pausa cuando sale; con menos
+ * movimiento o ahorro de datos espera a que se toque "Watch the tour". los capítulos salen de la
+ * pista del video (no se repiten los tiempos ni los nombres acá) y cada uno salta a su parte. si
+ * el video no carga, queda la imagen satelital
  *
  * @example <app-demo-video [fallback]="image" />
  */
@@ -138,7 +138,7 @@ export class DemoVideo {
     });
   }
 
-  /** "Ver el recorrido" desaparece al arrancar: el foco pasa al botón de pausa y no se pierde */
+  /** "Watch the tour" desaparece al arrancar: el foco pasa al botón de pausa y no se pierde */
   protected watch(): void {
     this.toggle();
     this.toggleButton()?.nativeElement.focus();

@@ -7,7 +7,11 @@ import { provideOfflineTesting } from '../../core/offline/testing';
 import { LandingPage } from './landing-page';
 
 const TITLE =
-  'Ecosistema que facilita y potencia a los productores y asesores en monitorear datos de la NASA simplificados, huellas, fertilización y rentabilidad';
+  'An ecosystem that empowers farmers and advisors to monitor simplified NASA data, footprints, fertilization and profitability';
+
+/** palabras y letras del español: en la landing no tiene que quedar ninguna a la vista */
+const SPANISH =
+  /[áéíóúñ¿¡]|\b(el|los|las|del|y|con|para|sin|una?|lotes?|campo|datos|cuenta|ingresar|gratis|recorrido)\b/i;
 
 /** un IntersectionObserver de mentira: la prueba decide cuánto del video se ve */
 class FakeObserver {
@@ -138,21 +142,35 @@ describe('LandingPage', () => {
     vi.unstubAllGlobals();
   });
 
-  it('lleva el título nuevo exacto, con las palabras clave resaltadas, para productores y asesores', async () => {
+  it('lleva el título en inglés exacto, con las palabras clave resaltadas, para productores y asesores', async () => {
     await setup();
 
     const h1 = el().querySelector('h1')!;
-    expect(h1.textContent?.trim()).toBe(TITLE);
+    expect(h1.textContent?.replace(/\s+/g, ' ').trim()).toBe(TITLE);
     expect([...h1.querySelectorAll('strong')].map((s) => s.textContent?.trim())).toEqual([
-      'datos de la NASA simplificados',
-      'huellas',
-      'fertilización',
-      'rentabilidad',
+      'simplified NASA data',
+      'footprints',
+      'fertilization',
+      'profitability',
     ]);
     expect(el().querySelector('.hero__tag')?.textContent?.trim()).toBe(
-      'Para productores agrícolas, ganaderos y asesores',
+      'For crop farmers, ranchers and advisors',
     );
-    expect(text()).not.toMatch(/zona núcleo|granos/i);
+  });
+
+  it('toda la landing está en inglés y lo dice: lang="en" y nada en español a la vista ni para el lector de pantalla', async () => {
+    await setup();
+
+    expect(el().getAttribute('lang')).toBe('en');
+    expect(text()).not.toMatch(SPANISH);
+    const names = [...el().querySelectorAll('[aria-label], [alt], [label], [title]')].flatMap(
+      (node) =>
+        ['aria-label', 'alt', 'label', 'title']
+          .map((name) => node.getAttribute(name))
+          .filter((value): value is string => !!value),
+    );
+    expect(names).toContain('LoTestigo, home');
+    for (const name of names) expect(name).not.toMatch(SPANISH);
   });
 
   it('cuenta los tres pasos, el primero marcar el perímetro', async () => {
@@ -160,51 +178,62 @@ describe('LandingPage', () => {
 
     const steps = [...el().querySelectorAll('.steps > li h3')].map((h) => h.textContent?.trim());
     expect(steps).toEqual([
-      'Marcá el perímetro del lote',
-      'Mirá los datos de la NASA, simplificados',
-      'Conocé huella, fertilización y rentabilidad',
+      "Mark your field's boundary",
+      'See NASA data, simplified',
+      'Check footprint, fertilization and profitability',
     ]);
-    expect(text()).not.toMatch(/pint[áa]/i);
+    expect(el().querySelector('#steps-title')?.textContent?.trim()).toBe('How it works');
+    expect(text()).not.toMatch(/\bpaint/i);
   });
 
-  it('poco texto a la vista: la bajada, cada paso y la sección de datos en una línea corta', async () => {
+  it('poco texto a la vista: sin bajada en el título, cada paso y la sección de datos en una línea corta', async () => {
     await setup();
 
     const short = (selector: string) =>
       [...el().querySelectorAll(selector)].map((p) => p.textContent!.replace(/\s+/g, ' ').trim());
-    const lines = [...short('.hero__lead'), ...short('.steps > li p'), ...short('.section__lead')];
-    expect(lines).toHaveLength(5);
+    // al lado del video quedan solo las acciones
+    expect(el().querySelector('.hero__lead')).toBeNull();
+    expect(el().querySelectorAll('.hero__side p')).toHaveLength(0);
+    const lines = [...short('.steps > li p'), ...short('.section__lead')];
+    expect(lines).toHaveLength(4);
     for (const line of lines) expect(line.length).toBeLessThanOrEqual(90);
-    expect(short('.hero__lead')[0]).toContain('datos abiertos de la NASA');
     // las estimaciones se dicen como tales, sin afirmar más de lo que son
-    expect(short('.steps > li p')[2]).toContain('Son estimaciones');
+    expect(short('.steps > li p')[2]).toContain('These are estimates');
   });
 
   it('sin sesión: una acción principal para crear la cuenta, ingresar al lado y un ejemplo', async () => {
     await setup();
 
     expect(heroLinks()).toEqual({
-      'Crear cuenta gratis': '/registrarse',
-      'Ya tengo cuenta': '/ingresar',
-      'Ver un lote de ejemplo': '/ejemplos',
+      'Create a free account': '/registrarse',
+      'I already have an account': '/ingresar',
+      'See a sample field': '/ejemplos',
     });
     const primary = el().querySelectorAll('.hero .btn--primary');
     expect(primary.length).toBe(1);
-    expect(primary[0].textContent?.trim()).toBe('Crear cuenta gratis');
-    expect(el().querySelector('.bar a[href="/ingresar"]')?.textContent?.trim()).toBe('Ingresar');
-    expect(el().querySelector('.final a.btn--primary')?.getAttribute('href')).toBe('/registrarse');
+    expect(primary[0].textContent?.trim()).toBe('Create a free account');
+    expect(el().querySelector('.bar a[href="/ingresar"]')?.textContent?.trim()).toBe('Log in');
+    // el cierre: el título y la acción, sin la línea de abajo
+    const final = el().querySelector('.final')!;
+    expect(final.querySelector('h2')?.textContent?.trim()).toBe('Try it on your field');
+    expect(final.querySelectorAll('p')).toHaveLength(0);
+    expect(final.querySelector('a.btn--primary')?.textContent?.trim()).toBe(
+      'Create a free account',
+    );
+    expect(final.querySelector('a.btn--primary')?.getAttribute('href')).toBe('/registrarse');
   });
 
   it('con la sesión abierta lleva a su campo', async () => {
     await setup(true);
 
     expect(heroLinks()).toEqual({
-      'Ir a mi campo': '/mapa',
-      'Ver un lote de ejemplo': '/ejemplos',
+      'Go to my fields': '/mapa',
+      'See a sample field': '/ejemplos',
     });
-    expect(el().querySelector('.bar a[href="/mapa"]')?.textContent?.trim()).toBe('Ir a mi campo');
+    expect(el().querySelector('.bar a[href="/mapa"]')?.textContent?.trim()).toBe('Go to my fields');
+    expect(el().querySelector('.final h2')?.textContent?.trim()).toBe('Your fields are waiting');
     expect(el().querySelector('.final a.btn--primary')?.getAttribute('href')).toBe('/mapa');
-    expect(text()).not.toContain('Crear cuenta gratis');
+    expect(text()).not.toContain('Create a free account');
     expect(el().querySelector('a[href="/ingresar"]')).toBeNull();
   });
 
@@ -213,6 +242,7 @@ describe('LandingPage', () => {
 
     const brand = el().querySelector<HTMLAnchorElement>('.bar .brand')!;
     expect(brand.textContent?.trim()).toBe('LoTestigo');
+    expect(brand.getAttribute('aria-label')).toBe('LoTestigo, home');
     expect(brand.querySelector('svg')).toBeNull();
     const logo = brand.querySelector<HTMLImageElement>('img.brand-logo')!;
     expect(logo.getAttribute('src')).toBe('/lotestigo-mark-32.png');
@@ -223,7 +253,7 @@ describe('LandingPage', () => {
     expect([logo.getAttribute('width'), logo.getAttribute('height')]).toEqual(['28', '32']);
   });
 
-  it('el recorrido: webm y mp4, póster, sin sonido, en línea, en bucle, con subtítulos y capítulos', async () => {
+  it('el recorrido: webm y mp4, póster, sin sonido, en línea, en bucle, con subtítulos en inglés y capítulos', async () => {
     await setup();
 
     const sources = [...video().querySelectorAll('source')].map((source) => [
@@ -252,14 +282,30 @@ describe('LandingPage', () => {
       kind: track.getAttribute('kind'),
       src: track.getAttribute('src'),
       srclang: track.getAttribute('srclang'),
+      label: track.getAttribute('label'),
       default: track.hasAttribute('default'),
     }));
     expect(trackAttrs).toEqual([
-      { kind: 'captions', src: '/landing/demo.es.vtt', srclang: 'es', default: true },
-      { kind: 'chapters', src: '/landing/demo.chapters.vtt', srclang: 'es', default: false },
+      {
+        kind: 'captions',
+        src: '/landing/demo.en.vtt',
+        srclang: 'en',
+        label: 'English',
+        default: true,
+      },
+      {
+        kind: 'chapters',
+        src: '/landing/demo.chapters.vtt',
+        srclang: 'en',
+        label: 'Tour chapters',
+        default: false,
+      },
     ]);
+    // los subtítulos en español ya no van
+    expect(el().querySelector('track[src*=".es."], track[srclang="es"]')).toBeNull();
     // la descripción del video para quien no lo ve
-    expect(el().querySelector('.demo figcaption')?.textContent).toContain('sin sonido');
+    expect(el().querySelector('.demo figcaption')?.textContent).toContain('no sound');
+    expect(el().querySelector('.demo figcaption')?.textContent).toContain('English captions');
   });
 
   it('arranca solo al entrar en pantalla, se pausa al salir y el botón de 44 px manda', async () => {
@@ -272,13 +318,13 @@ describe('LandingPage', () => {
     observer.show(0.6);
     await fixture.whenStable();
     expect(play).toHaveBeenCalledTimes(1);
-    expect(toggle()?.getAttribute('aria-label')).toBe('Pausar el recorrido');
+    expect(toggle()?.getAttribute('aria-label')).toBe('Pause the tour');
     expect(toggle()?.classList).toContain('btn--icon');
 
     observer.show(0);
     await fixture.whenStable();
     expect(pause).toHaveBeenCalledTimes(1);
-    expect(toggle()?.getAttribute('aria-label')).toBe('Reproducir el recorrido');
+    expect(toggle()?.getAttribute('aria-label')).toBe('Play the tour');
     observer.show(1);
     expect(play).toHaveBeenCalledTimes(2);
 
@@ -286,7 +332,7 @@ describe('LandingPage', () => {
     toggle()!.click();
     await fixture.whenStable();
     expect(pause).toHaveBeenCalledTimes(2);
-    expect(toggle()?.getAttribute('aria-label')).toBe('Reproducir el recorrido');
+    expect(toggle()?.getAttribute('aria-label')).toBe('Play the tour');
     observer.show(0);
     observer.show(1);
     expect(play).toHaveBeenCalledTimes(2);
@@ -294,7 +340,7 @@ describe('LandingPage', () => {
     toggle()!.click();
     await fixture.whenStable();
     expect(play).toHaveBeenCalledTimes(3);
-    expect(toggle()?.getAttribute('aria-label')).toBe('Pausar el recorrido');
+    expect(toggle()?.getAttribute('aria-label')).toBe('Pause the tour');
   });
 
   it('con menos movimiento no arranca solo: queda el póster con un botón para verlo', async () => {
@@ -305,7 +351,7 @@ describe('LandingPage', () => {
     await fixture.whenStable();
     expect(play).not.toHaveBeenCalled();
     const start = el().querySelector<HTMLButtonElement>('.demo__start')!;
-    expect(start.textContent?.trim()).toBe('Ver el recorrido');
+    expect(start.textContent?.trim()).toBe('Watch the tour');
     expect(start.getAttribute('type')).toBe('button');
 
     start.click();
@@ -314,7 +360,7 @@ describe('LandingPage', () => {
     expect(el().querySelector('.demo__start')).toBeNull();
     // el botón grande se va: el foco queda en el de pausa
     expect(document.activeElement).toBe(toggle());
-    expect(toggle()?.getAttribute('aria-label')).toBe('Pausar el recorrido');
+    expect(toggle()?.getAttribute('aria-label')).toBe('Pause the tour');
   });
 
   it('si el navegador no lo deja arrancar solo, también ofrece el botón para verlo', async () => {
@@ -326,7 +372,7 @@ describe('LandingPage', () => {
     FakeObserver.last!.show(1);
     await new Promise((done) => setTimeout(done));
     await fixture.whenStable();
-    expect(el().querySelector('.demo__start')?.textContent?.trim()).toBe('Ver el recorrido');
+    expect(el().querySelector('.demo__start')?.textContent?.trim()).toBe('Watch the tour');
   });
 
   it('los capítulos salen de la pista del video: saltan a su parte y marcan el que se ve', async () => {
@@ -336,37 +382,35 @@ describe('LandingPage', () => {
     expect(tracks[1].mode).toBe('hidden');
     expect(chips()).toHaveLength(0);
     tracks[1].cues = [
-      { startTime: 0, endTime: 8, text: 'Marcar el lote' },
-      { startTime: 8, endTime: 15, text: 'Datos de la NASA' },
-      { startTime: 15, endTime: 24, text: '<b>Historia del lote</b>' },
+      { startTime: 0, endTime: 8, text: 'Mark your field' },
+      { startTime: 8, endTime: 15, text: 'NASA data' },
+      { startTime: 15, endTime: 24, text: '<b>Passport</b>' },
     ];
     video().querySelector('track[kind="chapters"]')!.dispatchEvent(new Event('load'));
     await fixture.whenStable();
 
     expect(chips().map((chip) => chip.textContent?.trim())).toEqual([
-      'Marcar el lote',
-      'Datos de la NASA',
-      'Historia del lote',
+      'Mark your field',
+      'NASA data',
+      'Passport',
     ]);
-    expect(el().querySelector('.demo__chapters')?.getAttribute('aria-label')).toBe(
-      'Partes del recorrido',
-    );
-    expect(current()).toEqual(['Marcar el lote']);
+    expect(el().querySelector('.demo__chapters')?.getAttribute('aria-label')).toBe('Tour chapters');
+    expect(current()).toEqual(['Mark your field']);
 
     video().currentTime = 11.5;
     video().dispatchEvent(new Event('timeupdate'));
     await fixture.whenStable();
-    expect(current()).toEqual(['Datos de la NASA']);
+    expect(current()).toEqual(['NASA data']);
     expect(chips()[1].style.getPropertyValue('--p')).toBe('0.5');
 
     chips()[2].click();
     await fixture.whenStable();
     expect(video().currentTime).toBe(15);
     expect(play).toHaveBeenCalledTimes(1);
-    expect(current()).toEqual(['Historia del lote']);
+    expect(current()).toEqual(['Passport']);
   });
 
-  it('si el video no carga queda la imagen satelital, sin controles rotos', async () => {
+  it('si el video no carga queda la imagen satelital, sin crédito a la vista ni controles rotos', async () => {
     await setup();
     const sources = video().querySelectorAll('source');
 
@@ -380,26 +424,28 @@ describe('LandingPage', () => {
     const img = el().querySelector<HTMLImageElement>('.demo__fallback')!;
     expect(img.getAttribute('src')).toBe('/zona-nucleo-landsat-800.webp');
     expect([img.getAttribute('width'), img.getAttribute('height')]).toEqual(['1200', '750']);
-    expect(img.alt).toContain('Casilda y Rosario');
-    expect(el().querySelector('.demo__credit')?.textContent).toContain('Landsat el 31/10/2026');
+    // lo que muestra lo dice el alt, en inglés como el resto
+    expect(img.alt).toContain('between Casilda and Rosario');
+    expect(img.alt).not.toMatch(/31\/10\/2026|GIBS/);
+    expect(el().querySelector('.demo__credit')).toBeNull();
+    expect(el().querySelector('.demo__screen')?.textContent?.trim()).toBe('');
     expect(toggle()).toBeNull();
     expect(el().querySelector('.demo__start')).toBeNull();
     FakeObserver.last!.show(1);
     expect(play).not.toHaveBeenCalled();
   });
 
-  it('el cierre lleva la imagen satelital de fondo, con su fuente y carga diferida', async () => {
+  it('el cierre lleva la imagen satelital de fondo, decorativa, sin crédito y con carga diferida', async () => {
     await setup();
 
     const img = el().querySelector<HTMLImageElement>('.final img')!;
     expect(img.getAttribute('loading')).toBe('lazy');
     expect([img.getAttribute('width'), img.getAttribute('height')]).toEqual(['1200', '750']);
     expect(img.getAttribute('srcset')).toContain('/zona-nucleo-landsat-1200.webp 1200w');
-    // de fondo es decorativa: lo que muestra lo dice el texto de la fuente
+    // de fondo es decorativa: el lector de pantalla la saltea
     expect(img.getAttribute('alt')).toBe('');
-    const credit = el().querySelector('.final__credit')?.textContent ?? '';
-    expect(credit).toContain('Casilda y Rosario vistos por Landsat el 31/10/2026');
-    expect(credit).toContain('NASA EOSDIS GIBS');
+    expect(el().querySelector('.final__credit')).toBeNull();
+    expect(el().querySelector('.final')?.textContent).not.toMatch(/landsat|GIBS|31\/10\/2026/i);
   });
 
   describe('la documentación', () => {
@@ -417,17 +463,22 @@ describe('LandingPage', () => {
     it('arranca con los dos caminos: en vivo desde el navegador y procesado aparte en Python', async () => {
       await setup();
 
-      expect(el().querySelector('#docs-title')?.textContent).toContain('Documentación');
+      expect(el().querySelector('#docs-title')?.textContent).toContain('Documentation');
+      expect(clean(docs().querySelector('#docs-nasa'))).toBe('How we connect to NASA');
       expect(el().querySelector('img[src*="lotestigo-datos-nasa"]')).toBeNull();
       const paths = [...docs().querySelectorAll('.path')];
       expect(paths.map((path) => clean(path.querySelector('.chip')))).toEqual([
-        'En vivo',
-        'Procesado aparte',
+        'Live',
+        'Pre-processed',
+      ]);
+      expect(paths.map((path) => clean(path.querySelector('.path__head strong')))).toEqual([
+        'From the browser',
+        'In Python: radar and hydrology',
       ]);
       expect(paths.map((path) => [...path.querySelectorAll('.path__nodes li')].map(clean))).toEqual(
         [
-          ['NASA, sin login', 'Navegador', 'Copia en el dispositivo', 'Pantalla'],
-          ['Earthdata, con login', 'Pipeline en Python', 'Django y PostgreSQL', 'App'],
+          ['NASA, no login', 'Browser', 'Saved on the device', 'Screen'],
+          ['Earthdata, with login', 'Python pipeline', 'Django and PostgreSQL', 'App'],
         ],
       );
       // las flechas entre uno y otro son dibujo: el lector de pantalla no las lee
@@ -435,10 +486,10 @@ describe('LandingPage', () => {
         expect(path.querySelectorAll('.path__nodes app-icon[aria-hidden="true"]')).toHaveLength(3);
       }
       expect(clean(paths[0].querySelector('.path__note'))).toBe(
-        'MODIS, NASA POWER y CMR, por HTTPS y JSON. No pasan por el backend.',
+        "MODIS, NASA POWER and CMR, over HTTPS and JSON. They don't go through the backend.",
       );
       expect(clean(paths[1].querySelector('.path__note'))).toContain(
-        'NISAR, HLS, IMERG, SMAP y MOD16',
+        'NISAR, HLS, IMERG, SMAP and MOD16',
       );
     });
 
@@ -446,7 +497,7 @@ describe('LandingPage', () => {
       await setup();
 
       expect(docs().querySelector('[role="tablist"]')?.getAttribute('aria-label')).toBe(
-        'Fuentes de la NASA',
+        'NASA data sources',
       );
       expect(tabs().map(clean)).toEqual([
         'NISAR',
@@ -463,9 +514,9 @@ describe('LandingPage', () => {
         expect(panel.getAttribute('aria-labelledby')).toBe(tab.id);
         const steps = [...panel.querySelectorAll('.flow > li')];
         expect(steps.map((step) => clean(step.querySelector('.step__name')))).toEqual([
-          'De dónde sale',
-          'Cómo llega',
-          'En la app',
+          'Where it comes from',
+          'How it arrives',
+          'In the app',
         ]);
         // poco texto a la vista: una línea corta por paso y lo técnico en fichas
         for (const step of steps) {
@@ -475,54 +526,56 @@ describe('LandingPage', () => {
           for (const tag of tags) expect(tag.length).toBeLessThanOrEqual(24);
         }
         // el último paso dice con qué origen lo muestra la app, o por qué no lleva uno
-        expect(steps[2].querySelector('app-origin-badge, .chip')).toBeTruthy();
+        expect(steps[2].querySelector('.origin, .chip')).toBeTruthy();
       });
 
       // cada una dice su camino: en vivo desde el navegador o procesada aparte
       const live = (id: string) =>
         clean(docs().querySelector(`#docs-panel-${id} .panel__head .chip`));
       expect(['nisar', 'hls', 'modis', 'power', 'cmr', 'hydrology'].map(live)).toEqual([
-        'Procesado aparte',
-        'Procesado aparte',
-        'En vivo',
-        'En vivo',
-        'En vivo',
-        'Procesado aparte',
+        'Pre-processed',
+        'Pre-processed',
+        'Live',
+        'Live',
+        'Live',
+        'Pre-processed',
       ]);
 
-      // NASA POWER: el navegador pide la API por HTTPS, guarda una copia y Satélite lo muestra estimado
+      // NASA POWER: el navegador pide la API por HTTPS, guarda una copia y Satellite lo muestra estimado
       const power = flow('power');
-      expect(power[1]).toContain('El navegador pide el clima del centro del lote');
-      for (const tag of ['API REST', 'HTTPS · JSON', 'Copia en el dispositivo']) {
+      expect(power[1]).toContain("The browser gets weather for the field's center");
+      for (const tag of ['REST API', 'HTTPS · JSON', 'Saved on the device']) {
         expect(power[1]).toContain(tag);
       }
-      expect(power[2]).toContain('Lluvia de 30 días y humedad del suelo');
-      expect(power[2]).toContain('Satélite');
-      expect(power[2]).toContain('Estimado');
+      expect(power[2]).toContain('30-day rainfall and soil moisture');
+      expect(power[2]).toContain('Satellite');
+      expect(power[2]).toContain('Estimated');
+      expect(docs().querySelector('#docs-panel-power .origin--estimated')).toBeTruthy();
 
       // NISAR: de Earthdata al pipeline, de ahí a la base con import_events y a la bitácora
       const nisar = flow('nisar');
       expect(nisar[0]).toContain('ASF DAAC');
       expect(nisar[1]).toContain('Earthdata Login');
       expect(nisar[1]).toContain('import_events');
-      expect(nisar[2]).toContain('Bitácora');
-      expect(nisar[2]).toContain('Verificado');
+      expect(nisar[2]).toContain('Field log');
+      expect(nisar[2]).toContain('Verified');
+      expect(docs().querySelector('#docs-panel-nisar .origin--verified')).toBeTruthy();
 
       // MODIS va en vivo por el ORNL DAAC a cuatro pantallas
       const modis = flow('modis');
       expect(modis[0]).toContain('ORNL DAAC');
-      for (const place of ['Satélite', 'Mi campo', 'Fertilización', 'Prácticas']) {
+      for (const place of ['Satellite', 'My fields', 'Fertilization', 'Practices']) {
         expect(modis[2]).toContain(place);
       }
 
       // el catálogo solo lista pasadas; la hidrología entra a un modelo sin validar
-      expect(flow('cmr')[1]).toContain('Sin bajar imágenes');
-      expect(flow('cmr')[2]).toContain('Solo un listado');
+      expect(flow('cmr')[1]).toContain('No image downloads');
+      expect(flow('cmr')[2]).toContain('List only');
       const water = flow('hydrology');
       expect(water[1]).toContain('forcing.json');
       expect(water[1]).toContain('OPeNDAP');
-      expect(water[2]).toContain('Cuenca y Caudal');
-      expect(water[2]).toContain('Modelo sin validar');
+      expect(water[2]).toContain('Watershed');
+      expect(water[2]).toContain('Unvalidated model');
     });
 
     it('las fuentes van en pestañas: una a la vista, que cambia con un toque o con las flechas', async () => {
@@ -578,9 +631,10 @@ describe('LandingPage', () => {
         'Cloudflare Workers',
         'Railway + GitHub Actions',
         'PostgreSQL',
-        'Python · Django y DRF',
-        'Pipeline en Python',
+        'Python · Django and DRF',
+        'Python pipeline',
       ]);
+      expect(clean(docs().querySelector('#docs-stack'))).toBe('Technology built to scale');
       expect(
         cards.map((card) =>
           [...card.querySelectorAll('svg[role="img"]')].map((logo) =>
@@ -630,15 +684,22 @@ describe('LandingPage', () => {
         names.filter((name) => /nasa|nisar|isro|earthdata|landsat|modis|smap|gpm/i.test(name)),
       ).toEqual([]);
 
-      expect(docs().querySelector('a.link-arrow')?.getAttribute('href')).toBe('/ayuda');
+      const guide = docs().querySelector('a.link-arrow');
+      expect(guide?.getAttribute('href')).toBe('/ayuda');
+      expect(clean(guide)).toBe('How each data source is loaded: the illustrated guide');
     });
   });
 
-  it('es honesta: usa datos abiertos de la NASA, sin aval ni certificados', async () => {
+  it('sin los cuatro textos que se sacaron (ni su traducción) y sin hablar de certificados', async () => {
     await setup();
 
-    expect(text()).toContain('Usa datos abiertos de la NASA');
-    expect(text()).toContain('No está afiliado a la NASA ni cuenta con su aval');
-    expect(text()).not.toMatch(/certific/i);
+    // la bajada del título, la línea del cierre, el crédito de la imagen y el pie
+    expect(
+      el().querySelector('.hero__lead, .final__credit, .demo__credit, footer, .foot'),
+    ).toBeNull();
+    expect(text()).not.toMatch(
+      /with NASA open data|datos abiertos|privad|only you can see|solo vos|31\/10\/2026|EOSDIS|Space Apps|affiliat|afiliad|endors|\baval\b|VISEC|RTRS|2BSvs/i,
+    );
+    expect(text()).not.toMatch(/certif/i);
   });
 });

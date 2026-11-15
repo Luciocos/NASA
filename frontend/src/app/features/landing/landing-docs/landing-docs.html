@@ -1,12 +1,12 @@
 <section aria-labelledby="docs-nasa">
-  <h3 id="docs-nasa">Cómo nos conectamos con la NASA</h3>
+  <h3 id="docs-nasa">How we connect to NASA</h3>
 
   <ul class="paths">
     @for (path of paths; track path.title) {
       <li class="path reveal-scroll" [class.path--live]="path.live">
         <p class="path__head">
           <span class="chip" [class.chip--ok]="path.live" [class.chip--info]="!path.live">{{
-            path.live ? 'En vivo' : 'Procesado aparte'
+            path.live ? pathLabels.live : pathLabels.processed
           }}</span>
           <strong>{{ path.title }}</strong>
         </p>
@@ -25,7 +25,7 @@
     }
   </ul>
 
-  <div class="tabs" role="tablist" aria-label="Fuentes de la NASA">
+  <div class="tabs" role="tablist" aria-label="NASA data sources">
     @for (source of nasa; track source.id) {
       <button
         type="button"
@@ -61,7 +61,7 @@
           <p>{{ source.what }}</p>
         </div>
         <span class="chip" [class.chip--ok]="source.live" [class.chip--info]="!source.live">{{
-          source.live ? 'En vivo' : 'Procesado aparte'
+          source.live ? pathLabels.live : pathLabels.processed
         }}</span>
       </div>
 
@@ -70,8 +70,10 @@
           <li class="step" [style.--i]="i">
             <p class="step__label">
               <span class="step__name">{{ labels[i] }}</span>
-              @if (step.origin) {
-                <app-origin-badge [origin]="step.origin" />
+              @if (step.origin; as origin) {
+                <span class="origin" [class]="'origin origin--' + origin.toLowerCase()">{{
+                  origins[origin]
+                }}</span>
               }
               @if (step.note) {
                 <span class="chip">{{ step.note }}</span>
@@ -94,7 +96,7 @@
 </section>
 
 <section aria-labelledby="docs-stack">
-  <h3 id="docs-stack">Tecnología para escalar</h3>
+  <h3 id="docs-stack">Technology built to scale</h3>
   <ul class="stack">
     @for (tool of stack; track tool.name) {
       <li class="tool card reveal-scroll">
@@ -131,5 +133,5 @@
 </section>
 
 <a class="link-arrow more" routerLink="/ayuda">
-  Cómo se carga cada dato: la guía con imágenes <app-icon name="arrow-right" />
+  How each data source is loaded: the illustrated guide <app-icon name="arrow-right" />
 </a>

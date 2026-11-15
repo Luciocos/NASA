@@ -228,9 +228,38 @@ h4 {
   letter-spacing: 0;
 }
 
+/* el origen con el que la app muestra el dato: la misma pastilla que origin-badge (texto y color,
+   nunca solo color), con la etiqueta en inglés */
+.origin {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.origin--verified {
+  background: #e6f4ea;
+  color: #1b6e3a;
+}
+
+.origin--declared {
+  background: #e7effa;
+  color: #1a4f8b;
+}
+
+.origin--estimated {
+  background: #fdf3e1;
+  color: #8a5a00;
+}
+
 .step__text {
   font-weight: 600;
   line-height: 1.35;
+  text-wrap: pretty;
 }
 
 .tags {

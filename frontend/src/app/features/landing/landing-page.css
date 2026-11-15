@@ -102,13 +102,6 @@ h1 strong {
   font-weight: 800;
 }
 
-.hero__lead {
-  margin: 0;
-  color: var(--ink-2);
-  font-size: var(--text-lg);
-  text-wrap: pretty;
-}
-
 .hero__actions {
   display: grid;
   gap: var(--space-3);
@@ -183,13 +176,13 @@ h2 {
 
 /* la documentación (landing-docs) trae su propio css */
 
-/* cierre sobre la imagen satelital de la zona, oscurecida para que el texto se lea */
+/* cierre sobre la imagen satelital de la zona, oscurecida para que el texto se lea. es lo último
+   de la página: sin pie ni crédito, el título y la acción quedan solos */
 .final {
   position: relative;
   display: grid;
   justify-items: center;
   gap: var(--space-2);
-  padding-bottom: var(--space-5);
   overflow: hidden;
   isolation: isolate;
   background: var(--night-900);
@@ -215,26 +208,13 @@ h2 {
 }
 
 .final p {
-  margin: 0 0 var(--space-3);
+  margin: 0;
   text-wrap: balance;
 }
 
-.final__credit {
-  --icon-size: 1rem;
-  display: flex;
-  gap: var(--space-2);
-  margin: var(--space-6) 0 0;
-  color: var(--night-ink-2);
-  font-size: var(--text-xs);
-  line-height: 1.4;
-  text-align: left;
-}
-
-.foot {
-  padding: var(--space-5) var(--gutter) var(--space-6);
-  border-top: 1px solid var(--line);
-  color: var(--ink-3);
-  font-size: var(--text-xs);
+/* la acción, con aire debajo del título (o de la línea, con la sesión abierta) */
+.final .btn {
+  margin-top: var(--space-3);
 }
 
 /* sin lugar para dos columnas: el título, las acciones y abajo el video a todo el ancho */

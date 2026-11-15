@@ -1,5 +1,5 @@
 <header class="bar">
-  <a routerLink="/" class="brand" aria-label="LoTestigo, inicio">
+  <a routerLink="/" class="brand" aria-label="LoTestigo, home">
     <img
       class="brand-logo"
       src="/lotestigo-mark-32.png"
@@ -11,38 +11,35 @@
     LoTestigo
   </a>
   @if (loggedIn()) {
-    <a class="btn btn--sm" routerLink="/mapa">Ir a mi campo</a>
+    <a class="btn btn--sm" routerLink="/mapa">Go to my fields</a>
   } @else {
-    <a class="btn btn--sm" routerLink="/ingresar">Ingresar</a>
+    <a class="btn btn--sm" routerLink="/ingresar">Log in</a>
   }
 </header>
 
 <section class="hero" aria-labelledby="hero-title">
   <div class="hero__head" animate.enter="enter-rise">
-    <p class="hero__tag">Para productores agrícolas, ganaderos y asesores</p>
+    <p class="hero__tag">For crop farmers, ranchers and advisors</p>
     <h1 id="hero-title">
-      Ecosistema que facilita y potencia a los productores y asesores en monitorear
-      <strong>datos de la NASA simplificados</strong>, <strong>huellas</strong>,
-      <strong>fertilización</strong> y <strong>rentabilidad</strong>
+      An ecosystem that empowers farmers and advisors to monitor
+      <strong>simplified NASA data</strong>, <strong>footprints</strong>,
+      <strong>fertilization</strong> and <strong>profitability</strong>
     </h1>
   </div>
 
   <div class="hero__side" animate.enter="enter-rise">
-    <p class="hero__lead">
-      Marcá el lote y mirá lo que ve el satélite. Gratis, con datos abiertos de la NASA.
-    </p>
     <div class="hero__actions">
       @if (loggedIn()) {
         <a class="btn btn--primary btn--lg" routerLink="/mapa">
-          Ir a mi campo <app-icon name="arrow-right" />
+          Go to my fields <app-icon name="arrow-right" />
         </a>
       } @else {
-        <a class="btn btn--primary btn--lg" routerLink="/registrarse">Crear cuenta gratis</a>
-        <a class="btn btn--lg" routerLink="/ingresar">Ya tengo cuenta</a>
+        <a class="btn btn--primary btn--lg" routerLink="/registrarse">Create a free account</a>
+        <a class="btn btn--lg" routerLink="/ingresar">I already have an account</a>
       }
     </div>
     <a class="link-arrow" routerLink="/ejemplos">
-      Ver un lote de ejemplo <app-icon name="arrow-right" />
+      See a sample field <app-icon name="arrow-right" />
     </a>
   </div>
 
@@ -50,7 +47,7 @@
 </section>
 
 <section class="section" aria-labelledby="steps-title">
-  <h2 id="steps-title">Cómo funciona</h2>
+  <h2 id="steps-title">How it works</h2>
   <ol class="steps">
     @for (step of steps; track step.title; let i = $index) {
       <li class="step card reveal-scroll">
@@ -66,8 +63,10 @@
 </section>
 
 <section class="section section--tint" aria-labelledby="docs-title">
-  <h2 id="docs-title">Documentación</h2>
-  <p class="section__lead">Qué datos de la NASA usamos, cómo llegan y con qué tecnología escala.</p>
+  <h2 id="docs-title">Documentation</h2>
+  <p class="section__lead">
+    Which NASA data we use, how it reaches the app and the technology that lets it scale.
+  </p>
   <app-landing-docs />
 </section>
 
@@ -84,24 +83,13 @@
     alt=""
   />
   @if (loggedIn()) {
-    <h2 id="final-title">Tus lotes te esperan</h2>
-    <p>Seguí con lo que vio el satélite en tus lotes.</p>
+    <h2 id="final-title">Your fields are waiting</h2>
+    <p>Keep up with what the satellite sees on your fields.</p>
     <a class="btn btn--primary btn--lg" routerLink="/mapa">
-      Ir a mi campo <app-icon name="arrow-right" />
+      Go to my fields <app-icon name="arrow-right" />
     </a>
   } @else {
-    <h2 id="final-title">Probalo con un lote</h2>
-    <p>Es gratis y tus lotes son privados: solo vos los ves.</p>
-    <a class="btn btn--primary btn--lg" routerLink="/registrarse">Crear cuenta gratis</a>
+    <h2 id="final-title">Try it on your field</h2>
+    <a class="btn btn--primary btn--lg" routerLink="/registrarse">Create a free account</a>
   }
-  <p class="final__credit">
-    <app-icon name="satellite" />
-    <span>{{ image.caption }}</span>
-  </p>
 </section>
-
-<footer class="foot">
-  Prueba de concepto del NASA Space Apps Challenge 2026, sede Rosario. Usa datos abiertos de la
-  NASA. No está afiliado a la NASA ni cuenta con su aval. Es una estimación con respaldo satelital:
-  no reemplaza a VISEC, RTRS ni 2BSvs.
-</footer>
