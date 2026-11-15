@@ -71,6 +71,17 @@
                 }}{{ state.stale ? ' · copia guardada, no se pudo actualizar' : '' }}</span
               >
             </p>
+            @if (hasZones() && mixedHa() > 0) {
+              <p class="mixed-legend">
+                <span class="mixed-swatch" aria-hidden="true"></span>
+                <span
+                  >Los cuadros claros son <strong>píxeles mixtos</strong>: más de la mitad del
+                  cuadro de 250 m queda fuera del lote, así que su NDVI refleja sobre todo lo que
+                  hay alrededor. Son {{ hectares(mixedHa()) }} ha del lote y su ambiente es menos
+                  seguro. Pasá el mouse por un cuadro para ver qué parte es tuya.</span
+                >
+              </p>
+            }
             @if (zones(); as z) {
               @if (z.zones.length === 0) {
                 <p class="alert alert--info">
@@ -93,6 +104,11 @@
               unit="ha"
               [caption]="percent(row.zone.share) + ' del lote'"
             >
+              @if (row.mixedHa > 0) {
+                <span class="mixed-note"
+                  >{{ hectares(row.mixedHa) }} ha de píxeles mixtos, menos seguras</span
+                >
+              }
               <span class="zone-key">
                 <span
                   [class]="'swatch swatch--' + row.zone.level"

@@ -309,3 +309,29 @@ p {
     height: clamp(16rem, 40vh, 26rem);
   }
 }
+
+.mixed-note {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--ink-2, #5a5a5a);
+}
+
+.mixed-legend {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ink-2, #5a5a5a);
+}
+
+.mixed-swatch {
+  flex: none;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-top: 0.15rem;
+  border: 1.5px dashed #1b6e3a;
+  border-radius: 2px;
+  background: rgb(61 154 79 / 20%);
+}

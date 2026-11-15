@@ -13,6 +13,15 @@ import type {
 
 const DAY_MS = 86_400_000;
 
+/**
+ * píxel mixto: más de la mitad del cuadro de 250 m queda fuera del lote, así que su NDVI refleja
+ * sobre todo lo que hay alrededor (el campo vecino, un camino). Es la regla de la mayoría, no un
+ * umbral calibrado
+ */
+export function isMixedPixel(p: NdviPixel): boolean {
+  return p.insideShare !== undefined && p.insideShare < 0.5;
+}
+
 /** píxel usable: con valor y sin nubes ni nieve (0 bueno, 1 marginal) */
 export function isValidPixel(p: NdviPixel): boolean {
   return p.value !== null && (p.reliability === 0 || p.reliability === 1);
@@ -176,6 +185,10 @@ export function zonesByTerciles(grid: NdviGrid): NdviZones {
       to: round(bounds[level][1], 4),
       pixels,
       share: round(pixels.reduce((sum, p) => sum + weight(p), 0) / validWeight, 4),
+      mixedShare: round(
+        pixels.filter(isMixedPixel).reduce((sum, p) => sum + weight(p), 0) / validWeight,
+        4,
+      ),
     };
   });
   return { ...base, min, max, zones, note: null };

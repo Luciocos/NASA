@@ -13,7 +13,7 @@ import {
 import * as L from 'leaflet';
 
 import { PolygonGeometry } from '../../core/models';
-import { NdviZones } from '../../core/nasa';
+import { NdviPixel, NdviZones, isMixedPixel } from '../../core/nasa';
 
 /** color y trazo de cada ambiente: el borde cambia además del color */
 export const ZONE_STYLE = {
@@ -90,19 +90,16 @@ export class ZonesMap {
       for (const pixel of zone.pixels) {
         // solo la parte del píxel dentro del lote; una grilla sin recorte dibuja el píxel entero
         const shape = pixel.clip?.length ? pixel.clip : pixel.ring;
+        const mixed = isMixedPixel(pixel);
         L.polygon(shape, {
           color: style.color,
           weight: 1.5,
           dashArray: style.dash,
           fillColor: style.fill,
-          fillOpacity: 0.55,
+          // el píxel mixto va más claro; la ayuda y la leyenda dicen qué significa
+          fillOpacity: mixed ? 0.2 : 0.55,
         })
-          .bindTooltip(
-            `${zone.label}: NDVI ${pixel.value?.toLocaleString('es-AR')}` +
-              (pixel.insideHa
-                ? ` · ${pixel.insideHa.toLocaleString('es-AR', { maximumFractionDigits: 1 })} ha en el lote`
-                : ''),
-          )
+          .bindTooltip(pixelTooltip(zone.label, pixel, mixed))
           .addTo(layer);
       }
     }
@@ -111,4 +108,23 @@ export class ZonesMap {
     }).addTo(layer);
     map.fitBounds(outline.getBounds(), { padding: [30, 30], maxZoom: 16 });
   }
+}
+
+const formatter = (digits: number) =>
+  new Intl.NumberFormat('es-AR', { maximumFractionDigits: digits });
+
+/** ayuda de un píxel: NDVI, hectáreas en el lote y, si es mixto, qué parte del cuadro es del lote */
+export function pixelTooltip(label: string, pixel: NdviPixel, mixed: boolean): string {
+  const parts = [`${label}: NDVI ${formatter(2).format(pixel.value ?? 0)}`];
+  if (pixel.insideHa) parts.push(`${formatter(1).format(pixel.insideHa)} ha en el lote`);
+  const share = pixel.insideShare;
+  if (share !== undefined && share < 0.999) {
+    const percent = `${formatter(0).format(share * 100)} % del cuadro está en tu lote`;
+    parts.push(
+      mixed
+        ? `Píxel mixto: solo el ${percent}; el valor refleja sobre todo lo que hay alrededor`
+        : `el ${percent}`,
+    );
+  }
+  return parts.join(' · ');
 }

@@ -246,11 +246,14 @@ export function parseNdviSubset(
   const cells = Array.from({ length: grid.nrows * grid.ncols }, (_, i) => {
     const ring = cellRing(grid, i);
     const overlap = geometry ? cellOverlap(ring, geometry) : null;
+    const insideHa = overlap?.areaHa ?? 0;
     return {
       ring,
       center: cellCenter(grid, i),
-      inside: (overlap?.areaHa ?? 0) > 0,
-      insideHa: overlap?.areaHa ?? 0,
+      inside: insideHa > 0,
+      insideHa,
+      // la grilla sinusoidal es de área igual: el cuadro mide cellSizeM² en el terreno
+      insideShare: Math.min(1, insideHa / (grid.cellSizeM ** 2 / 10_000)),
       clip: overlap?.rings ?? [],
     };
   });

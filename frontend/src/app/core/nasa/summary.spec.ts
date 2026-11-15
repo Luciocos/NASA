@@ -1,7 +1,7 @@
 import type { PolygonGeometry } from '../models';
 import { cellOverlap } from './geo';
 import type { LatLng, NdviGrid, NdviObservation, NdviPixel } from './models';
-import { ndviSummary, observeLot, zonesByTerciles } from './summary';
+import { isMixedPixel, ndviSummary, observeLot, zonesByTerciles } from './summary';
 
 /** grilla de 4 x 4 píxeles de 1° con centros en 0.5, 1.5, 2.5 y 3.5 */
 function grid(values: (number | null)[], reliability: number[] = []): NdviGrid {
@@ -207,5 +207,35 @@ describe('zonesByTerciles', () => {
   it('avisa cuando no alcanza para separar ambientes', () => {
     expect(zonesByTerciles(grid(Array(16).fill(0.5))).note).toContain('parejo');
     expect(zonesByTerciles(grid(Array(16).fill(null))).zones).toEqual([]);
+  });
+});
+
+describe('píxeles mixtos', () => {
+  it('cuenta aparte la superficie de los píxeles que no caen enteros en el lote', () => {
+    const g = grid(VALUES);
+    // fila de abajo: dos píxeles enteros y uno con solo el 10 % dentro del lote
+    const share = (i: number, insideShare: number, insideHa: number) => {
+      g.pixels[i] = { ...g.pixels[i], inside: true, insideShare, insideHa };
+    };
+    for (const p of g.pixels) Object.assign(p, { inside: false });
+    // NDVI 0,1 a 0,9: cortes en 0,367 y 0,633, así que el 0,6 mixto cae en medio
+    share(12, 1, 10); // 0.1
+    share(15, 1, 10); // 0.9
+    share(14, 0.1, 1); // 0.6
+    const z = zonesByTerciles(g);
+    const byLevel = Object.fromEntries(z.zones.map((zone) => [zone.level, zone]));
+    expect(byLevel['alto'].share).toBeCloseTo(10 / 21, 4);
+    expect(byLevel['alto'].mixedShare).toBe(0);
+    expect(byLevel['medio'].share).toBeCloseTo(1 / 21, 4);
+    expect(byLevel['medio'].mixedShare).toBeCloseTo(1 / 21, 4);
+  });
+
+  it('un píxel entero no es mixto y uno sin recorte tampoco', () => {
+    const base = grid(VALUES).pixels[0];
+    expect(isMixedPixel({ ...base, insideShare: 1 })).toBe(false);
+    expect(isMixedPixel({ ...base, insideShare: 0.4 })).toBe(true);
+    // la mayor parte adentro: no es mixto aunque no esté entero
+    expect(isMixedPixel({ ...base, insideShare: 0.7 })).toBe(false);
+    expect(isMixedPixel(base)).toBe(false);
   });
 });

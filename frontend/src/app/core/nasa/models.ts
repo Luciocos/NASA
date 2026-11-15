@@ -67,6 +67,11 @@ export interface NdviPixel {
   inside: boolean;
   /** hectáreas del píxel dentro del lote (pesa en promedios y ambientes); sin lote, 0 */
   insideHa?: number;
+  /**
+   * parte del cuadro de 250 m que cae dentro del lote, de 0 a 1. Con menos de 1 su NDVI promedia
+   * también lo que hay alrededor; con menos de la mitad es un píxel mixto (isMixedPixel)
+   */
+  insideShare?: number;
   /** recorte del píxel con el lote, para dibujar: contorno y después huecos (ver cellOverlap) */
   clip?: LatLng[][];
 }
@@ -153,6 +158,8 @@ export interface NdviZone {
   pixels: NdviPixel[];
   /** parte de la superficie válida del lote (la que cae dentro del polígono), de 0 a 1 */
   share: number;
+  /** de esa parte, la que sale de píxeles mixtos (de 0 a share): su NDVI es menos seguro */
+  mixedShare: number;
 }
 
 export interface NdviZones {
