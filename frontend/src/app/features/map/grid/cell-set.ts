@@ -82,6 +82,9 @@ export class CellSet implements ReadonlyCellSet {
     if (!isValidCell(i, j)) throw new RangeError(`celda inválida: [${i}, ${j}]`);
     const key = pack(i, j);
     if (this.keys.has(key)) return false;
+    // un -0 es la misma celda que un 0, pero no tiene que colarse en la caja
+    i += 0;
+    j += 0;
     if (this.keys.size === 0) {
       this.box = { minI: i, maxI: i, minJ: j, maxJ: j };
       this.boxStale = false;

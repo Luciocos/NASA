@@ -1,0 +1,156 @@
+:host {
+  display: block;
+  max-width: 76rem;
+}
+
+h1 {
+  margin: 0 0 var(--space-2);
+}
+
+.lot-name {
+  color: var(--ink-3);
+  font-weight: 600;
+}
+
+.lead {
+  max-width: 48rem;
+  margin: 0 0 var(--space-4);
+  color: var(--ink-2);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 20rem minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+fieldset {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+legend {
+  padding: 0;
+  font-weight: 700;
+}
+
+.unit {
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--space-3);
+}
+
+.tile {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+
+.tile--main {
+  background: var(--night-900);
+  color: var(--night-ink);
+}
+
+.tile__label {
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.tile--main .tile__label,
+.tile--main .tile__unit {
+  color: var(--night-ink-2);
+}
+
+.tile__value {
+  font-size: var(--text-2xl);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.tile--main .tile__value {
+  color: var(--accent);
+}
+
+.tile__value.is-negative {
+  color: var(--fire-200);
+}
+
+.tile__unit {
+  color: var(--ink-3);
+  font-size: var(--text-sm);
+}
+
+.results {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.results h3 {
+  margin: var(--space-2) 0 0;
+}
+
+.note {
+  margin: 0;
+  padding: var(--space-3);
+  border-left: 4px solid var(--origin-estimated);
+  border-radius: var(--radius-sm);
+  background: var(--origin-estimated-bg);
+}
+
+.breakdown .is-empty td {
+  color: var(--ink-3);
+}
+
+.breakdown tfoot th,
+.breakdown tfoot td {
+  font-weight: 800;
+}
+
+.sens-wrap {
+  overflow-x: auto;
+}
+
+.sens td.is-loss {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.sens td.is-base {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: -2px;
+  font-weight: 800;
+}
+
+.block {
+  height: 18rem;
+  border-radius: var(--radius-lg);
+}
+
+@media (max-width: 60rem) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

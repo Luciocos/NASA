@@ -4,7 +4,7 @@
   "description": "Bitácora de manejo de un lote agrícola, detectada por satélite. Prueba de concepto.",
   "lang": "es-AR",
   "dir": "ltr",
-  "id": "/mapa",
+  "id": "/",
   "start_url": "/mapa",
   "scope": "/",
   "display": "standalone",

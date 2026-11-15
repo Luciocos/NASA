@@ -33,13 +33,13 @@ describe('components', () => {
   });
 
   it('separa los bloques y los ordena del más grande al más chico', () => {
-    const cells = cellsFromArt([
-      '##...#', //
-      '.....#',
-      '###..#',
-      '#.#...',
-      '###.#.',
-    ]);
+    const cells = cellsFromArt(`
+      ##...#
+      .....#
+      ###..#
+      #.#...
+      ###.#.
+    `);
     const regions = components(cells);
     expect(regions.map((region) => region.size)).toEqual([8, 3, 2, 1]);
     expect(sortedKeys(regions[0])).toEqual(
@@ -59,12 +59,12 @@ describe('components', () => {
   });
 
   it('las regiones no comparten celdas y entre todas suman el total', () => {
-    const cells = cellsFromArt([
-      '#.#.#.#', //
-      '.#.#.#.',
-      '#######',
-      '.#...#.',
-    ]);
+    const cells = cellsFromArt(`
+      #.#.#.#
+      .#.#.#.
+      #######
+      .#...#.
+    `);
     const regions = components(cells);
     const all = new CellSet();
     let total = 0;
@@ -112,9 +112,22 @@ describe('isSingleRegion', () => {
     expect(isSingleRegion(cellsFromArt(['###..', '###.#', '###..']))).toBe(false);
   });
 
-  it('una celda dentro de un hueco, tocando solo en diagonal, es otra región', () => {
-    expect(isSingleRegion(cellsFromArt(['#####', '#...#', '#.#.#', '#...#', '#####']))).toBe(false);
-    expect(isSingleRegion(cellsFromArt(['####', '#..#', '#.##', '####']))).toBe(true);
+  it('una celda suelta dentro de un hueco es otra región, y una península no', () => {
+    const island = cellsFromArt(`
+      #####
+      #...#
+      #.#.#
+      #...#
+      #####
+    `);
+    expect(isSingleRegion(island)).toBe(false);
+    const peninsula = cellsFromArt(`
+      ####
+      #..#
+      #.##
+      ####
+    `);
+    expect(isSingleRegion(peninsula)).toBe(true);
   });
 
   it('recorre una tira de 20.000 celdas sin desbordar la pila', () => {
@@ -128,17 +141,17 @@ describe('isSingleRegion', () => {
   });
 
   it('une una espiral larga por lados', () => {
-    const spiral = cellsFromArt([
-      '#########',
-      '........#',
-      '#######.#',
-      '#.....#.#',
-      '#.###.#.#',
-      '#.#...#.#',
-      '#.#####.#',
-      '#.......#',
-      '#########',
-    ]);
+    const spiral = cellsFromArt(`
+      #########
+      ........#
+      #######.#
+      #.....#.#
+      #.###.#.#
+      #.#...#.#
+      #.#####.#
+      #.......#
+      #########
+    `);
     expect(isSingleRegion(spiral)).toBe(true);
     expect(components(spiral)[0].size).toBe(spiral.size);
   });

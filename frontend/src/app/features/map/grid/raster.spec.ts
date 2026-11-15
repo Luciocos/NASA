@@ -327,7 +327,9 @@ describe('rasterizeRings', () => {
         [2.5, 3.5],
       ],
     ]);
-    expect(sortedKeys(left)).toEqual(sortedKeys(cellsFromArt(['.....', '##...', '##...', '##...'])));
+    expect(sortedKeys(left)).toEqual(
+      sortedKeys(cellsFromArt(['.....', '##...', '##...', '##...'])),
+    );
     expect(sortedKeys(right)).toEqual(
       sortedKeys(cellsFromArt(['.....', '..##.', '..##.', '..##.'])),
     );

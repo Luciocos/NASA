@@ -137,6 +137,11 @@ app-connection-status {
   outline: none;
 }
 
+/* la landing ocupa todo el ancho, sin el margen de las pantallas de la app */
+.content--landing {
+  padding: 0;
+}
+
 .footer {
   padding: var(--space-3) var(--space-5);
   border-top: 1px solid var(--line);

@@ -239,7 +239,9 @@ export class LotOutbox {
   }
 
   private patch(localId: string, change: (item: PendingLot) => PendingLot): void {
-    this.commit(this.pendingState().map((item) => (item.localId === localId ? change(item) : item)));
+    this.commit(
+      this.pendingState().map((item) => (item.localId === localId ? change(item) : item)),
+    );
   }
 
   private commit(queue: PendingLot[]): void {

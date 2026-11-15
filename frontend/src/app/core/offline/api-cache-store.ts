@@ -28,7 +28,7 @@ export class ApiCacheStore {
 
   /** cantidad de respuestas guardadas */
   get size(): number {
-    return this.entries().length;
+    return this.keys().length;
   }
 
   /** la copia guardada de una url (con sus parámetros), o null si no hay */
@@ -69,7 +69,7 @@ export class ApiCacheStore {
 
   /** borra todas las copias */
   clear(): void {
-    for (const entry of this.entries()) this.remove(entry.key);
+    for (const key of this.keys()) this.remove(key);
   }
 
   /**
@@ -77,37 +77,49 @@ export class ApiCacheStore {
    * devuelve false si no había nada para borrar
    */
   makeRoom(keepUrl?: string): boolean {
-    const keep = keepUrl === undefined ? null : PREFIX + keepUrl;
-    const oldestFirst = this.entries()
-      .filter((entry) => entry.key !== keep)
-      .sort((a, b) => a.savedAt - b.savedAt);
-    const victims = oldestFirst.slice(0, Math.ceil(oldestFirst.length / 2));
-    for (const entry of victims) this.remove(entry.key);
+    const candidates = this.oldestFirst(keepUrl === undefined ? null : PREFIX + keepUrl);
+    const victims = candidates.slice(0, Math.ceil(candidates.length / 2));
+    for (const key of victims) this.remove(key);
     return victims.length > 0;
   }
 
   private trim(justWritten: string): void {
-    const entries = this.entries();
-    if (entries.length <= API_CACHE_MAX_ENTRIES) return;
-    const oldestFirst = entries
-      .filter((entry) => entry.key !== justWritten)
-      .sort((a, b) => a.savedAt - b.savedAt);
-    for (const entry of oldestFirst.slice(0, entries.length - TRIM_TO)) this.remove(entry.key);
+    const excess = this.keys().length - API_CACHE_MAX_ENTRIES;
+    if (excess <= 0) return;
+    const victims = this.oldestFirst(justWritten).slice(0, API_CACHE_MAX_ENTRIES + excess - TRIM_TO);
+    for (const key of victims) this.remove(key);
   }
 
-  private entries(): { key: string; savedAt: number }[] {
-    const found: { key: string; savedAt: number }[] = [];
+  private keys(): string[] {
+    const found: string[] = [];
     try {
       for (let index = 0; index < this.storage.length; index++) {
         const key = this.storage.key(index);
-        if (key?.startsWith(PREFIX)) {
-          found.push({ key, savedAt: savedAtOf(this.storage.getItem(key)) });
-        }
+        if (key?.startsWith(PREFIX)) found.push(key);
       }
     } catch {
       // sin almacenamiento no hay copias
     }
     return found;
+  }
+
+  /** claves de las copias, de la más vieja a la más nueva, sin `exceptKey` */
+  private oldestFirst(exceptKey: string | null): string[] {
+    return this.keys()
+      .filter((key) => key !== exceptKey)
+      .map((key) => ({ key, savedAt: this.savedAtOf(key) }))
+      .sort((a, b) => a.savedAt - b.savedAt)
+      .map((entry) => entry.key);
+  }
+
+  // una entrada sin fecha legible cuenta como la más vieja: es la primera en irse
+  private savedAtOf(key: string): number {
+    try {
+      const match = /^\{"t":(\d+),/.exec(this.storage.getItem(key) ?? '');
+      return match ? Number(match[1]) : 0;
+    } catch {
+      return 0;
+    }
   }
 
   private write(key: string, value: string): boolean {
@@ -135,10 +147,4 @@ function isEntry(value: unknown): value is { t: number; b: unknown } {
     typeof (value as { t?: unknown }).t === 'number' &&
     'b' in value
   );
-}
-
-// una entrada sin fecha legible cuenta como la más vieja: es la primera en irse
-function savedAtOf(raw: string | null): number {
-  const match = raw === null ? null : /^\{"t":(\d+),/.exec(raw);
-  return match ? Number(match[1]) : 0;
 }

@@ -1,87 +1,163 @@
 import {
+  ChangeDetectionStrategy,
   Component,
-  DestroyRef,
-  ElementRef,
-  afterNextRender,
+  computed,
   effect,
   inject,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import * as L from 'leaflet';
+import { Subscription } from 'rxjs';
 
+import { DemoAccount } from '../../../core/account/demo-account';
+import { isExampleLot } from '../../../core/account/examples';
 import { Api } from '../../../core/api';
+import { formatHectares, latestCampaign } from '../../../core/insights';
+import { LotOverview, buildIsoScene, loadOverviews } from '../../../core/lot-scene';
 import { LotSummary } from '../../../core/models';
+import { LotOutbox } from '../../../core/offline/lot-outbox';
+import { EventGlyph } from '../../../shared/iso/event-glyph';
+import { IsoScene } from '../../../shared/iso/iso-scene';
+import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
+import { SimulatedNotice } from '../../../shared/simulated-notice/simulated-notice';
+import { Icon } from '../../../shared/ui/icon/icon';
+import { formatDate } from '../../lot/labels';
+import { SatelliteLot, SatelliteView, satelliteLotOf } from '../satellite-view/satellite-view';
 
-// Vista inicial si todavía no hay lotes: Zona Núcleo (sur de Santa Fe).
-const DEFAULT_CENTER: L.LatLngTuple = [-33.05, -61.2];
-const DEFAULT_ZOOM = 9;
+type ViewMode = 'maqueta' | 'satelital';
 
-const LOT_STYLE: L.PathOptions = { color: '#1a4f8b', weight: 3, fillOpacity: 0.2 };
-const LOT_HOVER_STYLE: L.PathOptions = { weight: 5, fillOpacity: 0.35 };
-
-/** Mapa de lotes (CLAUDE.md, sección 11, pantalla 1). Clic en un lote abre su ficha. */
+/**
+ * "Mi campo" (CLAUDE.md, sección 11, pantalla 1): los lotes de la cuenta demo y los de ejemplo
+ * de la zona en una maqueta isométrica interactiva, con la vista satelital como alternativa
+ */
 @Component({
-  imports: [RouterLink],
   selector: 'app-map-page',
-  styleUrl: './map-page.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, IsoScene, SatelliteView, EventGlyph, OriginBadge, SimulatedNotice, Icon],
   templateUrl: './map-page.html',
+  styleUrl: './map-page.css',
 })
 export class MapPage {
   private readonly api = inject(Api);
   private readonly router = inject(Router);
-  private readonly mapElement = viewChild.required<ElementRef<HTMLElement>>('map');
+  protected readonly account = inject(DemoAccount);
+  protected readonly outbox = inject(LotOutbox);
+  private readonly scene = viewChild(IsoScene);
+
+  protected readonly view = signal<ViewMode>('maqueta');
+  protected readonly showGrid = signal(true);
+  protected readonly selectedId = signal<string | null>(null);
 
   protected readonly lots = signal<LotSummary[] | null>(null);
   protected readonly error = signal<string | null>(null);
-  private readonly map = signal<L.Map | null>(null);
+  private readonly overviewMap = signal<ReadonlyMap<number, LotOverview>>(new Map());
+
+  /** lotes que se muestran: los de la cuenta y los de ejemplo de la zona */
+  private readonly shown = computed(() =>
+    (this.lots() ?? []).filter((lot) => this.account.owns(lot.id) || isExampleLot(lot)),
+  );
+  private readonly overviews = computed(() =>
+    this.shown().map(
+      (lot) => this.overviewMap().get(lot.id) ?? { lot, campaigns: null, last: null, events: [] },
+    ),
+  );
+  protected readonly mine = computed(() =>
+    this.overviews().filter((item) => this.account.owns(item.lot.id)),
+  );
+  protected readonly examples = computed(() =>
+    this.overviews().filter((item) => !this.account.owns(item.lot.id)),
+  );
+  protected readonly isoLots = computed(
+    () => buildIsoScene(this.overviews(), this.outbox.pending()).lots,
+  );
+  protected readonly satelliteLots = computed<SatelliteLot[]>(() => [
+    ...this.overviews().map((item) => satelliteLotOf(item.lot)),
+    ...this.outbox.pending().map((item) => ({
+      id: `pendiente:${item.localId}`,
+      name: item.body.name,
+      geometry: item.body.geometry,
+      pending: true,
+    })),
+  ]);
+  protected readonly totalHa = computed(() =>
+    this.mine().reduce((sum, item) => sum + item.lot.area_ha, 0),
+  );
+  protected readonly selected = computed(() => {
+    const id = this.selectedId();
+    return this.overviews().find((item) => String(item.lot.id) === id) ?? null;
+  });
+  protected readonly selectedPending = computed(() => {
+    const id = this.selectedId();
+    return id?.startsWith('pendiente:')
+      ? (this.outbox.pending().find((item) => `pendiente:${item.localId}` === id) ?? null)
+      : null;
+  });
+
+  protected readonly formatHectares = formatHectares;
+  protected readonly formatDate = formatDate;
+  protected readonly latestCampaign = latestCampaign;
 
   constructor() {
-    this.api.lots().subscribe({
-      next: (lots) => this.lots.set(lots),
-      error: () => this.error.set('No se pudieron cargar los lotes. ¿Está corriendo el backend?'),
+    this.reload();
+
+    // trae ficha y bitácora de los lotes que se muestran, una sola vez por lote
+    let loading: Subscription | null = null;
+    effect((onCleanup) => {
+      const missing = this.shown().filter((lot) => !untracked(this.overviewMap).has(lot.id));
+      if (missing.length === 0) return;
+      loading = loadOverviews(this.api, missing).subscribe((items) =>
+        this.overviewMap.update((current) => {
+          const next = new Map(current);
+          for (const item of items) next.set(item.lot.id, item);
+          return next;
+        }),
+      );
+      onCleanup(() => loading?.unsubscribe());
     });
 
-    afterNextRender(() => {
-      const map = L.map(this.mapElement().nativeElement).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(map);
-      this.map.set(map);
-    });
-
-    inject(DestroyRef).onDestroy(() => this.map()?.remove());
-
+    // lo que la cola subió aparece como lote propio: se vuelve a pedir la lista
     effect(() => {
-      const map = this.map();
-      const lots = this.lots();
-      if (map && lots) {
-        this.drawLots(map, lots);
-      }
+      if (this.outbox.lastSynced().length > 0) untracked(() => this.reload());
     });
   }
 
-  private drawLots(map: L.Map, lots: LotSummary[]): void {
-    const layer = L.featureGroup().addTo(map);
-    for (const lot of lots) {
-      const polygon = L.geoJSON(lot.geometry, { style: LOT_STYLE })
-        .bindTooltip(`${lot.name} · ${formatArea(lot.area_ha)}`, { sticky: true })
-        .on('mouseover', () => polygon.setStyle(LOT_HOVER_STYLE))
-        .on('mouseout', () => polygon.setStyle(LOT_STYLE))
-        .on('click', () => this.router.navigate(['/lotes', lot.id]));
-      polygon.addTo(layer);
-    }
-    if (lots.length > 0) {
-      map.fitBounds(layer.getBounds(), { padding: [40, 40], maxZoom: 15 });
-    }
+  protected reload(): void {
+    this.api.lots().subscribe({
+      next: (lots) => {
+        this.lots.set(lots);
+        this.error.set(null);
+      },
+      error: () =>
+        this.error.set('No se pudieron cargar los lotes. Revisá la conexión y probá de nuevo.'),
+    });
   }
 
-  protected readonly formatArea = formatArea;
-}
+  protected select(id: string | null): void {
+    this.selectedId.set(id);
+    if (id && this.view() === 'maqueta') this.scene()?.focusLot(id);
+  }
 
-function formatArea(hectares: number): string {
-  return `${hectares.toLocaleString('es-AR', { maximumFractionDigits: 1 })} ha`;
+  protected open(id: string): void {
+    if (id.startsWith('pendiente:')) return;
+    void this.router.navigate(['/lotes', Number(id)]);
+  }
+
+  protected zoom(factor: number): void {
+    this.scene()?.zoomBy(factor);
+  }
+
+  protected rotate(): void {
+    this.scene()?.rotate(1);
+  }
+
+  protected fit(): void {
+    this.scene()?.fitAll(true);
+  }
+
+  protected eventCount(item: LotOverview): string {
+    const count = item.lot.event_count;
+    return `${count} ${count === 1 ? 'evento' : 'eventos'}`;
+  }
 }

@@ -1,0 +1,152 @@
+<header class="bar">
+  <a routerLink="/" class="brand" aria-label="LoTestigo, inicio">
+    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+      <path fill="#3d9a4f" d="M16 7l13 7-13 7-13-7z" />
+      <path fill="#6b4429" d="M3 14l13 7v8L3 22z" />
+      <path fill="#96633f" d="M29 14l-13 7v8l13-7z" />
+      <path fill="none" stroke="#e8eef5" stroke-width="1.3" d="M16 14V2.6" />
+      <path fill="#f2a43a" d="M16 2.6l7 2.5-7 2.5z" />
+    </svg>
+    LoTestigo
+  </a>
+  <nav class="bar__nav" aria-label="Secciones">
+    <a href="#como-funciona">Cómo funciona</a>
+    <a href="#datos">Datos de la NASA</a>
+    <a href="#origen">Cada dato con su origen</a>
+  </nav>
+  <button type="button" class="cta cta--sm" (click)="startDemo()">
+    {{ hasAccount() ? 'Volver a mi campo' : 'Probar demo' }}
+  </button>
+</header>
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero__copy">
+    <p class="eyebrow" animate.enter="enter-rise" style="--i: 0">
+      NASA Space Apps Challenge 2026 · Zona Núcleo
+    </p>
+    <h1 id="hero-title" animate.enter="enter-rise" style="--i: 1">
+      Facilitación y potenciador de productores en huella y trazabilidad
+    </h1>
+    <p class="lead" animate.enter="enter-rise" style="--i: 2">
+      Marcá tu lote y LoTestigo arma su historia con datos abiertos de la NASA: radar NISAR,
+      imágenes HLS, NDVI de MODIS y clima de NASA POWER. Con eso estimás tu huella de carbono y
+      mostrás la trazabilidad de tu campo, sin cargar planillas.
+    </p>
+    <div class="hero__actions" animate.enter="enter-rise" style="--i: 3">
+      <button type="button" class="cta" (click)="startDemo()">
+        {{ hasAccount() ? 'Volver a mi campo' : 'Probar demo' }}
+        <app-icon name="arrow-right" />
+      </button>
+      <a class="ghost" href="#como-funciona">Cómo funciona</a>
+    </div>
+    <ul class="perks" animate.enter="enter-rise" style="--i: 4">
+      <li><app-icon name="check" /> Cuenta free, sin mail ni contraseña</li>
+      <li><app-icon name="cloud-off" /> Funciona sin conexión</li>
+      <li><app-icon name="satellite" /> Datos de tu polígono, en vivo</li>
+    </ul>
+  </div>
+
+  <div class="hero__stage" aria-label="Maqueta de los lotes de ejemplo de la zona">
+    <app-iso-scene
+      class="hero__scene"
+      [lots]="scene()"
+      [interactive]="false"
+      [ambient]="true"
+      [fitPadding]="40"
+      ariaLabel="Maqueta isométrica de cuatro lotes reales de Casilda, Santa Fe"
+    />
+    @if (loadingScene()) {
+      <div class="stage-note"><span class="skeleton dot"></span> Cargando lotes de la zona…</div>
+    } @else if (scene().length === 0) {
+      <div class="stage-note">
+        <span class="iso-tile" aria-hidden="true"></span>
+        Los lotes de ejemplo aparecen cuando hay conexión con el backend.
+      </div>
+    }
+    @for (item of highlights(); track item.lot; let i = $index) {
+      <div
+        class="callout"
+        [class.callout--b]="i === 1"
+        animate.enter="enter-pop"
+        [style.--i]="i + 5"
+      >
+        <app-event-glyph [type]="item.event.type" />
+        <div>
+          <strong>{{ item.lot }} · {{ item.event.type_label }}</strong>
+          <span>{{ item.date }} · {{ item.event.sensor_label }}</span>
+        </div>
+        <app-origin-badge [origin]="item.event.origin" />
+      </div>
+    }
+  </div>
+</section>
+
+<section id="como-funciona" class="section" aria-labelledby="steps-title">
+  <h2 id="steps-title">Cómo funciona</h2>
+  <ol class="steps">
+    @for (step of steps; track step.title; let i = $index) {
+      <li class="step reveal-scroll">
+        <span class="step__num" aria-hidden="true">{{ i + 1 }}</span>
+        <app-icon [name]="step.icon" />
+        <h3>{{ step.title }}</h3>
+        <p>{{ step.text }}</p>
+      </li>
+    }
+  </ol>
+</section>
+
+<section id="datos" class="section section--night" aria-labelledby="data-title">
+  <h2 id="data-title">Qué datos de la NASA usamos</h2>
+  <p class="section__lead">
+    Se consultan para el polígono de cada lote. Cada fuente se nombra con su sensor real y su
+    resolución, para que sepas qué mide y qué no.
+  </p>
+  <ul class="sources">
+    @for (source of sources; track source.name) {
+      <li class="source reveal-scroll">
+        <h3>{{ source.name }}</h3>
+        <p class="source__agency">{{ source.agency }}</p>
+        <p>{{ source.what }}</p>
+        <p class="source__detail">{{ source.detail }}</p>
+      </li>
+    }
+  </ul>
+</section>
+
+<section id="origen" class="section" aria-labelledby="origin-title">
+  <h2 id="origin-title">Cada dato con su origen</h2>
+  <p class="section__lead">
+    Nada se muestra sin decir de dónde sale. Es una estimación con respaldo satelital, una prueba de
+    concepto: no reemplaza a VISEC, RTRS ni 2BSvs.
+  </p>
+  <ul class="origins">
+    <li class="reveal-scroll">
+      <app-origin-badge origin="VERIFIED" />
+      <p>Lo observó un satélite: la evidencia queda en la bitácora.</p>
+    </li>
+    <li class="reveal-scroll">
+      <app-origin-badge origin="DECLARED" />
+      <p>Lo informaste vos: rendimiento, insumos o una corrección.</p>
+    </li>
+    <li class="reveal-scroll">
+      <app-origin-badge origin="ESTIMATED" />
+      <p>Es un valor de referencia regional o de un modelo, con su fuente.</p>
+    </li>
+  </ul>
+</section>
+
+<section class="final" aria-labelledby="final-title">
+  <h2 id="final-title">Probá con tu lote</h2>
+  <p>Abrí la cuenta demo gratuita, marcá tus hectáreas y mirá lo que ve el satélite.</p>
+  <button type="button" class="cta" (click)="startDemo()">
+    {{ hasAccount() ? 'Volver a mi campo' : 'Probar demo' }}
+    <app-icon name="arrow-right" />
+  </button>
+</section>
+
+<footer class="foot">
+  <p>
+    Prueba de concepto del NASA Space Apps Challenge 2026, sede Rosario, desafío AgTech para la Zona
+    Núcleo. Usa datos abiertos de la NASA. No está afiliado a la NASA ni cuenta con su aval.
+  </p>
+</footer>

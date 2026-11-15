@@ -1,32 +1,256 @@
-<h1>Mapa de lotes</h1>
-<p class="lead">Hacé clic en un lote para abrir su ficha y su bitácora de eventos.</p>
-<p><a routerLink="/mapa/nuevo" class="new-lot">+ Marcar un lote nuevo</a></p>
+<header class="head">
+  <div class="head__title">
+    <p class="kicker">
+      <span class="plan">Free</span> {{ account.session()?.name ?? 'Cuenta demo' }}
+    </p>
+    <h1>Mi campo</h1>
+    <p class="lead">
+      Tus lotes y los lotes de ejemplo de la zona, con el último dato satelital de cada uno. Tocá un
+      lote para ver su resumen; doble clic o Enter abren su ficha.
+    </p>
+  </div>
+  <dl class="score">
+    <div>
+      <dt>Tus lotes</dt>
+      <dd>{{ mine().length }}</dd>
+    </div>
+    <div>
+      <dt>Tus hectáreas</dt>
+      <dd>{{ formatHectares(totalHa()) }}</dd>
+    </div>
+    <div>
+      <dt>De ejemplo</dt>
+      <dd>{{ examples().length }}</dd>
+    </div>
+  </dl>
+  <a routerLink="/mapa/nuevo" class="btn btn--primary"><app-icon name="plus" /> Marcar lote</a>
+</header>
+
+@if (error(); as message) {
+  <p class="alert alert--error" role="alert">
+    {{ message }}
+    <button type="button" class="btn btn--sm" (click)="reload()">Reintentar</button>
+  </p>
+}
 
 <div class="layout">
-  <div #map class="map" role="region" aria-label="Mapa de lotes"></div>
+  <section class="stage" aria-label="Vista de los lotes">
+    <div class="seg stage__mode" role="group" aria-label="Tipo de vista">
+      <button
+        type="button"
+        [attr.aria-pressed]="view() === 'maqueta'"
+        (click)="view.set('maqueta')"
+      >
+        Maqueta 3D
+      </button>
+      <button
+        type="button"
+        [attr.aria-pressed]="view() === 'satelital'"
+        (click)="view.set('satelital')"
+      >
+        Satelital
+      </button>
+    </div>
 
-  <aside class="list" aria-labelledby="lots-title">
-    <h2 id="lots-title">Lotes</h2>
-    @if (error(); as message) {
-      <p class="error" role="alert">{{ message }}</p>
-    } @else if (lots(); as lots) {
-      @if (lots.length === 0) {
-        <p>Todavía no hay lotes cargados.</p>
-      } @else {
-        <ul>
-          @for (lot of lots; track lot.id) {
-            <li>
-              <a [routerLink]="['/lotes', lot.id]">{{ lot.name }}</a>
-              <span class="meta">
-                {{ lot.locality || 'Sin localidad' }} · {{ formatArea(lot.area_ha) }} ·
-                {{ lot.event_count }} {{ lot.event_count === 1 ? 'evento' : 'eventos' }}
+    @if (view() === 'maqueta') {
+      <app-iso-scene
+        class="scene"
+        [lots]="isoLots()"
+        [selectedId]="selectedId()"
+        [showGrid]="showGrid()"
+        [ambient]="true"
+        ariaLabel="Maqueta isométrica de tus lotes y de los lotes de ejemplo"
+        (lotSelect)="select($event)"
+        (lotOpen)="open($event)"
+      >
+        <nav class="hud stage__hud" aria-label="Controles de la maqueta">
+          <button type="button" class="hud__btn" (click)="zoom(1 / 1.4)">
+            <app-icon name="zoom-out" /><span>Alejar</span>
+          </button>
+          <button type="button" class="hud__btn" (click)="zoom(1.4)">
+            <app-icon name="zoom-in" /><span>Acercar</span>
+          </button>
+          <button type="button" class="hud__btn" (click)="fit()">
+            <app-icon name="fit" /><span>Todo</span>
+          </button>
+          <button type="button" class="hud__btn" (click)="rotate()">
+            <app-icon name="rotate" /><span>Girar</span>
+          </button>
+          <span class="hud__sep" aria-hidden="true"></span>
+          <button
+            type="button"
+            class="hud__btn"
+            [attr.aria-pressed]="showGrid()"
+            (click)="showGrid.set(!showGrid())"
+          >
+            <app-icon name="grid" /><span>Hectáreas</span>
+          </button>
+          <a class="hud__btn" routerLink="/mapa/nuevo">
+            <app-icon name="brush" /><span>Marcar</span>
+          </a>
+        </nav>
+      </app-iso-scene>
+    } @else {
+      <app-satellite-view
+        class="scene"
+        [lots]="satelliteLots()"
+        [selectedId]="selectedId()"
+        (lotSelect)="select($event)"
+        (lotOpen)="open($event)"
+      />
+    }
+    <p class="stage__note small muted">
+      La textura de cada bloque ilustra el último evento registrado del lote; no es una foto de hoy.
+      El globo indica el tipo de evento y su borde, el origen del dato.
+    </p>
+  </section>
+
+  <aside class="side" aria-label="Lotes">
+    @if (selected(); as item) {
+      <article class="inspect card card--raised" animate.enter="enter-pop">
+        <header class="inspect__head">
+          <h2>{{ item.lot.name }}</h2>
+          <button type="button" class="btn btn--icon btn--sm" (click)="select(null)">
+            <app-icon name="close" /><span class="visually-hidden">Cerrar resumen</span>
+          </button>
+        </header>
+        <p class="muted small">
+          {{ item.lot.locality || 'Sin localidad' }} · {{ formatHectares(item.lot.area_ha) }}
+          @if (!account.owns(item.lot.id)) {
+            · Lote de ejemplo
+          }
+        </p>
+        @if (latestCampaign(item.campaigns ?? []); as campaign) {
+          <p class="row">
+            <span>Campaña {{ campaign.label }}: {{ campaign.crop_label }}</span>
+            <app-origin-badge [origin]="campaign.crop_origin" />
+          </p>
+        } @else {
+          <p class="row muted">Sin campañas registradas</p>
+        }
+        @if (item.last; as event) {
+          <div class="last">
+            <app-event-glyph [type]="event.type" />
+            <div>
+              <strong>{{ event.type_label }}</strong>
+              <span class="small muted">
+                {{ formatDate(event.date) }} · {{ event.sensor_label }}
               </span>
+            </div>
+            <app-origin-badge [origin]="event.origin" />
+          </div>
+          @if (event.is_simulated) {
+            <app-simulated-notice />
+          }
+        } @else {
+          <p class="muted small">
+            Todavía no hay eventos detectados para este lote. Los datos de la NASA de su polígono se
+            consultan en vivo en la ficha.
+          </p>
+        }
+        <div class="cluster">
+          <a class="btn btn--primary btn--sm" [routerLink]="['/lotes', item.lot.id]">Ver ficha</a>
+          <a class="btn btn--sm" [routerLink]="['/huella', item.lot.id]">Huella</a>
+        </div>
+      </article>
+    } @else if (selectedPending(); as pending) {
+      <article class="inspect card card--raised" animate.enter="enter-pop">
+        <h2>{{ pending.body.name }}</h2>
+        <p class="chip chip--warn">Sin sincronizar</p>
+        <p class="small">
+          Está guardado en este dispositivo y se sube solo cuando vuelva la conexión.
+          @if (pending.rejected) {
+            El backend lo rechazó: {{ pending.error }}
+          }
+        </p>
+      </article>
+    }
+
+    <section aria-labelledby="mine-title">
+      <h2 id="mine-title" class="side__title">Tus lotes</h2>
+      @if (lots() === null && !error()) {
+        <p class="skeleton line" aria-hidden="true"></p>
+        <p class="visually-hidden">Cargando lotes…</p>
+      } @else if (mine().length === 0 && outbox.pending().length === 0) {
+        <div class="empty first">
+          <span class="iso-tile" aria-hidden="true"></span>
+          <p>Todavía no marcaste lotes. Pintá tus hectáreas y mirá lo que ve el satélite.</p>
+          <a routerLink="/mapa/nuevo" class="btn btn--primary btn--sm">Marcar mi primer lote</a>
+        </div>
+      } @else {
+        <ul class="list">
+          @for (item of mine(); track item.lot.id; let i = $index) {
+            <li animate.enter="enter-rise" [style.--i]="i">
+              <button
+                type="button"
+                class="lot"
+                [class.is-selected]="selectedId() === '' + item.lot.id"
+                (click)="select('' + item.lot.id)"
+              >
+                <span class="lot__glyph">
+                  @if (item.last; as event) {
+                    <app-event-glyph [type]="event.type" />
+                  } @else {
+                    <app-event-glyph type="NO_DATA" />
+                  }
+                </span>
+                <span class="lot__text">
+                  <strong>{{ item.lot.name }}</strong>
+                  <span>{{ formatHectares(item.lot.area_ha) }} · {{ eventCount(item) }}</span>
+                </span>
+              </button>
+            </li>
+          }
+          @for (pending of outbox.pending(); track pending.localId) {
+            <li>
+              <button
+                type="button"
+                class="lot lot--pending"
+                (click)="select('pendiente:' + pending.localId)"
+              >
+                <span class="lot__glyph"><app-event-glyph type="PENDING" /></span>
+                <span class="lot__text">
+                  <strong>{{ pending.body.name }}</strong>
+                  <span>{{
+                    pending.rejected ? 'Rechazado por el backend' : 'Sin sincronizar'
+                  }}</span>
+                </span>
+              </button>
             </li>
           }
         </ul>
       }
-    } @else {
-      <p>Cargando lotes…</p>
+    </section>
+
+    @if (examples().length > 0) {
+      <section aria-labelledby="examples-title">
+        <h2 id="examples-title" class="side__title">Lotes de ejemplo de la zona</h2>
+        <p class="small muted">Procesados con radar NISAR e imágenes HLS en Casilda, Santa Fe.</p>
+        <ul class="list">
+          @for (item of examples(); track item.lot.id; let i = $index) {
+            <li animate.enter="enter-rise" [style.--i]="i">
+              <button
+                type="button"
+                class="lot"
+                [class.is-selected]="selectedId() === '' + item.lot.id"
+                (click)="select('' + item.lot.id)"
+              >
+                <span class="lot__glyph">
+                  @if (item.last; as event) {
+                    <app-event-glyph [type]="event.type" />
+                  } @else {
+                    <app-event-glyph type="NO_DATA" />
+                  }
+                </span>
+                <span class="lot__text">
+                  <strong>{{ item.lot.name }}</strong>
+                  <span>{{ formatHectares(item.lot.area_ha) }} · {{ eventCount(item) }}</span>
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
     }
   </aside>
 </div>
