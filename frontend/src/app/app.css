@@ -149,6 +149,22 @@ app-connection-status {
   font-size: var(--text-xs);
 }
 
+/* el aviso de navegación fallida flota abajo: la pantalla anterior sigue abierta */
+.nav-error {
+  position: fixed;
+  inset: auto var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+  z-index: var(--z-toast);
+  align-items: center;
+  max-width: 36rem;
+  margin-inline: auto;
+  box-shadow: var(--shadow-3);
+}
+
+.nav-error p {
+  flex: 1;
+  margin: 0;
+}
+
 @media (min-width: 48rem) and (min-height: 30rem) {
   .topbar {
     position: sticky;
@@ -180,6 +196,7 @@ app-connection-status {
 
   .skip,
   .nav,
+  .nav-error,
   app-connection-status,
   app-update-toast {
     display: none;

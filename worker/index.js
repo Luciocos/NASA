@@ -2,7 +2,7 @@
 // no tiene login: la app la ve cualquiera que tenga el link
 
 // django y postgres corren en railway: API_ORIGIN (vars de wrangler.jsonc) es la dirección https del backend
-// si el backend no responde, /api devuelve 502 y el encabezado de la app muestra "Backend sin conexión"
+// si el backend no responde, /api devuelve 502 y el encabezado de la app muestra "Sin conexión con el servidor"
 
 const HEADERS = {
   "X-Content-Type-Options": "nosniff",

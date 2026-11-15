@@ -41,7 +41,7 @@ describe('Connectivity', () => {
   it('no pide nada hasta que se llama a start()', () => {
     http.expectNone(HEALTH_URL);
     expect(connectivity.backend()).toBe('checking');
-    expect(connectivity.label()).toBe('Conectando con el backend…');
+    expect(connectivity.label()).toBe('Conectando…');
     expect(vi.getTimerCount()).toBe(0);
   });
 
@@ -52,7 +52,7 @@ describe('Connectivity', () => {
     answerHealthy();
 
     expect(connectivity.backend()).toBe('up');
-    expect(connectivity.label()).toBe('Backend conectado');
+    expect(connectivity.label()).toBe('Conectado');
     expect(connectivity.reconnectCount()).toBe(0);
   });
 
@@ -70,7 +70,7 @@ describe('Connectivity', () => {
     answerFailure(status);
 
     expect(connectivity.backend()).toBe('down');
-    expect(connectivity.label()).toBe('Backend sin conexión');
+    expect(connectivity.label()).toBe('Sin conexión con el servidor');
   });
 
   it('da por caído un health que no responde en 10 segundos', () => {
@@ -245,7 +245,7 @@ describe('Connectivity', () => {
 
       connectivity.noteCacheServed(SAVED);
 
-      expect(connectivity.label()).toBe('Backend sin conexión · mostrando datos guardados');
+      expect(connectivity.label()).toBe('Sin conexión con el servidor · mostrando datos guardados');
     });
 
     it('sin internet el texto lo dice y avisa que se muestran datos guardados', () => {
@@ -265,10 +265,10 @@ describe('Connectivity', () => {
       vi.advanceTimersByTime(2_000);
       answerHealthy();
 
-      expect(connectivity.label()).toBe('Backend conectado · mostrando datos guardados');
+      expect(connectivity.label()).toBe('Conectado · mostrando datos guardados');
 
       connectivity.noteNetworkRead();
-      expect(connectivity.label()).toBe('Backend conectado');
+      expect(connectivity.label()).toBe('Conectado');
     });
   });
 

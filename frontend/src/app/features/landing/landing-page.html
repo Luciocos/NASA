@@ -46,21 +46,21 @@
     </ul>
   </div>
 
-  <div class="hero__stage" aria-label="Maqueta de los lotes de ejemplo de la zona">
+  <div class="hero__stage">
     <app-iso-scene
       class="hero__scene"
       [lots]="scene()"
       [interactive]="false"
       [ambient]="true"
       [fitPadding]="40"
-      ariaLabel="Maqueta isométrica de cuatro lotes reales de Casilda, Santa Fe"
+      [ariaLabel]="sceneLabel()"
     />
     @if (loadingScene()) {
       <div class="stage-note"><span class="skeleton dot"></span> Cargando lotes de la zona…</div>
     } @else if (scene().length === 0) {
       <div class="stage-note">
         <span class="iso-tile" aria-hidden="true"></span>
-        Los lotes de ejemplo aparecen cuando hay conexión con el backend.
+        Los lotes de ejemplo aparecen cuando hay conexión.
       </div>
     }
     @for (item of highlights(); track item.lot; let i = $index) {
@@ -74,6 +74,9 @@
         <div>
           <strong>{{ item.lot }} · {{ item.event.type_label }}</strong>
           <span>{{ item.date }} · {{ item.event.sensor_label }}</span>
+          @if (item.event.is_simulated) {
+            <app-simulated-notice />
+          }
         </div>
         <app-origin-badge [origin]="item.event.origin" />
       </div>

@@ -10,6 +10,7 @@ import { formatDate } from '../lot/labels';
 import { OriginBadge } from '../../shared/origin-badge/origin-badge';
 import { EventGlyph } from '../../shared/iso/event-glyph';
 import { IsoScene } from '../../shared/iso/iso-scene';
+import { SimulatedNotice } from '../../shared/simulated-notice/simulated-notice';
 import { Icon } from '../../shared/ui/icon/icon';
 import { IconName } from '../../shared/ui/icon/icons';
 
@@ -75,7 +76,7 @@ const SOURCES: Source[] = [
 @Component({
   selector: 'app-landing-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, IsoScene, OriginBadge, EventGlyph, Icon],
+  imports: [RouterLink, IsoScene, OriginBadge, EventGlyph, SimulatedNotice, Icon],
   templateUrl: './landing-page.html',
   styleUrl: './landing-page.css',
 })
@@ -94,6 +95,13 @@ export class LandingPage {
       .pipe(map((lots) => lots.filter(isExampleLot))),
   );
   protected readonly scene = computed(() => buildIsoScene(this.overviews() ?? []).lots);
+  /** la etiqueta de la maqueta nombra los lotes que dibuja de verdad */
+  protected readonly sceneLabel = computed(() => {
+    const count = this.scene().length;
+    if (count === 0) return 'Maqueta isométrica de la zona, sin lotes para mostrar';
+    const lots = count === 1 ? 'un lote real' : `${count} lotes reales`;
+    return `Maqueta isométrica de ${lots} de Casilda, Santa Fe`;
+  });
   protected readonly highlights = computed(() =>
     (this.overviews() ?? [])
       .filter((item) => item.last !== null)

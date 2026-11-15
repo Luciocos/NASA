@@ -108,7 +108,7 @@ export class LotPage {
           this.lotError.set(
             error.status === 404
               ? 'No existe un lote con ese identificador.'
-              : 'No se pudo cargar el lote. ¿Está corriendo el backend?',
+              : 'No se pudo cargar el lote. Revisá la conexión y probá de nuevo.',
           ),
       });
       onCleanup(() => subscription.unsubscribe());
@@ -132,7 +132,8 @@ export class LotPage {
           this.log.set(log);
           if (unfiltered) this.allEvents.set(log.events);
         },
-        error: () => this.logError.set('No se pudo cargar la bitácora.'),
+        error: () =>
+          this.logError.set('No se pudo cargar la bitácora. Revisá la conexión y probá de nuevo.'),
       });
       onCleanup(() => subscription.unsubscribe());
     });

@@ -17,6 +17,8 @@ describe('App', () => {
         provideRouter([
           { path: '', component: Blank },
           { path: 'mapa', component: Blank },
+          // como una pantalla cuyo código no se pudo bajar sin conexión
+          { path: 'rota', loadComponent: () => Promise.reject(new Error('sin red')) },
         ]),
         provideHttpClientTesting(),
         provideOfflineTesting(),
@@ -45,5 +47,35 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.topbar')).toBeNull();
     expect(compiled.querySelector('.footer')).toBeNull();
+  });
+
+  it('avisa si una pantalla no se pudo abrir, y el aviso se puede cerrar', async () => {
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/mapa');
+    await router.navigateByUrl('/rota').catch(() => undefined);
+    await fixture.whenStable();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const alert = compiled.querySelector('[role="alert"]');
+    expect(alert?.textContent).toContain(
+      'No se pudo abrir esa pantalla. Si estás sin conexión, probá de nuevo cuando vuelva la red.',
+    );
+
+    alert?.querySelector('button')?.click();
+    await fixture.whenStable();
+    expect(compiled.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('una navegación que funciona saca el aviso', async () => {
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/rota').catch(() => undefined);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.nav-error')).not.toBeNull();
+
+    await router.navigateByUrl('/mapa');
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.nav-error')).toBeNull();
   });
 });

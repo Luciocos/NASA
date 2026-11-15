@@ -148,4 +148,15 @@ describe('MapPage', () => {
     await fixture.whenStable();
     expect(el().querySelector('[role=alert]')?.textContent).toContain('No se pudieron cargar');
   });
+
+  it('sin la lista de lotes no muestra contadores en cero ni invita a marcar el primero', async () => {
+    await setup([]);
+    http.expectOne('/api/lots/').error(new ProgressEvent('error'));
+    await fixture.whenStable();
+
+    const counters = [...el().querySelectorAll('.score dd')].map((dd) => dd.textContent?.trim());
+    expect(counters).toEqual(['—', '—', '—']);
+    expect(el().textContent).not.toContain('Todavía no marcaste lotes');
+    expect(el().querySelector('[role=alert]')?.textContent).toContain('Reintentar');
+  });
 });

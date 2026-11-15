@@ -48,6 +48,7 @@ export class ZonesMap {
   private readonly element = viewChild.required<ElementRef<HTMLElement>>('map');
   private map: L.Map | null = null;
   private layer: L.LayerGroup | null = null;
+  private resizeTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
     afterNextRender(() => {
@@ -59,9 +60,13 @@ export class ZonesMap {
       this.layer = L.layerGroup().addTo(map);
       this.map = map;
       this.draw();
-      setTimeout(() => map.invalidateSize(), 0);
+      this.resizeTimer = setTimeout(() => map.invalidateSize(), 0);
     });
-    inject(DestroyRef).onDestroy(() => this.map?.remove());
+    inject(DestroyRef).onDestroy(() => {
+      // si se destruye antes del timeout, invalidateSize correría sobre un mapa ya quitado
+      clearTimeout(this.resizeTimer);
+      this.map?.remove();
+    });
     effect(() => {
       this.geometry();
       this.zones();

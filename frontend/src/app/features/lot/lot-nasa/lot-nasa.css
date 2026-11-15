@@ -66,6 +66,18 @@ h3 {
   box-shadow: inset 0 0 0 1px var(--night-600);
 }
 
+.tile__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.retry {
+  justify-self: start;
+  margin-top: var(--space-1);
+}
+
 .tile__value {
   color: var(--accent);
   font-size: var(--text-2xl);

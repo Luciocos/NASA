@@ -83,6 +83,8 @@ h1 {
   position: relative;
   display: grid;
   gap: var(--space-2);
+  /* la barra de la maqueta se acomoda al ancho de la escena, no al de la ventana */
+  container-type: inline-size;
 }
 
 .stage__mode {
@@ -109,6 +111,36 @@ h1 {
   background: rgb(11 22 34 / 88%);
   box-shadow: var(--shadow-hud);
   transform: translateX(-50%);
+}
+
+/* si no entra al lado de la brújula y la escala de la escena, sube por encima de ellas */
+@container (max-width: 54rem) {
+  .stage__hud {
+    bottom: var(--space-8);
+  }
+}
+
+/* en angosto quedan solo los íconos; el rótulo sigue para el lector de pantalla */
+@container (max-width: 34rem) {
+  .stage__hud {
+    flex-wrap: wrap;
+    justify-content: center;
+    width: max-content;
+    max-width: calc(100% - var(--space-4));
+  }
+  .stage__hud .hud__btn {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: var(--space-1);
+  }
+  .stage__hud .hud__btn > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 .ndvi-legend {
@@ -269,9 +301,6 @@ h1 {
 }
 
 @media (max-width: 40rem) {
-  .stage__hud .hud__btn {
-    min-width: 3rem;
-  }
   .score {
     width: 100%;
   }

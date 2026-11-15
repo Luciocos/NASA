@@ -63,7 +63,7 @@ const COUNT_MS = 320;
       <p class="alert alert--ok">Un solo sector: listo para guardar</p>
     }
     <p class="small muted">
-      Lo marcás vos sobre la imagen. La superficie final la calcula el backend sobre el polígono y
+      Lo marcás vos sobre la imagen. La superficie final la calcula el servidor sobre el polígono y
       puede variar en el segundo decimal.
     </p>
   `,

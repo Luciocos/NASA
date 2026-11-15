@@ -1,6 +1,13 @@
-import { Component, DOCUMENT, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, DOCUMENT, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import {
+  NavigationEnd,
+  NavigationError,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
 import { filter, map } from 'rxjs';
 
 import { AccountChip } from './core/account/account-chip';
@@ -26,6 +33,19 @@ export class App {
     // con el valor inicial correcto el encabezado de la app no parpadea al abrir la landing
     { initialValue: inject(DOCUMENT).location?.pathname === '/' },
   );
+
+  /**
+   * una pantalla que no se pudo abrir, por ejemplo sin conexión y sin el código de una pantalla
+   * que no se visitó. el aviso se va al cerrarlo o con la próxima navegación que funcione
+   */
+  protected readonly navigationFailed = signal(false);
+
+  constructor() {
+    this.router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
+      if (event instanceof NavigationError) this.navigationFailed.set(true);
+      else if (event instanceof NavigationEnd) this.navigationFailed.set(false);
+    });
+  }
 
   protected skipToContent(event: Event, content: HTMLElement): void {
     // con <base href="/">, seguir el enlace llevaría a /#contenido en vez de quedarse en la pantalla

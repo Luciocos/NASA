@@ -181,7 +181,8 @@ describe('LotSatellite', () => {
     const history = sat.ndviHistory({ id: 3, geometry: LOT3 });
     await settle();
     expect(calls).toHaveLength(4);
-    expect(history()).toMatchObject({ status: 'partial', progress: 4 / 16 });
+    // al rendirse queda como terminada (progress 1) para que la pantalla muestre el error
+    expect(history()).toMatchObject({ status: 'partial', progress: 1 });
     expect(history().error).toContain('Faltan 14 de 16 tandas');
     // retry retoma: vuelve a pedir y conserva lo que ya había llegado mientras tanto
     sat.retry({ id: 3, geometry: LOT3 });

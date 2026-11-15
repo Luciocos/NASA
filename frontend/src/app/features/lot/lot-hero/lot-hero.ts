@@ -79,14 +79,18 @@ const ORIGINS: Origin[] = ['VERIFIED', 'DECLARED', 'ESTIMATED'];
           </p>
         }
 
-        <ul class="origins" aria-label="Eventos de la bitácora según su origen">
-          @for (origin of origins; track origin) {
-            <li>
-              <strong>{{ counts()[origin] }}</strong> {{ originLabels[origin].toLowerCase()
-              }}{{ counts()[origin] === 1 ? '' : 's' }}
-            </li>
-          }
-        </ul>
+        <!-- el rótulo aclara que se cuentan eventos, no el origen del cultivo de arriba -->
+        <div class="origins-row">
+          <span class="origins-label">Eventos de la bitácora:</span>
+          <ul class="origins" aria-label="Eventos de la bitácora según su origen">
+            @for (origin of origins; track origin) {
+              <li>
+                <strong>{{ counts()[origin] }}</strong> {{ originLabels[origin].toLowerCase()
+                }}{{ counts()[origin] === 1 ? '' : 's' }}
+              </li>
+            }
+          </ul>
+        </div>
         <ng-content />
       </div>
     </section>
@@ -153,6 +157,16 @@ const ORIGINS: Origin[] = ['VERIFIED', 'DECLARED', 'ESTIMATED'];
     .last div {
       display: grid;
       flex: 1;
+    }
+    .origins-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    .origins-label {
+      color: var(--ink-3);
+      font-size: var(--text-sm);
     }
     .origins {
       display: flex;

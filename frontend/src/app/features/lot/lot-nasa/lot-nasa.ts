@@ -1,8 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
 
 import { EventLogItem, LotDetail } from '../../../core/models';
 import {
   DATA_SOURCES,
+  LoadState,
   LotSatellite,
   NasaSourceId,
   lastDaysRain,
@@ -10,6 +20,7 @@ import {
   monthlyRain,
   ndviSummary,
 } from '../../../core/nasa';
+import { Connectivity } from '../../../core/offline';
 import {
   ChartSeries,
   ColumnChart,
@@ -37,12 +48,18 @@ const SOURCE_IDS: NasaSourceId[] = ['modisNdvi', 'power', 'nisar', 'hls', 'modis
 })
 export class LotNasa {
   private readonly satellite = inject(LotSatellite);
+  private readonly connectivity = inject(Connectivity);
 
   readonly lot = input.required<LotDetail>();
   readonly events = input<readonly EventLogItem[]>([]);
 
   private readonly ref = computed(() => ({ id: this.lot().id, geometry: this.lot().geometry }));
   private readonly climateSince = monthStartMonthsAgo(12);
+
+  /** sin red, lo que todavía no llegó (y no tiene copia guardada) espera a que vuelva */
+  protected readonly offline = computed(() => !this.connectivity.online());
+  protected readonly offlineText = 'Sin conexión: se consulta cuando vuelva la red';
+  protected readonly dataSources = DATA_SOURCES;
 
   /**
    * desde cuándo se pide el NDVI: el servicio de MODIS tarda unos 30 a 60 s por pedido, así que
@@ -92,20 +109,63 @@ export class LotNasa {
     const days = this.climate().data;
     return days ? latestSoilWetness(days) : null;
   });
+  /**
+   * el último mes de lluvia si los días no llegan a su fin: es el mes en curso y su suma todavía
+   * no es la del mes completo
+   */
+  protected readonly rainOpenMonth = computed(() => {
+    const days = this.climate().data;
+    const last = days?.at(-1);
+    if (!days || !last) return null;
+    const month = last.date.slice(0, 7);
+    if (last.date === monthEnd(month)) return null;
+    const inMonth = days.filter((day) => day.date.startsWith(month));
+    const lastRain = inMonth.filter((day) => day.rainMm !== null).at(-1)?.date;
+    const label = monthLabel(month);
+    if (!lastRain) {
+      return {
+        month,
+        note: 'mes en curso: todavía sin dato',
+        aside: `* ${label} es el mes en curso: todavía sin dato.`,
+      };
+    }
+    const until = `${lastRain.slice(8, 10)}/${lastRain.slice(5, 7)}`;
+    const gaps = inMonth.filter((day) => day.rainMm === null && day.date < lastRain).length;
+    return {
+      month,
+      note: `mes en curso: hasta el ${until}${gaps ? `, ${missingText(gaps)}` : ''}`,
+      aside: `* ${label} es el mes en curso: suma la lluvia hasta el ${until}, no la del mes completo.`,
+    };
+  });
   protected readonly rainColumns = computed<ColumnItem[]>(() => {
     const days = this.climate().data;
     if (!days) return [];
+    const open = this.rainOpenMonth();
     return monthlyRain(days)
       .slice(-12)
       .map((month) => {
-        const [year, m] = month.month.split('-');
+        const current = open?.month === month.month ? open : null;
         return {
-          label: `${MONTHS[Number(m) - 1]} ${year.slice(2)}`,
+          label: `${monthLabel(month.month)}${current ? '*' : ''}`,
           value: month.rainMm,
           tone: 'water' as const,
-          note: month.missingDays > 0 ? `${month.missingDays} días sin dato` : undefined,
+          note:
+            current?.note ?? (month.missingDays > 0 ? missingText(month.missingDays) : undefined),
         };
       });
+  });
+  /**
+   * el catálogo no respondió del todo: una lista vacía no quiere decir que no haya escenas, así
+   * que se avisa la falla con su motivo
+   */
+  protected readonly scenesFailure = computed(() => {
+    const { status, error } = this.scenes();
+    if (status !== 'partial' && status !== 'error') return null;
+    const failed =
+      status === 'partial'
+        ? 'La consulta al catálogo falló en parte.'
+        : 'La consulta al catálogo falló.';
+    return error ? `${failed} ${error}` : failed;
   });
   protected readonly nisar = computed(() =>
     (this.scenes().data?.items ?? []).filter((scene) => scene.mission === 'NISAR'),
@@ -119,8 +179,23 @@ export class LotNasa {
 
   protected readonly formatDate = formatDate;
 
+  constructor() {
+    // al volver la red se pide de nuevo lo que quedó esperando o falló sin conexión
+    let wasOnline = this.connectivity.online();
+    effect(() => {
+      const online = this.connectivity.online();
+      if (online && !wasOnline) untracked(() => this.satellite.retry(this.ref()));
+      wasOnline = online;
+    });
+  }
+
   protected retry(): void {
     this.satellite.retry(this.ref());
+  }
+
+  /** todavía esperando respuesta: un 'partial' con todo el progreso ya terminó, con faltantes */
+  protected pending(state: LoadState<unknown>): boolean {
+    return state.status === 'loading' || (state.status === 'partial' && state.progress < 1);
   }
 
   protected number(value: number | null | undefined, digits = 2): string {
@@ -149,4 +224,20 @@ function monthStartMonthsAgo(n: number): string {
   const now = new Date();
   const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - n, 1));
   return date.toISOString().slice(0, 10);
+}
+
+/** último día de un mes AAAA-MM, en AAAA-MM-DD */
+function monthEnd(month: string): string {
+  const [year, m] = month.split('-').map(Number);
+  return new Date(Date.UTC(year, m, 0)).toISOString().slice(0, 10);
+}
+
+/** '2026-11' -> 'nov 26' */
+function monthLabel(month: string): string {
+  const [year, m] = month.split('-');
+  return `${MONTHS[Number(m) - 1]} ${year.slice(2)}`;
+}
+
+function missingText(days: number): string {
+  return days === 1 ? '1 día sin dato' : `${days} días sin dato`;
 }

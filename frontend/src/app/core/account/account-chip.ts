@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DOCUMENT,
+  ElementRef,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { Router } from '@angular/router';
 
 import { DemoAccount } from './demo-account';
@@ -7,13 +16,19 @@ import { DemoAccount } from './demo-account';
 @Component({
   selector: 'app-account-chip',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // el menú se cierra con Escape o con un clic o toque fuera de él
+  host: {
+    '(document:keydown.escape)': 'closeOnEscape()',
+    '(document:pointerdown)': 'closeOnOutsidePointer($event)',
+  },
   template: `
     @if (account.session(); as session) {
       <button
+        #chipButton
         type="button"
         class="chip-btn"
         [attr.aria-expanded]="open()"
-        aria-controls="account-menu"
+        [attr.aria-controls]="open() ? 'account-menu' : null"
         (click)="open.set(!open())"
       >
         <span class="avatar" aria-hidden="true">{{ initial() }}</span>
@@ -117,9 +132,28 @@ import { DemoAccount } from './demo-account';
 export class AccountChip {
   protected readonly account = inject(DemoAccount);
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly chipButton = viewChild<ElementRef<HTMLButtonElement>>('chipButton');
   protected readonly open = signal(false);
   protected readonly lotCount = computed(() => this.account.lotIds().size);
   protected readonly initial = computed(() => (this.account.session()?.name ?? 'C').charAt(0));
+
+  protected closeOnEscape(): void {
+    if (!this.open()) return;
+    this.open.set(false);
+    // el foco vuelve al chip si estaba en el chip o en el menú, no si ya estaba en otra parte
+    const active = this.document.activeElement;
+    if (!active || active === this.document.body || this.host.nativeElement.contains(active)) {
+      this.chipButton()?.nativeElement.focus();
+    }
+  }
+
+  protected closeOnOutsidePointer(event: Event): void {
+    if (this.open() && !this.host.nativeElement.contains(event.target as Node | null)) {
+      this.open.set(false);
+    }
+  }
 
   protected exit(): void {
     this.open.set(false);

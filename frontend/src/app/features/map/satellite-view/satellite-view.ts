@@ -67,12 +67,16 @@ export class SatelliteView {
   private layer: L.FeatureGroup | null = null;
   private readonly polygons = new Map<string, L.GeoJSON>();
   private fitted = false;
+  private resizeTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly reducedMotion =
     inject(DOCUMENT).defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
   constructor() {
     afterNextRender(() => this.init());
-    inject(DestroyRef).onDestroy(() => this.map?.remove());
+    inject(DestroyRef).onDestroy(() => {
+      clearTimeout(this.resizeTimer);
+      this.map?.remove();
+    });
     effect(() => {
       const lots = this.lots();
       untracked(() => this.draw(lots));
@@ -84,10 +88,14 @@ export class SatelliteView {
   }
 
   private init(): void {
-    const map = L.map(this.mapElement().nativeElement, { zoomControl: true }).setView(
+    const map = L.map(this.mapElement().nativeElement, { zoomControl: false }).setView(
       DEFAULT_CENTER,
       12,
     );
+    // el zoom va abajo a la derecha: arriba a la izquierda queda el selector de vista
+    L.control
+      .zoom({ position: 'bottomright', zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' })
+      .addTo(map);
     const satellite = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       { maxZoom: 19, attribution: 'Imágenes &copy; Esri, Maxar, Earthstar Geographics' },
@@ -115,7 +123,7 @@ export class SatelliteView {
     this.map = map;
     this.draw(this.lots());
     // la vista puede haber cambiado de tamaño al mostrarse
-    setTimeout(() => map.invalidateSize(), 0);
+    this.resizeTimer = setTimeout(() => map.invalidateSize(), 0);
   }
 
   private draw(lots: readonly SatelliteLot[]): void {

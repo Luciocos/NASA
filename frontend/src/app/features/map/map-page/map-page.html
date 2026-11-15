@@ -12,15 +12,15 @@
   <dl class="score">
     <div>
       <dt>Tus lotes</dt>
-      <dd>{{ mine().length }}</dd>
+      <dd>{{ lots() === null ? '—' : mine().length }}</dd>
     </div>
     <div>
       <dt>Tus hectáreas</dt>
-      <dd>{{ formatHectares(totalHa()) }}</dd>
+      <dd>{{ lots() === null ? '—' : formatHectares(totalHa()) }}</dd>
     </div>
     <div>
       <dt>De ejemplo</dt>
-      <dd>{{ examples().length }}</dd>
+      <dd>{{ lots() === null ? '—' : examples().length }}</dd>
     </div>
   </dl>
   <a routerLink="/mapa/nuevo" class="btn btn--primary"><app-icon name="plus" /> Marcar lote</a>
@@ -107,7 +107,7 @@
         (lotOpen)="open($event)"
       />
     }
-    @if (layer() === 'ndvi') {
+    @if (layer() === 'ndvi' && view() === 'maqueta') {
       <div class="ndvi-legend" role="note">
         <strong>NDVI actual (MODIS, 250 m)</strong>
         @if (ndvi()?.status === 'loading' || (ndvi()?.status === 'partial' && !ndvi()?.error)) {
@@ -124,10 +124,12 @@
         <span class="small">Rayado: sin dato (nubes o sin compuesto publicado).</span>
       </div>
     }
-    <p class="stage__note small muted">
-      La textura de cada bloque ilustra el último evento registrado del lote; no es una foto de hoy.
-      El globo indica el tipo de evento y su borde, el origen del dato.
-    </p>
+    @if (view() === 'maqueta') {
+      <p class="stage__note small muted">
+        La textura de cada bloque ilustra el último evento registrado del lote; no es una foto de
+        hoy. El globo indica el tipo de evento y su borde, el origen del dato.
+      </p>
+    }
   </section>
 
   <aside class="side" aria-label="Lotes">
@@ -193,7 +195,7 @@
         <p class="small">
           Está guardado en este dispositivo y se sube solo cuando vuelva la conexión.
           @if (pending.rejected) {
-            El backend lo rechazó: {{ pending.error }}
+            El servidor lo rechazó: {{ pending.error }}
           }
         </p>
       </article>
@@ -204,6 +206,8 @@
       @if (lots() === null && !error()) {
         <p class="skeleton line" aria-hidden="true"></p>
         <p class="visually-hidden">Cargando lotes…</p>
+      } @else if (lots() === null && outbox.pending().length === 0) {
+        <p class="small muted">Aparecen acá cuando se puedan cargar.</p>
       } @else if (mine().length === 0 && outbox.pending().length === 0) {
         <div class="empty first">
           <span class="iso-tile" aria-hidden="true"></span>
@@ -246,7 +250,7 @@
                 <span class="lot__text">
                   <strong>{{ pending.body.name }}</strong>
                   <span>{{
-                    pending.rejected ? 'Rechazado por el backend' : 'Sin sincronizar'
+                    pending.rejected ? 'Rechazado por el servidor' : 'Sin sincronizar'
                   }}</span>
                 </span>
               </button>

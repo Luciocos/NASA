@@ -40,4 +40,13 @@
   <footer class="footer">Prueba de concepto. Usa datos abiertos de la NASA.</footer>
 }
 
+@if (navigationFailed()) {
+  <div class="nav-error alert alert--error" role="alert" animate.enter="enter-rise">
+    <p>
+      No se pudo abrir esa pantalla. Si estás sin conexión, probá de nuevo cuando vuelva la red.
+    </p>
+    <button type="button" class="btn btn--sm" (click)="navigationFailed.set(false)">Cerrar</button>
+  </div>
+}
+
 <app-update-toast />

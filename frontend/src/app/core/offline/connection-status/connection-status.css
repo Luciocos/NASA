@@ -27,6 +27,11 @@ li {
   background: var(--night-800);
 }
 
+/* la clase global .chip no deja cortar el texto: en el celular el estado largo se salía de la pantalla */
+.chip {
+  white-space: normal;
+}
+
 .icon {
   flex: none;
   width: 1.15rem;

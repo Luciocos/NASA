@@ -210,7 +210,8 @@ export class LotSatellite {
               ? 'partial'
               : 'loading',
           data: data.length ? data : null,
-          progress: done / batches.length,
+          // al rendirse se informa como terminado: el panel deja de mostrar "cargando" y muestra el error
+          progress: finished ? 1 : done / batches.length,
           stale,
           updatedAt,
           error: missing

@@ -96,7 +96,7 @@ export class DeclarationForm {
       this.campaign.set(fp.campaign.label);
       this.crop.set(fp.campaign.crop);
       this.yieldValue.set(
-        fp.yield.origin === 'DECLARED' && fp.yield.value !== null ? String(fp.yield.value) : '',
+        fp.yield.origin === 'DECLARED' && fp.yield.value !== null ? toText(fp.yield.value) : '',
       );
       // Se arma desde cero: leer this.values() acá haría que el effect se dispare a sí mismo
       const next = {} as Record<DeclarableInput, string>;
@@ -104,7 +104,7 @@ export class DeclarationForm {
         const component = fp.components.find((c) => c.key === COMPONENT_OF[field.key]);
         const declared =
           component?.activity.origin === 'DECLARED' && component.activity.quantity !== null;
-        next[field.key] = declared ? String(component!.activity.quantity) : '';
+        next[field.key] = declared ? toText(component!.activity.quantity!) : '';
       }
       this.values.set(next);
     });
@@ -140,6 +140,11 @@ export class DeclarationForm {
   }
 }
 
+/** valor precargado con coma decimal y sin separador de miles: 9.5 -> "9,5" */
+function toText(value: number): string {
+  return String(value).replace('.', ',');
+}
+
 /** Campo vacío: null (borra lo declarado). Acepta coma decimal. */
 function toNumber(raw: string): number | null {
   const text = raw.trim().replace(',', '.');
@@ -149,7 +154,7 @@ function toNumber(raw: string): number | null {
 }
 
 function describeError(err: HttpErrorResponse): string {
-  if (err.status === 0) return 'No hay conexión con el backend.';
+  if (err.status === 0) return 'No hay conexión con el servidor.';
   const body = err.error as Record<string, string[]> | null;
   if (body && typeof body === 'object') {
     const text = Object.entries(body)

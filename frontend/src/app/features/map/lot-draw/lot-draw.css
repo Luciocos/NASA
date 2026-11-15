@@ -196,6 +196,16 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* guardar queda a la vista mientras se pinta: la fila y sus avisos se pegan abajo */
+.actions {
+  --gap: var(--space-2);
+  position: sticky;
+  bottom: 0;
+  padding-block: var(--space-3);
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
 .buttons {
   --gap: var(--space-2);
   justify-content: flex-end;

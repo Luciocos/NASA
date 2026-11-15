@@ -238,38 +238,43 @@
       }
     }
 
-    @if (error(); as message) {
-      <p class="alert alert--error" role="alert">{{ message }}</p>
-    }
-    @if (notice(); as message) {
-      <p class="alert alert--ok" role="status" animate.enter="enter-pop">{{ message }}</p>
-    }
-
     <p class="small muted">
       Al guardar, el lote queda sin eventos. La detección satelital se corre aparte con el pipeline
       de NISAR y HLS; nunca se generan eventos automáticos.
     </p>
 
-    <div class="cluster buttons">
-      @if (hasDraft()) {
-        @if (confirmDiscard()) {
-          <span class="small">¿Borramos lo marcado y el formulario?</span>
-          <button type="button" class="btn btn--sm btn--danger" (click)="discardDraft()">
-            Sí, descartar
-          </button>
-          <button type="button" class="btn btn--sm btn--ghost" (click)="confirmDiscard.set(false)">
-            No
-          </button>
-        } @else {
-          <button type="button" class="btn btn--sm btn--ghost" (click)="confirmDiscard.set(true)">
-            Descartar borrador
-          </button>
-        }
+    <div class="stack actions">
+      @if (error(); as message) {
+        <p class="alert alert--error" role="alert">{{ message }}</p>
       }
-      <a routerLink="/mapa" class="btn">Cancelar</a>
-      <button type="submit" class="btn btn--primary" [disabled]="!canSave()">
-        <app-icon name="save" /> {{ saving() ? 'Guardando…' : 'Guardar lote' }}
-      </button>
+      @if (notice(); as message) {
+        <p class="alert alert--ok" role="status" animate.enter="enter-pop">{{ message }}</p>
+      }
+      <div class="cluster buttons">
+        @if (hasDraft()) {
+          @if (confirmDiscard()) {
+            <span class="small">¿Borramos lo marcado y el formulario?</span>
+            <button type="button" class="btn btn--sm btn--danger" (click)="discardDraft()">
+              Sí, descartar
+            </button>
+            <button
+              type="button"
+              class="btn btn--sm btn--ghost"
+              (click)="confirmDiscard.set(false)"
+            >
+              No
+            </button>
+          } @else {
+            <button type="button" class="btn btn--sm btn--ghost" (click)="confirmDiscard.set(true)">
+              Descartar borrador
+            </button>
+          }
+        }
+        <a routerLink="/mapa" class="btn">Cancelar</a>
+        <button type="submit" class="btn btn--primary" [disabled]="!canSave()">
+          <app-icon name="save" /> {{ saving() ? 'Guardando…' : 'Guardar lote' }}
+        </button>
+      </div>
     </div>
   </form>
 </div>
