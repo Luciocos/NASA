@@ -15,6 +15,7 @@ import { Icon } from '../icon/icon';
         <a
           [routerLink]="['/lotes', lotId()]"
           routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: true }"
           ariaCurrentWhenActive="page"
           ><app-icon name="satellite" /> Ficha y datos NASA</a
         >

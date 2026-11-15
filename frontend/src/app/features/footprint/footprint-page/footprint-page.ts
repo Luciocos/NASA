@@ -1,6 +1,6 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 import { Api } from '../../../core/api';
@@ -10,10 +10,11 @@ import { FootprintBreakdown } from '../footprint-breakdown/footprint-breakdown';
 import { ESTIMATE_NOTICE } from '../format';
 import { ScorePanel } from '../score-panel/score-panel';
 import { Simulator } from '../simulator/simulator';
+import { LotTabs } from '../../../shared/ui/lot-tabs/lot-tabs';
 
 /** Huella estimada, puntaje provisional y simulador (CLAUDE.md, sección 11, pantallas 4 y 5). */
 @Component({
-  imports: [RouterLink, DeclarationForm, FootprintBreakdown, ScorePanel, Simulator],
+  imports: [DeclarationForm, FootprintBreakdown, ScorePanel, Simulator, LotTabs],
   selector: 'app-footprint-page',
   styleUrl: './footprint-page.css',
   templateUrl: './footprint-page.html',

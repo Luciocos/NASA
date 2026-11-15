@@ -1,6 +1,6 @@
-<p class="back">
-  <a [routerLink]="['/lotes', lotId()]">← Volver a la ficha del lote</a>
-</p>
+@if (lotId(); as id) {
+  <app-lot-tabs [lotId]="id" />
+}
 
 @if (error(); as message) {
   <p class="error" role="alert">{{ message }}</p>
