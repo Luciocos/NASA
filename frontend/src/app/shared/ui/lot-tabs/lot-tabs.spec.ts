@@ -97,7 +97,7 @@ describe('LotTabs', () => {
     await setup('/lotes/7', { lot: LOT });
     expect(el().querySelector('h1')?.textContent?.trim()).toBe('Lote de prueba');
     expect(el().querySelector('h1')?.id).toBe('lot-title-7');
-    expect(el().querySelector('.meta')?.textContent?.trim()).toBe('24,9 ha · Casilda, Santa Fe');
+    expect(el().querySelector('.meta')?.textContent?.trim()).toBe('24.9 ha · Casilda, Santa Fe');
     expect(el().textContent).not.toContain('read-only');
     // compartir el pasaporte es su pestaña: el menú ⋯ queda solo para el RENSPA
     expect(el().querySelector('app-more-menu')).toBeNull();

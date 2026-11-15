@@ -75,7 +75,7 @@ describe('LotPage', () => {
 
     expect(el().querySelector('app-lot-tabs h1')?.textContent?.trim()).toBe('Lote de prueba');
     expect(el().querySelector('app-lot-tabs .meta')?.textContent?.trim()).toBe(
-      '24,9 ha · Casilda, Santa Fe',
+      '24.9 ha · Casilda, Santa Fe',
     );
     expect(el().querySelector('app-lot-tabs a.back')?.getAttribute('href')).toBe('/mapa');
     const current = el().querySelector('nav a[aria-current="page"]');

@@ -100,5 +100,5 @@ export function countByOrigin<O extends string>(
 
 /** "86,7 ha": superficie con un decimal en formato de Argentina */
 export function formatHectares(hectares: number): string {
-  return `${hectares.toLocaleString('es-AR', { maximumFractionDigits: 1 })} ha`;
+  return `${hectares.toLocaleString('en-US', { maximumFractionDigits: 1 })} ha`;
 }

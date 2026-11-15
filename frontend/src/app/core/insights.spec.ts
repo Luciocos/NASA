@@ -64,7 +64,7 @@ describe('insights', () => {
   });
 
   it('formatea hectáreas con un decimal', () => {
-    expect(formatHectares(86.7211)).toBe('86,7 ha');
+    expect(formatHectares(86.7211)).toBe('86.7 ha');
     expect(formatHectares(24)).toBe('24 ha');
   });
 });

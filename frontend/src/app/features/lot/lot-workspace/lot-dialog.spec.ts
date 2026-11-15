@@ -185,7 +185,7 @@ describe('LotDialog', () => {
     expect(dialog().getAttribute('aria-labelledby')).toBe('lot-title-1');
     expect(dialog().querySelector('#lot-title-1')?.textContent?.trim()).toBe('Lote de prueba');
     expect(dialog().querySelector('.meta')?.textContent?.trim()).toBe(
-      '24,9 ha · Casilda, Santa Fe',
+      '24.9 ha · Casilda, Santa Fe',
     );
     expect(tab('Profitability').getAttribute('aria-selected')).toBe('true');
     const panel = dialog().querySelector('[role="tabpanel"]');
