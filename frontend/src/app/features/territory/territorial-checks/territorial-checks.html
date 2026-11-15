@@ -1,0 +1,67 @@
+<app-section-card
+  heading="Chequeos territoriales"
+  subtitle="Cruce del lote con capas públicas. Indicativo."
+>
+  @if (error()) {
+    <p class="muted" role="alert">No se pudieron cargar los chequeos territoriales.</p>
+  } @else if (data(); as d) {
+    <p class="disclaimer">{{ d.disclaimer }}</p>
+    <ul class="checks">
+      @for (check of d.checks; track check.key) {
+        <li class="check" [attr.data-status]="check.status">
+          <div class="check__head">
+            <h3 class="check__title">{{ check.title }}</h3>
+            <span class="status" [attr.data-status]="check.status">
+              <span aria-hidden="true">{{
+                check.status === 'CLEAR' ? '✓' : check.status === 'POSSIBLE_CONFLICT' ? '!' : '–'
+              }}</span>
+              {{ statusLabels[check.status] }}
+            </span>
+            <span class="origin" [attr.data-origin]="check.origin">{{
+              originLabels[check.origin]
+            }}</span>
+          </div>
+          <p class="check__summary">{{ check.summary }}</p>
+
+          @switch (check.key) {
+            @case ('periurban') {
+              <app-periurban-detail [check]="check" [lot]="lot()" [editable]="editable()" />
+            }
+            @case ('otbn') {
+              <app-otbn-detail [check]="check" [lot]="lot()" [editable]="editable()" />
+            }
+            @case ('bpa') {
+              <app-bpa-detail
+                [check]="check"
+                [lot]="lot()"
+                [editable]="editable()"
+                (changed)="reload()"
+              />
+            }
+          }
+
+          @if (check.sources.length) {
+            <p class="sources">
+              Fuente:
+              @for (s of check.sources; track s.name; let last = $last) {
+                @if (s.url) {
+                  <a [href]="s.url" target="_blank" rel="noopener">{{ s.name }}</a>
+                } @else {
+                  {{ s.name }}
+                }
+                @if (s.publisher) {
+                  ({{ s.publisher }}{{ s.date ? ', ' + s.date : '' }})
+                }
+                @if (!last) {
+                  ·
+                }
+              }
+            </p>
+          }
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="muted">Cargando chequeos…</p>
+  }
+</app-section-card>

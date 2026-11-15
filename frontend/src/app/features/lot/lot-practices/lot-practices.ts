@@ -29,6 +29,7 @@ import { SectionCard } from '../../../shared/ui/section-card/section-card';
 import { EVENT_TYPE_LABELS, formatDate } from '../labels';
 import { PracticeTip } from './practice-tip/practice-tip';
 import { LandUseCard } from './land-use/land-use-card';
+import { TerritorialChecks } from '../../territory/territorial-checks/territorial-checks';
 import { LAND_USE_KEY, formatDay, landUseMatch, modisStatus } from './land-use/land-use';
 import {
   STATUS_ICONS,
@@ -80,6 +81,7 @@ const CHIP_CLASSES: Record<StatusTone, string> = {
     SimulatedNotice,
     PracticeTip,
     LandUseCard,
+    TerritorialChecks,
     Slides,
   ],
   templateUrl: './lot-practices.html',

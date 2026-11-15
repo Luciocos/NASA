@@ -1,0 +1,73 @@
+:host {
+  display: block;
+}
+.disclaimer {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--ink-2, #555);
+}
+.muted {
+  color: var(--ink-2, #666);
+}
+.checks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.check {
+  padding: 0.75rem;
+  border: 1px solid var(--line, #ddd);
+  border-left-width: 4px;
+  border-radius: 6px;
+}
+.check[data-status='CLEAR'] {
+  border-left-color: #1b6e3a;
+}
+.check[data-status='POSSIBLE_CONFLICT'] {
+  border-left-color: #b45309;
+}
+.check[data-status='NO_DATA'] {
+  border-left-color: #888;
+}
+.check__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.check__title {
+  margin: 0;
+  font-size: 1rem;
+  flex: 1 1 12rem;
+}
+.status,
+.origin {
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid currentColor;
+}
+.status[data-status='CLEAR'] {
+  color: #1b6e3a;
+}
+.status[data-status='POSSIBLE_CONFLICT'] {
+  color: #b45309;
+}
+.status[data-status='NO_DATA'] {
+  color: #555;
+}
+.origin {
+  color: #33507a;
+}
+.check__summary {
+  margin: 0.5rem 0;
+}
+.sources {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: var(--ink-2, #666);
+}
