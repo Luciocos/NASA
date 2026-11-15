@@ -52,6 +52,8 @@ El backend no procesa imágenes satelitales. El análisis de radar y óptico se 
 
 El navegador consulta además servicios abiertos de la NASA que no piden login, para mostrar los datos de cualquier polígono: NASA POWER (clima), ORNL DAAC (NDVI y cobertura de MODIS), el catálogo CMR de Earthdata (pasadas de NISAR y HLS) y GIBS (imágenes por fecha). Esos datos se muestran con su fuente y no se guardan en la base.
 
+Cómo se usa cada pantalla, de dónde sale cada dato (NISAR, HLS, MODIS y NASA POWER) y cómo se calcula cada número (bitácora, huella, puntaje, fertilización y rentabilidad) está en [INFO.md](INFO.md).
+
 ## Stack
 
 - **Backend:** Python 3.13, Django 6.1, Django REST Framework
