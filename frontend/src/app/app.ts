@@ -5,6 +5,7 @@ import { filter, map } from 'rxjs';
 
 import { AccountChip } from './core/account/account-chip';
 import { AuthService } from './core/auth/auth.service';
+import { RETURN_PARAM, isAuthScreen, safeReturnUrl } from './core/auth/return-url';
 import { ConnectionStatus } from './core/offline/connection-status/connection-status';
 import { UpdateToast } from './core/offline/update-toast/update-toast';
 import { Icon } from './shared/ui/icon/icon';
@@ -16,7 +17,7 @@ export type AppSection = 'field' | 'draw' | null;
  * marco de la app: barra superior clara y la pantalla. con sesión, la barra lleva la marca, Mi
  * campo, Marcar lote, el estado de conexión y la cuenta; en el celular la navegación y la
  * cuenta bajan a una barra de pestañas fija (Mi campo, Marcar lote, Cuenta). sin sesión, solo
- * la marca e "Ingresar"
+ * la marca e "Ingresar", que después vuelve a la pantalla actual
  */
 @Component({
   imports: [RouterOutlet, RouterLink, ConnectionStatus, UpdateToast, AccountChip, Icon],
@@ -32,15 +33,30 @@ export class App {
   /** hay un productor con la sesión abierta */
   protected readonly loggedIn = this.auth.loggedIn;
 
-  /** ruta actual sin query ni fragmento */
-  protected readonly path = toSignal(
+  /** ruta actual con su query */
+  private readonly url = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-      map((event) => event.urlAfterRedirects.split(/[?#]/)[0]),
+      map((event) => event.urlAfterRedirects),
     ),
     // con el valor inicial correcto el encabezado de la app no parpadea al abrir la landing
-    { initialValue: inject(DOCUMENT).location?.pathname ?? '/' },
+    { initialValue: initialUrl(inject(DOCUMENT).location) },
   );
+
+  /** ruta actual sin query ni fragmento */
+  protected readonly path = computed(() => this.url().split(/[?#]/)[0]);
+
+  /**
+   * "Ingresar" vuelve después a la pantalla actual. desde ingresar o registrarse conserva la
+   * vuelta que ya traían; desde la landing no hace falta (después de ingresar se va a Mi campo)
+   */
+  protected readonly loginParams = computed(() => {
+    const url = this.url();
+    const back = safeReturnUrl(
+      isAuthScreen(url) ? this.router.parseUrl(url).queryParamMap.get(RETURN_PARAM) : url,
+    );
+    return back && back !== '/' ? { [RETURN_PARAM]: back } : {};
+  });
 
   /** la landing tiene su propio encabezado y su propio pie */
   protected readonly isLanding = computed(() => this.path() === '/');
@@ -73,4 +89,9 @@ export class App {
     event.preventDefault();
     content.focus();
   }
+}
+
+/** la ruta con la que abrió la app, antes de la primera navegación */
+function initialUrl(location: Location | null | undefined): string {
+  return location ? `${location.pathname}${location.search}` : '/';
 }

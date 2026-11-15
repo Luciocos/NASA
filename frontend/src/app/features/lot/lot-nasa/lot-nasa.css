@@ -1,133 +1,101 @@
-.nasa {
-  display: grid;
-  gap: var(--space-4);
-  margin: var(--space-5) 0;
-  padding: var(--space-5);
-  border-radius: var(--radius-lg);
-  background: var(--night-900);
-  color: var(--night-ink);
-  --ink: var(--night-ink);
-  --ink-3: var(--night-ink-2);
+:host {
+  display: block;
+  min-width: 0;
 }
 
-.nasa .btn {
-  --btn-bg: var(--night-700);
-  --btn-ink: var(--night-ink);
-  --btn-line: var(--night-600);
-}
-
-.nasa .skeleton {
-  opacity: 0.25;
-}
-
-.nasa__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-h2 {
-  margin: 0 0 var(--space-1);
+p {
+  margin: 0;
 }
 
 h3 {
   margin: 0 0 var(--space-2);
-  color: var(--night-ink-2);
-  font-size: var(--text-sm);
+  color: var(--ink-3);
+  font-size: var(--text-xs);
   font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.muted {
-  margin: 0;
-  color: var(--night-ink-2);
-}
-
-.small {
-  color: var(--night-ink-2);
-  font-size: var(--text-xs);
-}
-
-.tiles {
+/* tres indicadores: en el celular el verdor ocupa la fila y lluvia y humedad van de a dos */
+.kpis {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
 }
 
-.tile {
+.kpi {
+  background: var(--surface-2);
+  box-shadow: none;
+}
+
+/* el verdor en el tiempo es el protagonista: a todo el ancho del cuerpo */
+.chart {
   display: grid;
-  gap: var(--space-1);
-  align-content: start;
-  padding: var(--space-4);
-  border-radius: var(--radius-md);
-  background: var(--night-800);
-  box-shadow: inset 0 0 0 1px var(--night-600);
+  gap: var(--space-2);
+  min-width: 0;
 }
 
-.tile__row {
+.chart__notes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-4);
+}
+
+.note {
+  color: var(--ink-3);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.retry-line {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-1) var(--space-2);
-}
-
-.retry {
-  justify-self: start;
-  margin-top: var(--space-1);
-}
-
-.tile__value {
-  color: var(--accent);
-  font-size: var(--text-2xl);
-  font-variant-numeric: tabular-nums;
-}
-
-.delta {
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-4);
+  color: var(--ink-2);
   font-size: var(--text-sm);
-  font-weight: 600;
 }
 
-.bar {
-  height: 1.5rem;
-  border-radius: var(--radius-sm);
-}
-
-.charts {
+/* detalle técnico plegado */
+.detail {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  gap: var(--space-3);
+  gap: var(--space-5);
+  padding-top: var(--space-2);
 }
 
-.chart-card {
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--surface-light, #fff);
-  color: var(--ink-light, #16241b);
-  --ink: #16241b;
-  --ink-3: #56645a;
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
-.chart-card .small {
-  color: #56645a;
-}
-
-.lists {
+.blocks {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--space-5) var(--space-6);
 }
 
+.block {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.facts,
 .scenes,
-.years,
-.sources ul {
+.sources {
   display: grid;
   gap: var(--space-1);
   margin: 0;
   padding: 0;
-  list-style: none;
+  color: var(--ink-2);
   font-size: var(--text-sm);
+  list-style: none;
 }
 
 .scenes li {
@@ -135,29 +103,36 @@ h3 {
 }
 
 .scenes span {
-  color: var(--night-ink-2);
+  color: var(--ink-3);
   font-size: var(--text-xs);
-}
-
-.sources summary {
-  cursor: pointer;
-  font-weight: 600;
 }
 
 .sources li {
   padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--night-600);
+  border-bottom: 1px solid var(--line);
 }
 
-@media (max-width: 60rem) {
-  .charts {
-    grid-template-columns: 1fr;
+.sources li:last-child {
+  border-bottom: 0;
+}
+
+@media (max-width: 56rem) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kpi--lead {
+    grid-column: 1 / -1;
   }
 }
 
-.load-more {
-  margin-top: var(--space-2);
-  --btn-bg: var(--surface-light, #fff);
-  --btn-ink: #16241b;
-  --btn-line: #b0a88f;
+@media (max-width: 40rem) {
+  .kpis {
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .detail {
+    gap: var(--space-4);
+  }
 }

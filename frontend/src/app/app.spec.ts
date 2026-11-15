@@ -25,6 +25,8 @@ describe('App', () => {
           { path: '', component: Blank },
           { path: 'mapa', component: Blank },
           { path: 'ejemplos', component: Blank },
+          { path: 'ingresar', component: Blank },
+          { path: 'registrarse', component: Blank },
           // como una pantalla cuyo código no se pudo bajar sin conexión
           { path: 'rota', loadComponent: () => Promise.reject(new Error('sin red')) },
         ]),
@@ -66,7 +68,7 @@ describe('App', () => {
     expect(nav).toContain('Mi campo');
     expect(nav).toContain('Marcar lote');
     expect(compiled.querySelector('.tabbar')).not.toBeNull();
-    expect(compiled.querySelector('a[href="/ingresar"]')).toBeNull();
+    expect(compiled.querySelector('a[href^="/ingresar"]')).toBeNull();
     expect(fixture.nativeElement.classList).toContain('has-tabbar');
   });
 
@@ -80,9 +82,35 @@ describe('App', () => {
     expect(compiled.querySelector('.topbar .nav')).toBeNull();
     expect(compiled.querySelector('.tabbar')).toBeNull();
     expect(compiled.querySelector('app-connection-status')).toBeNull();
-    expect(compiled.querySelector('a[href="/ingresar"]')?.textContent).toContain('Ingresar');
+    expect(compiled.querySelector('.topbar__login')?.textContent?.trim()).toBe('Ingresar');
     expect(compiled.querySelector('.brand')?.getAttribute('href')).toBe('/');
     expect(fixture.nativeElement.classList).not.toContain('has-tabbar');
+  });
+
+  it('sin sesión, Ingresar vuelve después a la pantalla actual, con su query', async () => {
+    user.set(null);
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    const login = () =>
+      (fixture.nativeElement as HTMLElement).querySelector('.topbar__login')?.getAttribute('href');
+
+    await router.navigateByUrl('/ejemplos?orden=nombre');
+    await fixture.whenStable();
+    expect(login()).toBe('/ingresar?volver=%2Fejemplos%3Forden%3Dnombre');
+
+    // desde registrarse conserva la vuelta que traía, sin volver a una pantalla de ingreso
+    await router.navigateByUrl('/registrarse?volver=%2Flotes%2F3');
+    await fixture.whenStable();
+    expect(login()).toBe('/ingresar?volver=%2Flotes%2F3');
+
+    await router.navigateByUrl('/registrarse');
+    await fixture.whenStable();
+    expect(login()).toBe('/ingresar');
+
+    // en la misma pantalla de ingreso no aparece
+    await router.navigateByUrl('/ingresar?volver=%2Flotes%2F3');
+    await fixture.whenStable();
+    expect(login()).toBeUndefined();
   });
 
   it('la landing usa su propio encabezado y su propio pie', async () => {

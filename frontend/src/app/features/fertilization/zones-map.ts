@@ -31,13 +31,14 @@ export const ZONE_STYLE = {
     :host {
       position: relative;
       display: block;
-      min-height: 22rem;
+      min-height: 16rem;
     }
+    /* las esquinas las pone quien lo contiene (la tarjeta a sangre las recorta) */
     .map {
       position: absolute;
       inset: 0;
-      border-radius: var(--radius-lg);
-      background: #1b2f44;
+      border-radius: inherit;
+      background: var(--night-900, #1b2f44);
     }
   `,
 })
@@ -52,7 +53,12 @@ export class ZonesMap {
 
   constructor() {
     afterNextRender(() => {
-      const map = L.map(this.element().nativeElement, { scrollWheelZoom: false });
+      // en el celular un dedo desliza la pantalla, no el mapa (se acerca con dos dedos): el lote
+      // ya entra encuadrado y así el mapa no atrapa el scroll
+      const map = L.map(this.element().nativeElement, {
+        scrollWheelZoom: false,
+        dragging: !L.Browser.mobile,
+      });
       L.tileLayer(
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         { maxZoom: 19, attribution: 'Imágenes &copy; Esri, Maxar, Earthstar Geographics' },

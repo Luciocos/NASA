@@ -1,8 +1,12 @@
 @if (lotId(); as id) {
-  <app-lot-tabs [lotId]="id" />
+  @if (!notFound()) {
+    <app-lot-tabs [lotId]="id" />
+  }
 }
 
-@if (error(); as message) {
+@if (notFound()) {
+  <app-login-invite />
+} @else if (error(); as message) {
   <p class="error" role="alert">{{ message }}</p>
 } @else {
   <h1>
@@ -33,14 +37,19 @@
     <p>Cargando huella…</p>
   }
 
-  <section aria-labelledby="declaration-title">
-    <h2 id="declaration-title">Datos del productor</h2>
-    <app-declaration-form
-      [lotId]="lotId()"
-      [footprint]="footprint()"
-      (declared)="onDeclared($event)"
-    />
-  </section>
+  <!-- en un lote de ejemplo no se declara (el backend responde 403) -->
+  @if (lot(); as lot) {
+    @if (!lot.is_example) {
+      <section aria-labelledby="declaration-title">
+        <h2 id="declaration-title">Datos del productor</h2>
+        <app-declaration-form
+          [lotId]="lotId()"
+          [footprint]="footprint()"
+          (declared)="onDeclared($event)"
+        />
+      </section>
+    }
+  }
 
   <section aria-labelledby="score-title">
     <h2 id="score-title">Puntaje de sustentabilidad (provisional)</h2>

@@ -1,0 +1,107 @@
+<app-section-card [heading]="heading()" [subtitle]="subtitle()">
+  @switch (state().status) {
+    @case ('loading') {
+      <div class="loading" aria-busy="true">
+        <span class="skeleton loading__line"></span>
+        <span class="skeleton loading__line"></span>
+        <span class="skeleton loading__line loading__line--short"></span>
+        <p class="visually-hidden" role="status">Cargando las buenas prácticas…</p>
+      </div>
+    }
+    @case ('error') {
+      <p class="alert alert--error failure" role="alert">
+        No se pudieron cargar las buenas prácticas. Revisá la conexión y probá de nuevo.
+        <button type="button" class="btn btn--sm" (click)="retry()">Reintentar</button>
+      </p>
+    }
+    @case ('ready') {
+      @if (score(); as s) {
+        <p class="score"><app-icon name="chart" /> {{ scoreText() }}</p>
+
+        @if (recommendations().length > 0) {
+          <h3 class="sub">Qué conviene hacer</h3>
+          <ol class="recs">
+            @for (rec of recommendations(); track rec.key) {
+              <li class="rec" [attr.data-status]="rec.status">
+                <span class="chip" [class]="tone(rec.status)">
+                  <app-icon [name]="statusIcons[rec.status]" /> {{ rec.statusLabel }}
+                </span>
+                <p class="rec__action">{{ rec.action }}</p>
+                <p class="rec__why">{{ rec.why }}</p>
+                @if (rec.link; as link) {
+                  @if (link.kind === 'log') {
+                    <a class="rec__link" [routerLink]="route(link.kind)" fragment="bitacora">
+                      {{ link.text }} <app-icon name="arrow-right" />
+                    </a>
+                  } @else {
+                    <a class="rec__link" [routerLink]="route(link.kind)">
+                      {{ link.text }} <app-icon name="arrow-right" />
+                    </a>
+                  }
+                }
+              </li>
+            }
+          </ol>
+        } @else {
+          <p class="all-good">
+            <app-icon name="check" /> Por ahora la bitácora no muestra prácticas para mejorar.
+          </p>
+        }
+
+        <h3 class="sub">Cómo está cada práctica</h3>
+        <ul class="practices">
+          @for (criterion of s.criteria; track criterion.key) {
+            <li>
+              <span class="chip state" [class]="tone(criterion.status)">
+                <app-icon [name]="statusIcons[criterion.status]" /> {{ statusLabel(criterion) }}
+              </span>
+              <span class="name">
+                <span>
+                  {{ criterion.label }}
+                  @if (criterion.hypothetical) {
+                    <span class="muted">(supuesto)</span>
+                  }
+                </span>
+                @if (criterion.origin) {
+                  <app-origin-badge [origin]="criterion.origin" />
+                }
+              </span>
+            </li>
+          }
+        </ul>
+        @if (simulated()) {
+          <app-simulated-notice />
+        }
+      }
+    }
+  }
+
+  @if (score(); as s) {
+    <app-disclosure
+      footer
+      flat
+      icon="info"
+      label="Cómo se calcula"
+      hint="Por qué cada estado y cuánto vale"
+    >
+      <div class="how">
+        <p>{{ s.disclaimer }}</p>
+        @if (s.message) {
+          <p>{{ s.message }}</p>
+        }
+        <dl class="how__list">
+          @for (criterion of s.criteria; track criterion.key) {
+            <div>
+              <dt>
+                {{ criterion.label }}
+                <span class="muted">· {{ weightText(criterion.weight, s.max_score) }}</span>
+              </dt>
+              <dd>{{ criterion.reason }}</dd>
+            </div>
+          }
+        </dl>
+        <p>Confianza: {{ confidenceLabel() }}. {{ s.confidence.rule }}</p>
+      </div>
+    </app-disclosure>
+  }
+</app-section-card>

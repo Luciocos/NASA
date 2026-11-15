@@ -10,6 +10,11 @@ export type CostKey = 'seed' | 'fertilizer' | 'pesticide' | 'labor' | 'harvest' 
 export interface ProfitInputs {
   /** precio del grano en US$ por tonelada */
   priceUsdT: number | null;
+  /**
+   * rinde que el productor carga en esta pantalla, en t/ha. null usa el de la huella (declarado o
+   * de referencia, con su origen)
+   */
+  yieldTHa: number | null;
   /** flete, comisiones y gastos de comercialización, en US$ por tonelada */
   commercialUsdT: number | null;
   /** costos directos por hectárea, en US$ */
@@ -31,6 +36,7 @@ export const COST_KEYS = Object.keys(COST_LABELS) as CostKey[];
 export function emptyProfitInputs(): ProfitInputs {
   return {
     priceUsdT: null,
+    yieldTHa: null,
     commercialUsdT: null,
     costs: {
       seed: null,

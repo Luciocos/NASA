@@ -85,10 +85,77 @@ describe('LotNasa', () => {
     expect(text).not.toContain('Sin pasadas en el catálogo');
     expect(text).not.toContain('Sin imágenes en el catálogo');
     expect(text).not.toContain('imágenes HLS en el catálogo');
+    // una sola invitación a reintentar, a la vista; el detalle dice qué falló
     const retries = [...element.querySelectorAll('button')].filter(
       (button) => button.textContent?.trim() === 'Reintentar',
     );
-    expect(retries.length).toBe(3);
+    expect(retries.length).toBe(1);
+    expect(retries[0].closest('app-disclosure')).toBeNull();
+    retries[0].click();
+  });
+
+  it('a la vista deja tres indicadores y el NDVI; lo demás, en un único detalle técnico', async () => {
+    const fixture = await setup(provideNasaTesting());
+    const element = fixture.nativeElement as HTMLElement;
+
+    const kpis = [...element.querySelectorAll('app-kpi-card')];
+    expect(kpis.length).toBe(3);
+    // sin dato no inventa un cero: lo dice con su motivo
+    expect(kpis.every((kpi) => kpi.textContent?.includes('Sin dato'))).toBe(true);
+    expect(element.querySelector('app-series-chart')?.closest('app-disclosure')).toBeNull();
+
+    const details = [...element.querySelectorAll('app-disclosure')];
+    expect(details.length).toBe(1);
+    expect(details[0].textContent).toContain('Ver detalle técnico');
+    for (const heading of [
+      'Lluvia por mes',
+      'Pasadas NISAR sobre el lote',
+      'Imágenes HLS recientes',
+      'Cobertura del suelo por año',
+      'De dónde sale cada dato',
+    ]) {
+      expect(details[0].textContent).toContain(heading);
+    }
+    expect(details[0].querySelector('app-column-chart')).toBeTruthy();
+    expect(
+      [...details[0].querySelectorAll('button')].map((button) => button.textContent?.trim()),
+    ).toEqual(['Traer el historial desde 2020', 'Volver a consultar']);
+  });
+
+  it('muestra la lluvia y la humedad en lenguaje llano, con su origen', async () => {
+    // clima armado para la prueba: no es un dato de NASA POWER
+    const days: ClimateDay[] = [];
+    for (let t = Date.UTC(2026, 9, 16); t <= Date.UTC(2026, 10, 14); t += 86_400_000) {
+      days.push({
+        date: new Date(t).toISOString().slice(0, 10),
+        rainMm: 1.5,
+        tMaxC: null,
+        tMinC: null,
+        soilTop: 0.4,
+        soilRoot: 0.62,
+      });
+    }
+    const daily = async (_point: unknown, _from: string, to: string) => ({
+      data: to === '2026-11-14' ? days : [],
+      stale: false,
+      savedAt: '2026-11-14T12:00:00.000Z',
+    });
+    const fixture = await setup([
+      {
+        provide: NASA_CLIENTS,
+        useValue: silentClients({ power: { daily }, now: () => Date.UTC(2026, 10, 14, 12) }),
+      },
+    ]);
+    const [, rain, soil] = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll('app-kpi-card'),
+    ];
+
+    expect(rain.textContent).toContain('45');
+    expect(rain.textContent).toContain('mm');
+    expect(rain.textContent).toContain('hasta el 14/11/2026');
+    expect(rain.textContent).toContain('Estimado');
+    expect(soil.textContent).toContain('62');
+    expect(soil.textContent).toContain('Zona de raíces al 14/11/2026 (100 es saturado).');
   });
 
   it('marca el mes en curso de la lluvia como parcial', async () => {

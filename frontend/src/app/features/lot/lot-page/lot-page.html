@@ -1,50 +1,146 @@
-@if (lot(); as lot) {
-  <app-lot-tabs [lotId]="lot.id" />
-}
-
-@if (lotError(); as message) {
-  <p class="error" role="alert">{{ message }}</p>
+@if (lotError(); as error) {
+  @if (error === 'not-found') {
+    <app-login-invite />
+  } @else {
+    <div class="alert alert--error failure" role="alert">
+      <p>No se pudo cargar el lote. Revisá la conexión y probá de nuevo.</p>
+      <button type="button" class="btn btn--sm" (click)="reload()">Reintentar</button>
+    </div>
+  }
 } @else if (lot(); as lot) {
-  <app-lot-hero [lot]="lot" [events]="allEvents()" [owned]="owned()">
-    <p class="lot-actions">
-      <a class="button button--primary" [routerLink]="['/huella', lot.id]">Ver huella estimada</a>
-      <button
-        type="button"
-        class="button"
-        [disabled]="creatingPassport()"
-        (click)="generatePassport(lot.id)"
-      >
-        {{ creatingPassport() ? 'Generando…' : 'Generar pasaporte' }}
-      </button>
-      @if (passportError(); as message) {
-        <span class="error" role="alert">{{ message }}</span>
+  <app-lot-tabs [lotId]="lot.id" [example]="lot.is_example" />
+  <app-lot-hero [lot]="lot" [owned]="owned()" />
+
+  <div class="sections">
+    <app-lot-nasa [lot]="lot" [events]="allEvents()" />
+
+    <app-lot-practices [lot]="lot" [refresh]="reviews()" />
+
+    @if (selectedEvent(); as event) {
+      <div id="compare" class="compare-slot">
+        <app-radar-optical-compare [event]="event" (closed)="selectedEventId.set(null)" />
+      </div>
+    }
+
+    <app-section-card
+      id="bitacora"
+      class="log"
+      heading="Bitácora del lote"
+      [subtitle]="logSubtitle()"
+    >
+      @if (allEvents().length > 0) {
+        <div class="timeline-chart">
+          <app-event-timeline
+            title="Eventos en el tiempo"
+            description="Cada evento de la bitácora en su fecha, con su incertidumbre y su origen"
+            [events]="timelineEvents()"
+            [selectedId]="selectedEventId()"
+            (eventSelect)="onTimelineSelect($event)"
+          />
+        </div>
       }
-    </p>
-  </app-lot-hero>
 
-  <app-lot-nasa [lot]="lot" [events]="allEvents()" />
+      @if (showFilters()) {
+        <app-disclosure
+          class="filters"
+          icon="filter"
+          label="Filtrar la bitácora"
+          hint="Por tipo, sensor o campaña"
+        >
+          <div class="filters__grid" role="group" aria-label="Filtros de la bitácora">
+            <label class="field">
+              Tipo
+              <select [value]="typeFilter()" (change)="onTypeFilter($any($event.target).value)">
+                <option value="">Todos</option>
+                @for (type of eventTypes; track type) {
+                  <option [value]="type" [selected]="type === typeFilter()">
+                    {{ eventTypeLabels[type] }}
+                  </option>
+                }
+              </select>
+            </label>
+            <label class="field">
+              Sensor
+              <select [value]="sensorFilter()" (change)="onSensorFilter($any($event.target).value)">
+                <option value="">Todos</option>
+                @for (sensor of sensors; track sensor) {
+                  <option [value]="sensor" [selected]="sensor === sensorFilter()">
+                    {{ sensorLabels[sensor] }}
+                  </option>
+                }
+              </select>
+            </label>
+            <label class="field">
+              Campaña
+              <select
+                [value]="campaignFilter()"
+                (change)="onCampaignFilter($any($event.target).value)"
+              >
+                <option value="">Todas</option>
+                @for (campaign of lot.campaigns; track campaign.id) {
+                  <option [value]="campaign.id" [selected]="campaign.id === campaignFilter()">
+                    {{ campaign.label }}
+                  </option>
+                }
+              </select>
+            </label>
+            @if (filtersActive()) {
+              <button type="button" class="btn btn--sm" (click)="clearFilters()">
+                Quitar filtros
+              </button>
+            }
+          </div>
+        </app-disclosure>
+      }
 
-  <section aria-labelledby="campaigns-title">
-    <h2 id="campaigns-title">Campañas</h2>
-    @if (lot.campaigns.length === 0) {
-      <p>Este lote todavía no tiene campañas registradas.</p>
-    } @else {
-      <table class="campaigns">
-        <thead>
-          <tr>
-            <th scope="col">Campaña</th>
-            <th scope="col">Cultivo</th>
-            <th scope="col">Origen del cultivo</th>
-            <th scope="col">Rendimiento</th>
-          </tr>
-        </thead>
-        <tbody>
+      @if (logError(); as message) {
+        <div class="alert alert--error failure" role="alert">
+          <p>{{ message }}</p>
+          <button type="button" class="btn btn--sm" (click)="reload()">Reintentar</button>
+        </div>
+      } @else if (log(); as log) {
+        @if (log.message) {
+          <p class="empty-log">{{ log.message }}</p>
+        }
+        @if (log.events.length > 0) {
+          <ol class="timeline">
+            @for (event of log.events; track event.id) {
+              <li class="timeline__entry" [id]="'evento-' + event.id">
+                <span class="timeline__dot" aria-hidden="true"></span>
+                <app-event-log-item
+                  [event]="event"
+                  [selected]="event.id === selectedEventId()"
+                  [editable]="editable()"
+                  (compare)="openCompare($event)"
+                  (reviewed)="onReviewed($event)"
+                />
+              </li>
+            }
+          </ol>
+        } @else if (filtersActive()) {
+          <p class="empty-log">Ningún evento coincide con los filtros.</p>
+        }
+      } @else {
+        <p class="muted" role="status">Cargando bitácora…</p>
+      }
+    </app-section-card>
+
+    <app-section-card
+      heading="Campañas"
+      subtitle="El cultivo de cada campaña y su rendimiento, con su origen."
+    >
+      @if (lot.campaigns.length === 0) {
+        <p class="muted">Este lote todavía no tiene campañas registradas.</p>
+      } @else {
+        <ul class="campaigns">
           @for (campaign of lot.campaigns; track campaign.id) {
-            <tr>
-              <td>{{ campaign.label }}</td>
-              <td>{{ campaign.crop_label }}</td>
-              <td><app-origin-badge [origin]="campaign.crop_origin" /></td>
-              <td>
+            <li>
+              <strong class="campaigns__label">{{ campaign.label }}</strong>
+              <span class="campaigns__item">
+                {{ campaign.crop_label }} <app-origin-badge [origin]="campaign.crop_origin" />
+              </span>
+              <span class="campaigns__item">
+                <span class="muted">Rendimiento:</span>
                 @if (campaign.yield_t_ha !== null) {
                   {{ yieldLabel(campaign.yield_t_ha) }}
                   @if (campaign.yield_origin) {
@@ -53,97 +149,44 @@
                 } @else {
                   Sin dato
                 }
-              </td>
-            </tr>
+              </span>
+            </li>
           }
-        </tbody>
-      </table>
-    }
-  </section>
-
-  @if (selectedEvent(); as event) {
-    <div id="compare" class="compare-slot">
-      <app-radar-optical-compare [event]="event" (closed)="selectedEventId.set(null)" />
-    </div>
-  }
-
-  <section aria-labelledby="log-title">
-    <h2 id="log-title">Bitácora de eventos</h2>
-
-    @if (allEvents().length > 0) {
-      <div class="timeline-chart">
-        <app-event-timeline
-          title="Eventos en el tiempo"
-          description="Cada evento de la bitácora en su fecha, con su incertidumbre y su origen"
-          [events]="timelineEvents()"
-          [selectedId]="selectedEventId()"
-          (eventSelect)="onTimelineSelect($event)"
-        />
-      </div>
-    }
-
-    <div class="filters" role="group" aria-label="Filtros de la bitácora">
-      <label>
-        Tipo
-        <select [value]="typeFilter()" (change)="onTypeFilter($any($event.target).value)">
-          <option value="">Todos</option>
-          @for (type of eventTypes; track type) {
-            <option [value]="type" [selected]="type === typeFilter()">
-              {{ eventTypeLabels[type] }}
-            </option>
-          }
-        </select>
-      </label>
-      <label>
-        Sensor
-        <select [value]="sensorFilter()" (change)="onSensorFilter($any($event.target).value)">
-          <option value="">Todos</option>
-          @for (sensor of sensors; track sensor) {
-            <option [value]="sensor" [selected]="sensor === sensorFilter()">
-              {{ sensorLabels[sensor] }}
-            </option>
-          }
-        </select>
-      </label>
-      <label>
-        Campaña
-        <select [value]="campaignFilter()" (change)="onCampaignFilter($any($event.target).value)">
-          <option value="">Todas</option>
-          @for (campaign of lot.campaigns; track campaign.id) {
-            <option [value]="campaign.id" [selected]="campaign.id === campaignFilter()">
-              {{ campaign.label }}
-            </option>
-          }
-        </select>
-      </label>
-      @if (typeFilter() || sensorFilter() || campaignFilter()) {
-        <button type="button" class="button" (click)="clearFilters()">Quitar filtros</button>
+        </ul>
       }
-    </div>
-
-    @if (logError(); as message) {
-      <p class="error" role="alert">{{ message }}</p>
-    } @else if (log(); as log) {
-      @if (log.message) {
-        <p class="empty">{{ log.message }}</p>
+      @if (lot.renspa) {
+        <p footer class="renspa">RENSPA: {{ lot.renspa }}</p>
       }
-      <ol class="timeline">
-        @for (event of log.events; track event.id) {
-          <li class="timeline__entry" [id]="'evento-' + event.id">
-            <span class="timeline__dot" aria-hidden="true"></span>
-            <app-event-log-item
-              [event]="event"
-              [selected]="event.id === selectedEventId()"
-              (compare)="openCompare($event)"
-              (reviewed)="onReviewed($event)"
-            />
-          </li>
-        }
-      </ol>
-    } @else {
-      <p>Cargando bitácora…</p>
+    </app-section-card>
+
+    @if (editable()) {
+      <app-section-card
+        heading="Compartí tu lote"
+        subtitle="El pasaporte es un enlace público de solo lectura, para imprimir o mandárselo a quien quieras."
+      >
+        <div class="share">
+          <button
+            type="button"
+            class="btn btn--primary"
+            [disabled]="creatingPassport()"
+            (click)="generatePassport(lot.id)"
+          >
+            <app-icon name="passport" />
+            {{ creatingPassport() ? 'Generando…' : 'Generar pasaporte' }}
+          </button>
+          @if (passportError(); as message) {
+            <p class="alert alert--error share__error" role="alert">{{ message }}</p>
+          }
+        </div>
+      </app-section-card>
     }
-  </section>
+  </div>
 } @else {
-  <p>Cargando lote…</p>
+  <div class="loading" aria-busy="true">
+    <span class="skeleton loading__tabs"></span>
+    <span class="skeleton loading__title"></span>
+    <span class="skeleton loading__line"></span>
+    <span class="skeleton loading__card"></span>
+    <p class="visually-hidden" role="status">Cargando lote…</p>
+  </div>
 }

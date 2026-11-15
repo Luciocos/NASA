@@ -1,14 +1,16 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { Icon } from '../icon/icon';
 
 /**
  * subnavegación de un lote: ficha, huella, fertilización y rentabilidad, con la vuelta a Mi
- * campo. pestañas claras en una pista blanca; en el celular la pista se desliza de costado y
- * ningún rótulo se corta. la pestaña activa lleva aria-current="page", borde y negrita
+ * campo (o a Ejemplos, en un lote de ejemplo). pestañas claras en una pista blanca; en el
+ * celular las cuatro entran en una fila, con el ícono arriba del rótulo, y si la pantalla es
+ * más angosta todavía la pista se desliza de costado: ningún rótulo se corta. la pestaña activa
+ * lleva aria-current="page", borde y negrita
  *
- * @example <app-lot-tabs [lotId]="lot.id" />
+ * @example <app-lot-tabs [lotId]="lot.id" [example]="lot.is_example" />
  */
 @Component({
   selector: 'app-lot-tabs',
@@ -16,14 +18,19 @@ import { Icon } from '../icon/icon';
   imports: [RouterLink, RouterLinkActive, Icon],
   template: `
     <nav class="bar" aria-label="Secciones del lote">
-      <a routerLink="/mapa" class="back"><app-icon name="arrow-left" /> Mi campo</a>
+      @if (example()) {
+        <a routerLink="/ejemplos" class="back"><app-icon name="arrow-left" /> Ejemplos</a>
+      } @else {
+        <a routerLink="/mapa" class="back"><app-icon name="arrow-left" /> Mi campo</a>
+      }
       <div class="track">
         <a
           [routerLink]="['/lotes', lotId()]"
           routerLinkActive="is-active"
           [routerLinkActiveOptions]="{ exact: true }"
           ariaCurrentWhenActive="page"
-          ><app-icon name="satellite" /> Ficha y datos NASA</a
+          ><app-icon name="satellite" /><span class="long">Ficha y datos NASA</span
+          ><span class="short" aria-hidden="true">Ficha</span></a
         >
         <a
           [routerLink]="['/huella', lotId()]"
@@ -83,6 +90,9 @@ import { Icon } from '../icon/icon';
     .back:hover {
       background: var(--paper-2);
     }
+    .short {
+      display: none;
+    }
     /* la pista se desliza de costado cuando no entra: los rótulos nunca se cortan */
     .track {
       display: flex;
@@ -123,6 +133,10 @@ import { Icon } from '../icon/icon';
       background: var(--field-100);
       color: var(--field-900);
     }
+    /*
+     * celular: las cuatro pestañas en una fila que ocupa todo el ancho, con el ícono arriba del
+     * rótulo. la primera muestra "Ficha" y conserva "Ficha y datos NASA" como nombre accesible
+     */
     @media (max-width: 40rem) {
       :host {
         margin-bottom: var(--space-4);
@@ -130,17 +144,42 @@ import { Icon } from '../icon/icon';
       .bar {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
-        gap: var(--space-2);
+        gap: var(--space-1);
       }
       .back {
         justify-self: start;
       }
+      .track {
+        border-radius: var(--radius-lg);
+      }
       .track a {
-        padding: 0 var(--space-3);
+        position: relative;
+        flex: 1 0 auto;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.125rem;
+        min-height: 3.25rem;
+        padding: var(--space-1) var(--space-2);
+        border-radius: var(--radius-md);
+        font-size: var(--text-xs);
+        line-height: 1.2;
+      }
+      .long {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+      .short {
+        display: inline;
       }
     }
   `,
 })
 export class LotTabs {
   readonly lotId = input.required<number>();
+  /** lote de ejemplo: la vuelta lleva a Ejemplos en vez de a Mi campo */
+  readonly example = input(false, { transform: booleanAttribute });
 }

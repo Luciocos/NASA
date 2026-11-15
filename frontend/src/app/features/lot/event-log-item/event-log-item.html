@@ -35,27 +35,36 @@
       <p class="notes">{{ event().notes }}</p>
     }
 
-    <div class="actions">
-      @if (hasEvidence()) {
-        <button type="button" class="button button--primary" (click)="compare.emit(event())">
-          Ver radar contra óptico
-        </button>
-      }
-      <button type="button" class="button" [disabled]="saving()" (click)="confirm()">
-        Confirmar
-      </button>
-      <button
-        type="button"
-        class="button"
-        [disabled]="saving()"
-        [attr.aria-expanded]="editing()"
-        (click)="editing.set(!editing())"
-      >
-        {{ editing() ? 'Cancelar corrección' : 'Corregir' }}
-      </button>
-    </div>
+    @if (hasEvidence() || editable()) {
+      <div class="actions">
+        @if (hasEvidence()) {
+          <button type="button" class="btn btn--sm compare" (click)="compare.emit(event())">
+            <app-icon name="eye" /> Ver radar contra óptico
+          </button>
+        }
+        @if (editable()) {
+          <button
+            type="button"
+            class="btn btn--sm btn--ghost"
+            [disabled]="saving()"
+            (click)="confirm()"
+          >
+            <app-icon name="check" /> Confirmar
+          </button>
+          <button
+            type="button"
+            class="btn btn--sm btn--ghost"
+            [disabled]="saving()"
+            [attr.aria-expanded]="editing()"
+            (click)="editing.set(!editing())"
+          >
+            {{ editing() ? 'Cancelar corrección' : 'Corregir' }}
+          </button>
+        }
+      </div>
+    }
 
-    @if (editing()) {
+    @if (editing() && editable()) {
       <form
         class="review"
         (submit)="
@@ -68,7 +77,7 @@
           )
         "
       >
-        <label>
+        <label class="field">
           Tipo
           <select #typeInput [value]="event().type">
             @for (type of eventTypes; track type) {
@@ -78,27 +87,28 @@
             }
           </select>
         </label>
-        <label>
+        <label class="field">
           Fecha
           <input #dateInput type="date" [value]="event().date" required />
         </label>
-        <label>
+        <label class="field">
           Incertidumbre (días)
           <input
             #uncertaintyInput
             type="number"
             min="0"
+            inputmode="numeric"
             [value]="event().date_uncertainty_days ?? ''"
           />
         </label>
-        <label class="review__notes">
+        <label class="field review__wide">
           Notas
           <textarea #notesInput rows="2" [value]="event().notes"></textarea>
         </label>
-        <p class="review__hint">
+        <p class="review__hint review__wide">
           Si cambiás el tipo o la fecha, el dato pasa a figurar como declarado por vos.
         </p>
-        <button type="submit" class="button button--primary" [disabled]="saving()">
+        <button type="submit" class="btn btn--primary btn--sm" [disabled]="saving()">
           Guardar corrección
         </button>
       </form>

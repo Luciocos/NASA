@@ -1,266 +1,253 @@
-<section class="nasa" aria-labelledby="nasa-title">
-  <header class="nasa__head">
-    <div>
-      <h2 id="nasa-title">Lo que ve la NASA de este lote</h2>
-      <p class="muted">
-        Datos abiertos consultados en vivo para el polígono. Quedan guardados en este dispositivo
-        para verlos sin conexión.
-      </p>
-    </div>
-    <button type="button" class="btn btn--sm" (click)="retry()">Actualizar</button>
-  </header>
+<app-section-card
+  heading="Lo que ve el satélite"
+  subtitle="Datos abiertos de la NASA, consultados en vivo para el polígono del lote."
+>
+  <div class="kpis">
+    @let ndviView = ndviKpi();
+    <app-kpi-card
+      class="kpi kpi--lead"
+      icon="leaf"
+      label="Verdor del cultivo (NDVI)"
+      [value]="ndviView?.value"
+      [caption]="ndviView?.caption ?? null"
+      [trend]="ndviView?.trend ?? null"
+      [trendText]="ndviView?.trendText ?? null"
+      [loading]="!ndviView && waiting(ndvi())"
+      [emptyReason]="reason(ndvi())"
+    >
+      @if (ndviView) {
+        <app-origin-badge [origin]="dataSources.modisNdvi.origin" />
+      }
+      <span class="source">Fuente: MODIS Terra</span>
+    </app-kpi-card>
 
-  <div class="tiles">
-    <article class="tile">
-      <h3>NDVI actual</h3>
-      @if (summary().latest; as latest) {
-        <div class="tile__row">
-          <strong class="tile__value">{{ number(latest.mean) }}</strong>
-          <app-origin-badge [origin]="dataSources.modisNdvi.origin" />
-        </div>
-        <span class="small"
-          >Compuesto del {{ formatDate(latest.date) }} · MODIS {{ latest.satellite }}</span
-        >
-        @if (summary().changeVsPrevious !== null) {
-          <span class="delta">{{ signed(summary().changeVsPrevious) }} vs. el anterior</span>
-        }
-        @if (summary().changeVsLastYear !== null) {
-          <span class="delta">{{ signed(summary().changeVsLastYear) }} vs. hace un año</span>
-        }
-        @if (latest.centroidOnly) {
-          <span class="small">El lote es más chico que un píxel: se usa el del centro.</span>
-        }
-      } @else if (pending(ndvi())) {
-        @if (offline()) {
-          <span class="small" role="status">{{ offlineText }}</span>
-        } @else {
-          <span class="skeleton bar" aria-hidden="true"></span>
-          <span class="small" role="status">Consultando MODIS…</span>
-        }
-      } @else {
-        <strong class="tile__value">Sin dato</strong>
-        <span class="small">{{ ndvi().error }}</span>
+    @let rainView = rainKpi();
+    <app-kpi-card
+      class="kpi"
+      icon="cloud"
+      label="Lluvia en 30 días"
+      [value]="rainView?.value"
+      unit="mm"
+      [caption]="rainView?.caption ?? null"
+      [loading]="!rainView && waiting(climate())"
+      [emptyReason]="reason(climate())"
+    >
+      @if (rainView) {
+        <app-origin-badge [origin]="dataSources.power.origin" />
       }
-    </article>
+      <span class="source">Fuente: NASA POWER</span>
+    </app-kpi-card>
 
-    <article class="tile">
-      <h3>Lluvia, últimos 30 días</h3>
-      @if (rainLast30(); as rain) {
-        <div class="tile__row">
-          <strong class="tile__value">{{ number(rain.rainMm, 0) }} mm</strong>
-          <app-origin-badge [origin]="dataSources.power.origin" />
-        </div>
-        <span class="small">Hasta el {{ formatDate(rain.to) }} · NASA POWER</span>
-        @if (rain.missingDays > 0) {
-          <span class="small">{{ rain.missingDays }} días todavía sin dato</span>
-        }
-      } @else if (pending(climate())) {
-        @if (offline()) {
-          <span class="small" role="status">{{ offlineText }}</span>
-        } @else {
-          <span class="skeleton bar" aria-hidden="true"></span>
-        }
-      } @else {
-        <strong class="tile__value">Sin dato</strong>
-        <span class="small">{{ climate().error }}</span>
+    @let soilView = soilKpi();
+    <app-kpi-card
+      class="kpi"
+      icon="layers"
+      label="Humedad del suelo"
+      [value]="soilView?.value"
+      unit="%"
+      [caption]="soilView?.caption ?? null"
+      [loading]="!soilView && waiting(climate())"
+      [emptyReason]="reason(climate())"
+    >
+      @if (soilView) {
+        <app-origin-badge [origin]="dataSources.power.origin" />
       }
-    </article>
-
-    <article class="tile">
-      <h3>Humedad del suelo</h3>
-      @if (soil(); as s) {
-        <div class="tile__row">
-          <strong class="tile__value">{{ percent(s.soilRoot) }}</strong>
-          <app-origin-badge [origin]="dataSources.power.origin" />
-        </div>
-        <span class="small"
-          >Zona de raíces, de seco (0) a saturado (100) · {{ formatDate(s.date) }}</span
-        >
-        <span class="small">Superficie: {{ percent(s.soilTop) }}</span>
-      } @else if (pending(climate())) {
-        @if (offline()) {
-          <span class="small" role="status">{{ offlineText }}</span>
-        } @else {
-          <span class="skeleton bar" aria-hidden="true"></span>
-        }
-      } @else {
-        <strong class="tile__value">Sin dato</strong>
-      }
-    </article>
-
-    <!-- sin etiqueta de origen: es un listado del catálogo, no una medición del lote -->
-    <article class="tile">
-      <h3>Pasadas de satélite</h3>
-      @if (scenes().data && (nisar().length || !scenesFailure())) {
-        <strong class="tile__value">{{ nisar().length }} NISAR</strong>
-        @if (nisar()[0]; as last) {
-          <span class="small">Última: {{ day(last.start) }} · {{ last.maturity }}</span>
-        }
-      } @else if (pending(scenes())) {
-        @if (offline()) {
-          <span class="small" role="status">{{ offlineText }}</span>
-        } @else {
-          <span class="skeleton bar" aria-hidden="true"></span>
-        }
-      } @else {
-        <strong class="tile__value">Sin dato</strong>
-      }
-      @if (hls().length || (scenes().data && !scenesFailure())) {
-        <span class="small">{{ hls().length }} imágenes HLS en el catálogo</span>
-      }
-      @if (lastClearHls(); as clear) {
-        <span class="small"
-          >Última despejada: {{ day(clear.start) }} ({{ clear.cloudCover }} % nubes)</span
-        >
-      }
-      @if (scenesFailure(); as failure) {
-        <span class="small">{{ failure }}</span>
-        <button type="button" class="btn btn--sm retry" (click)="retry()">Reintentar</button>
-      }
-    </article>
+      <span class="source">Fuente: NASA POWER</span>
+    </app-kpi-card>
   </div>
 
-  <div class="charts">
-    <div class="chart-card">
-      <app-series-chart
-        [title]="
-          fullHistory()
-            ? 'Verdor del cultivo (NDVI) desde 2020'
-            : 'Verdor del cultivo (NDVI), últimos 12 meses'
-        "
-        description="NDVI medio del lote en cada compuesto de 16 días de MODIS Terra, con los eventos de la bitácora marcados"
-        [series]="ndviSeries()"
-        [markers]="markers()"
-        [yDomain]="[0, 1]"
-        [decimals]="2"
-        emptyText="Todavía no llegó la serie de NDVI"
-      />
+  <div class="chart">
+    <app-series-chart
+      [title]="
+        fullHistory()
+          ? 'Verdor del lote (NDVI) desde 2020'
+          : 'Verdor del lote (NDVI), últimos 12 meses'
+      "
+      description="NDVI medio del lote en cada imagen de 16 días de MODIS Terra, con los eventos de la bitácora marcados"
+      [series]="ndviSeries()"
+      [markers]="markers()"
+      [yDomain]="[0, 1]"
+      [decimals]="2"
+      emptyText="Todavía no llegó la serie de NDVI"
+    />
+    <div class="chart__notes">
       @if (pending(ndvi())) {
-        <p class="small" role="status">
+        <p class="note" role="status">
           @if (offline()) {
             {{ offlineText }}
           } @else {
-            Cargando el historial: {{ percent(ndvi().progress) }}. El servicio de MODIS puede tardar
-            varios minutos la primera vez; después queda guardado en este dispositivo.
+            Consultando MODIS: {{ percent(ndvi().progress) }}. La primera vez puede tardar unos
+            minutos; después queda guardado en este dispositivo.
           }
         </p>
       } @else if (ndvi().error && ndvi().data) {
-        <p class="small">{{ ndvi().error }}</p>
-      }
-      @if (!fullHistory()) {
-        <button type="button" class="btn btn--sm load-more" (click)="ndviSince.set('2020-01-01')">
-          Traer el historial desde 2020
-        </button>
+        <p class="note">{{ ndvi().error }}</p>
       }
       @if (ndvi().stale) {
-        <p class="small">Copia guardada: no se pudo actualizar.</p>
+        <p class="note">Copia guardada: no se pudo actualizar.</p>
       }
-    </div>
-    <div class="chart-card">
-      <app-column-chart
-        title="Lluvia por mes"
-        description="Lluvia mensual de NASA POWER en el centro del lote, últimos 12 meses"
-        [items]="rainColumns()"
-        unit="mm"
-        emptyText="Todavía no llegó la lluvia de NASA POWER"
-      />
-      @if (rainOpenMonth(); as open) {
-        <p class="small">{{ open.aside }}</p>
-      }
-      @if (offline() && pending(climate()) && !climate().data) {
-        <p class="small" role="status">{{ offlineText }}</p>
-      }
+      <span class="source">Fuente: MODIS Terra (MOD13Q1)</span>
     </div>
   </div>
 
-  <div class="lists">
-    <div>
-      <h3>Pasadas NISAR sobre el lote</h3>
-      @if (nisar().length) {
-        <ul class="scenes">
-          @for (scene of nisar().slice(0, 6); track scene.title) {
-            <li>
-              <strong>{{ day(scene.start) }}</strong>
-              <span>
-                Órbita {{ scene.track ?? 'sin dato' }} · {{ scene.direction ?? 'sin dato' }} ·
-                {{ scene.maturity ?? 'sin dato' }}
-              </span>
-            </li>
-          }
-        </ul>
-      } @else if (scenesFailure(); as failure) {
-        <p class="small muted">{{ failure }}</p>
-        <button type="button" class="btn btn--sm retry" (click)="retry()">Reintentar</button>
-      } @else if (pending(scenes())) {
-        @if (offline()) {
-          <p class="small muted" role="status">{{ offlineText }}</p>
-        } @else {
-          <span class="skeleton bar" aria-hidden="true"></span>
-        }
-      } @else {
-        <p class="small muted">Sin pasadas en el catálogo por ahora.</p>
-      }
-    </div>
-    <div>
-      <h3>Imágenes HLS recientes</h3>
-      @if (hls().length) {
-        <ul class="scenes">
-          @for (scene of hls().slice(0, 6); track scene.title) {
-            <li>
-              <strong>{{ day(scene.start) }}</strong>
-              <span
-                >{{ scene.sensorLabel }} · {{ scene.cloudCover ?? '?' }} % de nubes en la
-                escena</span
-              >
-            </li>
-          }
-        </ul>
-      } @else if (scenesFailure(); as failure) {
-        <p class="small muted">{{ failure }}</p>
-        <button type="button" class="btn btn--sm retry" (click)="retry()">Reintentar</button>
-      } @else if (pending(scenes())) {
-        @if (offline()) {
-          <p class="small muted" role="status">{{ offlineText }}</p>
-        } @else {
-          <span class="skeleton bar" aria-hidden="true"></span>
-        }
-      } @else {
-        <p class="small muted">Sin imágenes en el catálogo por ahora.</p>
-      }
-    </div>
-    <div>
-      <h3>Cobertura del suelo por año</h3>
-      @if (landCover().data; as years) {
-        <ul class="years">
-          @for (year of years; track year.year) {
-            <li>
-              <strong>{{ year.year }}</strong> {{ year.label }}
-            </li>
-          }
-        </ul>
-      } @else if (pending(landCover())) {
-        @if (offline()) {
-          <p class="small muted" role="status">{{ offlineText }}</p>
-        } @else {
-          <span class="skeleton bar" aria-hidden="true"></span>
-        }
-      } @else {
-        <p class="small muted">{{ landCover().error ?? 'Sin dato' }}</p>
-      }
-    </div>
-  </div>
+  @if (anyFailed()) {
+    <p class="retry-line" role="status">
+      Algunos datos no llegaron.
+      <button type="button" class="btn btn--sm" (click)="retry()">Reintentar</button>
+    </p>
+  }
 
-  <details class="sources">
-    <summary>De dónde sale cada dato</summary>
-    <ul>
-      @for (source of sources; track source.name) {
-        <li>
-          <app-origin-badge [origin]="source.origin" />
-          <strong>{{ source.name }}</strong> · {{ source.product }} · {{ source.resolution }} ·
-          {{ source.cadence }}.
-          <span class="muted">{{ source.note }}</span>
-        </li>
-      }
-    </ul>
-  </details>
-</section>
+  <app-disclosure
+    footer
+    flat
+    icon="info"
+    label="Ver detalle técnico"
+    hint="Lluvia por mes, NISAR, HLS y fuentes"
+  >
+    <div class="detail">
+      <div class="options" role="group" aria-label="Opciones de la consulta">
+        @if (!fullHistory()) {
+          <button type="button" class="btn btn--sm" (click)="ndviSince.set('2020-01-01')">
+            Traer el historial desde 2020
+          </button>
+        }
+        <button type="button" class="btn btn--sm" (click)="retry()">Volver a consultar</button>
+      </div>
+
+      <section class="block block--wide" aria-labelledby="nasa-rain-title">
+        <h3 id="nasa-rain-title">Lluvia por mes</h3>
+        <app-column-chart
+          title="Lluvia por mes"
+          description="Lluvia mensual de NASA POWER en el centro del lote, últimos 12 meses"
+          [items]="rainColumns()"
+          unit="mm"
+          emptyText="Todavía no llegó la lluvia de NASA POWER"
+        />
+        @if (rainOpenMonth(); as open) {
+          <p class="note">{{ open.aside }}</p>
+        }
+        @if (offline() && pending(climate()) && !climate().data) {
+          <p class="note" role="status">{{ offlineText }}</p>
+        }
+      </section>
+
+      <div class="blocks">
+        <section class="block" aria-labelledby="nasa-ndvi-title">
+          <h3 id="nasa-ndvi-title">Verdor (NDVI)</h3>
+          @if (summary().latest; as latest) {
+            <ul class="facts">
+              <li>
+                Compuesto del <strong>{{ formatDate(latest.date) }}</strong> · MODIS
+                {{ latest.satellite }}
+              </li>
+              <li>{{ latest.validPixels }} de {{ latest.pixels }} píxeles válidos</li>
+              <li>Frente al anterior: {{ signed(summary().changeVsPrevious) }}</li>
+              <li>Frente a hace un año: {{ signed(summary().changeVsLastYear) }}</li>
+              @if (latest.centroidOnly) {
+                <li>El lote es más chico que un píxel: se usa el del centro.</li>
+              }
+            </ul>
+          } @else {
+            <p class="note">{{ pending(ndvi()) ? 'Consultando…' : reason(ndvi()) }}</p>
+          }
+        </section>
+
+        <section class="block" aria-labelledby="nasa-soil-title">
+          <h3 id="nasa-soil-title">Humedad del suelo</h3>
+          @if (soil(); as s) {
+            <ul class="facts">
+              <li>Zona de raíces: {{ percent(s.soilRoot) }}</li>
+              <li>Superficie: {{ percent(s.soilTop) }}</li>
+              <li>De seco (0) a saturado (100) · {{ formatDate(s.date) }}</li>
+            </ul>
+          } @else {
+            <p class="note">{{ pending(climate()) ? 'Consultando…' : reason(climate()) }}</p>
+          }
+        </section>
+
+        <!-- sin etiqueta de origen: es un listado del catálogo, no una medición del lote -->
+        <section class="block" aria-labelledby="nasa-nisar-title">
+          <h3 id="nasa-nisar-title">Pasadas NISAR sobre el lote</h3>
+          @if (nisar().length) {
+            <ul class="scenes">
+              @for (scene of nisar().slice(0, 6); track scene.title) {
+                <li>
+                  <strong>{{ day(scene.start) }}</strong>
+                  <span>
+                    Órbita {{ scene.track ?? 'sin dato' }} · {{ scene.direction ?? 'sin dato' }} ·
+                    {{ scene.maturity ?? 'sin dato' }}
+                  </span>
+                </li>
+              }
+            </ul>
+          } @else if (scenesFailure(); as failure) {
+            <p class="note">{{ failure }}</p>
+          } @else if (pending(scenes())) {
+            <p class="note" role="status">{{ offline() ? offlineText : 'Consultando…' }}</p>
+          } @else {
+            <p class="note">Sin pasadas en el catálogo por ahora.</p>
+          }
+        </section>
+
+        <section class="block" aria-labelledby="nasa-hls-title">
+          <h3 id="nasa-hls-title">Imágenes HLS recientes</h3>
+          @if (hls().length) {
+            <ul class="scenes">
+              @for (scene of hls().slice(0, 6); track scene.title) {
+                <li>
+                  <strong>{{ day(scene.start) }}</strong>
+                  <span
+                    >{{ scene.sensorLabel }} · {{ scene.cloudCover ?? '?' }} % de nubes en la
+                    escena</span
+                  >
+                </li>
+              }
+            </ul>
+            @if (lastClearHls(); as clear) {
+              <p class="note">
+                Última despejada: {{ day(clear.start) }} ({{ clear.cloudCover }} % nubes)
+              </p>
+            }
+          } @else if (scenesFailure()) {
+            <p class="note">Sin respuesta del catálogo: no se sabe si hay imágenes.</p>
+          } @else if (pending(scenes())) {
+            <p class="note" role="status">{{ offline() ? offlineText : 'Consultando…' }}</p>
+          } @else {
+            <p class="note">Sin imágenes en el catálogo por ahora.</p>
+          }
+        </section>
+
+        <section class="block" aria-labelledby="nasa-cover-title">
+          <h3 id="nasa-cover-title">Cobertura del suelo por año</h3>
+          @if (landCover().data; as years) {
+            <ul class="facts">
+              @for (year of years; track year.year) {
+                <li>
+                  <strong>{{ year.year }}</strong> {{ year.label }}
+                </li>
+              }
+            </ul>
+          } @else if (pending(landCover())) {
+            <p class="note" role="status">{{ offline() ? offlineText : 'Consultando…' }}</p>
+          } @else {
+            <p class="note">{{ landCover().error ?? 'Sin dato' }}</p>
+          }
+        </section>
+      </div>
+
+      <section class="block block--wide" aria-labelledby="nasa-sources-title">
+        <h3 id="nasa-sources-title">De dónde sale cada dato</h3>
+        <ul class="sources">
+          @for (source of sources; track source.name) {
+            <li>
+              <app-origin-badge [origin]="source.origin" />
+              <strong>{{ source.name }}</strong> · {{ source.product }} · {{ source.resolution }} ·
+              {{ source.cadence }}.
+              <span class="muted">{{ source.note }}</span>
+            </li>
+          }
+        </ul>
+      </section>
+    </div>
+  </app-disclosure>
+</app-section-card>

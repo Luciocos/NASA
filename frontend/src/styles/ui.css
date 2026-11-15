@@ -953,3 +953,79 @@
     white-space: nowrap;
   }
 }
+
+/* sumado con la landing y el acceso: la marca y el enlace chico con flecha, compartidos */
+@layer ui {
+  /* marca de la app: logo isométrico y nombre. la usan la barra del marco y la de la landing */
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--tap);
+    border-radius: var(--radius-sm);
+    color: var(--ink);
+    font-size: var(--text-lg);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+  }
+
+  .brand-logo {
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .brand-logo__top {
+    fill: var(--field-500);
+  }
+
+  .brand-logo__left {
+    fill: var(--soil-700);
+  }
+
+  .brand-logo__right {
+    fill: var(--soil-500);
+  }
+
+  .brand-logo__rows,
+  .brand-logo__pole {
+    fill: none;
+    stroke: var(--field-300);
+    stroke-width: 1.3;
+    stroke-linecap: round;
+  }
+
+  .brand-logo__pole {
+    stroke: var(--ink);
+  }
+
+  .brand-logo__flag {
+    fill: var(--accent);
+  }
+
+  /* ícono en un círculo verde suave: encabeza la tarjeta de ingreso, la invitación a ingresar y
+     los pasos de la landing */
+  .icon-mark {
+    --icon-size: 1.5rem;
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: var(--field-50);
+    color: var(--field-800);
+  }
+
+  /* enlace chico con flecha ("Ver un lote de ejemplo"), con el alto de un toque */
+  .link-arrow {
+    --icon-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-height: var(--tap);
+    color: var(--link);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+}

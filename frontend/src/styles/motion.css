@@ -297,3 +297,26 @@
     }
   }
 }
+
+/*
+ * sumado con la landing: .reveal-scroll sube y aparece al entrar en pantalla, sin javascript,
+ * donde el navegador soporta animaciones ligadas al scroll. con menos movimiento queda quieto
+ */
+@layer motion {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal-scroll {
+        animation: reveal-scroll linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 90%;
+      }
+    }
+  }
+
+  @keyframes reveal-scroll {
+    from {
+      opacity: 0;
+      translate: 0 1.5rem;
+    }
+  }
+}

@@ -1,6 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  Injector,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -11,6 +14,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { Api } from '../../core/api';
+import { AuthSession } from '../../core/auth/auth-session';
 import { formatHectares } from '../../core/insights';
 import { Footprint, FootprintComponent, LotDetail } from '../../core/models';
 import {
@@ -21,10 +25,15 @@ import {
   NdviZoneLevel,
   zonesByTerciles,
 } from '../../core/nasa';
-import { AuthSession } from '../../core/auth/auth-session';
 import { OFFLINE_STORAGE } from '../../core/offline/storage';
 import { OriginBadge } from '../../shared/origin-badge/origin-badge';
+import { Disclosure } from '../../shared/ui/disclosure/disclosure';
+import { Icon } from '../../shared/ui/icon/icon';
+import { KpiCard } from '../../shared/ui/kpi-card/kpi-card';
+import { LoginInvite } from '../../shared/ui/login-invite/login-invite';
 import { LotTabs } from '../../shared/ui/lot-tabs/lot-tabs';
+import { PageHeader } from '../../shared/ui/page-header/page-header';
+import { SectionCard } from '../../shared/ui/section-card/section-card';
 import { formatDate } from '../lot/labels';
 import { ZONE_STYLE, ZonesMap } from './zones-map';
 
@@ -32,16 +41,29 @@ import { ZONE_STYLE, ZonesMap } from './zones-map';
 // sin sesión no se guardan: la planilla vive mientras la pantalla esté abierta
 const STORAGE_NAME = 'fertilization:v1';
 const LEVELS: NdviZoneLevel[] = ['alto', 'medio', 'bajo'];
+type Doses = Record<NdviZoneLevel, number | null>;
 
 /**
- * fertilización: ambientes del lote según el NDVI de MODIS (tercios del rango, sin umbrales
- * inventados) y una planilla de dosis variable de nitrógeno que el productor completa. las
- * emisiones salen de los factores con fuente del backend (los mismos de la huella)
+ * fertilización: el mapa de ambientes del lote según el NDVI de MODIS (tercios del rango, sin
+ * umbrales inventados) es lo principal, con la superficie de cada ambiente. la planilla de dosis
+ * variable de nitrógeno la completa el productor (dato declarado) y queda plegada hasta que la
+ * pide. las emisiones salen de los factores con fuente del backend (los mismos de la huella)
  */
 @Component({
   selector: 'app-fertilization-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LotTabs, ZonesMap, OriginBadge],
+  imports: [
+    RouterLink,
+    LotTabs,
+    ZonesMap,
+    OriginBadge,
+    PageHeader,
+    SectionCard,
+    KpiCard,
+    Disclosure,
+    Icon,
+    LoginInvite,
+  ],
   templateUrl: './fertilization-page.html',
   styleUrl: './fertilization-page.css',
 })
@@ -50,6 +72,8 @@ export class FertilizationPage {
   private readonly satellite = inject(LotSatellite);
   private readonly storage = inject(OFFLINE_STORAGE);
   private readonly session = inject(AuthSession);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
 
   protected readonly lotId = toSignal(
     inject(ActivatedRoute).paramMap.pipe(map((params) => Number(params.get('id')))),
@@ -57,13 +81,15 @@ export class FertilizationPage {
   );
   protected readonly lot = signal<LotDetail | null>(null);
   protected readonly footprint = signal<Footprint | null>(null);
+  /** el lote no existe o es de otra cuenta (404) */
+  protected readonly notFound = signal(false);
   protected readonly error = signal<string | null>(null);
   private readonly gridState = signal<(() => LoadState<NdviGrid>) | null>(null);
-  protected readonly doses = signal<Record<NdviZoneLevel, number | null>>({
-    alto: null,
-    medio: null,
-    bajo: null,
-  });
+  protected readonly doses = signal<Doses>({ alto: null, medio: null, bajo: null });
+  /** lo tipeado en cada dosis, para no pisarlo mientras se escribe */
+  private readonly drafts = signal<Partial<Record<NdviZoneLevel, string>>>({});
+  /** la planilla de dosis está plegada hasta que se pide */
+  protected readonly plannerOpen = signal(false);
 
   protected readonly levels = LEVELS;
   protected readonly zoneStyle = ZONE_STYLE;
@@ -72,10 +98,18 @@ export class FertilizationPage {
   protected readonly formatDate = formatDate;
 
   protected readonly grid = computed(() => this.gridState()?.() ?? null);
+  /** el NDVI todavía no llegó: los ambientes se muestran como esqueleto */
+  protected readonly loadingGrid = computed(() => {
+    const state = this.grid();
+    return (
+      this.lot() === null || state === null || state.status === 'idle' || state.status === 'loading'
+    );
+  });
   protected readonly zones = computed(() => {
     const data = this.grid()?.data;
     return data ? zonesByTerciles(data) : null;
   });
+  protected readonly hasZones = computed(() => (this.zones()?.zones.length ?? 0) > 0);
   protected readonly rows = computed(() => {
     const area = this.lot()?.area_ha ?? 0;
     return (this.zones()?.zones ?? []).map((zone) => {
@@ -83,6 +117,11 @@ export class FertilizationPage {
       const dose = this.doses()[zone.level];
       return { zone, ha, dose, totalN: dose === null ? null : dose * ha };
     });
+  });
+  protected readonly dosesHint = computed(() => {
+    const rows = this.rows();
+    const loaded = rows.filter((row) => row.dose !== null).length;
+    return `${loaded} de ${rows.length} ambientes con dosis`;
   });
   private readonly component = (key: string): FootprintComponent | null =>
     this.footprint()?.components.find((item) => item.key === key) ?? null;
@@ -124,13 +163,17 @@ export class FertilizationPage {
         return;
       }
       this.doses.set(this.loadDoses(id));
+      this.drafts.set({});
       const subs = [
         this.api.lot(id).subscribe({
           next: (lot) => {
             this.lot.set(lot);
             this.gridState.set(this.satellite.ndviGrid({ id: lot.id, geometry: lot.geometry }));
           },
-          error: () => this.error.set('No se pudo cargar el lote. Revisá la conexión.'),
+          error: (err: { status?: number }) => {
+            if (err.status === 404) this.notFound.set(true);
+            else this.error.set('No se pudo cargar el lote. Revisá la conexión.');
+          },
         }),
         this.api.footprint(id).subscribe({
           next: (fp) => this.footprint.set(fp),
@@ -141,10 +184,32 @@ export class FertilizationPage {
     });
   }
 
+  /** la acción principal: abre la planilla y lleva el foco a la primera dosis */
+  protected openPlanner(): void {
+    this.plannerOpen.set(true);
+    afterNextRender(
+      () => {
+        const input = this.host.nativeElement.querySelector<HTMLInputElement>('.dose input');
+        input?.focus({ preventScroll: true });
+        input?.scrollIntoView({ block: 'center' });
+      },
+      { injector: this.injector },
+    );
+  }
+
+  /** el texto de una dosis: lo tipeado o lo guardado, con coma decimal */
+  protected doseText(level: NdviZoneLevel): string {
+    const typed = this.drafts()[level];
+    if (typed !== undefined) return typed;
+    const dose = this.doses()[level];
+    return dose === null ? '' : String(dose).replace('.', ',');
+  }
+
   protected setDose(level: NdviZoneLevel, raw: string): void {
     const text = raw.trim().replace(',', '.');
     const value = text === '' ? null : Number(text);
     const dose = value !== null && Number.isFinite(value) && value >= 0 ? value : null;
+    this.drafts.update((drafts) => ({ ...drafts, [level]: raw }));
     this.doses.update((doses) => ({ ...doses, [level]: dose }));
     this.saveDoses(this.lotId(), this.doses());
   }
@@ -164,15 +229,17 @@ export class FertilizationPage {
     return `${Math.round(value * 100)} %`;
   }
 
-  private loadDoses(lotId: number): Record<NdviZoneLevel, number | null> {
+  /** superficie de un ambiente para la tarjeta: "18,2" */
+  protected hectares(value: number): string {
+    return value.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+  }
+
+  private loadDoses(lotId: number): Doses {
     const empty = { alto: null, medio: null, bajo: null };
     const storageKey = this.session.userKey(STORAGE_NAME);
     if (storageKey === null) return empty;
     try {
-      const all = JSON.parse(this.storage.getItem(storageKey) ?? '{}') as Record<
-        string,
-        Record<NdviZoneLevel, number | null>
-      >;
+      const all = JSON.parse(this.storage.getItem(storageKey) ?? '{}') as Record<string, Doses>;
       const saved = all[String(lotId)];
       if (!saved) return empty;
       const pick = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
@@ -182,7 +249,7 @@ export class FertilizationPage {
     }
   }
 
-  private saveDoses(lotId: number, doses: Record<NdviZoneLevel, number | null>): void {
+  private saveDoses(lotId: number, doses: Doses): void {
     const storageKey = this.session.userKey(STORAGE_NAME);
     if (storageKey === null) return;
     try {

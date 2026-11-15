@@ -11,11 +11,17 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { Api } from '../../../core/api';
+import { AuthSession } from '../../../core/auth/auth-session';
 import { formatHectares } from '../../../core/insights';
-import { Footprint, LotDetail } from '../../../core/models';
-import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
-import { LotTabs } from '../../../shared/ui/lot-tabs/lot-tabs';
+import { Footprint, LotDetail, Origin } from '../../../core/models';
 import { WaterfallChart, WaterfallStep } from '../../../shared/charts';
+import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
+import { Disclosure } from '../../../shared/ui/disclosure/disclosure';
+import { KpiCard } from '../../../shared/ui/kpi-card/kpi-card';
+import { LoginInvite } from '../../../shared/ui/login-invite/login-invite';
+import { LotTabs } from '../../../shared/ui/lot-tabs/lot-tabs';
+import { PageHeader } from '../../../shared/ui/page-header/page-header';
+import { SectionCard } from '../../../shared/ui/section-card/section-card';
 import {
   COST_KEYS,
   COST_LABELS,
@@ -26,23 +32,42 @@ import {
   formatUsd,
   sensitivity,
 } from '../profit-calc';
-import { ProfitStore } from '../profit-store';
+import { NO_CAMPAIGN, ProfitStore } from '../profit-store';
+
+/** campos que se escriben a mano: el texto se guarda tal cual mientras se tipea */
+type FieldKey = 'price' | 'yield' | 'commercial' | CostKey;
+
+/** flete y comercialización más los costos directos */
+const COST_COUNT = COST_KEYS.length + 1;
 
 /**
- * rentabilidad del lote: margen bruto por hectárea y del lote entero, rinde de indiferencia y
- * sensibilidad a precio y rinde. el área y el rinde salen del backend (rinde declarado o valor
- * de referencia con su fuente); precio y costos los declara el productor
+ * rentabilidad del lote, una sola pregunta: ¿cuánto te deja? el margen bruto por hectárea y del
+ * lote entero se recalcula mientras se cargan el precio y el rinde (el área sale del polígono).
+ * los costos detallados, el desglose y la sensibilidad quedan plegados. el rinde viene de la
+ * huella (declarado o de referencia, con su origen) y el productor puede poner el suyo; precio,
+ * rinde propio y costos son datos declarados y se guardan por cuenta en ProfitStore
  */
 @Component({
   selector: 'app-profit-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, OriginBadge, LotTabs, WaterfallChart],
+  imports: [
+    RouterLink,
+    OriginBadge,
+    LotTabs,
+    WaterfallChart,
+    PageHeader,
+    KpiCard,
+    SectionCard,
+    Disclosure,
+    LoginInvite,
+  ],
   templateUrl: './profit-page.html',
   styleUrl: './profit-page.css',
 })
 export class ProfitPage {
   private readonly api = inject(Api);
   private readonly store = inject(ProfitStore);
+  private readonly session = inject(AuthSession);
 
   protected readonly lotId = toSignal(
     inject(ActivatedRoute).paramMap.pipe(map((params) => Number(params.get('id')))),
@@ -50,33 +75,110 @@ export class ProfitPage {
   );
   protected readonly lot = signal<LotDetail | null>(null);
   protected readonly footprint = signal<Footprint | null>(null);
+  /** la huella no respondió: se calcula igual, sin el rinde de la huella */
+  protected readonly footprintFailed = signal(false);
+  /** el lote no existe o es de otra cuenta (404) */
+  protected readonly notFound = signal(false);
   protected readonly error = signal<string | null>(null);
   /** id de la campaña elegida; null usa la última */
   protected readonly campaignId = signal<number | null>(null);
   protected readonly inputs = signal<ProfitInputs>(emptyProfitInputs());
+  /** lo que se tipeó en cada campo desde que se abrió la campaña, para no pisarlo al recalcular */
+  private readonly drafts = signal<Partial<Record<FieldKey, string>>>({});
 
   protected readonly costKeys = COST_KEYS;
   protected readonly costLabels = COST_LABELS;
   protected readonly formatUsd = formatUsd;
   protected readonly formatHectares = formatHectares;
 
-  protected readonly campaignLabel = computed(() => this.footprint()?.campaign?.label ?? null);
-  protected readonly yieldTHa = computed(() => this.footprint()?.yield.value ?? null);
+  protected readonly signedIn = computed(() => this.session.user() !== null);
+  protected readonly ready = computed(
+    () => this.lot() !== null && (this.footprint() !== null || this.footprintFailed()),
+  );
+  protected readonly campaigns = computed(() => this.footprint()?.available_campaigns ?? []);
+  protected readonly campaignLabel = computed(
+    () => this.footprint()?.campaign?.label ?? NO_CAMPAIGN,
+  );
   protected readonly area = computed(() => this.lot()?.area_ha ?? 0);
+
+  /** rinde de la huella: declarado en la campaña o valor de referencia regional */
+  protected readonly huellaYield = computed(() => this.footprint()?.yield.value ?? null);
+  /** el rinde con el que se calcula: el que cargó acá el productor o el de la huella */
+  protected readonly yieldTHa = computed(() => this.inputs().yieldTHa ?? this.huellaYield());
+  protected readonly yieldOrigin = computed<Origin | null>(() =>
+    this.inputs().yieldTHa !== null ? 'DECLARED' : (this.footprint()?.yield.origin ?? null),
+  );
+  /** de dónde sale el rinde, en una línea */
+  protected readonly yieldNote = computed(() => {
+    const huella = this.huellaYield();
+    if (this.inputs().yieldTHa !== null) {
+      return huella === null
+        ? 'Lo cargaste vos.'
+        : `Lo cargaste vos. Si lo borrás, vuelve a ${this.tons(huella)} de la huella.`;
+    }
+    const fp = this.footprint();
+    if (huella !== null && fp) {
+      if (fp.yield.reference) {
+        return `Referencia regional, no es de tu lote. Fuente: ${fp.yield.reference}.`;
+      }
+      return fp.yield.origin === 'DECLARED' ? 'De tu declaración en la huella.' : '';
+    }
+    if (!fp) return 'Sin dato: no se pudo leer la huella del lote. Cargalo vos.';
+    return fp.campaign
+      ? `Sin dato: no hay rinde declarado para ${fp.campaign.label}. Cargalo vos.`
+      : 'Sin dato: el lote todavía no tiene campañas. Cargalo vos.';
+  });
+
   protected readonly result = computed(() =>
     computeProfit(this.inputs(), this.yieldTHa(), this.area()),
   );
-  protected readonly table = computed(() => {
-    const y = this.yieldTHa();
-    return y === null || this.inputs().priceUsdT === null ? [] : sensitivity(this.inputs(), y);
+  /** costos sin cargar, contando el flete */
+  protected readonly pendingCosts = computed(
+    () => this.result().missingCosts.length + (this.inputs().commercialUsdT === null ? 1 : 0),
+  );
+  protected readonly costsHint = computed(() => {
+    const loaded = COST_COUNT - this.pendingCosts();
+    const direct = this.result().directUsdHa;
+    const total = direct > 0 ? ` · ${formatUsd(direct)}/ha` : '';
+    return `${loaded} de ${COST_COUNT} cargados${total}`;
   });
+
+  /** número del margen para la tarjeta grande: sin "US$", que va como unidad */
+  protected readonly marginHa = computed(() => amount(this.result().marginUsdHa));
+  protected readonly marginTotal = computed(() => amount(this.result().marginTotalUsd));
+  protected readonly negative = computed(() => (this.result().marginUsdHa ?? 0) < 0);
+  /** por qué todavía no hay margen */
+  protected readonly missingReason = computed(() => {
+    const missing = this.result().missing;
+    if (missing.length === 2) return 'Faltan el precio del grano y el rinde.';
+    if (missing.includes('precio')) return 'Falta el precio del grano.';
+    return missing.includes('rinde') ? 'Falta el rinde.' : null;
+  });
+  /** qué incluye el margen, en una línea */
+  protected readonly marginCaption = computed(() => {
+    const pending = this.pendingCosts();
+    if (pending === COST_COUNT) return 'Todavía sin costos: es lo que entra por hectárea.';
+    if (pending > 0) {
+      return pending === 1
+        ? 'Falta 1 costo por cargar: el margen real es menor.'
+        : `Faltan ${pending} costos por cargar: el margen real es menor.`;
+    }
+    return this.negative()
+      ? 'Con todos tus costos, este lote pierde plata.'
+      : 'Lo que queda después de todos tus costos.';
+  });
+  /** el margen usa precio y costos declarados; si el rinde es de referencia, es una estimación */
+  protected readonly marginOrigin = computed<Origin>(() =>
+    this.yieldOrigin() === 'ESTIMATED' ? 'ESTIMATED' : 'DECLARED',
+  );
+
   /** cascada del margen por hectárea con los conceptos cargados (los vacíos no se dibujan) */
   protected readonly waterfall = computed<WaterfallStep[]>(() => {
     const r = this.result();
     if (r.grossUsdHa === null || r.marginUsdHa === null) return [];
     const steps: WaterfallStep[] = [{ label: 'Ingreso bruto', value: r.grossUsdHa, kind: 'total' }];
     if (r.commercialUsdHa) {
-      steps.push({ label: 'Comercialización', value: -r.commercialUsdHa, kind: 'delta' });
+      steps.push({ label: 'Flete y comercialización', value: -r.commercialUsdHa, kind: 'delta' });
     }
     for (const key of COST_KEYS) {
       const cost = this.inputs().costs[key];
@@ -90,7 +192,7 @@ export class ProfitPage {
     const area = this.area();
     const rows: { label: string; perHa: number | null; sign: 1 | -1 }[] = [
       { label: 'Ingreso bruto', perHa: r.grossUsdHa, sign: 1 },
-      { label: 'Comercialización y flete', perHa: r.commercialUsdHa, sign: -1 },
+      { label: 'Flete y comercialización', perHa: r.commercialUsdHa, sign: -1 },
       ...COST_KEYS.map((key) => ({
         label: COST_LABELS[key],
         perHa: this.inputs().costs[key],
@@ -101,6 +203,10 @@ export class ProfitPage {
       ...row,
       total: row.perHa === null ? null : row.perHa * area,
     }));
+  });
+  protected readonly table = computed(() => {
+    const y = this.yieldTHa();
+    return y === null || this.inputs().priceUsdT === null ? [] : sensitivity(this.inputs(), y);
   });
   /** emisiones por hectárea y por dólar de margen, si la huella está completa */
   protected readonly carbon = computed(() => {
@@ -121,12 +227,10 @@ export class ProfitPage {
       }
       const sub = this.api.lot(id).subscribe({
         next: (lot) => this.lot.set(lot),
-        error: (err: { status?: number }) =>
-          this.error.set(
-            err.status === 404
-              ? 'No existe un lote con ese identificador.'
-              : 'No se pudo cargar el lote. Revisá la conexión.',
-          ),
+        error: (err: { status?: number }) => {
+          if (err.status === 404) this.notFound.set(true);
+          else this.error.set('No se pudo cargar el lote. Revisá la conexión.');
+        },
       });
       onCleanup(() => sub.unsubscribe());
     });
@@ -135,8 +239,11 @@ export class ProfitPage {
       const id = this.lotId();
       if (!Number.isInteger(id)) return;
       const sub = this.api.footprint(id, this.campaignId()).subscribe({
-        next: (fp) => this.footprint.set(fp),
-        error: () => this.footprint.set(null),
+        next: (fp) => {
+          this.footprint.set(fp);
+          this.footprintFailed.set(false);
+        },
+        error: () => this.footprintFailed.set(true),
       });
       onCleanup(() => sub.unsubscribe());
     });
@@ -145,8 +252,26 @@ export class ProfitPage {
     effect(() => {
       const id = this.lotId();
       const label = this.campaignLabel();
-      if (Number.isInteger(id) && label) this.inputs.set(this.store.load(id, label));
+      if (!Number.isInteger(id) || !this.ready()) return;
+      this.inputs.set(this.store.load(id, label));
+      this.drafts.set({});
     });
+  }
+
+  /** el texto de un campo: lo tipeado o el valor guardado, con coma decimal */
+  protected field(key: FieldKey): string {
+    const typed = this.drafts()[key];
+    if (typed !== undefined) return typed;
+    const inputs = this.inputs();
+    const value =
+      key === 'price'
+        ? inputs.priceUsdT
+        : key === 'yield'
+          ? this.yieldTHa()
+          : key === 'commercial'
+            ? inputs.commercialUsdT
+            : inputs.costs[key];
+    return value === null ? '' : String(value).replace('.', ',');
   }
 
   protected onCampaign(value: string): void {
@@ -154,16 +279,20 @@ export class ProfitPage {
   }
 
   protected setPrice(raw: string): void {
-    this.update({ ...this.inputs(), priceUsdT: parse(raw) });
+    this.type('price', raw, { ...this.inputs(), priceUsdT: parse(raw) });
+  }
+
+  protected setYield(raw: string): void {
+    this.type('yield', raw, { ...this.inputs(), yieldTHa: parse(raw) });
   }
 
   protected setCommercial(raw: string): void {
-    this.update({ ...this.inputs(), commercialUsdT: parse(raw) });
+    this.type('commercial', raw, { ...this.inputs(), commercialUsdT: parse(raw) });
   }
 
   protected setCost(key: CostKey, raw: string): void {
     const inputs = this.inputs();
-    this.update({ ...inputs, costs: { ...inputs.costs, [key]: parse(raw) } });
+    this.type(key, raw, { ...inputs, costs: { ...inputs.costs, [key]: parse(raw) } });
   }
 
   protected percent(step: number): string {
@@ -181,19 +310,11 @@ export class ProfitPage {
     return value === null ? 'Sin dato' : `${this.number(value)} t/ha`;
   }
 
-  protected readonly missingText = computed(() => {
-    const missing = this.result().missing;
-    return [
-      ...(missing.includes('precio') ? ['el precio del grano'] : []),
-      ...(missing.includes('rinde') ? ['el rinde de la campaña'] : []),
-    ].join(' y ');
-  });
-
-  private update(inputs: ProfitInputs): void {
+  private type(key: FieldKey, raw: string, inputs: ProfitInputs): void {
+    this.drafts.update((drafts) => ({ ...drafts, [key]: raw }));
     this.inputs.set(inputs);
     const id = this.lotId();
-    const label = this.campaignLabel();
-    if (Number.isInteger(id) && label) this.store.save(id, label, inputs);
+    if (Number.isInteger(id)) this.store.save(id, this.campaignLabel(), inputs);
   }
 }
 
@@ -203,4 +324,9 @@ function parse(raw: string): number | null {
   if (text === '') return null;
   const value = Number(text);
   return Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+/** "1.234" en es-AR, sin decimales; null si falta */
+function amount(value: number | null): string | null {
+  return value === null ? null : value.toLocaleString('es-AR', { maximumFractionDigits: 0 });
 }

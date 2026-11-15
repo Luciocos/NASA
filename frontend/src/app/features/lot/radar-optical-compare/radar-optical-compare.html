@@ -1,18 +1,21 @@
 <section class="compare" aria-labelledby="compare-title">
   <header class="compare__header">
-    <div>
+    <div class="compare__titles">
       <h2 id="compare-title">Radar contra óptico: {{ event().type_label }}</h2>
       <p class="compare__meta">
-        {{ dateLabel() }} · <app-origin-badge [origin]="event().origin" />
+        <span>{{ dateLabel() }}</span>
+        <app-origin-badge [origin]="event().origin" />
         @if (confidence(); as value) {
-          · Confianza de la detección: {{ value }}
+          <span>Confianza de la detección: {{ value }}</span>
         }
         @if (event().is_simulated) {
-          · <app-simulated-notice />
+          <app-simulated-notice />
         }
       </p>
     </div>
-    <button type="button" class="button" (click)="closed.emit()">Cerrar comparación</button>
+    <button type="button" class="btn btn--sm" (click)="closed.emit()">
+      <app-icon name="close" /> Cerrar comparación
+    </button>
   </header>
 
   @if (radarUrl(); as radar) {
@@ -71,15 +74,16 @@
     </p>
   }
 
-  @if (metrics().length > 0) {
-    <h3>Métricas de la detección</h3>
-    <dl class="metrics">
-      @for (metric of metrics(); track metric.key) {
-        <dt>{{ metric.key }}</dt>
-        <dd>{{ metric.value }}</dd>
-      }
-    </dl>
-  }
-
   <p class="disclaimer">Prueba de concepto: la detección no está validada en campo.</p>
+
+  @if (metrics().length > 0) {
+    <app-disclosure flat label="Ver detalle técnico" hint="Métricas de la detección">
+      <dl class="metrics">
+        @for (metric of metrics(); track metric.key) {
+          <dt>{{ metric.key }}</dt>
+          <dd>{{ metric.value }}</dd>
+        }
+      </dl>
+    </app-disclosure>
+  }
 </section>

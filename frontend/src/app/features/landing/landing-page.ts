@@ -1,14 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { Api } from '../../core/api';
 import { AuthService } from '../../core/auth/auth.service';
-import { buildIsoScene, overviewsSignal } from '../../core/lot-scene';
-import { formatDate } from '../lot/labels';
-import { OriginBadge } from '../../shared/origin-badge/origin-badge';
-import { EventGlyph } from '../../shared/iso/event-glyph';
-import { IsoScene } from '../../shared/iso/iso-scene';
-import { SimulatedNotice } from '../../shared/simulated-notice/simulated-notice';
 import { Icon } from '../../shared/ui/icon/icon';
 import { IconName } from '../../shared/ui/icon/icons';
 
@@ -18,93 +11,72 @@ interface Step {
   text: string;
 }
 
-interface Source {
+interface Place {
   name: string;
-  agency: string;
-  what: string;
-  detail: string;
+  /** posición en la imagen, en % del ancho y del alto */
+  left: number;
+  top: number;
+  /** la etiqueta va a la izquierda del punto, para no salirse del borde derecho */
+  labelBefore?: boolean;
 }
 
-const STEPS: Step[] = [
+export const LANDING_STEPS: readonly Step[] = [
   {
-    icon: 'brush',
-    title: 'Marcá tu lote',
-    text: 'Pintá tus hectáreas sobre la imagen satelital o trazá el perímetro. No hace falta cargar planillas.',
+    icon: 'vertices',
+    title: 'Marcá el perímetro de tu lote sobre la imagen satelital',
+    text: 'Tocá sus esquinas en el mapa y listo: no hace falta cargar planillas.',
   },
   {
     icon: 'satellite',
-    title: 'El satélite lo observa',
-    text: 'Consultamos en vivo los datos abiertos de la NASA para tu polígono: radar, verdor del cultivo, lluvia y humedad del suelo.',
+    title: 'Mirá lo que ve el satélite',
+    text: 'El verdor del cultivo, la lluvia y la humedad del suelo de tu lote, con datos abiertos de la NASA.',
   },
   {
     icon: 'footprint',
-    title: 'Huella y trazabilidad',
-    text: 'Una bitácora con evidencia, la huella de carbono estimada con el origen de cada dato y un pasaporte para compartir con tu acopio.',
-  },
-];
-
-const SOURCES: Source[] = [
-  {
-    name: 'NISAR',
-    agency: 'NASA e ISRO · radar banda L',
-    what: 'Cambios en la superficie: siembra, labranza, anegamiento.',
-    detail: 'Ve a través de las nubes. Pasa cada 12 días.',
-  },
-  {
-    name: 'HLS',
-    agency: 'NASA · Landsat y Sentinel-2 armonizados',
-    what: 'Imagen óptica de 30 m para ver el lote y su cobertura.',
-    detail: 'Varias pasadas por semana cuando no hay nubes.',
-  },
-  {
-    name: 'MODIS',
-    agency: 'NASA · Terra y Aqua',
-    what: 'NDVI, el verdor del cultivo, cada 16 días desde el año 2000.',
-    detail: 'Píxel de 250 m: más de 6 ha por píxel.',
-  },
-  {
-    name: 'NASA POWER',
-    agency: 'NASA · modelo y reanálisis',
-    what: 'Lluvia, temperatura y humedad del suelo, día por día.',
-    detail: 'Grilla de unos 50 km: es un valor regional.',
+    title: 'Conocé tu huella, fertilización y rentabilidad',
+    text: 'Son estimaciones y cada número dice de dónde sale: del satélite, de lo que declaraste o de una referencia.',
   },
 ];
 
 /**
- * página de inicio pública: "Crear cuenta gratis" lleva a /registrarse y "Ya tengo cuenta" a
- * /ingresar; con la sesión abierta, "Ir a mi campo". la maqueta muestra los lotes de ejemplo
+ * imagen satelital real del encabezado: teselas de NASA GIBS (HLS Landsat, L30, zoom 11) del
+ * 31/10/2026, un día despejado, unidas en un solo archivo liviano sin retocar los colores. las
+ * posiciones de Casilda y Rosario salen de proyectar sus coordenadas sobre ese recorte
+ */
+export const LANDING_IMAGE = {
+  src: '/zona-nucleo-landsat-800.webp',
+  srcset: '/zona-nucleo-landsat-800.webp 800w, /zona-nucleo-landsat-1200.webp 1200w',
+  alt: 'Imagen satelital de los campos de la Zona Núcleo entre Casilda y Rosario, con el río Paraná y sus islas a la derecha',
+  caption:
+    'Campos entre Casilda y Rosario vistos por Landsat el 31/10/2026. Imagen HLS de la NASA, de NASA EOSDIS GIBS.',
+  places: [
+    { name: 'Casilda', left: 36.6, top: 58.5 },
+    { name: 'Rosario', left: 84.7, top: 41.6, labelBefore: true },
+  ] satisfies Place[],
+};
+
+/** la infografía de los datos de la NASA, más abajo y con carga diferida */
+export const LANDING_INFOGRAPHIC = {
+  src: '/lotestigo-datos-nasa.jpg',
+  alt: 'Infografía de cómo LoTestigo usa los datos abiertos de la NASA: qué datos toma (NISAR, HLS, MODIS, NASA POWER, CMR y GIBS), cómo llegan a la app y para qué le sirven al productor (bitácora, Mi campo, fertilización, huella, puntaje y rentabilidad).',
+};
+
+/**
+ * página de inicio pública. una sola acción principal: "Crear cuenta gratis" (/registrarse),
+ * con "Ya tengo cuenta" (/ingresar) al lado y "Ver un lote de ejemplo" como enlace chico. con la
+ * sesión abierta, "Ir a mi campo". no pide nada a la red: la imagen satelital es un archivo
+ * propio y la infografía carga recién al acercarse
  */
 @Component({
   selector: 'app-landing-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, IsoScene, OriginBadge, EventGlyph, SimulatedNotice, Icon],
+  imports: [RouterLink, Icon],
   templateUrl: './landing-page.html',
   styleUrl: './landing-page.css',
 })
 export class LandingPage {
-  protected readonly steps = STEPS;
-  protected readonly sources = SOURCES;
+  protected readonly steps = LANDING_STEPS;
+  protected readonly image = LANDING_IMAGE;
+  protected readonly infographic = LANDING_INFOGRAPHIC;
   protected readonly loggedIn = inject(AuthService).loggedIn;
-
-  // los lotes de ejemplo de la zona (públicos), con su último dato satelital real
-  private readonly overviews = overviewsSignal(inject(Api).exampleLots());
-  protected readonly scene = computed(() => buildIsoScene(this.overviews() ?? []).lots);
-  /** la etiqueta de la maqueta nombra los lotes que dibuja de verdad */
-  protected readonly sceneLabel = computed(() => {
-    const count = this.scene().length;
-    if (count === 0) return 'Maqueta isométrica de la zona, sin lotes para mostrar';
-    const lots = count === 1 ? 'un lote real' : `${count} lotes reales`;
-    return `Maqueta isométrica de ${lots} de Casilda, Santa Fe`;
-  });
-  protected readonly highlights = computed(() =>
-    (this.overviews() ?? [])
-      .filter((item) => item.last !== null)
-      .slice(0, 2)
-      .map((item) => ({
-        lot: item.lot.name,
-        event: item.last!,
-        date: formatDate(item.last!.date),
-      })),
-  );
-  protected readonly loadingScene = computed(() => this.overviews() === undefined);
 }

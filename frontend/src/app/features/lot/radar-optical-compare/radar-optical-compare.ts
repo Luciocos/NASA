@@ -3,6 +3,8 @@ import { Component, computed, input, linkedSignal, output, signal } from '@angul
 import { EventLogItem } from '../../../core/models';
 import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
 import { SimulatedNotice } from '../../../shared/simulated-notice/simulated-notice';
+import { Disclosure } from '../../../shared/ui/disclosure/disclosure';
+import { Icon } from '../../../shared/ui/icon/icon';
 import { RADAR_SENSORS, SENSOR_LABELS, formatConfidence, formatEventDate } from '../labels';
 
 /** Rótulo de la imagen óptica si el evento no indica otro sensor. */
@@ -18,7 +20,7 @@ type ImageKey = 'radar' | 'optical';
  * metrics.optical_sensor si el pipeline lo informa, o "Óptico (HLS)" si no.
  */
 @Component({
-  imports: [OriginBadge, SimulatedNotice],
+  imports: [OriginBadge, SimulatedNotice, Disclosure, Icon],
   selector: 'app-radar-optical-compare',
   styleUrl: './radar-optical-compare.css',
   templateUrl: './radar-optical-compare.html',

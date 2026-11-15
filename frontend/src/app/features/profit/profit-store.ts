@@ -7,12 +7,15 @@ import { COST_KEYS, ProfitInputs, emptyProfitInputs } from './profit-calc';
 // a nombre del usuario: lotestigo:u<id>:profit:v1 (se borra al salir)
 const STORAGE_NAME = 'profit:v1';
 
+/** campaña de un lote que todavía no tiene ninguna declarada */
+export const NO_CAMPAIGN = '';
+
 type Stored = Record<string, ProfitInputs>;
 
 /**
- * precios y costos que declara el productor, por lote y campaña. el backend no tiene dónde
- * guardarlos todavía: quedan en este dispositivo, a nombre de quien ingresó. sin sesión viven
- * solo mientras la pestaña esté abierta
+ * precios, rinde y costos que declara el productor, por lote y campaña. el backend no tiene
+ * dónde guardarlos todavía: quedan en este dispositivo, a nombre de quien ingresó. sin sesión
+ * viven solo mientras la pestaña esté abierta
  */
 @Service()
 export class ProfitStore {
@@ -20,8 +23,13 @@ export class ProfitStore {
   private readonly session = inject(AuthSession);
   private unsaved: Stored = {};
 
+  /**
+   * lo guardado para esa campaña. si la campaña no tiene nada propio, lo que se cargó cuando el
+   * lote todavía no tenía campañas, para no perderlo al declarar la primera
+   */
   load(lotId: number, campaign: string): ProfitInputs {
-    const saved = this.read()[key(lotId, campaign)];
+    const all = this.read();
+    const saved = all[key(lotId, campaign)] ?? all[key(lotId, NO_CAMPAIGN)];
     return saved ? normalize(saved) : emptyProfitInputs();
   }
 
@@ -63,5 +71,10 @@ function normalize(raw: Partial<ProfitInputs>): ProfitInputs {
   const base = emptyProfitInputs();
   const costs = { ...base.costs };
   for (const cost of COST_KEYS) costs[cost] = num(raw.costs?.[cost]);
-  return { priceUsdT: num(raw.priceUsdT), commercialUsdT: num(raw.commercialUsdT), costs };
+  return {
+    priceUsdT: num(raw.priceUsdT),
+    yieldTHa: num(raw.yieldTHa),
+    commercialUsdT: num(raw.commercialUsdT),
+    costs,
+  };
 }

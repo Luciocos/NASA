@@ -1,134 +1,290 @@
 :host {
-  display: block;
-  max-width: 76rem;
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
 }
 
-h1 {
-  margin: 0 0 var(--space-2);
+/* la pestaña del lote trae su propio margen inferior: en la grilla manda el gap */
+app-lot-tabs {
+  margin-bottom: 0;
 }
 
-h2 {
-  margin: 0 0 var(--space-3);
-  font-size: var(--text-lg);
+p {
+  margin: 0;
 }
 
-.lot-name {
-  color: var(--ink-3);
-  font-weight: 600;
-}
-
-.lead {
-  max-width: 50rem;
-  margin: 0 0 var(--space-4);
-  color: var(--ink-2);
-}
-
+/* el mapa manda; al costado, la superficie de cada ambiente (hace de leyenda) y la planilla */
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 23rem;
+  grid-template-areas:
+    'map zones'
+    'map planner';
+  grid-template-rows: auto 1fr;
   gap: var(--space-5);
   align-items: start;
 }
 
-.map-card,
-.plan {
+.map-card {
+  grid-area: map;
+}
+
+.zones {
+  grid-area: zones;
   display: grid;
   gap: var(--space-3);
 }
 
+.planner {
+  grid-area: planner;
+}
+
 .zones-map {
-  height: 24rem;
-  box-shadow: var(--shadow-2);
+  display: block;
+  height: clamp(20rem, 58vh, 34rem);
+}
+
+.map-foot {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+}
+
+.status,
+.source-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .status {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
 }
 
 .dot {
   width: 0.8rem;
   height: 0.8rem;
+  min-height: 0;
   border-radius: 50%;
 }
 
-.source {
-  margin: 0;
-  color: var(--ink-3);
+.retry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
 }
 
+/* muestra de cada ambiente: color y trazo del borde, como en el mapa (no solo color) */
 .swatch {
   display: inline-block;
-  width: 0.9rem;
-  height: 0.9rem;
-  margin-right: var(--space-1);
+  flex: none;
+  width: 0.95rem;
+  height: 0.95rem;
   border: 2px solid;
-  vertical-align: -2px;
+  border-radius: 3px;
 }
 
-.swatch--dashed {
+.swatch--medio {
   border-style: dashed;
 }
 
-.swatch--dotted {
+.swatch--bajo {
   border-style: dotted;
 }
 
-td input {
-  width: 5rem;
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  font: inherit;
-  text-align: right;
+.zone-key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
 }
 
-.compare {
+.summary {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
-.stat-box {
-  display: grid;
-  gap: var(--space-1);
+.summary .stat {
   padding: var(--space-3);
   border-radius: var(--radius-md);
-  background: var(--surface);
-  box-shadow: var(--shadow-1);
+  background: var(--surface-2);
 }
 
-.stat-box strong {
+.stat__value {
   font-size: var(--text-xl);
 }
 
-.label {
+.stat__value--empty {
   color: var(--ink-3);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  text-transform: uppercase;
+  font-size: var(--text-lg);
+}
+
+.stat__hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
 }
 
 .delta {
-  margin: 0;
+  margin-bottom: var(--space-3);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
   background: var(--warn-bg);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
 
 .delta--less {
   background: var(--ok-bg);
 }
 
-.block {
-  height: 12rem;
-  border-radius: var(--radius-md);
+/* la etiqueta de origen va en línea con el texto, no en un renglón aparte */
+.co2 {
+  margin-bottom: var(--space-3);
+  line-height: 1.6;
 }
 
-@media (max-width: 60rem) {
+.co2 app-origin-badge {
+  margin-right: var(--space-1);
+}
+
+.planner .muted {
+  margin-bottom: var(--space-3);
+}
+
+/* planilla: nombre del ambiente a la izquierda y la dosis a la derecha */
+.doses {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.dose {
+  grid-template-columns: minmax(0, 1fr) 7.5rem;
+  grid-template-areas:
+    'name input'
+    'hint hint';
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+
+.dose__name {
+  grid-area: name;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.dose input {
+  grid-area: input;
+  text-align: right;
+}
+
+.dose .field__hint {
+  grid-area: hint;
+}
+
+.field__hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.tech {
+  display: grid;
+  gap: var(--space-3);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.tech h3 {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-md);
+}
+
+.sources {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-5);
+  overflow-wrap: anywhere;
+}
+
+.specs {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.specs div {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.specs dt {
+  color: var(--ink-3);
+  font-weight: 600;
+}
+
+.specs dd {
+  margin: 0;
+}
+
+@media (max-width: 64rem) {
   .layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'map'
+      'zones'
+      'planner';
+    grid-template-rows: none;
+  }
+
+  /* con todo el ancho, los tres ambientes van uno al lado del otro */
+  .zones {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 40rem) {
+  :host,
+  .layout {
+    gap: var(--space-4);
+  }
+
+  .zones-map {
+    height: 18rem;
+  }
+
+  .zones {
+    gap: var(--space-2);
+  }
+
+  /* tres tarjetas en 390 px: menos relleno para que el número entre sin cortarse */
+  .zones app-kpi-card {
+    --text-kpi: 1.375rem;
+    padding: var(--space-3);
+  }
+
+  .summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .specs div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
   }
 }

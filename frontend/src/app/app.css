@@ -36,52 +36,7 @@
   }
 }
 
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: var(--tap);
-  border-radius: var(--radius-sm);
-  color: var(--ink);
-  font-size: var(--text-lg);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  text-decoration: none;
-}
-
-.logo {
-  flex: none;
-  width: 2rem;
-  height: 2rem;
-}
-
-.logo-top {
-  fill: var(--field-500);
-}
-
-.logo-left {
-  fill: var(--soil-700);
-}
-
-.logo-right {
-  fill: var(--soil-500);
-}
-
-.logo-rows,
-.logo-pole {
-  fill: none;
-  stroke: var(--field-300);
-  stroke-width: 1.3;
-  stroke-linecap: round;
-}
-
-.logo-pole {
-  stroke: var(--ink);
-}
-
-.logo-flag {
-  fill: var(--accent);
-}
+/* la marca (.brand, .brand-logo) es global: la comparte con la landing (ui.css) */
 
 .nav {
   display: flex;

@@ -1,234 +1,286 @@
-@if (lot(); as lot) {
-  <app-lot-tabs [lotId]="lot.id" />
-}
-
-@if (error(); as message) {
+@if (notFound()) {
+  <app-login-invite />
+} @else if (error(); as message) {
   <p class="alert alert--error" role="alert">{{ message }}</p>
 } @else {
-  <header class="head">
-    <h1>
-      Rentabilidad
-      @if (lot(); as lot) {
-        <span class="lot-name">· {{ lot.name }}</span>
-      }
-    </h1>
-    <p class="lead">
-      Margen bruto de tu campaña. El área sale del polígono del lote y el rinde de tu declaración o,
-      si no lo declaraste, del valor de referencia regional. El precio y los costos los cargás vos:
-      se guardan en este dispositivo.
-    </p>
-  </header>
+  @if (lot(); as lot) {
+    <app-lot-tabs [lotId]="lot.id" [example]="lot.is_example ?? false" />
+  }
 
-  @if (footprint(); as fp) {
-    @if (fp.available_campaigns.length === 0) {
-      <div class="empty">
-        <p>
-          Este lote todavía no tiene campañas. Declarala con su cultivo en la huella para calcular.
-        </p>
-        <a class="btn btn--primary" [routerLink]="['/huella', lotId()]">Declarar campaña</a>
-      </div>
-    } @else {
-      <div class="layout">
-        <form class="panel form" (submit)="$event.preventDefault()">
+  <app-page-header
+    [kicker]="lot()?.name ?? null"
+    heading="Rentabilidad"
+    subtitle="¿Cuánto te deja este lote? Cargá el precio y el rinde y lo ves al instante."
+  />
+
+  @if (ready()) {
+    <div class="layout">
+      <section class="hero" aria-labelledby="profit-result" aria-live="polite">
+        <h2 id="profit-result" class="visually-hidden">Cuánto te deja</h2>
+        <app-kpi-card
+          icon="coins"
+          label="Margen bruto por hectárea"
+          [value]="marginHa()"
+          unit="US$/ha"
+          [caption]="marginCaption()"
+          [emptyReason]="missingReason()"
+          [class.is-loss]="negative()"
+        >
+          @if (marginHa() !== null) {
+            <app-origin-badge [origin]="marginOrigin()" />
+            <span class="source">{{
+              marginOrigin() === 'ESTIMATED' ? 'Con el rinde de referencia' : 'Con tus datos'
+            }}</span>
+          }
+        </app-kpi-card>
+        <app-kpi-card
+          label="Margen bruto del lote"
+          [value]="marginTotal()"
+          unit="US$"
+          [caption]="'En las ' + formatHectares(area()) + ' del lote.'"
+          [emptyReason]="missingReason()"
+          [class.is-loss]="negative()"
+        >
+          @if (marginTotal() !== null) {
+            <app-origin-badge [origin]="marginOrigin()" />
+          }
+        </app-kpi-card>
+      </section>
+
+      <app-section-card
+        class="numbers"
+        heading="Tus números"
+        [subtitle]="
+          signedIn()
+            ? 'Se guardan en este dispositivo, en tu cuenta.'
+            : 'Sin cuenta no se guardan: se borran al cerrar.'
+        "
+      >
+        <div class="fields">
+          @if (campaigns().length > 1) {
+            <label class="field">
+              Campaña
+              <select (change)="onCampaign($any($event.target).value)">
+                @for (c of campaigns(); track c.id) {
+                  <option [value]="c.id" [selected]="c.id === footprint()?.campaign?.id">
+                    {{ c.label }}
+                  </option>
+                }
+              </select>
+            </label>
+          } @else if (footprint()?.campaign; as campaign) {
+            <p class="fact">
+              <span class="fact__label">Campaña</span>
+              <strong>{{ campaign.label }}</strong>
+            </p>
+          }
+
           <label class="field">
-            Campaña
-            <select (change)="onCampaign($any($event.target).value)">
-              @for (c of fp.available_campaigns; track c.id) {
-                <option [value]="c.id" [selected]="c.id === fp.campaign?.id">{{ c.label }}</option>
-              }
-            </select>
+            <span>Precio del grano <span class="unit">US$/t</span></span>
+            <input
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              [value]="field('price')"
+              (input)="setPrice($any($event.target).value)"
+              placeholder="Sin cargar"
+            />
+            <span class="field__hint">
+              <app-origin-badge origin="DECLARED" /> Por tonelada, antes del flete.
+            </span>
           </label>
 
-          <fieldset>
-            <legend>Precio y comercialización</legend>
-            <label class="field">
-              Precio del grano <span class="unit">US$/t</span>
+          <label class="field">
+            <span>Rinde <span class="unit">t/ha</span></span>
+            <input
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              [value]="field('yield')"
+              (input)="setYield($any($event.target).value)"
+              [placeholder]="huellaYield() === null ? 'Sin cargar' : number(huellaYield())"
+            />
+            <span class="field__hint">
+              @if (yieldOrigin(); as origin) {
+                <app-origin-badge [origin]="origin" />
+              }
+              {{ yieldNote() }}
+            </span>
+          </label>
+
+          <p class="fact">
+            <span class="fact__label">Superficie</span>
+            <strong>{{ formatHectares(area()) }}</strong>
+            <span class="field__hint">
+              <app-origin-badge origin="DECLARED" /> Del polígono que marcaste.
+            </span>
+          </p>
+        </div>
+
+        <app-disclosure footer flat label="Costos y gastos" [hint]="costsHint()">
+          <div class="costs">
+            <p class="small muted">
+              Por hectárea, salvo el flete. Si alguno no corresponde, poné 0.
+            </p>
+            <label class="field cost">
+              <span>Flete y comercialización <span class="unit">US$/t</span></span>
               <input
-                type="number"
-                min="0"
-                step="any"
+                type="text"
                 inputmode="decimal"
-                [value]="inputs().priceUsdT ?? ''"
-                (input)="setPrice($any($event.target).value)"
-                placeholder="Sin cargar"
-              />
-            </label>
-            <label class="field">
-              Flete y comercialización <span class="unit">US$/t</span>
-              <input
-                type="number"
-                min="0"
-                step="any"
-                inputmode="decimal"
-                [value]="inputs().commercialUsdT ?? ''"
+                autocomplete="off"
+                [value]="field('commercial')"
                 (input)="setCommercial($any($event.target).value)"
                 placeholder="Sin cargar"
               />
             </label>
-          </fieldset>
-
-          <fieldset>
-            <legend>Costos directos <span class="unit">US$/ha</span></legend>
             @for (key of costKeys; track key) {
-              <label class="field">
-                {{ costLabels[key] }}
+              <label class="field cost">
+                <span>{{ costLabels[key] }} <span class="unit">US$/ha</span></span>
                 <input
-                  type="number"
-                  min="0"
-                  step="any"
+                  type="text"
                   inputmode="decimal"
-                  [value]="inputs().costs[key] ?? ''"
+                  autocomplete="off"
+                  [value]="field(key)"
                   (input)="setCost(key, $any($event.target).value)"
                   placeholder="Sin cargar"
                 />
               </label>
             }
-          </fieldset>
-          <p class="small muted">Todo lo económico figura como dato declarado por vos.</p>
-        </form>
-
-        <section class="results" aria-labelledby="results-title" aria-live="polite">
-          <h2 id="results-title" class="visually-hidden">Resultado</h2>
-          <div class="tiles">
-            <div class="tile tile--main">
-              <span class="tile__label">Margen bruto</span>
-              <strong class="tile__value" [class.is-negative]="(result().marginUsdHa ?? 0) < 0">{{
-                formatUsd(result().marginUsdHa)
-              }}</strong>
-              <span class="tile__unit">por hectárea</span>
-            </div>
-            <div class="tile">
-              <span class="tile__label">Margen del lote</span>
-              <strong class="tile__value">{{ formatUsd(result().marginTotalUsd) }}</strong>
-              <span class="tile__unit">{{ formatHectares(area()) }}</span>
-            </div>
-            <div class="tile">
-              <span class="tile__label">Rinde</span>
-              <strong class="tile__value">{{ tons(yieldTHa()) }}</strong>
-              @if (fp.yield.origin; as origin) {
-                <app-origin-badge [origin]="origin" />
-              }
-            </div>
-            <div class="tile">
-              <span class="tile__label">Rinde de indiferencia</span>
-              <strong class="tile__value">{{ tons(result().breakEvenTHa) }}</strong>
-              <span class="tile__unit">cubre los costos cargados</span>
-            </div>
+            <p class="field__hint">
+              <app-origin-badge origin="DECLARED" /> Los costos los cargás vos.
+            </p>
           </div>
+        </app-disclosure>
+      </app-section-card>
 
-          @if (fp.yield.reference; as source) {
-            <p class="note small">
-              <strong>Rinde de referencia, no observado por satélite.</strong> Fuente: {{ source }}.
-              <a [routerLink]="['/huella', lotId()]">Declarar tu rinde</a>
-            </p>
-          }
-          @if (result().missing.length > 0) {
-            <p class="alert alert--info">Para calcular el margen falta: {{ missingText() }}.</p>
-          } @else if (result().missingCosts.length > 0) {
-            @let one = result().missingCosts.length === 1;
-            <p class="alert alert--warn">
-              Hay {{ result().missingCosts.length }} {{ one ? 'costo' : 'costos' }} sin cargar: si
-              {{ one ? 'lo' : 'los' }} tenés, el margen real es menor.
-            </p>
-          }
-
-          @if (waterfall().length > 0) {
-            <div class="chart-card">
-              <app-waterfall
-                title="De dónde sale el margen"
-                description="Ingreso bruto por hectárea, cada costo cargado y el margen bruto que queda"
-                [steps]="waterfall()"
-                unit="US$/ha"
-              />
-            </div>
-          }
-
-          <table class="table breakdown">
-            <caption class="visually-hidden">
-              Desglose del margen
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Concepto</th>
-                <th scope="col" class="num">US$/ha</th>
-                <th scope="col" class="num">Lote</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of breakdown(); track row.label) {
-                <tr [class.is-empty]="row.perHa === null">
-                  <th scope="row">{{ row.sign < 0 ? '−' : '+' }} {{ row.label }}</th>
-                  <td class="num">{{ formatUsd(row.perHa) }}</td>
-                  <td class="num">{{ formatUsd(row.total) }}</td>
-                </tr>
-              }
-            </tbody>
-            <tfoot>
-              <tr>
-                <th scope="row">= Margen bruto</th>
-                <td class="num">{{ formatUsd(result().marginUsdHa) }}</td>
-                <td class="num">{{ formatUsd(result().marginTotalUsd) }}</td>
-              </tr>
-            </tfoot>
-          </table>
-
-          @if (table().length > 0) {
-            <h3>Sensibilidad: margen por hectárea</h3>
-            <p class="small muted">
-              Filas: rinde. Columnas: precio. Moviendo cada uno un 10 y un 20 %.
-            </p>
-            <div class="sens-wrap">
-              <table class="table sens">
-                <thead>
-                  <tr>
-                    <th scope="col">Rinde \ Precio</th>
-                    @for (cell of table()[0].cells; track cell.priceStep) {
-                      <th scope="col" class="num">{{ percent(cell.priceStep) }}</th>
-                    }
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (row of table(); track row.yieldStep) {
+      @if (waterfall().length > 0) {
+        <app-section-card
+          class="chart"
+          heading="De dónde sale el margen"
+          subtitle="Por hectárea: lo que entra y cada costo que cargaste."
+        >
+          <app-waterfall
+            description="Ingreso bruto por hectárea, cada costo cargado y el margen bruto que queda"
+            [steps]="waterfall()"
+            unit="US$/ha"
+          />
+          <app-disclosure
+            footer
+            flat
+            label="Ver detalle"
+            hint="Desglose del lote, rinde de indiferencia y sensibilidad"
+          >
+            <div class="detail">
+              <div class="table-wrap">
+                <table class="table">
+                  <caption class="visually-hidden">
+                    Desglose del margen
+                  </caption>
+                  <thead>
                     <tr>
-                      <th scope="row">{{ percent(row.yieldStep) }}</th>
-                      @for (cell of row.cells; track cell.priceStep) {
-                        <td
-                          class="num"
-                          [class.is-loss]="(cell.marginUsdHa ?? 0) < 0"
-                          [class.is-base]="row.yieldStep === 0 && cell.priceStep === 0"
-                        >
-                          {{ (cell.marginUsdHa ?? 0) < 0 ? '▼' : '' }}
-                          {{ formatUsd(cell.marginUsdHa) }}
-                        </td>
-                      }
+                      <th scope="col">Concepto</th>
+                      <th scope="col" class="num">Por ha</th>
+                      <th scope="col" class="num">Lote</th>
                     </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          }
+                  </thead>
+                  <tbody>
+                    @for (row of breakdown(); track row.label) {
+                      <tr [class.is-empty]="row.perHa === null">
+                        <th scope="row">{{ row.sign < 0 ? '−' : '+' }} {{ row.label }}</th>
+                        <td class="num">{{ formatUsd(row.perHa) }}</td>
+                        <td class="num">{{ formatUsd(row.total) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <th scope="row">= Margen bruto</th>
+                      <td class="num">{{ formatUsd(result().marginUsdHa) }}</td>
+                      <td class="num">{{ formatUsd(result().marginTotalUsd) }}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
 
-          <h3>Margen y huella</h3>
-          @if (carbon(); as c) {
-            <p>
-              Tu campaña emite unos <strong>{{ number(c.perHa, 0) }} kg CO2e por hectárea</strong>
-              (huella estimada).
-              @if (c.perUsd !== null) {
-                Son {{ number(c.perUsd, 2) }} kg CO2e por cada dólar de margen.
+              <p>
+                <strong>Rinde de indiferencia:</strong>
+                @if (result().directUsdHa === 0) {
+                  cargá los costos para calcularlo.
+                } @else if (result().breakEvenTHa !== null) {
+                  {{ tons(result().breakEvenTHa) }}. Con ese rinde cubrís los costos que cargaste.
+                } @else {
+                  sin dato: hace falta un precio mayor que el flete.
+                }
+              </p>
+
+              @if (table().length > 0) {
+                <div class="sens">
+                  <h3>Si cambian el precio o el rinde</h3>
+                  <p class="small muted">
+                    Margen por hectárea en US$. Filas: rinde. Columnas: precio.
+                  </p>
+                  <div class="table-wrap">
+                    <table class="table sens__table">
+                      <caption class="visually-hidden">
+                        Margen por hectárea con el precio y el rinde movidos un 10 y un 20 %
+                      </caption>
+                      <thead>
+                        <tr>
+                          <th scope="col">Rinde</th>
+                          @for (cell of table()[0].cells; track cell.priceStep) {
+                            <th scope="col" class="num">{{ percent(cell.priceStep) }}</th>
+                          }
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (row of table(); track row.yieldStep) {
+                          <tr>
+                            <th scope="row">{{ percent(row.yieldStep) }}</th>
+                            @for (cell of row.cells; track cell.priceStep) {
+                              <td
+                                class="num"
+                                [class.is-loss]="(cell.marginUsdHa ?? 0) < 0"
+                                [class.is-base]="row.yieldStep === 0 && cell.priceStep === 0"
+                              >
+                                {{ (cell.marginUsdHa ?? 0) < 0 ? '▼' : '' }}
+                                {{ number(cell.marginUsdHa, 0) }}
+                              </td>
+                            }
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               }
-            </p>
-          } @else {
-            <p class="muted">
-              La huella de esta campaña todavía no está completa.
-              <a [routerLink]="['/huella', lotId()]">Completala en la huella</a> para ver cuánto
-              emite cada dólar de margen.
-            </p>
-          }
-        </section>
-      </div>
-    }
+
+              @if (carbon(); as c) {
+                <p>
+                  <strong>Margen y huella:</strong> <app-origin-badge origin="ESTIMATED" /> tu
+                  campaña emite unos {{ number(c.perHa, 0) }} kg CO2e por hectárea.
+                  @if (c.perUsd !== null) {
+                    Son {{ number(c.perUsd, 2) }} kg CO2e por cada dólar de margen.
+                  }
+                </p>
+              } @else {
+                <p>
+                  <strong>Margen y huella:</strong> la huella de esta campaña todavía no está
+                  completa. <a [routerLink]="['/huella', lotId()]">Completala en la huella</a> para
+                  ver cuánto emite cada dólar de margen.
+                </p>
+              }
+            </div>
+          </app-disclosure>
+        </app-section-card>
+      }
+    </div>
   } @else {
-    <p class="skeleton block" aria-hidden="true"></p>
-    <p class="visually-hidden">Cargando…</p>
+    <div class="layout" aria-busy="true">
+      <div class="hero">
+        <app-kpi-card label="Margen bruto por hectárea" loading />
+        <app-kpi-card label="Margen bruto del lote" loading />
+      </div>
+      <p class="numbers skeleton block" aria-hidden="true"></p>
+    </div>
   }
 }

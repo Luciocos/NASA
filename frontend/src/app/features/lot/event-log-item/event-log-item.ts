@@ -4,6 +4,7 @@ import { Api } from '../../../core/api';
 import { EventLogItem, EventReview, EventType } from '../../../core/models';
 import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
 import { SimulatedNotice } from '../../../shared/simulated-notice/simulated-notice';
+import { Icon } from '../../../shared/ui/icon/icon';
 import {
   EVENT_TYPES,
   EVENT_TYPE_LABELS,
@@ -14,10 +15,11 @@ import {
 
 /**
  * Un evento de la bitácora: tipo, fecha, sensor, origen, confianza, evidencia y la opción
- * de confirmarlo o corregirlo (PATCH /api/events/{id}/).
+ * de confirmarlo o corregirlo (PATCH /api/events/{id}/). En un lote de solo lectura (un
+ * ejemplo) no se ofrece confirmar ni corregir: solo ver la evidencia.
  */
 @Component({
-  imports: [OriginBadge, SimulatedNotice],
+  imports: [OriginBadge, SimulatedNotice, Icon],
   selector: 'app-event-log-item',
   styleUrl: './event-log-item.css',
   templateUrl: './event-log-item.html',
@@ -27,6 +29,8 @@ export class EventLogItemCard {
 
   readonly event = input.required<EventLogItem>();
   readonly selected = input(false);
+  /** false en un lote de ejemplo o de otra cuenta: se ocultan las acciones que escriben */
+  readonly editable = input(true);
   readonly compare = output<EventLogItem>();
   readonly reviewed = output<EventLogItem>();
 

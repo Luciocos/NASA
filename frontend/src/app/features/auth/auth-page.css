@@ -9,10 +9,22 @@
 }
 
 .auth__card {
+  --pad: clamp(var(--space-4), 5vw, var(--space-6));
   display: grid;
   gap: var(--space-4);
   width: min(100%, 27rem);
-  padding: clamp(var(--space-4), 5vw, var(--space-6));
+  padding: var(--pad);
+}
+
+/* franja con la misma imagen satelital de la landing, de borde a borde de la tarjeta */
+.auth__cover {
+  display: block;
+  width: calc(100% + 2 * var(--pad));
+  height: 4.5rem;
+  margin: calc(-1 * var(--pad)) calc(-1 * var(--pad)) 0;
+  border-radius: calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px) 0 0;
+  background: var(--soil-300);
+  object-fit: cover;
 }
 
 .auth__head {
@@ -22,15 +34,10 @@
   text-align: center;
 }
 
+/* el círculo es .icon-mark (ui.css): acá se monta sobre el borde de la franja */
 .auth__mark {
-  --icon-size: 1.5rem;
-  display: grid;
-  place-items: center;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  background: var(--field-50);
-  color: var(--field-800);
+  margin-top: calc(-1 * (var(--space-4) + 1.5rem));
+  box-shadow: 0 0 0 4px var(--surface);
 }
 
 h1 {
@@ -45,6 +52,7 @@ p {
 
 .auth__lead {
   color: var(--ink-2);
+  text-wrap: balance;
 }
 
 .auth__form {

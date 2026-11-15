@@ -1,71 +1,166 @@
 :host {
   display: block;
+  min-width: 0;
 }
 
+/* el valor por tonelada como indicador grande, igual que app-kpi-card */
 .headline {
-  padding: 0.75rem 1rem;
-  border: 2px solid #1a4f8b;
-  border-radius: 6px;
-  margin-bottom: 1rem;
+  display: grid;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--field-700);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
 }
 
+/* sin total: borde punteado y en ámbar, además del texto que lo dice */
 .headline--missing {
   border-style: dashed;
-  border-color: #8a5a00;
+  border-left-style: solid;
+  border-left-color: var(--warn);
 }
 
 .headline p {
-  margin: 0.2rem 0;
+  margin: 0;
 }
 
 .headline__label {
-  font-size: 0.85rem;
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: #555;
 }
 
 .headline__value {
-  font-size: 1.6rem;
+  color: var(--ink);
+  font-size: var(--text-kpi);
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+}
+
+.headline--missing .headline__value {
+  color: var(--ink-2);
+  font-size: var(--text-lg);
+  letter-spacing: 0;
+}
+
+.headline__why {
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.headline__confidence {
+  color: var(--ink-2);
+  font-size: var(--text-sm);
 }
 
 .muted {
-  color: #555;
+  color: var(--ink-3);
 }
 
 app-origin-badge,
 app-simulated-notice {
-  margin-left: 0.35rem;
+  margin-left: var(--space-1);
 }
 
+/* las fuentes traen direcciones largas: se cortan donde haga falta antes que desbordar */
 .small {
   display: block;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
 }
 
+/* "¿De dónde sale cada dato?" plegable, con la forma de app-disclosure */
+.legend {
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.legend summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+  border-radius: inherit;
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.legend summary:hover {
+  background: var(--paper-2);
+}
+
+.legend summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.legend ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-4) var(--space-6);
+}
+
+.yield {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin: 0 0 var(--space-4);
+}
+
+.yield .reference,
+.yield .reason {
+  flex-basis: 100%;
+}
+
+/* desglose con la misma tabla que el resto (.table) */
 .breakdown {
   display: block;
-  overflow-x: auto;
   width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
   border-collapse: collapse;
+  font-size: var(--text-sm);
 }
 
 .breakdown th,
 .breakdown td {
-  padding: 0.45rem 0.75rem 0.45rem 0;
-  border-bottom: 1px solid #e5e5e5;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--line);
   text-align: left;
   vertical-align: top;
 }
 
 .breakdown thead th {
-  font-size: 0.85rem;
-  color: #555;
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.breakdown tbody th {
+  color: var(--ink);
+  font-weight: 600;
 }
 
 .missing {
-  background: #fafafa;
+  background: var(--paper-2);
 }
 
 .status {
@@ -75,8 +170,8 @@ app-simulated-notice {
 
 .reason {
   display: block;
-  font-size: 0.85rem;
-  color: #444;
+  color: var(--ink-2);
+  font-size: var(--text-xs);
 }
 
 .visually-hidden {
@@ -85,32 +180,101 @@ app-simulated-notice {
   height: 1px;
   overflow: hidden;
   clip-path: inset(50%);
-}
-
-.legend {
-  margin-bottom: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background: #fafafa;
-  font-size: 0.85rem;
-}
-
-.legend summary {
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.legend ul {
-  margin: 0.4rem 0 0;
-  padding-left: 1.2rem;
+  white-space: nowrap;
 }
 
 .reference {
   display: block;
-  margin-top: 0.2rem;
-  padding-left: 0.5rem;
-  border-left: 3px solid #b7791f;
-  color: #6b4a00;
-  font-size: 0.78rem;
+  margin-top: var(--space-1);
+  padding-left: var(--space-2);
+  border-left: 3px solid var(--origin-estimated);
+  color: var(--ink-2);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+/* en el celular cada componente es una ficha: sin columnas que se salgan de la pantalla.
+   cada dato lleva su rótulo delante (los mismos de la cabecera de la tabla) */
+@media (max-width: 40rem) {
+  .headline {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .breakdown,
+  .breakdown tbody,
+  .breakdown tr,
+  .breakdown th,
+  .breakdown td {
+    display: block;
+  }
+
+  .breakdown {
+    overflow: visible;
+  }
+
+  .breakdown thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .breakdown tr {
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .breakdown tr.missing {
+    margin-inline: calc(-1 * var(--space-2));
+    padding-inline: var(--space-2);
+    border-radius: var(--radius-sm);
+  }
+
+  .breakdown th,
+  .breakdown td {
+    padding: 0;
+    border: 0;
+  }
+
+  .breakdown tbody th {
+    margin-bottom: var(--space-1);
+    font-size: var(--text-md);
+  }
+
+  .breakdown td {
+    padding-block: 0.125rem;
+  }
+
+  .breakdown td::before {
+    margin-right: var(--space-1);
+    color: var(--ink-3);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .breakdown td:nth-of-type(1)::before {
+    content: 'Dato de actividad';
+  }
+
+  /* con la columna del factor (5 columnas) y sin ella (pasaporte, 4 columnas) */
+  .breakdown:has(thead th:nth-child(5)) td:nth-of-type(2)::before {
+    content: 'Factor de emisión';
+  }
+
+  .breakdown:has(thead th:nth-child(5)) td:nth-of-type(3)::before,
+  .breakdown:not(:has(thead th:nth-child(5))) td:nth-of-type(2)::before {
+    content: 'kg CO2e/t';
+  }
+
+  .breakdown:has(thead th:nth-child(5)) td:nth-of-type(4)::before,
+  .breakdown:not(:has(thead th:nth-child(5))) td:nth-of-type(3)::before {
+    content: 'Estado';
+  }
+
+  .status {
+    white-space: normal;
+  }
 }

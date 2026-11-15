@@ -29,20 +29,33 @@ import {
   SeriesMarker,
 } from '../../../shared/charts';
 import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
+import { Disclosure } from '../../../shared/ui/disclosure/disclosure';
+import { KpiCard, KpiTrend } from '../../../shared/ui/kpi-card/kpi-card';
+import { SectionCard } from '../../../shared/ui/section-card/section-card';
 import { formatDate } from '../labels';
 
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 const SOURCE_IDS: NasaSourceId[] = ['modisNdvi', 'power', 'nisar', 'hls', 'modisLandCover'];
 
+interface KpiView {
+  value: string | number;
+  caption: string;
+  trend?: KpiTrend | null;
+  trendText?: string | null;
+}
+
 /**
- * lo que ve la NASA de un lote, consultado en vivo para su polígono: NDVI de MODIS desde 2020,
- * lluvia y humedad de NASA POWER, pasadas de NISAR y HLS, y cobertura del suelo por año. cada
- * dato con su fuente real; lo que no llega queda como "Sin dato" con el motivo
+ * lo que ve la NASA de un lote, consultado en vivo para su polígono. a la vista, tres
+ * indicadores en lenguaje llano (verdor NDVI de MODIS con su tendencia, lluvia y humedad del
+ * suelo de NASA POWER) y el verdor en el tiempo como protagonista. lo demás (lluvia por mes,
+ * pasadas de NISAR y HLS, cobertura del suelo por año, fuentes y opciones) queda plegado en
+ * "Ver detalle técnico". cada dato con su fuente real; lo que no llega queda como "Sin dato"
+ * con el motivo
  */
 @Component({
   selector: 'app-lot-nasa',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SeriesChart, ColumnChart, OriginBadge],
+  imports: [SeriesChart, ColumnChart, OriginBadge, SectionCard, KpiCard, Disclosure],
   templateUrl: './lot-nasa.html',
   styleUrl: './lot-nasa.css',
 })
@@ -109,6 +122,46 @@ export class LotNasa {
     const days = this.climate().data;
     return days ? latestSoilWetness(days) : null;
   });
+
+  /** verdor actual: la tendencia compara con hace un año (misma época) o con la imagen anterior */
+  protected readonly ndviKpi = computed<KpiView | null>(() => {
+    const { latest, changeVsLastYear, changeVsPrevious } = this.summary();
+    if (!latest || latest.mean === null) return null;
+    const change = changeVsLastYear ?? changeVsPrevious;
+    const versus = changeVsLastYear !== null ? 'hace un año' : 'la imagen anterior';
+    return {
+      value: decimal(latest.mean),
+      caption: `Imagen de 16 días desde el ${formatDate(latest.date)}. Cuanto más cerca de 1, más verde.`,
+      trend: change === null ? null : change > 0 ? 'up' : change < 0 ? 'down' : 'flat',
+      trendText:
+        change === null
+          ? null
+          : change === 0
+            ? `Igual que ${versus}`
+            : `${signedDecimal(change)} frente a ${versus}`,
+    };
+  });
+  protected readonly rainKpi = computed<KpiView | null>(() => {
+    const rain = this.rainLast30();
+    if (!rain || rain.rainMm === null) return null;
+    const missing = rain.missingDays > 0 ? ` ${capitalize(missingText(rain.missingDays))}.` : '';
+    return {
+      value: Math.round(rain.rainMm),
+      caption: `En la zona del lote, hasta el ${formatDate(rain.to)}.${missing}`,
+    };
+  });
+  protected readonly soilKpi = computed<KpiView | null>(() => {
+    const soil = this.soil();
+    if (!soil) return null;
+    const root = soil.soilRoot !== null;
+    const value = root ? soil.soilRoot : soil.soilTop;
+    if (value === null) return null;
+    return {
+      value: Math.round(value * 100),
+      caption: `${root ? 'Zona de raíces' : 'Superficie'} al ${formatDate(soil.date)} (100 es saturado).`,
+    };
+  });
+
   /**
    * el último mes de lluvia si los días no llegan a su fin: es el mes en curso y su suma todavía
    * no es la del mes completo
@@ -176,6 +229,12 @@ export class LotNasa {
   protected readonly lastClearHls = computed(
     () => this.hls().find((scene) => scene.cloudCover !== null && scene.cloudCover <= 20) ?? null,
   );
+  /** algo terminó sin llegar (o llegó en parte): se ofrece volver a pedirlo, una sola vez */
+  protected readonly anyFailed = computed(() =>
+    [this.ndvi(), this.climate(), this.scenes(), this.landCover()].some(
+      (state) => !this.pending(state) && (state.status === 'error' || state.status === 'partial'),
+    ),
+  );
 
   protected readonly formatDate = formatDate;
 
@@ -198,6 +257,17 @@ export class LotNasa {
     return state.status === 'loading' || (state.status === 'partial' && state.progress < 1);
   }
 
+  /** un indicador sin valor todavía: esqueleto mientras se consulta con red */
+  protected waiting(state: LoadState<unknown>): boolean {
+    return this.pending(state) && !this.offline();
+  }
+
+  /** por qué un indicador quedó sin dato */
+  protected reason(state: LoadState<unknown>): string {
+    if (this.pending(state)) return this.offlineText;
+    return state.error ?? 'El servicio no devolvió datos para este lote.';
+  }
+
   protected number(value: number | null | undefined, digits = 2): string {
     return value == null
       ? 'Sin dato'
@@ -205,9 +275,7 @@ export class LotNasa {
   }
 
   protected signed(value: number | null): string {
-    if (value === null) return '';
-    const text = Math.abs(value).toLocaleString('es-AR', { maximumFractionDigits: 2 });
-    return `${value > 0 ? '▲ +' : value < 0 ? '▼ −' : '= '}${text}`;
+    return value === null ? 'Sin dato' : signedDecimal(value);
   }
 
   protected day(iso: string): string {
@@ -240,4 +308,19 @@ function monthLabel(month: string): string {
 
 function missingText(days: number): string {
   return days === 1 ? '1 día sin dato' : `${days} días sin dato`;
+}
+
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** 0.6234 -> '0,62' */
+function decimal(value: number): string {
+  return value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/** 0.12 -> '+0,12'; -0.05 -> '−0,05' */
+function signedDecimal(value: number): string {
+  const text = Math.abs(value).toLocaleString('es-AR', { maximumFractionDigits: 2 });
+  return `${value > 0 ? '+' : value < 0 ? '−' : ''}${text}`;
 }

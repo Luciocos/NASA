@@ -1,146 +1,170 @@
-@if (lot(); as lot) {
-  <app-lot-tabs [lotId]="lot.id" />
-}
-
-@if (error(); as message) {
+@if (notFound()) {
+  <app-login-invite />
+} @else if (error(); as message) {
   <p class="alert alert--error" role="alert">{{ message }}</p>
 } @else {
-  <header class="head">
-    <h1>
-      Fertilización
-      @if (lot(); as lot) {
-        <span class="lot-name">· {{ lot.name }}</span>
-      }
-    </h1>
-    <p class="lead">
-      Ambientes de tu lote según el verdor del cultivo (NDVI) que mide MODIS, consultado en vivo. El
-      rango del lote se parte en tres partes iguales: no hay umbrales fijos. Usalos para pensar una
-      dosis variable de nitrógeno; no es una recomendación agronómica.
-    </p>
-  </header>
+  @if (lot(); as lot) {
+    <app-lot-tabs [lotId]="lot.id" [example]="lot.is_example ?? false" />
+  }
+
+  <app-page-header
+    [kicker]="lot()?.name ?? null"
+    heading="Fertilización"
+    subtitle="El satélite separa tu lote en ambientes según el verdor del cultivo: así ves dónde conviene más o menos nitrógeno."
+  >
+    @if (hasZones()) {
+      <button actions type="button" class="btn btn--primary" (click)="openPlanner()">
+        <app-icon name="leaf" /> Armar dosis variable
+      </button>
+    }
+  </app-page-header>
 
   <div class="layout">
-    <section class="map-card" aria-labelledby="zones-title">
-      <h2 id="zones-title">Ambientes por NDVI</h2>
+    <app-section-card
+      class="map-card"
+      heading="Ambientes por NDVI"
+      subtitle="Dónde el cultivo está más y menos verde, en cuadros de 250 m."
+      flush
+    >
       @if (lot(); as lot) {
         <app-zones-map class="zones-map" [geometry]="lot.geometry" [zones]="zones()" />
+      } @else {
+        <div class="zones-map skeleton" aria-hidden="true"></div>
       }
-      @if (grid(); as state) {
-        @if (state.status === 'loading' || state.status === 'idle') {
+      <div footer class="map-foot">
+        @if (loadingGrid()) {
           <p class="status" role="status">
-            <span class="skeleton dot" aria-hidden="true"></span> Consultando MODIS para tu
-            polígono…
+            <span class="skeleton dot" aria-hidden="true"></span> Consultando MODIS para tu lote…
           </p>
-        } @else if (state.status === 'error') {
-          <p class="alert alert--warn">
-            Sin dato de NDVI: {{ state.error }}
-            <button type="button" class="btn btn--sm" (click)="retry()">Reintentar</button>
-          </p>
-        } @else if (state.data; as data) {
-          <p class="small muted">
-            Compuesto MODIS del {{ formatDate(data.date) }} ({{ data.satellite }}), píxel de 250 m.
-            @if (state.stale) {
-              Copia guardada: no se pudo actualizar.
-            }
-          </p>
-        }
-      }
-      <p class="small source">
-        <app-origin-badge [origin]="modis.origin" /> {{ modis.name }}: {{ modis.note }}
-      </p>
-    </section>
-
-    <section class="plan" aria-labelledby="plan-title">
-      <h2 id="plan-title">Dosis variable de nitrógeno</h2>
-      @if (zones(); as z) {
-        @if (z.zones.length === 0) {
-          <p class="alert alert--info">{{ z.note ?? 'No alcanza para separar ambientes.' }}</p>
-        } @else {
-          <table class="table">
-            <caption class="visually-hidden">
-              Ambientes del lote y dosis por ambiente
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Ambiente</th>
-                <th scope="col" class="num">NDVI</th>
-                <th scope="col" class="num">Superficie</th>
-                <th scope="col" class="num">kg N/ha</th>
-                <th scope="col" class="num">N total</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of rows(); track row.zone.level) {
-                <tr>
-                  <th scope="row">
-                    <span
-                      class="swatch"
-                      [style.background]="zoneStyle[row.zone.level].fill"
-                      [style.border-color]="zoneStyle[row.zone.level].color"
-                      [class.swatch--dashed]="row.zone.level === 'medio'"
-                      [class.swatch--dotted]="row.zone.level === 'bajo'"
-                      aria-hidden="true"
-                    ></span>
-                    {{ row.zone.label }}
-                  </th>
-                  <td class="num">{{ number(row.zone.from, 2) }} a {{ number(row.zone.to, 2) }}</td>
-                  <td class="num">
-                    {{ formatHectares(row.ha) }}
-                    <span class="muted">({{ percent(row.zone.share) }})</span>
-                  </td>
-                  <td class="num">
-                    <input
-                      type="number"
-                      min="0"
-                      step="any"
-                      inputmode="decimal"
-                      [value]="row.dose ?? ''"
-                      (input)="setDose(row.zone.level, $any($event.target).value)"
-                      [attr.aria-label]="'Dosis de nitrógeno para ' + row.zone.label"
-                      placeholder="—"
-                    />
-                  </td>
-                  <td class="num">
-                    {{ row.totalN === null ? 'Sin dato' : number(row.totalN) + ' kg' }}
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-
-          <div class="compare">
-            <div class="stat-box">
-              <span class="label">Dosis variable</span>
-              <strong>{{
-                plan().variableN === null
-                  ? 'Completá las dosis'
-                  : number(plan().variableN) + ' kg N'
-              }}</strong>
-              @if (plan().averageDose !== null) {
-                <span class="small">promedio {{ number(plan().averageDose, 1) }} kg N/ha</span>
-              }
-              @if (plan().variableCo2 !== null) {
-                <span class="small">{{ number(plan().variableCo2) }} kg CO2e estimados</span>
-              }
+        } @else if (grid(); as state) {
+          @if (state.status === 'error') {
+            <div class="alert alert--warn retry">
+              <span>Sin dato de NDVI: {{ state.error }}</span>
+              <button type="button" class="btn btn--sm" (click)="retry()">Reintentar</button>
             </div>
-            <div class="stat-box">
-              <span class="label">Dosis uniforme declarada</span>
-              @if (uniformDose() !== null) {
-                <strong>{{ number(plan().uniformN) }} kg N</strong>
-                <span class="small">
+          } @else if (state.data; as data) {
+            <p class="source-line">
+              <app-origin-badge [origin]="modis.origin" />
+              <span class="source"
+                >MODIS Terra · compuesto del {{ formatDate(data.date)
+                }}{{ state.stale ? ' · copia guardada, no se pudo actualizar' : '' }}</span
+              >
+            </p>
+            @if (zones(); as z) {
+              @if (z.zones.length === 0) {
+                <p class="alert alert--info">
+                  {{ z.note ?? 'No alcanza para separar ambientes.' }}
+                </p>
+              }
+            }
+          }
+        }
+        <app-disclosure label="Cómo se arman los ambientes" icon="info" flat>
+          <div class="tech">
+            <p>
+              @if (zones(); as z) {
+                @if (z.min !== null && z.max !== null) {
+                  El NDVI del lote va de {{ number(z.min, 2) }} a {{ number(z.max, 2) }} en
+                  {{ z.validPixels }}
+                  {{ z.validPixels === 1 ? 'píxel válido' : 'píxeles válidos' }}.
+                }
+              }
+              Ese rango se parte en tres partes iguales: alto, medio y bajo. No hay umbrales fijos.
+              La superficie de cada ambiente es su parte de los píxeles por el área del lote: es
+              aproximada.
+            </p>
+            <p>{{ modis.note }}</p>
+            <dl class="specs">
+              <div>
+                <dt>Producto</dt>
+                <dd>{{ modis.product }}</dd>
+              </div>
+              <div>
+                <dt>Resolución</dt>
+                <dd>{{ modis.resolution }}</dd>
+              </div>
+              <div>
+                <dt>Frecuencia</dt>
+                <dd>{{ modis.cadence }}</dd>
+              </div>
+              @if (grid()?.data; as data) {
+                <div>
+                  <dt>Satélite</dt>
+                  <dd>{{ data.satellite }}, compuesto del {{ formatDate(data.date) }}</dd>
+                </div>
+              }
+            </dl>
+          </div>
+        </app-disclosure>
+      </div>
+    </app-section-card>
+
+    @if (hasZones() || loadingGrid()) {
+      <section class="zones" aria-label="Superficie de cada ambiente">
+        @if (hasZones()) {
+          @for (row of rows(); track row.zone.level) {
+            <app-kpi-card
+              [label]="row.zone.label"
+              [value]="hectares(row.ha)"
+              unit="ha"
+              [caption]="percent(row.zone.share) + ' del lote'"
+            >
+              <span class="zone-key">
+                <span
+                  [class]="'swatch swatch--' + row.zone.level"
+                  [style.background]="zoneStyle[row.zone.level].fill"
+                  [style.border-color]="zoneStyle[row.zone.level].color"
+                  aria-hidden="true"
+                ></span>
+                NDVI {{ number(row.zone.from, 2) }} a {{ number(row.zone.to, 2) }}
+              </span>
+            </app-kpi-card>
+          }
+        } @else {
+          @for (level of levels; track level) {
+            <app-kpi-card [label]="'NDVI ' + level" loading />
+          }
+        }
+      </section>
+    }
+
+    @if (hasZones()) {
+      <app-section-card
+        class="planner"
+        heading="Dosis variable de nitrógeno"
+        subtitle="La decidís vos para cada ambiente: no es una recomendación agronómica."
+      >
+        @if (plan().variableN !== null) {
+          <div class="summary">
+            <p class="stat">
+              <span class="stat__label">Con tu dosis variable</span>
+              <span class="stat__value"
+                >{{ number(plan().variableN) }} <span class="stat__unit">kg de N</span></span
+              >
+              <span class="stat__hint">
+                Promedio {{ number(plan().averageDose, 1) }} kg N/ha
+                <app-origin-badge origin="DECLARED" />
+              </span>
+            </p>
+            <p class="stat">
+              <span class="stat__label">Con la dosis uniforme</span>
+              @if (plan().uniformN !== null) {
+                <span class="stat__value"
+                  >{{ number(plan().uniformN) }} <span class="stat__unit">kg de N</span></span
+                >
+                <span class="stat__hint">
                   {{ number(uniformDose(), 1) }} kg N/ha
                   @if (nitrogen()?.activity?.origin; as origin) {
                     <app-origin-badge [origin]="origin" />
                   }
                 </span>
-                @if (plan().uniformCo2 !== null) {
-                  <span class="small">{{ number(plan().uniformCo2) }} kg CO2e estimados</span>
-                }
               } @else {
-                <strong>Sin dato</strong>
-                <a class="small" [routerLink]="['/huella', lotId()]">Declarala en la huella</a>
+                <span class="stat__value stat__value--empty">Sin dato</span>
+                <span class="stat__hint">
+                  <a [routerLink]="['/huella', lotId()]">Declarala en la huella</a> para comparar.
+                </span>
               }
-            </div>
+            </p>
           </div>
           @let delta = plan().deltaN;
           @if (delta !== null) {
@@ -148,43 +172,114 @@
               @if (delta === 0) {
                 La dosis variable usa el mismo nitrógeno que la uniforme.
               } @else {
-                {{ delta < 0 ? '▼' : '▲' }} La dosis variable usa
-                {{ number(delta < 0 ? -delta : delta) }} kg de N {{ delta < 0 ? 'menos' : 'más' }}
-                que la uniforme.
+                <span aria-hidden="true">{{ delta < 0 ? '▼' : '▲' }}</span>
+                La dosis variable usa {{ number(delta < 0 ? -delta : delta) }} kg de N
+                {{ delta < 0 ? 'menos' : 'más' }} que la uniforme.
               }
             </p>
           }
-          @if (factorN() !== null) {
-            <p class="small muted">
-              Emisiones: {{ number(factorN(), 3) }} kg CO2e por kg de N (producción del fertilizante
-              más N2O directo del suelo), los mismos factores con fuente de la huella:
-              {{ nitrogen()?.factor?.source }} · {{ soilN2o()?.factor?.source }}
+          @if (plan().variableCo2 !== null) {
+            <p class="small muted co2">
+              <app-origin-badge origin="ESTIMATED" />
+              Emisiones: {{ number(plan().variableCo2) }} kg CO2e con la dosis variable{{
+                plan().uniformCo2 !== null
+                  ? ' y ' + number(plan().uniformCo2) + ' kg CO2e con la uniforme'
+                  : ''
+              }}.
             </p>
           }
-        }
-      } @else {
-        <p class="skeleton block" aria-hidden="true"></p>
-      }
-
-      <h2>Fósforo</h2>
-      @if (phosphorus(); as p) {
-        @if (p.activity.quantity !== null) {
-          <p>
-            Declaraste {{ number(p.activity.quantity, 1) }} {{ p.activity.unit }} de P2O5
-            @if (p.activity.origin; as origin) {
-              <app-origin-badge [origin]="origin" />
-            }
-            @if (p.kg_co2e_per_ha !== null) {
-              : unos {{ number(p.kg_co2e_per_ha) }} kg CO2e por hectárea por su producción.
-            }
-          </p>
         } @else {
           <p class="muted">
-            Sin dato de fósforo.
-            <a [routerLink]="['/huella', lotId()]">Declaralo en la huella</a> para sumarlo.
+            Poné cuántos kg de N por hectárea va en cada ambiente y te mostramos el total.
           </p>
         }
-      }
-    </section>
+
+        <app-disclosure [(open)]="plannerOpen" label="Dosis por ambiente" [hint]="dosesHint()">
+          <div class="doses">
+            @for (row of rows(); track row.zone.level) {
+              <label class="field dose">
+                <span class="dose__name">
+                  <span
+                    [class]="'swatch swatch--' + row.zone.level"
+                    [style.background]="zoneStyle[row.zone.level].fill"
+                    [style.border-color]="zoneStyle[row.zone.level].color"
+                    aria-hidden="true"
+                  ></span>
+                  {{ row.zone.label }}
+                  <span class="muted">· {{ formatHectares(row.ha) }}</span>
+                </span>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  autocomplete="off"
+                  [value]="doseText(row.zone.level)"
+                  (input)="setDose(row.zone.level, $any($event.target).value)"
+                  placeholder="kg N/ha"
+                />
+                <span class="field__hint">
+                  {{
+                    row.totalN === null
+                      ? 'kg de N por hectárea'
+                      : number(row.dose, 1) + ' kg N/ha: ' + number(row.totalN) + ' kg de N'
+                  }}
+                </span>
+              </label>
+            }
+            <p class="field__hint">
+              <app-origin-badge origin="DECLARED" /> Las dosis las cargás vos.
+            </p>
+          </div>
+        </app-disclosure>
+
+        <app-disclosure
+          footer
+          flat
+          label="Ver detalle técnico"
+          hint="Factores de emisión y fósforo"
+        >
+          <div class="tech">
+            @if (factorN() !== null) {
+              <p>
+                Emisiones: {{ number(factorN(), 3) }} kg CO2e por kg de N (producción del
+                fertilizante más N2O directo del suelo). Son los mismos factores con fuente de la
+                huella:
+              </p>
+              <ul class="sources">
+                <li>{{ nitrogen()?.factor?.source }}</li>
+                <li>{{ soilN2o()?.factor?.source }}</li>
+              </ul>
+            } @else {
+              <p>
+                Sin factores de emisión con fuente para el nitrógeno: las emisiones quedan sin dato.
+              </p>
+            }
+            @if (nitrogen()?.activity?.reference; as reference) {
+              <p>Dosis uniforme de referencia, no es de tu lote. Fuente: {{ reference }}</p>
+            }
+            <h3>Fósforo</h3>
+            @if (phosphorus(); as p) {
+              @if (p.activity.quantity !== null) {
+                <p>
+                  @if (p.activity.origin; as origin) {
+                    <app-origin-badge [origin]="origin" />
+                  }
+                  Declaraste {{ number(p.activity.quantity, 1) }} {{ p.activity.unit }} de P2O5.
+                  @if (p.kg_co2e_per_ha !== null) {
+                    Su producción emite unos {{ number(p.kg_co2e_per_ha) }} kg CO2e por hectárea.
+                  }
+                </p>
+              } @else {
+                <p class="muted">
+                  Sin dato de fósforo.
+                  <a [routerLink]="['/huella', lotId()]">Declaralo en la huella</a> para sumarlo.
+                </p>
+              }
+            } @else {
+              <p class="muted">Sin dato de fósforo: no se pudo leer la huella del lote.</p>
+            }
+          </div>
+        </app-disclosure>
+      </app-section-card>
+    }
   </div>
 }

@@ -45,6 +45,19 @@ describe('EventLogItemCard', () => {
     expect(button('Ver radar contra óptico')).toBeDefined();
   });
 
+  it('en un lote de solo lectura deja ver la evidencia pero no confirmar ni corregir', async () => {
+    fixture.componentRef.setInput(
+      'event',
+      makeEvent({ evidence_image_url: '/media/evidence/a.png' }),
+    );
+    fixture.componentRef.setInput('editable', false);
+    await fixture.whenStable();
+    expect(button('Ver radar contra óptico')).toBeDefined();
+    expect(button('Confirmar')).toBeUndefined();
+    expect(button('Corregir')).toBeUndefined();
+    expect(el().querySelector('form')).toBeNull();
+  });
+
   it('confirma el evento con PATCH y avisa el cambio de origen', async () => {
     fixture.componentRef.setInput('event', makeEvent());
     let reviewed: EventLogItem | undefined;
