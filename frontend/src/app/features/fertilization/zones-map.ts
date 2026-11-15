@@ -88,14 +88,21 @@ export class ZonesMap {
     for (const zone of this.zones()?.zones ?? []) {
       const style = ZONE_STYLE[zone.level];
       for (const pixel of zone.pixels) {
-        L.polygon(pixel.ring, {
+        // solo la parte del píxel dentro del lote; una grilla sin recorte dibuja el píxel entero
+        const shape = pixel.clip?.length ? pixel.clip : pixel.ring;
+        L.polygon(shape, {
           color: style.color,
           weight: 1.5,
           dashArray: style.dash,
           fillColor: style.fill,
           fillOpacity: 0.55,
         })
-          .bindTooltip(`${zone.label}: NDVI ${pixel.value?.toLocaleString('es-AR')}`)
+          .bindTooltip(
+            `${zone.label}: NDVI ${pixel.value?.toLocaleString('es-AR')}` +
+              (pixel.insideHa
+                ? ` · ${pixel.insideHa.toLocaleString('es-AR', { maximumFractionDigits: 1 })} ha en el lote`
+                : ''),
+          )
           .addTo(layer);
       }
     }

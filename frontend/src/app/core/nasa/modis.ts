@@ -1,5 +1,5 @@
 import type { PolygonGeometry } from '../models';
-import { latLngToSinusoidal, pointInPolygon, round, sinusoidalToLatLng } from './geo';
+import { cellOverlap, latLngToSinusoidal, round, sinusoidalToLatLng } from './geo';
 import type { NasaHttp, NasaResponse } from './http';
 import type { LandCoverYear, LatLng, NdviGrid, NdviPixel } from './models';
 import { IGBP_LABELS } from './sources';
@@ -242,22 +242,30 @@ export function parseNdviSubset(
   const grid = subsetGrid(ndvi);
   const scale = Number(ndvi.scale) || 0.0001;
   const relByDate = new Map((reliability?.subset ?? []).map((s) => [s.modis_date, s.data]));
+  // la geometría de cada píxel y su recorte con el lote no cambian entre fechas: una sola vez
+  const cells = Array.from({ length: grid.nrows * grid.ncols }, (_, i) => {
+    const ring = cellRing(grid, i);
+    const overlap = geometry ? cellOverlap(ring, geometry) : null;
+    return {
+      ring,
+      center: cellCenter(grid, i),
+      inside: (overlap?.areaHa ?? 0) > 0,
+      insideHa: overlap?.areaHa ?? 0,
+      clip: overlap?.rings ?? [],
+    };
+  });
   return ndvi.subset
     .filter((s) => s.band === NDVI_BAND)
     .map((entry) => {
       const rel = relByDate.get(entry.modis_date);
-      const pixels: NdviPixel[] = [];
-      for (let i = 0; i < grid.nrows * grid.ncols; i++) {
-        const center = cellCenter(grid, i);
+      const pixels: NdviPixel[] = cells.map((cell, i) => {
         const relValue = rel?.[i];
-        pixels.push({
-          ring: cellRing(grid, i),
-          center,
+        return {
+          ...cell,
           value: ndviValue(entry.data[i], scale),
           reliability: relValue === undefined ? null : relValue,
-          inside: geometry ? pointInPolygon(center, geometry) : false,
-        });
-      }
+        };
+      });
       return {
         date: entry.calendar_date,
         satellite: MODIS_SATELLITE[product],

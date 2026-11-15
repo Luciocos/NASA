@@ -63,8 +63,12 @@ export interface NdviPixel {
   value: number | null;
   /** 0 bueno, 1 marginal, 2 nieve, 3 nublado, -1 sin dato */
   reliability: number | null;
-  /** true si el centro del píxel cae dentro del lote */
+  /** true si alguna parte del píxel cae dentro del lote */
   inside: boolean;
+  /** hectáreas del píxel dentro del lote (pesa en promedios y ambientes); sin lote, 0 */
+  insideHa?: number;
+  /** recorte del píxel con el lote, para dibujar: contorno y después huecos (ver cellOverlap) */
+  clip?: LatLng[][];
 }
 
 export interface NdviGrid {
@@ -147,7 +151,7 @@ export interface NdviZone {
   from: number;
   to: number;
   pixels: NdviPixel[];
-  /** parte de los píxeles válidos del lote, de 0 a 1 */
+  /** parte de la superficie válida del lote (la que cae dentro del polígono), de 0 a 1 */
   share: number;
 }
 
