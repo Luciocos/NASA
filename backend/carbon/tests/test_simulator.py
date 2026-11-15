@@ -92,3 +92,18 @@ def test_cuerpo_invalido(body, field) -> None:
     with pytest.raises(InvalidChanges) as error:
         validate_changes(body)
     assert field in error.value.errors
+
+
+def test_en_lote_sin_bitacora_la_cobertura_hipotetica_no_inventa_ausencias(fake_factors) -> None:
+    # Sin eventos reales no se puede inferir "sin labranza" ni "sin quema" del evento hipotético
+    lot = make_lot(events=[])
+    result = simulate(lot, {'cover_crop': True}, fake_factors, FAKE_WEIGHTS)
+    after = statuses(result['after']['score'])
+    assert after['winter_cover'] == 'cumple'
+    assert after['no_till'] == 'sin_dato'
+    assert after['no_burn'] == 'sin_dato'
+    assert result['after']['score']['score'] is None
+    land_use = next(
+        c for c in result['after']['footprint']['components'] if c['key'] == 'land_use_change'
+    )
+    assert land_use['status'] == 'sin_dato'

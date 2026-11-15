@@ -69,6 +69,15 @@ class LotData:
     name: str
     campaigns: tuple[CampaignData, ...] = ()
     events: tuple[EventData, ...] = field(default_factory=tuple)
+    # Declaración del productor sobre el uso del suelo desde 2020 (POST /lots/{id}/land-use/):
+    # True si no cambió, False si cambió, None si no declaró. Origen DECLARED.
+    land_use_unchanged: bool | None = None
+
+    @property
+    def has_observed_events(self) -> bool:
+        """Hay bitácora real. Los eventos hipotéticos del simulador no cuentan: con ellos solos
+        no se puede inferir la ausencia de otros eventos."""
+        return any(not e.hypothetical for e in self.events)
 
     def find_campaign(self, value: str | int | None) -> CampaignData | None:
         """Campaña por id o etiqueta. Sin valor, la última campaña (por etiqueta)."""
@@ -117,4 +126,10 @@ def load_lot_data(lot: Lot) -> LotData:
         )
         for event in lot.events.select_related('campaign').order_by('date', 'id')
     )
-    return LotData(id=lot.pk, name=lot.name, campaigns=campaigns, events=events)
+    return LotData(
+        id=lot.pk,
+        name=lot.name,
+        campaigns=campaigns,
+        events=events,
+        land_use_unchanged=lot.land_use_unchanged,
+    )

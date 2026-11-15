@@ -85,7 +85,7 @@ def _event_criterion(
         result['is_simulated'] = any(e.is_simulated for e in events)
         result['hypothetical'] = any(e.hypothetical for e in events)
         return result
-    if lot.events:
+    if lot.has_observed_events:
         result = _criterion(
             key,
             label,
@@ -120,17 +120,42 @@ def _rotation_criterion(lot: LotData, key: str, label: str) -> dict[str, Any]:
     )
 
 
-def evaluate_criteria(lot: LotData) -> list[dict[str, Any]]:
-    labels = dict(CRITERIA)
-    return [
-        _event_criterion(
+def _land_use_criterion(lot: LotData, label: str) -> dict[str, Any]:
+    """Un evento satelital manda; sin él, vale lo que declaró el productor."""
+    key = 'no_land_use_change_since_2020'
+    detected = any(
+        e.type == EventType.LAND_USE_CHANGE and e.date >= LAND_USE_CHANGE_SINCE for e in lot.events
+    )
+    if detected or lot.land_use_unchanged is None:
+        return _event_criterion(
             lot,
-            'no_land_use_change_since_2020',
-            labels['no_land_use_change_since_2020'],
+            key,
+            label,
             EventType.LAND_USE_CHANGE,
             met_if_present=False,
             since=LAND_USE_CHANGE_SINCE,
-        ),
+        )
+    if lot.land_use_unchanged:
+        return _criterion(
+            key,
+            label,
+            MET,
+            Origin.DECLARED,
+            'El productor declaró que el lote no cambió de uso del suelo desde 2020.',
+        )
+    return _criterion(
+        key,
+        label,
+        NOT_MET,
+        Origin.DECLARED,
+        'El productor declaró que el lote cambió de uso del suelo desde 2020.',
+    )
+
+
+def evaluate_criteria(lot: LotData) -> list[dict[str, Any]]:
+    labels = dict(CRITERIA)
+    return [
+        _land_use_criterion(lot, labels['no_land_use_change_since_2020']),
         _event_criterion(lot, 'no_till', labels['no_till'], EventType.TILLAGE, False),
         _event_criterion(lot, 'winter_cover', labels['winter_cover'], EventType.COVER_CROP, True),
         _rotation_criterion(lot, 'rotation', labels['rotation']),
