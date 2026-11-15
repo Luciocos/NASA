@@ -38,6 +38,8 @@ La app funciona sin conexión: un service worker guarda la interfaz y cada respu
 
 ## Cómo funciona
 
+![Cómo LoTestigo usa los datos abiertos de la NASA: qué datos, cómo llegan a la app y para qué le sirven al productor](assets/lotestigo-datos-nasa.png)
+
 ```
 [Procesamiento satelital offline]  -->  JSON de eventos + imágenes PNG
                                               |
