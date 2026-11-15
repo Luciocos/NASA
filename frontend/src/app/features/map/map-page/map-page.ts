@@ -91,7 +91,9 @@ export class MapPage {
       return {
         ...lot,
         tint: value === null ? null : ndviTint(value),
-        hatched: ndvi.status !== 'loading' && value === null,
+        // rayado solo si llegó el compuesto y no tiene píxeles válidos: un lote que todavía
+        // carga o cuyo pedido falló no se muestra como nublado
+        hatched: obs !== null && value === null,
         sublabel: value === null ? lot.sublabel : `NDVI ${value.toLocaleString('es-AR')}`,
       };
     });
@@ -145,9 +147,14 @@ export class MapPage {
       onCleanup(() => loading?.unsubscribe());
     });
 
-    // lo que la cola subió aparece como lote propio: se vuelve a pedir la lista
+    // lo que la cola subió aparece como lote propio: se vuelve a pedir la lista. lo subido
+    // antes de abrir la pantalla ya viene en el primer pedido
+    let seen = this.outbox.lastSynced();
     effect(() => {
-      if (this.outbox.lastSynced().length > 0) untracked(() => this.reload());
+      const synced = this.outbox.lastSynced();
+      if (synced === seen) return;
+      seen = synced;
+      if (synced.length > 0) untracked(() => this.reload());
     });
   }
 
@@ -160,6 +167,10 @@ export class MapPage {
       error: () =>
         this.error.set('No se pudieron cargar los lotes. Revisá la conexión y probá de nuevo.'),
     });
+  }
+
+  protected retryNdvi(): void {
+    this.satellite.retry();
   }
 
   protected select(id: string | null): void {

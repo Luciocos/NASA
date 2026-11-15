@@ -88,8 +88,9 @@ export function computeProfit(
     };
   }
   const grossUsdHa = yieldTHa * inputs.priceUsdT;
-  const commercialUsdHa = yieldTHa * commercialT;
-  const marginUsdHa = grossUsdHa - commercialUsdHa - directUsdHa;
+  // un flete sin cargar cuenta como cero en el margen, pero en el desglose queda sin dato
+  const commercialUsdHa = inputs.commercialUsdT === null ? null : yieldTHa * commercialT;
+  const marginUsdHa = grossUsdHa - (commercialUsdHa ?? 0) - directUsdHa;
   return {
     grossUsdHa,
     commercialUsdHa,

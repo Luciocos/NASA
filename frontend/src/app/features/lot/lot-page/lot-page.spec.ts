@@ -81,6 +81,38 @@ describe('LotPage', () => {
     expect(el().textContent).toContain('Este lote todavía no tiene eventos registrados.');
   });
 
+  it('muestra el rendimiento con coma decimal', async () => {
+    const campaign = { ...LOT.campaigns[0], yield_t_ha: 3.1, yield_origin: 'DECLARED' as const };
+    http.expectOne('/api/lots/1/').flush({ ...LOT, campaigns: [campaign] });
+    http.expectOne('/api/lots/1/events/').flush({ lot: 1, count: 0, message: null, events: [] });
+    await fixture.whenStable();
+    expect(el().querySelector('table.campaigns')?.textContent).toContain('3,1 t/ha');
+  });
+
+  it('lleva la vista a la comparación cuando ya está dibujada', async () => {
+    const scrolled: Element[] = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled.push(this);
+    };
+    try {
+      const event = makeEvent({ evidence_image_url: '/media/evidence/prueba.png' });
+      http.expectOne('/api/lots/1/').flush(LOT);
+      http
+        .expectOne('/api/lots/1/events/')
+        .flush({ lot: 1, count: 1, message: null, events: [event] });
+      await fixture.whenStable();
+
+      el().querySelector<HTMLButtonElement>('app-event-log-item .button--primary')?.click();
+      await fixture.whenStable();
+
+      expect(el().querySelector('#compare')).toBeTruthy();
+      expect(scrolled.map((element) => element.id)).toContain('compare');
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+
   it('avisa si el lote no existe', async () => {
     http.expectOne('/api/lots/1/').flush('', { status: 404, statusText: 'Not Found' });
     http.expectOne('/api/lots/1/events/').flush('', { status: 404, statusText: 'Not Found' });

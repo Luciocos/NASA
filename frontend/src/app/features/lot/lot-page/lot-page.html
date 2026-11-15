@@ -46,7 +46,7 @@
               <td><app-origin-badge [origin]="campaign.crop_origin" /></td>
               <td>
                 @if (campaign.yield_t_ha !== null) {
-                  {{ campaign.yield_t_ha }} t/ha
+                  {{ yieldLabel(campaign.yield_t_ha) }}
                   @if (campaign.yield_origin) {
                     <app-origin-badge [origin]="campaign.yield_origin" />
                   }

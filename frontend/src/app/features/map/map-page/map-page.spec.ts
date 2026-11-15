@@ -1,10 +1,15 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Provider, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 
 import { DemoAccount } from '../../../core/account/demo-account';
 import { LotSummary } from '../../../core/models';
+import { NO_DATA_REASONS } from '../../../core/nasa';
+import { LotOutbox, PendingLot, SyncedLot } from '../../../core/offline/lot-outbox';
 import { provideOfflineTesting } from '../../../core/offline/testing';
+import { IsoScene } from '../../../shared/iso/iso-scene';
 import { MapPage } from './map-page';
 import { provideNasaTesting } from '../../../core/nasa/testing';
 
@@ -39,7 +44,7 @@ describe('MapPage', () => {
   let http: HttpTestingController;
   const el = () => fixture.nativeElement as HTMLElement;
 
-  async function setup(owned: number[]): Promise<void> {
+  async function setup(owned: number[], extra: Provider[] = []): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [MapPage],
       providers: [
@@ -47,6 +52,7 @@ describe('MapPage', () => {
         ...provideNasaTesting(),
         provideHttpClientTesting(),
         provideOfflineTesting(),
+        ...extra,
       ],
     }).compileComponents();
     const account = TestBed.inject(DemoAccount);
@@ -89,6 +95,51 @@ describe('MapPage', () => {
     await fixture.whenStable();
     expect(el().textContent).toContain('Todavía no marcaste lotes');
     expect(el().querySelector('a[href="/mapa/nuevo"]')).toBeTruthy();
+  });
+
+  it('indica en la lista cuál es el lote elegido, no solo con el color', async () => {
+    await setup([7]);
+    http.expectOne('/api/lots/').flush([MINE, EXAMPLE]);
+    await fixture.whenStable();
+    flushDetails();
+    await fixture.whenStable();
+
+    const button = [...el().querySelectorAll<HTMLButtonElement>('button.lot')].find((item) =>
+      item.textContent?.includes('Lote de prueba'),
+    );
+    button?.click();
+    await fixture.whenStable();
+    expect(button?.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('si la NASA no responde, la capa NDVI lo dice y no raya los lotes como nublados', async () => {
+    await setup([7]);
+    http.expectOne('/api/lots/').flush([MINE, EXAMPLE]);
+    await fixture.whenStable();
+    flushDetails();
+    await fixture.whenStable();
+
+    const ndviButton = [...el().querySelectorAll<HTMLButtonElement>('.hud__btn')].find((item) =>
+      item.textContent?.includes('NDVI'),
+    );
+    ndviButton?.click();
+    for (let i = 0; i < 5; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await fixture.whenStable();
+    }
+
+    expect(el().querySelector('.ndvi-legend')?.textContent).toContain(NO_DATA_REASONS.offline);
+    const scene = fixture.debugElement.query(By.directive(IsoScene)).componentInstance as IsoScene;
+    expect(scene.lots().some((lot) => lot.hatched)).toBe(false);
+  });
+
+  it('no vuelve a pedir la lista al abrir la pantalla si la cola ya había subido lotes', async () => {
+    const outbox = {
+      pending: signal<PendingLot[]>([]),
+      lastSynced: signal<SyncedLot[]>([{ localId: 'a', lot: { ...MINE, campaigns: [] } }]),
+    };
+    await setup([7], [{ provide: LotOutbox, useValue: outbox }]);
+    expect(http.match('/api/lots/').length).toBe(1);
   });
 
   it('avisa si no se pudieron cargar los lotes', async () => {

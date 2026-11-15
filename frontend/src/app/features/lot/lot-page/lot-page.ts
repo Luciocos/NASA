@@ -1,4 +1,13 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  DOCUMENT,
+  Injector,
+  afterNextRender,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
@@ -66,8 +75,9 @@ export class LotPage {
   protected readonly campaignFilter = signal<number | ''>('');
 
   protected readonly selectedEventId = signal<number | null>(null);
+  // se busca en la bitácora completa: con filtros activos el evento puede no estar en `log`
   protected readonly selectedEvent = computed(
-    () => this.log()?.events.find((event) => event.id === this.selectedEventId()) ?? null,
+    () => this.allEvents().find((event) => event.id === this.selectedEventId()) ?? null,
   );
 
   protected readonly eventTypes = EVENT_TYPES;
@@ -156,18 +166,32 @@ export class LotPage {
       return;
     }
     this.selectedEventId.set(event.id);
-    queueMicrotask(() =>
-      document
-        .getElementById(`evento-${event.id}`)
-        ?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
-    );
+    this.scrollWhenRendered(`evento-${event.id}`, 'center');
   }
 
   protected openCompare(event: EventLogItem): void {
     this.selectedEventId.set(event.id);
     // Lleva la vista a la comparación, que se dibuja arriba de la bitácora.
-    queueMicrotask(() =>
-      document.getElementById('compare')?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+    this.scrollWhenRendered('compare', 'start');
+  }
+
+  protected yieldLabel(value: number): string {
+    return `${value.toLocaleString('es-AR', { maximumFractionDigits: 2 })} t/ha`;
+  }
+
+  private readonly injector = inject(Injector);
+  private readonly view = inject(DOCUMENT).defaultView;
+
+  // sin zone.js el cambio se dibuja después de las microtareas: hay que esperar al render
+  private scrollWhenRendered(id: string, block: ScrollLogicalPosition): void {
+    afterNextRender(
+      () => {
+        const reduce = this.view?.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        this.view?.document
+          .getElementById(id)
+          ?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block });
+      },
+      { injector: this.injector },
     );
   }
 

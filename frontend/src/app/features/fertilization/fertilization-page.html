@@ -38,7 +38,7 @@
           </p>
         } @else if (state.data; as data) {
           <p class="small muted">
-            Compuesto MODIS del {{ data.date }} ({{ data.satellite }}), píxel de 250 m.
+            Compuesto MODIS del {{ formatDate(data.date) }} ({{ data.satellite }}), píxel de 250 m.
             @if (state.stale) {
               Copia guardada: no se pudo actualizar.
             }
@@ -142,11 +142,16 @@
               }
             </div>
           </div>
-          @if (plan().variableN !== null && plan().uniformN !== null) {
-            <p class="delta" [class.delta--less]="plan().variableN! < plan().uniformN!">
-              {{ plan().variableN! < plan().uniformN! ? '▼' : '▲' }}
-              La dosis variable usa {{ number(plan().variableN! - plan().uniformN!) }} kg de N
-              respecto de la uniforme.
+          @let delta = plan().deltaN;
+          @if (delta !== null) {
+            <p class="delta" [class.delta--less]="delta < 0">
+              @if (delta === 0) {
+                La dosis variable usa el mismo nitrógeno que la uniforme.
+              } @else {
+                {{ delta < 0 ? '▼' : '▲' }} La dosis variable usa
+                {{ number(delta < 0 ? -delta : delta) }} kg de N {{ delta < 0 ? 'menos' : 'más' }}
+                que la uniforme.
+              }
             </p>
           }
           @if (factorN() !== null) {

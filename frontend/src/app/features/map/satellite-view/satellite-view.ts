@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DOCUMENT,
   DestroyRef,
   ElementRef,
   afterNextRender,
@@ -66,6 +67,8 @@ export class SatelliteView {
   private layer: L.FeatureGroup | null = null;
   private readonly polygons = new Map<string, L.GeoJSON>();
   private fitted = false;
+  private readonly reducedMotion =
+    inject(DOCUMENT).defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
   constructor() {
     afterNextRender(() => this.init());
@@ -149,7 +152,12 @@ export class SatelliteView {
     }
     const target = selected ? this.polygons.get(selected) : null;
     if (target && this.map) {
-      this.map.flyToBounds(target.getBounds(), { padding: [60, 60], maxZoom: 16, duration: 0.6 });
+      // con prefers-reduced-motion se salta al lote sin el vuelo animado
+      if (this.reducedMotion) {
+        this.map.fitBounds(target.getBounds(), { padding: [60, 60], maxZoom: 16, animate: false });
+      } else {
+        this.map.flyToBounds(target.getBounds(), { padding: [60, 60], maxZoom: 16, duration: 0.6 });
+      }
     }
   }
 }

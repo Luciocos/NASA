@@ -110,8 +110,14 @@
     @if (layer() === 'ndvi') {
       <div class="ndvi-legend" role="note">
         <strong>NDVI actual (MODIS, 250 m)</strong>
-        @if (ndvi()?.status === 'loading' || ndvi()?.status === 'partial') {
+        @if (ndvi()?.status === 'loading' || (ndvi()?.status === 'partial' && !ndvi()?.error)) {
           <span>Consultando a la NASA… puede tardar un minuto la primera vez.</span>
+        } @else if (ndvi()?.error; as reason) {
+          <span
+            >Sin NDVI para {{ ndvi()?.status === 'partial' ? 'algunos lotes' : 'los lotes' }}:
+            {{ reason }}
+            <button type="button" class="btn btn--sm" (click)="retryNdvi()">Reintentar</button>
+          </span>
         }
         <span class="ndvi-legend__bar" [style.background]="ndviGradient" aria-hidden="true"></span>
         <span class="ndvi-legend__scale"><span>0 suelo</span><span>0,85 cultivo denso</span></span>
@@ -212,6 +218,7 @@
                 type="button"
                 class="lot"
                 [class.is-selected]="selectedId() === '' + item.lot.id"
+                [attr.aria-pressed]="selectedId() === '' + item.lot.id"
                 (click)="select('' + item.lot.id)"
               >
                 <span class="lot__glyph">
@@ -260,6 +267,7 @@
                 type="button"
                 class="lot"
                 [class.is-selected]="selectedId() === '' + item.lot.id"
+                [attr.aria-pressed]="selectedId() === '' + item.lot.id"
                 (click)="select('' + item.lot.id)"
               >
                 <span class="lot__glyph">

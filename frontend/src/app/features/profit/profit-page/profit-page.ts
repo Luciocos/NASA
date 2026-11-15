@@ -176,6 +176,19 @@ export class ProfitPage {
       : value.toLocaleString('es-AR', { maximumFractionDigits: digits });
   }
 
+  /** "3,4 t/ha", o "Sin dato" sin la unidad */
+  protected tons(value: number | null): string {
+    return value === null ? 'Sin dato' : `${this.number(value)} t/ha`;
+  }
+
+  protected readonly missingText = computed(() => {
+    const missing = this.result().missing;
+    return [
+      ...(missing.includes('precio') ? ['el precio del grano'] : []),
+      ...(missing.includes('rinde') ? ['el rinde de la campaña'] : []),
+    ].join(' y ');
+  });
+
   private update(inputs: ProfitInputs): void {
     this.inputs.set(inputs);
     const id = this.lotId();

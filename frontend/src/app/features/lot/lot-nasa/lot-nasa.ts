@@ -78,9 +78,10 @@ export class LotNasa {
       },
     ];
   });
+  // solo los eventos del período pedido: la gráfica estira su eje para incluir cada marca
   protected readonly markers = computed<SeriesMarker[]>(() =>
     this.events()
-      .filter((event) => event.date >= '2020-01-01')
+      .filter((event) => event.date >= this.ndviSince())
       .map((event) => ({ date: event.date, label: event.type_label })),
   );
   protected readonly rainLast30 = computed(() => {

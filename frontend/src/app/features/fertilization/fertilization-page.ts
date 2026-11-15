@@ -24,6 +24,7 @@ import {
 import { OFFLINE_STORAGE } from '../../core/offline/storage';
 import { OriginBadge } from '../../shared/origin-badge/origin-badge';
 import { LotTabs } from '../../shared/ui/lot-tabs/lot-tabs';
+import { formatDate } from '../lot/labels';
 import { ZONE_STYLE, ZonesMap } from './zones-map';
 
 const STORAGE_KEY = 'lotestigo:fertilization:v1';
@@ -64,6 +65,7 @@ export class FertilizationPage {
   protected readonly zoneStyle = ZONE_STYLE;
   protected readonly modis = DATA_SOURCES.modisNdvi;
   protected readonly formatHectares = formatHectares;
+  protected readonly formatDate = formatDate;
 
   protected readonly grid = computed(() => this.gridState()?.() ?? null);
   protected readonly zones = computed(() => {
@@ -103,6 +105,7 @@ export class FertilizationPage {
     return {
       variableN,
       uniformN,
+      deltaN: variableN !== null && uniformN !== null ? variableN - uniformN : null,
       variableCo2: variableN !== null && factor !== null ? variableN * factor : null,
       uniformCo2: uniformN !== null && factor !== null ? uniformN * factor : null,
       averageDose: variableN !== null && area > 0 ? variableN / area : null,

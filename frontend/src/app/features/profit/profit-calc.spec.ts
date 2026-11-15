@@ -45,6 +45,12 @@ describe('profit-calc', () => {
     expect(table[0].cells[0].marginUsdHa).toBeLessThan(470);
   });
 
+  it('un flete sin cargar queda sin dato en el desglose, no como cero', () => {
+    const result = computeProfit({ ...emptyProfitInputs(), priceUsdT: 300 }, 3, 10);
+    expect(result.commercialUsdHa).toBeNull();
+    expect(result.marginUsdHa).toBe(900);
+  });
+
   it('formatea dólares en es-AR', () => {
     expect(formatUsd(18800)).toBe('US$ 18.800');
     expect(formatUsd(null)).toBe('Sin dato');

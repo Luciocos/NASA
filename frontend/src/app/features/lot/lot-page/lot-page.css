@@ -62,7 +62,8 @@ h2 {
 
 .compare-slot {
   margin: 1.5rem 0;
-  scroll-margin-top: 1rem;
+  /* deja a la vista el título debajo del encabezado fijo de la app */
+  scroll-margin-top: 4.5rem;
 }
 
 .filters {

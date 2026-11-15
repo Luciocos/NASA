@@ -104,14 +104,14 @@
             </div>
             <div class="tile">
               <span class="tile__label">Rinde</span>
-              <strong class="tile__value">{{ number(yieldTHa()) }} t/ha</strong>
+              <strong class="tile__value">{{ tons(yieldTHa()) }}</strong>
               @if (fp.yield.origin; as origin) {
                 <app-origin-badge [origin]="origin" />
               }
             </div>
             <div class="tile">
               <span class="tile__label">Rinde de indiferencia</span>
-              <strong class="tile__value">{{ number(result().breakEvenTHa) }} t/ha</strong>
+              <strong class="tile__value">{{ tons(result().breakEvenTHa) }}</strong>
               <span class="tile__unit">cubre los costos cargados</span>
             </div>
           </div>
@@ -123,16 +123,12 @@
             </p>
           }
           @if (result().missing.length > 0) {
-            <p class="alert alert--info">
-              Para calcular el margen falta:
-              {{ result().missing.includes('precio') ? 'el precio del grano' : '' }}
-              {{ result().missing.length === 2 ? 'y' : '' }}
-              {{ result().missing.includes('rinde') ? 'el rinde de la campaña' : '' }}.
-            </p>
+            <p class="alert alert--info">Para calcular el margen falta: {{ missingText() }}.</p>
           } @else if (result().missingCosts.length > 0) {
+            @let one = result().missingCosts.length === 1;
             <p class="alert alert--warn">
-              Hay {{ result().missingCosts.length }} costos sin cargar: si los tenés, el margen real
-              es menor.
+              Hay {{ result().missingCosts.length }} {{ one ? 'costo' : 'costos' }} sin cargar: si
+              {{ one ? 'lo' : 'los' }} tenés, el margen real es menor.
             </p>
           }
 
