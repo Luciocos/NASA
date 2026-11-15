@@ -35,6 +35,7 @@ export {
   compositeFromIndex,
   compositeIndexAt,
   landCoverWindow,
+  MODIS_CELL_M,
   parseLandCoverSubset,
   parseNdviSubset,
   windowKm,

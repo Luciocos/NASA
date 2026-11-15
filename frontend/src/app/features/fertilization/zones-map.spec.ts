@@ -24,6 +24,11 @@ describe('pixelTooltip', () => {
     expect(text).not.toContain('mixto');
   });
 
+  it('un cuadro casi entero no muestra un 100 % redondeado', () => {
+    const text = pixelTooltip('NDVI alto', pixel({ insideHa: 5.3, insideShare: 0.997 }), false);
+    expect(text).not.toContain('% del cuadro');
+  });
+
   it('en un píxel entero no habla de mezcla', () => {
     const text = pixelTooltip('NDVI bajo', pixel({ insideHa: 5.4, insideShare: 1 }), false);
     expect(text).not.toContain('mixto');

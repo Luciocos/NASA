@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DOCUMENT,
   DestroyRef,
   ElementRef,
   afterNextRender,
@@ -13,7 +14,8 @@ import {
 import * as L from 'leaflet';
 
 import { PolygonGeometry } from '../../core/models';
-import { NdviPixel, NdviZones, isMixedPixel } from '../../core/nasa';
+import { MODIS_CELL_M, NdviPixel, NdviZones, isMixedPixel } from '../../core/nasa';
+import { renderBlend } from './ndvi-blend';
 
 /** color y trazo de cada ambiente: el borde cambia además del color */
 export const ZONE_STYLE = {
@@ -47,6 +49,7 @@ export class ZonesMap {
   readonly zones = input<NdviZones | null>(null);
 
   private readonly element = viewChild.required<ElementRef<HTMLElement>>('map');
+  private readonly document = inject(DOCUMENT);
   private map: L.Map | null = null;
   private layer: L.LayerGroup | null = null;
   private resizeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -85,19 +88,30 @@ export class ZonesMap {
     const layer = this.layer;
     if (!map || !layer) return;
     layer.clearLayers();
+    // degradado suave entre ambientes, recortado al lote (solo visual: los números son por cuadro)
+    const blend = renderBlend(this.zones(), this.geometry(), MODIS_CELL_M, this.document);
+    if (blend) {
+      L.imageOverlay(blend.url, blend.bounds, {
+        interactive: false,
+        className: 'ndvi-blend',
+      }).addTo(layer);
+    }
     for (const zone of this.zones()?.zones ?? []) {
       const style = ZONE_STYLE[zone.level];
       for (const pixel of zone.pixels) {
         // solo la parte del píxel dentro del lote; una grilla sin recorte dibuja el píxel entero
         const shape = pixel.clip?.length ? pixel.clip : pixel.ring;
         const mixed = isMixedPixel(pixel);
+        // con degradado, el cuadro queda invisible y solo sirve para la ayuda al pasar el mouse;
+        // sin canvas (navegadores viejos) se dibuja como antes, plano y con trazo por ambiente
         L.polygon(shape, {
           color: style.color,
-          weight: 1.5,
+          weight: blend ? 0 : 1.5,
+          opacity: blend ? 0 : 1,
           dashArray: style.dash,
           fillColor: style.fill,
           // el píxel mixto va más claro; la ayuda y la leyenda dicen qué significa
-          fillOpacity: mixed ? 0.2 : 0.55,
+          fillOpacity: blend ? 0 : mixed ? 0.2 : 0.55,
         })
           .bindTooltip(pixelTooltip(zone.label, pixel, mixed))
           .addTo(layer);
@@ -118,7 +132,8 @@ export function pixelTooltip(label: string, pixel: NdviPixel, mixed: boolean): s
   const parts = [`${label}: NDVI ${formatter(2).format(pixel.value ?? 0)}`];
   if (pixel.insideHa) parts.push(`${formatter(1).format(pixel.insideHa)} ha en el lote`);
   const share = pixel.insideShare;
-  if (share !== undefined && share < 0.999) {
+  // un cuadro casi entero ("100 %" redondeado) no necesita la aclaración
+  if (share !== undefined && Math.round(share * 100) < 100) {
     const percent = `${formatter(0).format(share * 100)} % del cuadro está en tu lote`;
     parts.push(
       mixed
