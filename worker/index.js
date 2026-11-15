@@ -60,11 +60,32 @@ function isNavigation(request) {
   return request.headers.get("Sec-Fetch-Mode") === "navigate" || (request.headers.get("Accept") || "").includes("text/html");
 }
 
+// safari en el iphone pide el video de la landing por partes (Range) y sin un 206 no lo reproduce
+const VIDEO = /^\/landing\/[\w.-]+\.(mp4|webm)$/;
+
+async function withRange(request, response) {
+  const match = /^bytes=(\d*)-(\d*)$/.exec((request.headers.get("Range") || "").trim());
+  if (!match || response.status !== 200) return response;
+  const body = await response.arrayBuffer();
+  const size = body.byteLength;
+  const start = match[1] === "" ? Math.max(0, size - Number(match[2])) : Number(match[1]);
+  const end = match[1] === "" || match[2] === "" ? size - 1 : Math.min(Number(match[2]), size - 1);
+  if (!(start <= end && start < size)) {
+    return new Response(null, { status: 416, headers: { "Content-Range": `bytes */${size}` } });
+  }
+  const headers = new Headers(response.headers);
+  headers.set("Accept-Ranges", "bytes");
+  headers.set("Content-Range", `bytes ${start}-${end}/${size}`);
+  headers.set("Content-Length", String(end - start + 1));
+  return new Response(body.slice(start, end + 1), { status: 206, headers });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/api" || url.pathname.startsWith("/api/")) return toBackend(request, env);
     const asset = await env.ASSETS.fetch(request);
+    if (VIDEO.test(url.pathname) && request.headers.has("Range")) return withHeaders(await withRange(request, asset));
     if (asset.status !== 404) return withHeaders(asset);
     // en /media primero van los archivos del build (los íconos de leaflet y la evidencia de data/evidence) y lo que no esté se le pide a django
     if (url.pathname.startsWith("/media/")) return toBackend(request, env);
