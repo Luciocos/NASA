@@ -1,0 +1,66 @@
+<section
+  class="guide"
+  aria-roledescription="guía de pasos"
+  [attr.aria-labelledby]="label()"
+  [attr.aria-label]="label() ? null : 'Cómo cargar tus datos'"
+>
+  @if (heading(); as title) {
+    <header class="head">
+      <h2 class="title" [id]="headingId()">{{ title }}</h2>
+      @if (closable()) {
+        <button type="button" class="btn btn--ghost btn--icon close" (click)="closed.emit()">
+          <app-icon name="close" /><span class="visually-hidden">Cerrar la ayuda</span>
+        </button>
+      }
+    </header>
+  }
+
+  <div
+    class="stage"
+    (pointerdown)="onPointerDown($event)"
+    (pointerup)="onPointerUp($event)"
+    (pointercancel)="onPointerCancel()"
+  >
+    @for (item of shown(); track item.key) {
+      <figure
+        class="slide"
+        animate.enter="enter-slide"
+        [attr.data-step]="item.key"
+        [style.--slide-x]="direction() > 0 ? '1.5rem' : '-1.5rem'"
+      >
+        <app-help-scene class="scene" [step]="item.key" />
+        <figcaption class="caption">
+          <span class="num" aria-hidden="true">{{ index() + 1 }}</span>
+          <span class="caption__text">{{ item.caption }}</span>
+        </figcaption>
+      </figure>
+    }
+  </div>
+
+  <p class="visually-hidden" aria-live="polite" aria-atomic="true">
+    Paso {{ index() + 1 }} de {{ steps.length }}: {{ step().caption }}
+  </p>
+
+  <div class="nav">
+    <button
+      type="button"
+      class="btn prev"
+      [attr.aria-disabled]="isFirst() || null"
+      (click)="prev()"
+    >
+      <app-icon name="arrow-left" /><span class="prev__text">Anterior</span>
+    </button>
+    <ol class="dots" aria-hidden="true">
+      @for (item of steps; track item.key; let i = $index) {
+        <li class="dot" [class.is-done]="i < index()" [class.is-current]="i === index()"></li>
+      }
+    </ol>
+    <button #nextButton type="button" class="btn btn--primary next" (click)="advance()">
+      @if (isLast()) {
+        <app-icon name="check" /> Listo
+      } @else {
+        Siguiente <app-icon name="arrow-right" />
+      }
+    </button>
+  </div>
+</section>

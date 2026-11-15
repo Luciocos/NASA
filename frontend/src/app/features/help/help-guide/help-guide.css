@@ -1,0 +1,167 @@
+/*
+ * la guía se acomoda a su propio ancho (en el diálogo o en la página): debajo de 26rem, Anterior
+ * queda solo con la flecha y la frase baja un tamaño
+ */
+:host {
+  display: block;
+  container-type: inline-size;
+  min-width: 0;
+}
+
+.guide {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+}
+.title {
+  flex: 1;
+  margin: 0;
+  font-size: var(--text-lg);
+}
+.close {
+  flex: none;
+  margin-right: calc(-1 * var(--space-2));
+}
+
+/* la imagen manda: se desliza con el dedo de costado y deja desplazar en vertical */
+.stage {
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.slide {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+.scene {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow-1);
+}
+.caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: var(--tap);
+  color: var(--ink);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-align: center;
+  text-wrap: balance;
+}
+.num {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--field-700);
+  border-radius: 50%;
+  color: var(--field-800);
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.prev,
+.next {
+  flex: none;
+}
+.prev {
+  padding: 0 var(--space-4);
+}
+.next {
+  min-width: 8.5rem;
+}
+/*
+ * con el dedo, el hover queda pegado después de tocar: la capa oscura del hover tapa también el
+ * texto (queda en 3,9:1) y Siguiente parece apagado justo cuando hay que tocarlo otra vez
+ */
+@media (hover: none) {
+  .next:hover::after {
+    opacity: 0;
+  }
+}
+.dots {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* el avance se lee por tamaño y por color: el actual es más ancho */
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--line-strong);
+}
+.dot.is-done {
+  background: var(--field-300);
+}
+.dot.is-current {
+  width: 22px;
+  background: var(--field-700);
+}
+
+@container (max-width: 26rem) {
+  .guide {
+    gap: var(--space-3);
+  }
+  .caption {
+    gap: var(--space-2);
+    font-size: var(--text-lg);
+  }
+  .num {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: var(--text-sm);
+  }
+  .prev {
+    width: var(--tap);
+    padding: 0;
+  }
+  /* sin el texto a la vista, el botón conserva su nombre para el lector de pantalla */
+  .prev__text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .next {
+    min-width: 7.5rem;
+    padding: 0 var(--space-4);
+  }
+  .dots {
+    gap: 5px;
+  }
+  .dot {
+    width: 7px;
+    height: 7px;
+  }
+  .dot.is-current {
+    width: 16px;
+  }
+}

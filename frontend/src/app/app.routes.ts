@@ -40,5 +40,7 @@ export const routes: Routes = [
   { path: 'huella', loadChildren: () => import('./features/footprint/footprint.routes') },
   // el pasaporte es público: se abre por enlace sin cuenta
   { path: 'pasaporte', loadChildren: () => import('./features/passport/passport.routes') },
+  // la guía para cargar datos, con imágenes: pública, para mostrarla o compartirla
+  { path: 'ayuda', loadChildren: () => import('./features/help/help.routes') },
   { path: '**', redirectTo: '' },
 ];

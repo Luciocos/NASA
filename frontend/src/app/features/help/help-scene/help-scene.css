@@ -1,0 +1,822 @@
+/*
+ * miniaturas de la ayuda: los colores salen de los tokens de la app, así cada dibujo se ve
+ * como la pantalla real. los bordes finos no engordan al agrandarse (non-scaling-stroke)
+ */
+:host {
+  display: block;
+}
+
+.scene {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: var(--font-sans);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+text {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.bg {
+  fill: var(--paper);
+}
+.surface {
+  fill: var(--surface);
+}
+.card,
+.card-2,
+.frame,
+.input,
+.seg,
+.pill-active,
+.rule {
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.card {
+  fill: var(--surface);
+  stroke: var(--line);
+}
+.card-2 {
+  fill: var(--surface-2);
+  stroke: var(--line);
+}
+.frame {
+  fill: none;
+  stroke: var(--line);
+}
+.rule {
+  stroke: var(--line);
+}
+.input {
+  fill: var(--surface);
+  stroke: var(--line-control);
+}
+.seg {
+  fill: var(--paper-2);
+  stroke: var(--line);
+}
+.pill-active {
+  fill: var(--field-50);
+  stroke: var(--field-700);
+}
+.float {
+  fill: var(--surface);
+  filter: drop-shadow(0 1px 1.5px rgb(21 33 26 / 22%));
+}
+.pressed {
+  fill: var(--paper-2);
+}
+
+/* rayitas y barras en lugar de textos y valores */
+.ink {
+  fill: var(--ink);
+}
+.ink-2 {
+  fill: var(--ink-2);
+}
+.ink-3 {
+  fill: var(--ink-3);
+}
+.soft {
+  fill: var(--line-strong);
+}
+.green {
+  fill: var(--field-700);
+}
+.link {
+  fill: var(--field-800);
+}
+.field-50 {
+  fill: var(--field-50);
+}
+.field-100 {
+  fill: var(--field-100);
+}
+.accent-bar {
+  fill: var(--accent-strong);
+}
+.chip-warn {
+  fill: var(--warn-bg);
+  stroke: var(--warn);
+  stroke-width: 0.7;
+}
+
+/* etiquetas de origen, con los colores de origin-badge */
+.badge-v,
+.badge-d,
+.badge-e {
+  stroke-width: 0.8;
+}
+.badge-v {
+  fill: var(--origin-verified-bg);
+  stroke: var(--origin-verified);
+}
+.badge-d {
+  fill: var(--origin-declared-bg);
+  stroke: var(--origin-declared);
+}
+.badge-e {
+  fill: var(--origin-estimated-bg);
+  stroke: var(--origin-estimated);
+}
+
+/* Mi campo: el lote elegido en la lista y en la maqueta, y el cromo oscuro de la barra */
+.row-picked {
+  fill: var(--accent-soft);
+  stroke: var(--accent-line);
+  stroke-width: 1.2;
+}
+.lot-picked {
+  fill: #8fcf7c;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+.night {
+  fill: var(--night-glass);
+}
+.night-ink {
+  fill: var(--night-ink);
+}
+.night-sep {
+  stroke: var(--night-600);
+  stroke-width: 0.8;
+}
+
+/* el perímetro trazado: borde ámbar con halo oscuro y relleno claro, como en el alta de lote */
+.lot-fill {
+  fill: var(--draw-fill);
+  fill-opacity: 0.5;
+}
+.edge-halo {
+  stroke: rgb(0 0 0 / 50%);
+  stroke-width: 3.6;
+  stroke-linecap: round;
+}
+.edge {
+  stroke: var(--draw-line);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.corner {
+  fill: #fff;
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+
+/* Satélite: la curva del verdor */
+.area {
+  fill: var(--field-100);
+}
+.curve {
+  fill: none;
+  stroke: var(--field-700);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+/* Fertilización: el contorno del lote sobre los ambientes */
+.zone-halo {
+  fill: none;
+  stroke: rgb(0 0 0 / 45%);
+  stroke-width: 3.2;
+  stroke-linejoin: round;
+}
+.zone-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+/* Bitácora: el glifo del evento y el contorno sobre la evidencia */
+.glyph-mark {
+  fill: var(--field-50);
+  stroke: var(--field-300);
+  stroke-width: 0.8;
+}
+.evidence-line {
+  fill: none;
+  stroke: var(--draw-line);
+  stroke-width: 1;
+}
+
+/* Pasaporte: la sombra del menú */
+.menu-shadow {
+  fill: rgb(21 33 26 / 10%);
+}
+
+/* íconos de la app, con el mismo trazo que app-icon */
+.ico {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.glyph {
+  stroke-width: 2;
+}
+.c-green {
+  color: var(--field-700);
+}
+.c-link {
+  color: var(--field-800);
+}
+.c-muted {
+  color: var(--ink-3);
+}
+.c-ink {
+  color: var(--ink);
+}
+.c-white {
+  color: #fff;
+}
+.c-night {
+  color: var(--night-ink-2);
+}
+.t-ink {
+  fill: var(--ink);
+}
+.t-ink-2 {
+  fill: var(--ink-2);
+}
+.t-white {
+  fill: #fff;
+}
+.t-green {
+  fill: var(--field-800);
+}
+
+/*
+ * lo que hay que tocar: aro ámbar con un borde oscuro (se ve sobre la imagen satelital y sobre
+ * el verde), como lo elegido en la app, y la mano con la punta del dedo encima
+ */
+.ring-halo {
+  fill: none;
+  stroke: var(--accent-ink);
+  stroke-opacity: 0.55;
+  stroke-width: 3.8;
+}
+.ring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.2;
+}
+.flash {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.4;
+  opacity: 0;
+}
+.tap,
+.press {
+  transform-origin: 0 0;
+}
+
+/*
+ * el último cuadro es el estado de reposo: con prefers-reduced-motion no se anima nada y queda
+ * la mano sobre lo que se toca. las secuencias (Marcar lote, el pasaporte y las pestañas)
+ * terminan ahí. en las de pestañas, los puntos salen de --x1/--y1 … del dibujo
+ *
+ * el movimiento se repite unas veces (unos 20 segundos) y se queda quieto en ese cuadro: no
+ * distrae para siempre y vuelve a arrancar al cambiar de paso
+ */
+.seq2 {
+  translate: var(--x2) var(--y2);
+}
+.seq3 {
+  translate: var(--x3) var(--y3);
+}
+.s1-hand {
+  translate: 244px 149px;
+}
+.s1-ring1,
+.s9-ring1,
+.seq-ring1,
+.seq3-ring2 {
+  opacity: 0;
+}
+.s9-hand {
+  translate: 234px 46px;
+}
+.s9-menu {
+  transform-box: fill-box;
+  transform-origin: 100% 0;
+}
+.s9-pressed {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tap {
+    animation: help-tap 1.8s var(--ease-in-out) 6;
+  }
+  .flash {
+    animation: help-flash 1.8s ease-out 6;
+  }
+  .caret {
+    animation: help-caret 1.1s steps(1) 10;
+  }
+
+  /* las pestañas: primero la pestaña y después el botón (en la bitácora, también el evento) */
+  .seq2 {
+    animation: help-seq2 6s var(--ease-in-out) 3;
+  }
+  .seq2-press {
+    animation: help-seq2-press 6s linear 3;
+  }
+  .seq3 {
+    animation: help-seq3 6s var(--ease-in-out) 3;
+  }
+  .seq3-press {
+    animation: help-seq3-press 6s linear 3;
+  }
+  .seq-ring1 {
+    animation: help-seq-ring1 6s linear 3;
+  }
+  .seq-ring2 {
+    animation: help-seq-ring2 6s linear 3;
+  }
+  .seq3-ring2 {
+    animation: help-seq3-ring2 6s linear 3;
+  }
+  .seq3-ring3 {
+    animation: help-seq3-ring3 6s linear 3;
+  }
+  .flash.seq-flash {
+    animation: help-seq-flash 6s ease-out 3;
+  }
+  .flash.seq3-flash {
+    animation: help-seq3-flash 6s ease-out 3;
+  }
+
+  /* Marcar lote: Marcar lote, las cuatro esquinas y Guardar lote */
+  .s1-hand {
+    animation: s1-hand 7s var(--ease-in-out) 3;
+  }
+  .s1-press {
+    animation: s1-press 7s linear 3;
+  }
+  .s1-c1 {
+    animation: s1-c1 7s linear 3;
+  }
+  .s1-c2 {
+    animation: s1-c2 7s linear 3;
+  }
+  .s1-c3 {
+    animation: s1-c3 7s linear 3;
+  }
+  .s1-c4 {
+    animation: s1-c4 7s linear 3;
+  }
+  .s1-ring1 {
+    animation: s1-ring1 7s linear 3;
+  }
+  .s1-ring2 {
+    animation: s1-ring2 7s linear 3;
+  }
+  .s1-save {
+    animation: s1-save 7s linear 3;
+  }
+
+  /* pasaporte: ⋯ y después Compartir pasaporte */
+  .s9-hand {
+    animation: s9-hand 5s var(--ease-in-out) 3;
+  }
+  .s9-press {
+    animation: s9-press 5s linear 3;
+  }
+  .s9-menu,
+  .s9-pressed {
+    animation: s9-menu 5s var(--ease-out) 3;
+  }
+  .s9-ring1 {
+    animation: s9-ring1 5s linear 3;
+  }
+  .s9-ring2 {
+    animation: s9-ring2 5s linear 3;
+  }
+}
+
+/* la mano llega desde abajo, apoya el dedo y pulsa */
+@keyframes help-tap {
+  0%,
+  100% {
+    translate: 5px 7px;
+    scale: 1;
+  }
+  38% {
+    translate: 0 0;
+    scale: 1;
+  }
+  48% {
+    translate: 0 0;
+    scale: 0.88;
+  }
+  60% {
+    translate: 0 0;
+    scale: 1;
+  }
+}
+@keyframes help-flash {
+  0%,
+  44% {
+    opacity: 0;
+  }
+  52% {
+    opacity: 0.9;
+  }
+  80%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes help-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* pestaña y botón: la pestaña al 13 %, el botón al 42,5 % y queda ahí */
+@keyframes help-seq2 {
+  0% {
+    translate: var(--x1) var(--y1);
+    opacity: 0;
+  }
+  4%,
+  22% {
+    translate: var(--x1) var(--y1);
+    opacity: 1;
+  }
+  34%,
+  94% {
+    translate: var(--x2) var(--y2);
+    opacity: 1;
+  }
+  100% {
+    translate: var(--x2) var(--y2);
+    opacity: 0;
+  }
+}
+@keyframes help-seq2-press {
+  0%,
+  9%,
+  17%,
+  38%,
+  47%,
+  100% {
+    scale: 1;
+  }
+  13%,
+  42.5% {
+    scale: 0.86;
+  }
+}
+@keyframes help-seq-ring1 {
+  0%,
+  22% {
+    opacity: 1;
+  }
+  26%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes help-seq-ring2 {
+  0%,
+  32% {
+    opacity: 0;
+  }
+  36%,
+  95% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes help-seq-flash {
+  0%,
+  41% {
+    opacity: 0;
+  }
+  44% {
+    opacity: 0.9;
+  }
+  56%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* pestaña, evento y Confirmar: al 13 %, al 38 % y al 62,5 % */
+@keyframes help-seq3 {
+  0% {
+    translate: var(--x1) var(--y1);
+    opacity: 0;
+  }
+  4%,
+  22% {
+    translate: var(--x1) var(--y1);
+    opacity: 1;
+  }
+  32%,
+  44% {
+    translate: var(--x2) var(--y2);
+  }
+  56%,
+  94% {
+    translate: var(--x3) var(--y3);
+    opacity: 1;
+  }
+  100% {
+    translate: var(--x3) var(--y3);
+    opacity: 0;
+  }
+}
+@keyframes help-seq3-press {
+  0%,
+  9%,
+  17%,
+  34%,
+  42%,
+  58%,
+  67%,
+  100% {
+    scale: 1;
+  }
+  13%,
+  38%,
+  62.5% {
+    scale: 0.86;
+  }
+}
+@keyframes help-seq3-ring2 {
+  0%,
+  30% {
+    opacity: 0;
+  }
+  33%,
+  46% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes help-seq3-ring3 {
+  0%,
+  54% {
+    opacity: 0;
+  }
+  58%,
+  95% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes help-seq3-flash {
+  0%,
+  61% {
+    opacity: 0;
+  }
+  64% {
+    opacity: 0.9;
+  }
+  76%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes s1-hand {
+  0% {
+    translate: 152px 15px;
+    opacity: 0;
+  }
+  3%,
+  12% {
+    translate: 152px 15px;
+    opacity: 1;
+  }
+  20%,
+  27% {
+    translate: 72px 90px;
+  }
+  33%,
+  40% {
+    translate: 148px 82px;
+  }
+  46%,
+  53% {
+    translate: 152px 116px;
+  }
+  59%,
+  66% {
+    translate: 76px 124px;
+  }
+  76%,
+  94% {
+    translate: 244px 149px;
+    opacity: 1;
+  }
+  99%,
+  100% {
+    translate: 244px 149px;
+    opacity: 0;
+  }
+}
+@keyframes s1-press {
+  0%,
+  4%,
+  10%,
+  21%,
+  26%,
+  34%,
+  39%,
+  47%,
+  52%,
+  60%,
+  65%,
+  77%,
+  84%,
+  100% {
+    scale: 1;
+  }
+  7%,
+  23.5%,
+  36.5%,
+  49.5%,
+  62.5%,
+  80% {
+    scale: 0.86;
+  }
+}
+@keyframes s1-c1 {
+  0%,
+  23% {
+    opacity: 0;
+  }
+  24.5%,
+  95% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes s1-c2 {
+  0%,
+  36% {
+    opacity: 0;
+  }
+  37.5%,
+  95% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes s1-c3 {
+  0%,
+  49% {
+    opacity: 0;
+  }
+  50.5%,
+  95% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes s1-c4 {
+  0%,
+  62% {
+    opacity: 0;
+  }
+  63.5%,
+  95% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes s1-ring1 {
+  0%,
+  12% {
+    opacity: 1;
+  }
+  16%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes s1-ring2 {
+  0%,
+  72% {
+    opacity: 0;
+  }
+  76%,
+  95% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes s1-save {
+  0%,
+  62% {
+    opacity: 0.5;
+  }
+  64%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes s9-hand {
+  0% {
+    translate: 221px 20px;
+    opacity: 0;
+  }
+  4%,
+  26% {
+    translate: 221px 20px;
+    opacity: 1;
+  }
+  40%,
+  94% {
+    translate: 234px 46px;
+    opacity: 1;
+  }
+  100% {
+    translate: 234px 46px;
+    opacity: 0;
+  }
+}
+@keyframes s9-press {
+  0%,
+  10%,
+  18%,
+  44%,
+  52%,
+  100% {
+    scale: 1;
+  }
+  14%,
+  48% {
+    scale: 0.86;
+  }
+}
+@keyframes s9-menu {
+  0%,
+  15% {
+    opacity: 0;
+    scale: 0.92;
+  }
+  22%,
+  95% {
+    opacity: 1;
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1;
+  }
+}
+@keyframes s9-ring1 {
+  0%,
+  18% {
+    opacity: 1;
+  }
+  22%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes s9-ring2 {
+  0%,
+  38% {
+    opacity: 0;
+  }
+  42%,
+  95% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
