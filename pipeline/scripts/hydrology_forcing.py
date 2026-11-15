@@ -256,25 +256,43 @@ def split_events(hh: dict, ci: int, cj: int) -> list[dict]:
 
 
 def smap_before(day: str, lat: float, lon: float) -> dict | None:
-    """humedad SMAP 9 km de la mañana, del día anterior al evento o hasta 3 días antes"""
+    """humedad SMAP 9 km del día anterior al evento o hasta 5 días antes.
+
+    Se pide un bloque de 3 x 3 celdas de las pasadas de la mañana y de la tarde, porque un índice
+    suelto devuelve vacío en OPeNDAP. Se usa la celda del lote y, si no tiene dato (-9999), la más
+    cercana con dato del mismo bloque.
+    """
     to_ease = Transformer.from_crs('EPSG:4326', 'EPSG:6933', always_xy=True)
     x, y = to_ease.transform(lon, lat)
     cell = 9008.055210146
     col = int((x + 17367530.44516138) // cell)
     row = int((7314540.830638 - y) // cell)
+    block = f'[{row - 1}:{row + 1}][{col - 1}:{col + 1}]'
+    passes = [
+        ('AM', '/Soil_Moisture_Retrieval_Data_AM', ''),
+        ('PM', '/Soil_Moisture_Retrieval_Data_PM', '_pm'),
+    ]
+    ce = ';'.join(
+        f'{g}/{var}{sfx}{block}'
+        for _, g, sfx in passes
+        for var in ('soil_moisture', 'latitude', 'longitude')
+    )
     d0 = date.fromisoformat(day)
-    for back in range(1, 4):
+    for back in range(1, 6):
         d = d0 - timedelta(days=back)
-        r = requests.get(
-            CMR,
-            params={
-                'short_name': 'SPL3SMP_E',
-                'temporal': f'{d}T00:00:00Z,{d}T23:59:59Z',
-                'page_size': 5,
-            },
-            timeout=60,
-        )
-        items = r.json().get('items', [])
+        try:
+            r = requests.get(
+                CMR,
+                params={
+                    'short_name': 'SPL3SMP_E',
+                    'temporal': f'{d}T00:00:00Z,{d}T23:59:59Z',
+                    'page_size': 5,
+                },
+                timeout=60,
+            )
+            items = r.json().get('items', [])
+        except (requests.RequestException, ValueError):
+            continue
         urls = [
             u['URL']
             for it in items
@@ -283,26 +301,41 @@ def smap_before(day: str, lat: float, lon: float) -> dict | None:
         ]
         if not urls:
             continue
-        g = '/Soil_Moisture_Retrieval_Data_AM'
-        cell_ix = f'[{row}][{col}]'
-        ce = f'{g}/soil_moisture{cell_ix};{g}/latitude{cell_ix};{g}/longitude{cell_ix}'
         try:
             rr = requests.get(f'{urls[-1]}.dap.csv?dap4.ce={ce}', headers=headers(), timeout=120)
         except requests.RequestException:
             continue
-        values = {}
+        grids: dict[str, list[list[float]]] = {}
         for line in rr.text.splitlines():
-            for var in ('soil_moisture', 'latitude', 'longitude'):
-                if line.startswith(f'{g}/{var}'):
-                    values[var] = float(line.split(',')[-1])
-        sm = values.get('soil_moisture')
-        if sm is None or sm < 0:
+            name, _, rest = line.partition('[')
+            if not rest or ',' not in rest:
+                continue
+            try:
+                grids.setdefault(name, []).append([float(v) for v in rest.split(',')[1:]])
+            except ValueError:
+                continue  # fila vacía o sin dato
+        best = None
+        for label, g, sfx in passes:
+            sm = grids.get(f'{g}/soil_moisture{sfx}')
+            la = grids.get(f'{g}/latitude{sfx}')
+            lo = grids.get(f'{g}/longitude{sfx}')
+            if not (sm and la and lo):
+                continue
+            for i, line_sm in enumerate(sm):
+                for j, v in enumerate(line_sm):
+                    if v < 0 or la[i][j] < -90:
+                        continue
+                    dist = (la[i][j] - lat) ** 2 + ((lo[i][j] - lon) * 0.84) ** 2
+                    if best is None or dist < best[0]:
+                        best = (dist, v, la[i][j], lo[i][j], label)
+        if best is None:
             continue
+        _, v, cla, clo, label = best
         return {
             'date': d.isoformat(),
-            'm3_m3': round(sm, 3),
-            'cell_center': [round(values['latitude'], 3), round(values['longitude'], 3)],
-            'product': 'SPL3SMP_E (AM)',
+            'm3_m3': round(v, 3),
+            'cell_center': [round(cla, 3), round(clo, 3)],
+            'product': f'SPL3SMP_E ({label})',
         }
     return None
 
@@ -448,16 +481,24 @@ def soils() -> dict:
             lon = round(west + fx * (east - west), 4)
             if (lat, lon) in done:
                 continue
-            r = requests.get(
-                SOILGRIDS,
-                params=[('lon', lon), ('lat', lat), ('value', 'mean')]
-                + [('property', p) for p in ('sand', 'silt', 'clay')]
-                + [('depth', d) for d in ('0-5cm', '5-15cm', '15-30cm')],
-                timeout=120,
-            )
-            if r.status_code != 200:
-                print('SoilGrids', r.status_code, lat, lon)
+            r = None
+            for _ in range(3):
+                try:
+                    r = requests.get(
+                        SOILGRIDS,
+                        params=[('lon', lon), ('lat', lat), ('value', 'mean')]
+                        + [('property', p) for p in ('sand', 'silt', 'clay')]
+                        + [('depth', d) for d in ('0-5cm', '5-15cm', '15-30cm')],
+                        timeout=120,
+                    )
+                except requests.RequestException as error:
+                    print('SoilGrids', type(error).__name__, lat, lon)
+                    r = None
+                if r is not None and r.status_code == 200:
+                    break
                 time.sleep(15)
+            if r is None or r.status_code != 200:
+                print('SoilGrids sin respuesta', lat, lon)
                 continue
             frac = {}
             for layer in r.json()['properties']['layers']:

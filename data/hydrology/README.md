@@ -30,7 +30,7 @@ python scripts/hydrology_forcing.py   # IMERG, SMAP, MOD16, MCD12Q1 y SoilGrids
 | Relieve | Copernicus DEM GLO-30 (DSM) | AWS Open Data, sin login |
 | Cursos de agua | OpenStreetMap | Overpass API |
 | Lluvia | NASA GPM IMERG V07: diaria Final (`GPM_3IMERGDF`) y Late (`GPM_3IMERGDL`); cada media hora Final (`GPM_3IMERGHH`) y Late (`GPM_3IMERGHHL`) | Earthdata (OPeNDAP) |
-| Humedad del suelo | NASA SMAP L3 `SPL3SMP_E` (9 km, pasada de la mañana) | Earthdata (OPeNDAP) |
+| Humedad del suelo | NASA SMAP L3 `SPL3SMP_E` (9 km, pasada de la mañana o, si no hay, de la tarde) | Earthdata (OPeNDAP) |
 | Evapotranspiración | NASA MODIS `MOD16A2GF` (hasta 2025) y `MOD16A2` (2026) | ORNL DAAC |
 | Cobertura | NASA MODIS `MCD12Q1` LC_Type1 (IGBP), 500 m | ORNL DAAC |
 | Textura del suelo | ISRIC SoilGrids 2.0, 0–30 cm | REST API |
