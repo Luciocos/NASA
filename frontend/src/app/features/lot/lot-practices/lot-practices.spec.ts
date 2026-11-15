@@ -263,7 +263,13 @@ describe('LotPractices', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    // el panel de chequeos territoriales pide lo suyo; acá no se prueba
+    http
+      .match((req) => req.url.endsWith('/territorial-checks/'))
+      .forEach((req) => req.flush({ lot: 1, disclaimer: '', checks: [] }));
+    http.verify();
+  });
 
   it('destaca hasta tres recomendaciones de una frase y cada práctica con su chip', async () => {
     await render(LOT, score(MIXED, { score: 40, missing_criteria: [] }));

@@ -18,7 +18,7 @@ class CheckStatus(StrEnum):
 
 
 class CheckOrigin(StrEnum):
-    OFFICIAL_LAYER = 'OFFICIAL_LAYER'  # capa pública de un organismo (no es dato satelital)
+    OFFICIAL_LAYER = 'OFFICIAL_LAYER'  # capa pública (organismo u OpenStreetMap), no satelital
     DECLARED = 'DECLARED'  # informado por el productor
     VERIFIED = 'VERIFIED'  # observado por satélite
 
