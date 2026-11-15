@@ -65,26 +65,47 @@
   </ol>
 </section>
 
-<section class="section section--tint" aria-labelledby="data-title">
-  <h2 id="data-title">Cómo usamos los datos de la NASA</h2>
-  <p class="section__lead">
-    Cada dato dice de dónde sale: el satélite, lo que declaraste o una estimación.
-  </p>
-  <figure class="data reveal-scroll">
-    <a class="data__frame" [href]="infographic.src" target="_blank" rel="noopener">
-      <img
-        [src]="infographic.src"
-        width="1600"
-        height="1000"
-        loading="lazy"
-        decoding="async"
-        [alt]="infographic.alt"
-      />
+<section class="section section--tint" aria-labelledby="docs-title">
+  <h2 id="docs-title">Documentación</h2>
+  <p class="section__lead">Qué datos de la NASA usamos, cómo llegan y con qué tecnología escala.</p>
+
+  <div class="docs">
+    <section class="docs__group" aria-labelledby="docs-nasa">
+      <h3 id="docs-nasa">Cómo nos conectamos con la NASA</h3>
+      <ul class="docs__grid">
+        @for (source of nasa; track source.name) {
+          <li class="doc card reveal-scroll">
+            <span class="icon-mark" aria-hidden="true"><app-icon [name]="source.icon" /></span>
+            <h4>{{ source.name }}</h4>
+            <p>{{ source.what }}</p>
+            <p class="doc__how">
+              <span class="chip" [class.chip--ok]="source.live">{{
+                source.live ? 'En vivo' : 'Procesado aparte'
+              }}</span>
+              {{ source.how }}
+            </p>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="docs__group" aria-labelledby="docs-stack">
+      <h3 id="docs-stack">Tecnología para escalar</h3>
+      <ul class="docs__grid">
+        @for (tool of stack; track tool.name) {
+          <li class="doc card reveal-scroll">
+            <span class="icon-mark" aria-hidden="true"><app-icon [name]="tool.icon" /></span>
+            <h4>{{ tool.name }}</h4>
+            <p>{{ tool.why }}</p>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <a class="link-arrow docs__more" routerLink="/ayuda">
+      Cómo se carga cada dato: la guía con imágenes <app-icon name="arrow-right" />
     </a>
-    <figcaption class="data__caption small">
-      <a [href]="infographic.src" target="_blank" rel="noopener">Abrir la imagen en grande</a>
-    </figcaption>
-  </figure>
+  </div>
 </section>
 
 <section class="final" aria-labelledby="final-title">

@@ -402,15 +402,32 @@ describe('LandingPage', () => {
     expect(credit).toContain('NASA EOSDIS GIBS');
   });
 
-  it('la infografía de los datos de la NASA carga diferida y con su tamaño', async () => {
+  it('la documentación cuenta cómo se conecta con la NASA y con qué tecnología escala', async () => {
     await setup();
 
-    const img = el().querySelector<HTMLImageElement>('.data img')!;
-    expect(img.getAttribute('src')).toBe('/lotestigo-datos-nasa.jpg');
-    expect(img.getAttribute('loading')).toBe('lazy');
-    expect(img.getAttribute('width')).toBe('1600');
-    expect(img.getAttribute('height')).toBe('1000');
-    expect(img.alt).toContain('datos abiertos de la NASA');
+    expect(el().querySelector('#docs-title')?.textContent).toContain('Documentación');
+    expect(el().querySelector('img[src*="lotestigo-datos-nasa"]')).toBeNull();
+    const groups = [...el().querySelectorAll('.docs__group')];
+    expect(groups).toHaveLength(2);
+
+    const sources = [...groups[0].querySelectorAll('.doc')];
+    expect(sources).toHaveLength(6);
+    const sourceText = groups[0].textContent!;
+    for (const name of ['NISAR', 'HLS', 'MODIS', 'NASA POWER', 'CMR', 'IMERG']) {
+      expect(sourceText).toContain(name);
+    }
+    // cada fuente dice cómo llega: en vivo desde el navegador o procesada aparte
+    for (const card of sources) {
+      expect(card.querySelector('.chip')?.textContent?.trim()).toMatch(
+        /^(En vivo|Procesado aparte)$/,
+      );
+    }
+
+    const stackText = groups[1].textContent!;
+    for (const name of ['Angular 22', 'Cloudflare', 'Railway', 'PostgreSQL', 'Django']) {
+      expect(stackText).toContain(name);
+    }
+    expect(el().querySelector('.docs__more')?.getAttribute('href')).toBe('/ayuda');
   });
 
   it('es honesta: usa datos abiertos de la NASA, sin aval ni certificados', async () => {

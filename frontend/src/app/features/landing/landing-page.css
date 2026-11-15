@@ -181,33 +181,58 @@ h2 {
   background: var(--surface);
 }
 
-.data {
+/* documentación: dos grupos de tarjetas cortas, una línea por tarjeta */
+.docs {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.docs__group h3 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+}
+
+.docs__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--space-3);
   margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.data__frame {
-  display: block;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-2);
+.doc {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-content: start;
+  gap: var(--space-1) var(--space-3);
 }
 
-.data__frame img {
-  display: block;
-  width: 100%;
-  height: auto;
+.doc .icon-mark {
+  grid-row: span 3;
 }
 
-.data__caption {
-  margin-top: var(--space-1);
-  font-weight: 600;
+.doc h4 {
+  margin: 0;
+  font-size: var(--text-md);
 }
 
-/* el enlace chico se toca con el dedo: 44 px de alto sin agrandar la letra */
-.data__caption a {
-  display: inline-flex;
+.doc p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.doc__how {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+/* el enlace a la guía se toca con el dedo: 44 px de alto */
+.docs__more {
+  justify-self: start;
   min-height: var(--tap);
 }
 

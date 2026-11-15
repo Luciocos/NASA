@@ -42,18 +42,111 @@ export const LANDING_IMAGE: DemoFallback = {
   caption: 'Casilda y Rosario vistos por Landsat el 31/10/2026 (HLS, NASA EOSDIS GIBS).',
 };
 
-/** la infografía de los datos de la NASA, más abajo y con carga diferida */
-export const LANDING_INFOGRAPHIC = {
-  src: '/lotestigo-datos-nasa.jpg',
-  alt: 'Infografía de cómo LoTestigo usa los datos abiertos de la NASA: qué datos toma (NISAR, HLS, MODIS, NASA POWER, CMR y GIBS), cómo llegan a la app y para qué le sirven al productor (bitácora, Mi campo, fertilización, huella, puntaje y rentabilidad).',
-};
+interface NasaSource {
+  icon: IconName;
+  name: string;
+  /** para qué le sirve al productor, en una línea */
+  what: string;
+  /** por dónde llega a la app */
+  how: string;
+  /** en vivo desde el navegador o procesado aparte en el pipeline */
+  live: boolean;
+}
+
+/** documentación: qué datos de la NASA usa la app y cómo llegan (ver INFO.md, sección 3) */
+export const LANDING_NASA: readonly NasaSource[] = [
+  {
+    icon: 'satellite',
+    name: 'NISAR · radar banda L',
+    what: 'Ve labores como la siembra aunque haya nubes.',
+    how: 'Earthdata → pipeline en Python → bitácora',
+    live: false,
+  },
+  {
+    icon: 'eye',
+    name: 'HLS · Landsat y Sentinel-2',
+    what: 'Confirma con el verdor óptico lo que vio el radar.',
+    how: 'Earthdata → pipeline en Python',
+    live: false,
+  },
+  {
+    icon: 'leaf',
+    name: 'MODIS · NDVI y cobertura',
+    what: 'Verdor, ambientes y uso del suelo desde 2020.',
+    how: 'ORNL DAAC, desde el navegador',
+    live: true,
+  },
+  {
+    icon: 'cloud',
+    name: 'NASA POWER',
+    what: 'Lluvia y humedad del suelo de la zona.',
+    how: 'API abierta, desde el navegador',
+    live: true,
+  },
+  {
+    icon: 'search',
+    name: 'CMR de Earthdata',
+    what: 'Qué pasadas de NISAR y HLS cubren el lote.',
+    how: 'Catálogo abierto, desde el navegador',
+    live: true,
+  },
+  {
+    icon: 'water',
+    name: 'GPM IMERG, SMAP y MOD16',
+    what: 'Lluvia, humedad y evapotranspiración para Cuenca y Caudal.',
+    how: 'Pipeline en Python',
+    live: false,
+  },
+];
+
+interface StackTool {
+  icon: IconName;
+  name: string;
+  /** por qué lo usamos, en una línea */
+  why: string;
+}
+
+/** documentación: la tecnología y por qué la elegimos para escalar */
+export const LANDING_STACK: readonly StackTool[] = [
+  {
+    icon: 'layers',
+    name: 'Angular 22 · PWA',
+    why: 'Se instala en el celular y anda sin conexión en el campo.',
+  },
+  {
+    icon: 'cloud',
+    name: 'Cloudflare Workers',
+    why: 'Sirve la app desde el borde, cerca de cada usuario, y escala sola.',
+  },
+  {
+    icon: 'sync',
+    name: 'Railway + GitHub Actions',
+    why: 'Backend en contenedores, publicado solo en cada cambio.',
+  },
+  {
+    icon: 'list',
+    name: 'PostgreSQL',
+    why: 'Los datos de cada productor, privados y consistentes.',
+  },
+  {
+    icon: 'chart',
+    name: 'Python · Django y DRF',
+    why: 'API y cuentas en el mismo lenguaje del análisis satelital.',
+  },
+  {
+    icon: 'satellite',
+    name: 'Pipeline en Python',
+    why: 'Lo pesado (radar e hidrología) corre aparte: la app responde rápido.',
+  },
+];
 
 /**
  * página de inicio pública, para productores agrícolas, ganaderos y asesores. arriba, el título
  * y el recorrido en video como protagonista; una sola acción principal: "Crear cuenta gratis"
  * (/registrarse), con "Ya tengo cuenta" (/ingresar) al lado y "Ver un lote de ejemplo" como
- * enlace chico. con la sesión abierta, "Ir a mi campo". no le pide nada al backend: el video, la
- * imagen satelital y la infografía son archivos propios, y lo de abajo carga al acercarse
+ * enlace chico. con la sesión abierta, "Ir a mi campo". abajo, la documentación: cómo se conecta
+ * con la NASA y la tecnología para escalar. no le pide nada al backend: el video y la imagen
+ * satelital son archivos propios, y lo de abajo carga al acercarse
  */
 @Component({
   selector: 'app-landing-page',
@@ -65,6 +158,7 @@ export const LANDING_INFOGRAPHIC = {
 export class LandingPage {
   protected readonly steps = LANDING_STEPS;
   protected readonly image = LANDING_IMAGE;
-  protected readonly infographic = LANDING_INFOGRAPHIC;
+  protected readonly nasa = LANDING_NASA;
+  protected readonly stack = LANDING_STACK;
   protected readonly loggedIn = inject(AuthService).loggedIn;
 }
