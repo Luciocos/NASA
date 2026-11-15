@@ -1,0 +1,220 @@
+/* el recorrido: el video en un marco claro que flota sobre un resplandor con los colores del campo */
+:host {
+  position: relative;
+  display: block;
+  min-width: 0;
+  isolation: isolate;
+}
+
+:host::before {
+  content: '';
+  position: absolute;
+  inset: 4% 3% 18%;
+  z-index: -1;
+  border-radius: 50%;
+  background: linear-gradient(120deg, var(--field-300), var(--water-300) 55%, var(--straw-200));
+  opacity: 0.55;
+  filter: blur(48px);
+}
+
+/* una sola columna que se achica: la fila de capítulos se desliza en vez de ensanchar el video */
+.demo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.demo__device {
+  padding: 0.375rem;
+  border: 1px solid rgb(255 255 255 / 85%);
+  border-radius: calc(var(--radius-xl) + 0.375rem);
+  background: rgb(255 255 255 / 55%);
+  box-shadow:
+    0 0 0 1px rgb(21 33 26 / 7%),
+    0 12px 24px -12px rgb(21 33 26 / 18%),
+    0 32px 64px -24px rgb(21 33 26 / 38%);
+}
+
+.demo__screen {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-xl);
+  background: var(--paper-2);
+}
+
+.demo__video,
+.demo__fallback {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.demo--failed .demo__video {
+  visibility: hidden;
+}
+
+.demo__video::cue {
+  font-family: var(--font-sans);
+}
+
+/* sin arranque solo: el póster con un botón grande en el medio */
+.demo__start {
+  --icon-size: 1.25rem;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: max-content;
+  height: max-content;
+  min-height: 3.5rem;
+  margin: auto;
+  padding: var(--space-2) var(--space-5) var(--space-2) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--night-glass);
+  color: var(--night-ink);
+  box-shadow: var(--shadow-hud);
+  font-size: var(--text-md);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.demo__start:focus-visible {
+  outline-color: var(--accent);
+}
+
+.demo__start-icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* la imagen satelital en lugar del video, con su fuente sobre un degradé */
+.demo__credit {
+  --icon-size: 1rem;
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-6) var(--space-4) var(--space-3);
+  background: linear-gradient(transparent, rgb(11 22 34 / 78%));
+  color: #fff;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}
+
+.demo__bar {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.demo__toggle {
+  flex: none;
+  border-radius: 50%;
+}
+
+.demo__chapters {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  min-width: 0;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* cada capítulo salta a su parte; el actual va en verde y se llena a medida que avanza */
+.demo__chapter {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0 0.625rem;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.demo__chapter:hover {
+  border-color: var(--line-control);
+  color: var(--ink);
+}
+
+.demo__chapter[aria-current='true'] {
+  border-color: var(--field-700);
+  background: var(--field-700);
+  color: #fff;
+}
+
+.demo__chapter[aria-current='true']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--field-900);
+  transform: scaleX(var(--p, 0));
+  transform-origin: left;
+  transition: transform 0.3s linear;
+}
+
+@media (pointer: coarse) {
+  .demo__chapter {
+    min-height: var(--tap);
+  }
+
+  .demo__chapters {
+    margin-top: 0;
+  }
+}
+
+/* en el celular los capítulos van en una sola fila que se desliza, con aire para el anillo del foco */
+@media (max-width: 40rem) {
+  .demo__bar {
+    align-items: center;
+  }
+
+  .demo__chapters {
+    flex-wrap: nowrap;
+    margin: 0;
+    padding: 0.25rem var(--space-2);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    mask-image: linear-gradient(90deg, transparent, #000 0.75rem calc(100% - 0.75rem), transparent);
+  }
+
+  .demo__chapters > li {
+    flex: none;
+  }
+
+  /* el subtítulo no baja de 13 px aunque el video sea chico */
+  .demo__video::cue {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo__chapter[aria-current='true']::before {
+    transition: none;
+  }
+}

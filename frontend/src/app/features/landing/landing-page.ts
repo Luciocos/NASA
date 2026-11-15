@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { Icon } from '../../shared/ui/icon/icon';
 import { IconName } from '../../shared/ui/icon/icons';
+import { DemoFallback, DemoVideo } from './demo-video/demo-video';
 
 interface Step {
   icon: IconName;
@@ -11,47 +12,34 @@ interface Step {
   text: string;
 }
 
-interface Place {
-  name: string;
-  /** posición en la imagen, en % del ancho y del alto */
-  left: number;
-  top: number;
-  /** la etiqueta va a la izquierda del punto, para no salirse del borde derecho */
-  labelBefore?: boolean;
-}
-
 export const LANDING_STEPS: readonly Step[] = [
   {
     icon: 'vertices',
-    title: 'Marcá el perímetro de tu lote sobre la imagen satelital',
-    text: 'Tocá sus esquinas en el mapa. Sin planillas.',
+    title: 'Marcá el perímetro del lote',
+    text: 'Tocá sus esquinas sobre la imagen satelital. Sin planillas.',
   },
   {
     icon: 'satellite',
-    title: 'Mirá lo que ve el satélite',
-    text: 'Verdor, lluvia y humedad del suelo, con datos abiertos de la NASA.',
+    title: 'Mirá los datos de la NASA, simplificados',
+    text: 'Verdor, lluvia, humedad del suelo y la historia del lote.',
   },
   {
     icon: 'footprint',
-    title: 'Conocé tu huella, fertilización y rentabilidad',
+    title: 'Conocé huella, fertilización y rentabilidad',
     text: 'Son estimaciones: cada número dice de dónde sale.',
   },
 ];
 
 /**
- * imagen satelital real del encabezado: teselas de NASA GIBS (HLS Landsat, L30, zoom 11) del
- * 31/10/2026, un día despejado, unidas en un solo archivo liviano sin retocar los colores. las
- * posiciones de Casilda y Rosario salen de proyectar sus coordenadas sobre ese recorte
+ * imagen satelital real de la zona: teselas de NASA GIBS (HLS Landsat, L30, zoom 11) del
+ * 31/10/2026, un día despejado, unidas en un solo archivo liviano sin retocar los colores. es el
+ * fondo del cierre y ocupa el lugar del video si no carga
  */
-export const LANDING_IMAGE = {
+export const LANDING_IMAGE: DemoFallback = {
   src: '/zona-nucleo-landsat-800.webp',
   srcset: '/zona-nucleo-landsat-800.webp 800w, /zona-nucleo-landsat-1200.webp 1200w',
   alt: 'Imagen satelital de los campos de la Zona Núcleo entre Casilda y Rosario, con el río Paraná y sus islas a la derecha',
   caption: 'Casilda y Rosario vistos por Landsat el 31/10/2026 (HLS, NASA EOSDIS GIBS).',
-  places: [
-    { name: 'Casilda', left: 36.6, top: 58.5 },
-    { name: 'Rosario', left: 84.7, top: 41.6, labelBefore: true },
-  ] satisfies Place[],
 };
 
 /** la infografía de los datos de la NASA, más abajo y con carga diferida */
@@ -61,15 +49,16 @@ export const LANDING_INFOGRAPHIC = {
 };
 
 /**
- * página de inicio pública. una sola acción principal: "Crear cuenta gratis" (/registrarse),
- * con "Ya tengo cuenta" (/ingresar) al lado y "Ver un lote de ejemplo" como enlace chico. con la
- * sesión abierta, "Ir a mi campo". no pide nada a la red: la imagen satelital es un archivo
- * propio y la infografía carga recién al acercarse
+ * página de inicio pública, para productores agrícolas, ganaderos y asesores. arriba, el título
+ * y el recorrido en video como protagonista; una sola acción principal: "Crear cuenta gratis"
+ * (/registrarse), con "Ya tengo cuenta" (/ingresar) al lado y "Ver un lote de ejemplo" como
+ * enlace chico. con la sesión abierta, "Ir a mi campo". no le pide nada al backend: el video, la
+ * imagen satelital y la infografía son archivos propios, y lo de abajo carga al acercarse
  */
 @Component({
   selector: 'app-landing-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, Icon],
+  imports: [RouterLink, Icon, DemoVideo],
   templateUrl: './landing-page.html',
   styleUrl: './landing-page.css',
 })

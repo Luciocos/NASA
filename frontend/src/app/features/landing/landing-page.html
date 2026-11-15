@@ -18,11 +18,18 @@
 </header>
 
 <section class="hero" aria-labelledby="hero-title">
-  <div class="hero__copy" animate.enter="enter-rise">
-    <p class="eyebrow">Para productores de la Zona Núcleo</p>
-    <h1 id="hero-title">Facilitación y potenciador de productores en huella y trazabilidad</h1>
+  <div class="hero__head" animate.enter="enter-rise">
+    <p class="hero__tag">Para productores agrícolas, ganaderos y asesores</p>
+    <h1 id="hero-title">
+      Ecosistema que facilita y potencia a los productores y asesores en monitorear
+      <strong>datos de la NASA simplificados</strong>, <strong>huellas</strong>,
+      <strong>fertilización</strong> y <strong>rentabilidad</strong>
+    </h1>
+  </div>
+
+  <div class="hero__side" animate.enter="enter-rise">
     <p class="hero__lead">
-      Marcá tu lote y mirá lo que ve el satélite. Gratis y con datos abiertos de la NASA.
+      Marcá el lote y mirá lo que ve el satélite. Gratis, con datos abiertos de la NASA.
     </p>
     <div class="hero__actions">
       @if (loggedIn()) {
@@ -39,34 +46,7 @@
     </a>
   </div>
 
-  <figure class="sat" animate.enter="enter-fade">
-    <div class="sat__frame">
-      <img
-        class="sat__img"
-        [src]="image.src"
-        [srcset]="image.srcset"
-        sizes="(min-width: 56rem) 40rem, calc(100vw - 2rem)"
-        width="1200"
-        height="750"
-        fetchpriority="high"
-        decoding="async"
-        [alt]="image.alt"
-      />
-      @for (place of image.places; track place.name) {
-        <span
-          class="sat__place"
-          [class.sat__place--end]="place.labelBefore"
-          [style.left.%]="place.left"
-          [style.top.%]="place.top"
-          >{{ place.name }}</span
-        >
-      }
-    </div>
-    <figcaption class="sat__caption">
-      <app-icon name="satellite" />
-      <span>{{ image.caption }}</span>
-    </figcaption>
-  </figure>
+  <app-demo-video class="hero__demo" animate.enter="enter-fade" [fallback]="image" />
 </section>
 
 <section class="section" aria-labelledby="steps-title">
@@ -108,17 +88,32 @@
 </section>
 
 <section class="final" aria-labelledby="final-title">
+  <img
+    class="final__bg"
+    [src]="image.src"
+    [srcset]="image.srcset"
+    sizes="100vw"
+    width="1200"
+    height="750"
+    loading="lazy"
+    decoding="async"
+    alt=""
+  />
   @if (loggedIn()) {
     <h2 id="final-title">Tus lotes te esperan</h2>
-    <p>Seguí con lo que vio el satélite en tu campo.</p>
+    <p>Seguí con lo que vio el satélite en tus lotes.</p>
     <a class="btn btn--primary btn--lg" routerLink="/mapa">
       Ir a mi campo <app-icon name="arrow-right" />
     </a>
   } @else {
-    <h2 id="final-title">Probá con tu lote</h2>
+    <h2 id="final-title">Probalo con un lote</h2>
     <p>Es gratis y tus lotes son privados: solo vos los ves.</p>
     <a class="btn btn--primary btn--lg" routerLink="/registrarse">Crear cuenta gratis</a>
   }
+  <p class="final__credit">
+    <app-icon name="satellite" />
+    <span>{{ image.caption }}</span>
+  </p>
 </section>
 
 <footer class="foot">

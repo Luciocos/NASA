@@ -1,0 +1,93 @@
+<figure class="demo" [class.demo--failed]="failed()">
+  <div class="demo__device">
+    <div class="demo__screen">
+      <video
+        #video
+        class="demo__video"
+        width="1280"
+        height="800"
+        poster="/landing/demo-poster.webp"
+        preload="metadata"
+        muted
+        playsinline
+        loop
+        disablepictureinpicture
+        disableremoteplayback
+        (play)="playing.set(true)"
+        (pause)="playing.set(false)"
+        (timeupdate)="onTime()"
+        (error)="failed.set(true)"
+      >
+        <source src="/landing/demo.webm" type="video/webm" />
+        <source src="/landing/demo.mp4" type="video/mp4" (error)="failed.set(true)" />
+        <track kind="captions" src="/landing/demo.es.vtt" srclang="es" label="Español" default />
+        <track
+          kind="chapters"
+          src="/landing/demo.chapters.vtt"
+          srclang="es"
+          label="Partes del recorrido"
+          (load)="readChapters()"
+        />
+      </video>
+
+      @if (failed()) {
+        <img
+          class="demo__fallback"
+          [src]="fallback().src"
+          [srcset]="fallback().srcset"
+          sizes="(min-width: 60rem) 50rem, 100vw"
+          width="1200"
+          height="750"
+          decoding="async"
+          [alt]="fallback().alt"
+        />
+        <p class="demo__credit">
+          <app-icon name="satellite" />
+          <span>{{ fallback().caption }}</span>
+        </p>
+      } @else if (askToPlay() && !playing()) {
+        <button type="button" class="demo__start" (click)="watch()">
+          <span class="demo__start-icon"><app-icon name="play" /></span>
+          Ver el recorrido
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (!failed()) {
+    <div class="demo__bar">
+      <button
+        #toggleButton
+        type="button"
+        class="btn btn--icon demo__toggle"
+        [attr.aria-label]="playing() ? 'Pausar el recorrido' : 'Reproducir el recorrido'"
+        (click)="toggle()"
+      >
+        <app-icon [name]="playing() ? 'pause' : 'play'" />
+      </button>
+      @if (chapters().length) {
+        <ol #list class="demo__chapters" aria-label="Partes del recorrido">
+          @for (chapter of chapters(); track chapter.start; let i = $index) {
+            <li>
+              <button
+                type="button"
+                class="demo__chapter"
+                [attr.aria-current]="i === current() ? 'true' : null"
+                [style.--p]="i === current() ? progress() : null"
+                (click)="seek(chapter)"
+              >
+                {{ chapter.title }}
+              </button>
+            </li>
+          }
+        </ol>
+      }
+    </div>
+  }
+
+  <figcaption class="visually-hidden">
+    Recorrido por la app, sin sonido y con subtítulos: marcar un lote y ver los datos de la NASA
+    simplificados, la historia del lote, las prácticas, la huella, la fertilización y la
+    rentabilidad.
+  </figcaption>
+</figure>
