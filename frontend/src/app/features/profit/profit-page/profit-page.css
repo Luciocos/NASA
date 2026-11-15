@@ -171,3 +171,27 @@ p {
     padding: var(--space-2);
   }
 }
+
+.suggest {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+}
+
+.suggest__note,
+.suggest__error {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+
+.suggest__warn {
+  display: block;
+  font-weight: 600;
+  color: #8a5a00;
+}
+
+.suggest__error {
+  color: #a1261a;
+}

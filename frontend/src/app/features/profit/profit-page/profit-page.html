@@ -88,9 +88,36 @@
               placeholder="Sin cargar"
             />
             <span class="field__hint">
-              <app-origin-badge origin="DECLARED" /> Por tonelada, antes del flete.
+              <app-origin-badge [origin]="priceOrigin()" /> Por tonelada, antes del flete.
             </span>
           </label>
+          @if (canSuggestPrice()) {
+            <div class="suggest">
+              <button
+                type="button"
+                class="btn btn--sm"
+                [disabled]="loadingSuggestion()"
+                (click)="loadSuggestedPrice()"
+              >
+                {{ loadingSuggestion() ? 'Consultando Rofex…' : 'Cargar precio sugerido de Rofex' }}
+              </button>
+              @if (suggestion(); as s) {
+                <p class="suggest__note">
+                  <strong>Precio sugerido de mercado:</strong> US$ {{ number(s.price_usd_t) }}/t,
+                  {{ suggestionKind(s.kind) }}{{ suggestionDate(s.date) }} del futuro
+                  {{ s.symbol }} en Matba Rofex. {{ s.disclaimer }}
+                  @if (s.simulated_market) {
+                    <span class="suggest__warn"
+                      >Viene del entorno de prueba reMarkets: no es un precio real de mercado.</span
+                    >
+                  }
+                </p>
+              }
+              @if (suggestionError(); as message) {
+                <p class="suggest__error" role="alert">{{ message }}</p>
+              }
+            </div>
+          }
 
           <label class="field">
             <span>Rinde <span class="unit">t/ha</span></span>

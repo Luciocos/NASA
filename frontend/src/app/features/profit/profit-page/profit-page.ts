@@ -8,6 +8,7 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
@@ -15,7 +16,7 @@ import { map } from 'rxjs';
 import { Api } from '../../../core/api';
 import { AuthSession } from '../../../core/auth/auth-session';
 import { formatHectares } from '../../../core/insights';
-import { Footprint, LotDetail, Origin } from '../../../core/models';
+import { Footprint, LotDetail, Origin, SuggestedPrice } from '../../../core/models';
 import { WaterfallChart, WaterfallStep } from '../../../shared/charts';
 import { InfoTip } from '../../lot/lot-workspace/info-tip';
 import { OriginBadge } from '../../../shared/origin-badge/origin-badge';
@@ -123,6 +124,20 @@ export class ProfitPage {
   );
   protected readonly area = computed(() => this.lot()?.area_ha ?? 0);
 
+  /** precio sugerido de Rofex: solo hay contrato para soja (y se asume soja sin campaña) */
+  protected readonly canSuggestPrice = computed(() => {
+    const crop = this.footprint()?.campaign?.crop;
+    return crop === undefined || crop === 'SOY';
+  });
+  protected readonly suggestion = signal<SuggestedPrice | null>(null);
+  protected readonly loadingSuggestion = signal(false);
+  protected readonly suggestionError = signal<string | null>(null);
+  /** el precio es el sugerido mientras el productor no lo cambie; si lo cambia, es declarado */
+  protected readonly priceOrigin = computed<Origin>(() => {
+    const s = this.suggestion();
+    return s !== null && this.inputs().priceUsdT === s.price_usd_t ? 'ESTIMATED' : 'DECLARED';
+  });
+
   /** rinde de la huella: declarado en la campaña o valor de referencia regional */
   protected readonly huellaYield = computed(() => this.footprint()?.yield.value ?? null);
   /** el rinde con el que se calcula: el que cargó acá el productor o el de la huella */
@@ -193,7 +208,9 @@ export class ProfitPage {
   });
   /** el margen usa precio y costos declarados; si el rinde es de referencia, es una estimación */
   protected readonly marginOrigin = computed<Origin>(() =>
-    this.yieldOrigin() === 'ESTIMATED' ? 'ESTIMATED' : 'DECLARED',
+    this.yieldOrigin() === 'ESTIMATED' || this.priceOrigin() === 'ESTIMATED'
+      ? 'ESTIMATED'
+      : 'DECLARED',
   );
 
   /** cascada del margen por hectárea con los conceptos cargados (los vacíos no se dibujan) */
@@ -304,6 +321,39 @@ export class ProfitPage {
 
   protected setPrice(raw: string): void {
     this.type('price', raw, { ...this.inputs(), priceUsdT: parse(raw) });
+  }
+
+  /** pide el precio sugerido de Rofex y lo carga en el campo; el productor lo puede cambiar */
+  protected loadSuggestedPrice(): void {
+    const label = this.campaignLabel();
+    this.loadingSuggestion.set(true);
+    this.suggestionError.set(null);
+    this.api.suggestedPrice('SOY', label === NO_CAMPAIGN ? null : label).subscribe({
+      next: (price) => {
+        this.loadingSuggestion.set(false);
+        this.suggestion.set(price);
+        this.setPrice(String(price.price_usd_t).replace('.', ','));
+      },
+      error: (err: HttpErrorResponse) => {
+        this.loadingSuggestion.set(false);
+        const detail = (err.error as { detail?: string } | null)?.detail;
+        this.suggestionError.set(
+          err.status === 0
+            ? 'No hay conexión con el servidor.'
+            : (detail ?? 'No se pudo traer el precio de Rofex.'),
+        );
+      },
+    });
+  }
+
+  protected suggestionKind(kind: SuggestedPrice['kind']): string {
+    return kind === 'settlement' ? 'ajuste' : kind === 'last' ? 'último operado' : 'cierre';
+  }
+
+  protected suggestionDate(date: string | null): string {
+    if (!date) return '';
+    const [y, m, d] = date.split('-');
+    return ` del ${d}/${m}/${y}`;
   }
 
   protected setYield(raw: string): void {

@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'carbon',
     'passports',
     'territory',
+    'market',
 ]
 
 MIDDLEWARE = [

@@ -91,6 +91,56 @@ describe('ProfitPage', () => {
     expect(text()).toContain('Faltan el precio del grano y el rinde.');
   });
 
+  it('carga el precio sugerido de Rofex, lo marca como estimado y avisa si es de prueba', async () => {
+    await setup(3);
+    const button = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('button'),
+    ).find((b) => b.textContent?.includes('Cargar precio sugerido de Rofex'));
+    expect(button).toBeDefined();
+    button!.click();
+    http
+      .expectOne(
+        (req) =>
+          req.url === '/api/market/suggested-price/' &&
+          req.params.get('crop') === 'SOY' &&
+          req.params.get('campaign') === '2025/26',
+      )
+      .flush({
+        crop: 'SOY',
+        symbol: 'SOJ.ROS/MAY26',
+        price_usd_t: 300,
+        kind: 'settlement',
+        date: '2026-11-13',
+        environment: 'REMARKET',
+        simulated_market: true,
+        source: 'Matba Rofex',
+        disclaimer: 'Precio sugerido de mercado.',
+      });
+    await fixture.whenStable();
+    expect(amounts()).toEqual(['900', '9.000']);
+    expect(text()).toContain('Precio sugerido de mercado: US$ 300/t, ajuste del 13/11/2026');
+    expect(text()).toContain('SOJ.ROS/MAY26');
+    expect(text()).toContain('no es un precio real de mercado');
+    expect(text()).toContain('Estimado');
+    // si el productor lo cambia, pasa a ser declarado
+    page().setPrice('310');
+    await fixture.whenStable();
+    expect(text()).not.toContain('Estimado');
+  });
+
+  it('sin credenciales en el servidor muestra el motivo', async () => {
+    await setup(3);
+    (fixture.componentInstance as unknown as { loadSuggestedPrice(): void }).loadSuggestedPrice();
+    http
+      .expectOne((req) => req.url === '/api/market/suggested-price/')
+      .flush(
+        { detail: 'El servidor no tiene configurada la conexión con Matba Rofex.' },
+        { status: 503, statusText: 'Service Unavailable' },
+      );
+    await fixture.whenStable();
+    expect(text()).toContain('no tiene configurada la conexión');
+  });
+
   it('si solo falta el precio, lo dice como motivo del margen', async () => {
     await setup(3);
     expect(text()).toContain('Falta el precio del grano.');
