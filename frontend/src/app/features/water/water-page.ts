@@ -55,7 +55,7 @@ function toLotId(value: unknown): number | undefined {
 export const num = (v: number | null | undefined, digits = 1): string =>
   v === null || v === undefined
     ? '—'
-    : v.toLocaleString('es-AR', { maximumFractionDigits: digits, minimumFractionDigits: 0 });
+    : v.toLocaleString('en-US', { maximumFractionDigits: digits, minimumFractionDigits: 0 });
 
 /** escenario guardado para comparar en el simulador */
 interface SavedScenario {
@@ -331,7 +331,7 @@ export class WaterPage {
   }
 
   protected eventTime(e: RainEvent): string {
-    return new Date(e.start).toLocaleTimeString('es-AR', {
+    return new Date(e.start).toLocaleTimeString('en-GB', {
       hour: '2-digit',
       minute: '2-digit',
       timeZone: 'America/Argentina/Buenos_Aires',

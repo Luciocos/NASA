@@ -1,7 +1,7 @@
 /** texto de un valor que no existe. las gráficas nunca rellenan ni interpolan un faltante */
 export const NO_DATA = 'No data';
 
-const LOCALE = 'es-AR';
+const LOCALE = 'en-US';
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})/;
 

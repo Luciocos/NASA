@@ -13,17 +13,17 @@ import {
 
 describe('formatNumber', () => {
   it('usa coma decimal, punto de miles y decimales fijos', () => {
-    expect(formatNumber(1250.5)).toBe('1.250,5');
-    expect(formatNumber(-1.78, 2)).toBe('-1,78');
-    expect(formatNumber(0.3, 2)).toBe('0,30');
+    expect(formatNumber(1250.5)).toBe('1,250.5');
+    expect(formatNumber(-1.78, 2)).toBe('-1.78');
+    expect(formatNumber(0.3, 2)).toBe('0.30');
     expect(formatNumber(120, 0)).toBe('120');
-    expect(formatNumber(1234567.891, 2)).toBe('1.234.567,89');
+    expect(formatNumber(1234567.891, 2)).toBe('1,234,567.89');
   });
 
   it('redondea sin dejar un cero negativo', () => {
-    expect(formatNumber(-0.04, 1)).toBe('0,0');
-    expect(formatNumber(-0.0004, 2)).toBe('0,00');
-    expect(formatNumber(0.05, 1)).toBe('0,1');
+    expect(formatNumber(-0.04, 1)).toBe('0.0');
+    expect(formatNumber(-0.0004, 2)).toBe('0.00');
+    expect(formatNumber(0.05, 1)).toBe('0.1');
   });
 
   it('muestra "Sin dato" si el valor no existe', () => {
@@ -37,7 +37,7 @@ describe('formatNumber', () => {
   it('tolera una cantidad de decimales inválida', () => {
     expect(formatNumber(1.5, -3)).toBe('2');
     expect(formatNumber(1.5, NaN)).toBe('2');
-    expect(formatNumber(1.26, 1.9)).toBe('1,3');
+    expect(formatNumber(1.26, 1.9)).toBe('1.3');
   });
 });
 
@@ -47,15 +47,15 @@ describe('formatSigned', () => {
     expect(formatSigned(-120.4)).toBe('-120');
     expect(formatSigned(0)).toBe('0');
     expect(formatSigned(-0.2)).toBe('0');
-    expect(formatSigned(1250.25, 1)).toBe('+1.250,3');
+    expect(formatSigned(1250.25, 1)).toBe('+1,250.3');
     expect(formatSigned(null)).toBe(NO_DATA);
   });
 });
 
 describe('formatValue y withUnit', () => {
   it('agrega la unidad solo si hay', () => {
-    expect(formatValue(1.03, 'dB', 2)).toBe('1,03 dB');
-    expect(formatValue(0.34, '', 2)).toBe('0,34');
+    expect(formatValue(1.03, 'dB', 2)).toBe('1.03 dB');
+    expect(formatValue(0.34, '', 2)).toBe('0.34');
     expect(formatValue(null, 'dB')).toBe(NO_DATA);
     expect(withUnit('+350', 'USD/ha')).toBe('+350 USD/ha');
     expect(withUnit('12')).toBe('12');
@@ -65,7 +65,7 @@ describe('formatValue y withUnit', () => {
 describe('formatPercent', () => {
   it('pasa una proporción a porcentaje', () => {
     expect(formatPercent(0.625)).toBe('63 %');
-    expect(formatPercent(0.625, 1)).toBe('62,5 %');
+    expect(formatPercent(0.625, 1)).toBe('62.5 %');
     expect(formatPercent(0)).toBe('0 %');
     expect(formatPercent(null)).toBe(NO_DATA);
   });

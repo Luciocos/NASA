@@ -61,7 +61,7 @@ export function formatKgPerTonne(value: number | null): string {
 
 /** "2026-11-14T10:00:00-03:00" -> "14/11/2026 10:00", en hora de Argentina. */
 export function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('es-AR', {
+  return new Date(iso).toLocaleString('en-GB', {
     timeZone: 'America/Argentina/Buenos_Aires',
     dateStyle: 'short',
     timeStyle: 'short',

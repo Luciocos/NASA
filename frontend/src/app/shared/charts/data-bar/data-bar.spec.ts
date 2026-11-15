@@ -24,10 +24,10 @@ describe('DataBar', () => {
     expect(el().querySelector('path.fill')).not.toBeNull();
     expect(el().querySelector('svg.plot')?.textContent).toContain('NDVI medio');
     expect(el().querySelector('svg.plot')?.getAttribute('aria-label')).toBe(
-      'NDVI medio: 0,62 out of a maximum of 1,00 (62 %).',
+      'NDVI medio: 0.62 out of a maximum of 1.00 (62 %).',
     );
     const cells = [...el().querySelectorAll('details tbody td')].map((td) => td.textContent);
-    expect(cells).toEqual(['0,62', '1,00', '62 %']);
+    expect(cells).toEqual(['0.62', '1.00', '62 %']);
   });
 
   it('null muestra "Sin dato" con el motivo y la pista con trama', async () => {

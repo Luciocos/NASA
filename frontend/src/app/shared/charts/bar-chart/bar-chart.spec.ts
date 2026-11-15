@@ -41,8 +41,8 @@ describe('BarChart', () => {
 
     expect(el().querySelectorAll('path.bar').length).toBe(2);
     expect(text()).toContain('Cambio de retrodispersión');
-    expect(text()).toContain('-1,78 dB');
-    expect(text()).toContain('0,81 dB');
+    expect(text()).toContain('-1.78 dB');
+    expect(text()).toContain('0.81 dB');
     expect(text()).toContain('Polarización horizontal');
     const svg = el().querySelector('svg.plot');
     expect(svg?.getAttribute('role')).toBe('img');
@@ -73,9 +73,9 @@ describe('BarChart', () => {
 
     const label = el().querySelector('svg.plot')?.getAttribute('aria-label') ?? '';
     expect(label.startsWith('Radar NISAR del evento de siembra. ')).toBe(true);
-    expect(label).toContain('HH: -1,78 dB');
-    expect(label).toContain('HV: 0,81 dB');
-    expect(label).toContain('Umbral: ±1,03 dB');
+    expect(label).toContain('HH: -1.78 dB');
+    expect(label).toContain('HV: 0.81 dB');
+    expect(label).toContain('Umbral: ±1.03 dB');
   });
 
   it('dibuja las líneas de referencia rotuladas, también en negativo si son simétricas', async () => {
@@ -154,8 +154,8 @@ describe('BarChart', () => {
     const ticks = [...el().querySelectorAll('svg.plot text.t-num')].map((node) =>
       node.textContent?.trim(),
     );
-    expect(ticks).toContain('0,0');
-    expect(ticks).toContain('1,0');
+    expect(ticks).toContain('0.0');
+    expect(ticks).toContain('1.0');
   });
 
   it('ofrece la tabla de datos equivalente dentro de "Ver datos"', async () => {
@@ -168,9 +168,9 @@ describe('BarChart', () => {
       [...row.children].map((cell) => cell.textContent),
     );
     expect(rows).toEqual([
-      ['HH', '-1,78', 'Polarización horizontal'],
-      ['HV', '0,81', ''],
-      ['Umbral (reference line)', '±1,03', ''],
+      ['HH', '-1.78', 'Polarización horizontal'],
+      ['HV', '0.81', ''],
+      ['Umbral (reference line)', '±1.03', ''],
     ]);
     expect(el().querySelector('details tbody th')?.getAttribute('scope')).toBe('row');
   });

@@ -13,8 +13,8 @@ const pixel = (extra: Partial<NdviPixel>): NdviPixel => ({
 describe('pixelTooltip', () => {
   it('en un píxel mixto dice qué parte del cuadro es del lote', () => {
     const text = pixelTooltip('High NDVI', pixel({ insideHa: 1.24, insideShare: 0.23 }), true);
-    expect(text).toContain('High NDVI: NDVI 0,62');
-    expect(text).toContain('1,2 ha in the field');
+    expect(text).toContain('High NDVI: NDVI 0.62');
+    expect(text).toContain('1.2 ha in the field');
     expect(text).toContain('Mixed pixel: only 23 % of the cell is in your field');
   });
 

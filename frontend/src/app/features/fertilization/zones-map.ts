@@ -133,7 +133,7 @@ export class ZonesMap {
 }
 
 const formatter = (digits: number) =>
-  new Intl.NumberFormat('es-AR', { maximumFractionDigits: digits });
+  new Intl.NumberFormat('en-US', { maximumFractionDigits: digits });
 
 /** ayuda de un píxel: NDVI, hectáreas en el lote y, si es mixto, qué parte del cuadro es del lote */
 export function pixelTooltip(label: string, pixel: NdviPixel, mixed: boolean): string {

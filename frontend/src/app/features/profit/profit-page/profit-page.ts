@@ -453,7 +453,7 @@ export class ProfitPage {
   protected number(value: number | null, digits = 2): string {
     return value === null
       ? 'No data'
-      : value.toLocaleString('es-AR', { maximumFractionDigits: digits });
+      : value.toLocaleString('en-US', { maximumFractionDigits: digits });
   }
 
   /** "3,4 t/ha", o "No data" sin la unidad */
@@ -482,5 +482,5 @@ function parse(raw: string): number | null {
 
 /** "1.234" en es-AR, sin decimales; null si falta */
 function amount(value: number | null): string | null {
-  return value === null ? null : value.toLocaleString('es-AR', { maximumFractionDigits: 0 });
+  return value === null ? null : value.toLocaleString('en-US', { maximumFractionDigits: 0 });
 }

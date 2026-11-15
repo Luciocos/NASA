@@ -136,7 +136,7 @@ describe('ProfitPage', () => {
         disclaimer: 'Precio sugerido de mercado.',
       });
     await fixture.whenStable();
-    expect(amounts()).toEqual(['900', '9.000']);
+    expect(amounts()).toEqual(['900', '9,000']);
     expect(text()).toContain('Suggested market price: US$ 300/t, settlement on 13/11/2026');
     expect(text()).toContain('SOJ.ROS/MAY26');
     expect(text()).toContain('it is not a real market price');
@@ -152,7 +152,7 @@ describe('ProfitPage', () => {
     expect(visible('.suggest')).toBe('Rofex: US$ 300/t · 13/11/2026 Use Test price');
     buttonNamed('Use the suggested Rofex price')!.click();
     await fixture.whenStable();
-    expect(amounts()).toEqual(['900', '9.000']);
+    expect(amounts()).toEqual(['900', '9,000']);
     expect(origins()).toContain('ESTIMATED');
   });
 
@@ -245,7 +245,7 @@ describe('ProfitPage', () => {
       await fixture.whenStable();
     };
     await reopen();
-    expect(amounts()).toEqual(['900', '9.000']);
+    expect(amounts()).toEqual(['900', '9,000']);
     expect(origins('.price .field__hint')).toEqual(['ESTIMATED']);
     // guardada puede ser de otro día: se ofrece actualizarla
     expect(visible('.suggest')).toBe('Suggested by Matba Rofex · 13/11/2026 Test price Update');
@@ -259,7 +259,7 @@ describe('ProfitPage', () => {
     await fixture.whenStable();
     expect(visible('.suggest')).toBe('Suggested by Matba Rofex · 13/11/2026 Test price Retry');
     expect(text()).toContain('Could not update: Rofex took too long to respond.');
-    expect(amounts()).toEqual(['900', '9.000']);
+    expect(amounts()).toEqual(['900', '9,000']);
     expect(origins('.price .field__hint')).toEqual(['ESTIMATED']);
 
     // actualizada: el precio nuevo pasa al campo y ya no hace falta actualizar
@@ -279,7 +279,7 @@ describe('ProfitPage', () => {
       });
     await fixture.whenStable();
     expect(visible('.suggest')).toBe('Suggested by Matba Rofex · 14/11/2026');
-    expect(amounts()).toEqual(['960', '9.600']);
+    expect(amounts()).toEqual(['960', '9,600']);
     expect(visible('.hero')).toContain('With the Rofex price');
 
     // un precio propio sigue declarado, con el sugerido a mano
@@ -299,7 +299,7 @@ describe('ProfitPage', () => {
     page().setPrice('300');
     await fixture.whenStable();
     // 3 t/ha x 300 US$/t = 900 US$/ha, en 10 ha
-    expect(amounts()).toEqual(['900', '9.000']);
+    expect(amounts()).toEqual(['900', '9,000']);
     expect(text()).toContain('No costs yet');
   });
 
@@ -316,13 +316,13 @@ describe('ProfitPage', () => {
   it('el rinde que carga el productor reemplaza al de la huella y al borrarlo vuelve', async () => {
     await setup(3);
     page().setPrice('100');
-    page().setYield('4,5');
+    page().setYield('4.5');
     await fixture.whenStable();
-    expect(amounts()).toEqual(['450', '4.500']);
+    expect(amounts()).toEqual(['450', '4,500']);
     expect(text()).toContain('Entered by you · footprint: 3 t/ha');
     page().setYield('');
     await fixture.whenStable();
-    expect(amounts()).toEqual(['300', '3.000']);
+    expect(amounts()).toEqual(['300', '3,000']);
     expect(text()).toContain('From what you declared in Footprint');
   });
 
@@ -332,7 +332,7 @@ describe('ProfitPage', () => {
     page().setPrice('200');
     page().setYield('2');
     await fixture.whenStable();
-    expect(amounts()).toEqual(['400', '4.000']);
+    expect(amounts()).toEqual(['400', '4,000']);
   });
 
   it('un lote ajeno o inexistente invita a ingresar', async () => {

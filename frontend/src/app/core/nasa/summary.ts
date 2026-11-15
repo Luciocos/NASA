@@ -136,9 +136,9 @@ export function ndviSummary(history: NdviObservation[]): NdviSummary {
 }
 
 const ZONE_LABELS: Record<NdviZoneLevel, string> = {
-  alto: 'NDVI alto',
-  medio: 'NDVI medio',
-  bajo: 'NDVI bajo',
+  alto: 'High NDVI',
+  medio: 'Medium NDVI',
+  bajo: 'Low NDVI',
 };
 
 /**

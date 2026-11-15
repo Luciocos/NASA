@@ -282,7 +282,7 @@ export class FertilizationPage {
   protected number(value: number | null | undefined, digits = 0): string {
     return value == null
       ? 'No data'
-      : value.toLocaleString('es-AR', { maximumFractionDigits: digits });
+      : value.toLocaleString('en-US', { maximumFractionDigits: digits });
   }
 
   protected percent(value: number): string {
@@ -291,7 +291,7 @@ export class FertilizationPage {
 
   /** superficie de un ambiente para la tarjeta: "18,2" */
   protected hectares(value: number): string {
-    return value.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+    return value.toLocaleString('en-US', { maximumFractionDigits: 1 });
   }
 
   private loadDoses(lotId: number): Doses {

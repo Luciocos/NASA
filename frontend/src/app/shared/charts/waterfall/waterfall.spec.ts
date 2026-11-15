@@ -50,7 +50,7 @@ describe('WaterfallChart', () => {
     const text = el().querySelector('svg.plot')?.textContent ?? '';
     expect(text).toContain('-180 USD/ha');
     expect(text).toContain('+40 USD/ha');
-    expect(text).toContain('1.150 USD/ha');
+    expect(text).toContain('1,150 USD/ha');
     expect(el().querySelectorAll('line.link').length).toBe(4);
     // el valor va del lado de afuera de la barra: a la derecha si crece, a la izquierda si baja
     const anchors = [...el().querySelectorAll('svg.plot text.t-num.t-strong')].map((t) =>

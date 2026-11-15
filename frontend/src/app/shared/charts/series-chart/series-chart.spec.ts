@@ -66,7 +66,7 @@ describe('SeriesChart', () => {
     const labels = [...el().querySelectorAll('svg.plot text.t-strong')].map((t) =>
       t.textContent?.trim(),
     );
-    expect(labels).toEqual(['0,31', '0,42', '0,66', '0,71']);
+    expect(labels).toEqual(['0.31', '0.42', '0.66', '0.71']);
 
     await render({ series: [{ name: 'NDVI', points: longSeries(140) }] });
     expect(el().querySelectorAll('svg.plot text.t-strong').length).toBe(0);

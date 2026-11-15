@@ -24,7 +24,7 @@ function niceMax(value: number): number {
   return step * exp;
 }
 
-const fmt = (v: number, d = 2) => v.toLocaleString('es-AR', { maximumFractionDigits: d });
+const fmt = (v: number, d = 2) => v.toLocaleString('en-US', { maximumFractionDigits: d });
 
 /**
  * hietograma (barras de lluvia colgando desde arriba) e hidrograma (caudal en m³/s) en el mismo

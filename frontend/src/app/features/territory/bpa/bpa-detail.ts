@@ -131,7 +131,7 @@ export class BpaDetail {
   protected readonly details = computed(() => this.check().details as BpaDetails);
   protected readonly declaredAt = computed(() => {
     const raw = this.details().declared_at;
-    return raw ? new Date(raw).toLocaleDateString('es-AR') : null;
+    return raw ? new Date(raw).toLocaleDateString('en-GB') : null;
   });
 
   /** Se precarga con lo declarado y se reinicia cuando llega un chequeo nuevo. */

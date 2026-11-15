@@ -128,5 +128,5 @@ export function sensitivity(
 /** "1.234" con el formato de Argentina y sin decimales; "No data" si falta */
 export function formatUsd(value: number | null, digits = 0): string {
   if (value === null) return 'No data';
-  return `US$ ${value.toLocaleString('es-AR', { maximumFractionDigits: digits, minimumFractionDigits: digits })}`;
+  return `US$ ${value.toLocaleString('en-US', { maximumFractionDigits: digits, minimumFractionDigits: digits })}`;
 }

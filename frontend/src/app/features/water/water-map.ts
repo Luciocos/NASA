@@ -32,7 +32,7 @@ export const WATER_STYLE = {
   sector: '#e63946',
 } as const;
 
-const fmtHa = (ha: number) => `${ha.toLocaleString('es-AR', { maximumFractionDigits: 1 })} ha`;
+const fmtHa = (ha: number) => `${ha.toLocaleString('en-US', { maximumFractionDigits: 1 })} ha`;
 
 /**
  * mapa de Cuenca y Caudal: el lote, la cuenca que le aporta agua, la cuenca al punto de salida,

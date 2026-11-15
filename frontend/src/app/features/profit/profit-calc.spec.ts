@@ -52,7 +52,7 @@ describe('profit-calc', () => {
   });
 
   it('formatea dólares en es-AR', () => {
-    expect(formatUsd(18800)).toBe('US$ 18.800');
+    expect(formatUsd(18800)).toBe('US$ 18,800');
     expect(formatUsd(null)).toBe('No data');
   });
 });

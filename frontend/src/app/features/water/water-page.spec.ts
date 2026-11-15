@@ -199,7 +199,7 @@ describe('WaterPage', () => {
     req.flush(SIMULATION);
     await fixture.whenStable();
     expect(text()).toContain('Escenario hipotético');
-    expect(text()).toContain('6.665');
+    expect(text()).toContain('6,665');
     expect(text()).toContain('no es un pronóstico meteorológico');
   });
 
