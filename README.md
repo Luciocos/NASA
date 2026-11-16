@@ -1,88 +1,133 @@
 # LoTestigo
 
-*[Read in English](README.en.md) · [Submission text and checklist](docs/SUBMISSION.md)*
+*[Leer en español](README.es.md)*
 
-Bitácora de manejo de un lote agrícola, detectada por satélite.
+The field's logbook, written by satellite.
 
-LoTestigo es una **prueba de concepto** desarrollada en 48 horas para el NASA Space Apps Challenge 2026 (sede Rosario). Usa datos abiertos de la NASA, con radar NISAR (banda L) como sensor principal, para registrar qué pasó en un lote: siembra, cosecha, remoción de suelo, cobertura, anegamiento, quema o cambio de uso. Sobre esa bitácora estima una huella de carbono y permite simular mejoras de manejo.
+LoTestigo is a **proof of concept** built in 48 hours for the NASA Space Apps Challenge 2026 (Rosario, Argentina). It uses NASA open data, with NISAR L-band radar as the main sensor, to record what happened in a farm field: sowing, harvest, tillage, cover crop, flooding, burning or land-use change. On top of that logbook it estimates a carbon footprint and lets the grower simulate management improvements.
 
-### [▶ Ver la demo de 30 s (subtítulos en inglés)](https://lotestigo.1mj0t4h.workers.dev/landing/demo-en-subs.mp4) · [Abrir la app](https://lotestigo.1mj0t4h.workers.dev/)
+### [▶ Watch the 30-second demo (English subtitles)](https://lotestigo.1mj0t4h.workers.dev/landing/demo-en-subs.mp4) · [Open the app](https://lotestigo.1mj0t4h.workers.dev/)
 
-[![Demo de 30 s de LoTestigo: marcar un lote, ver los datos de la NASA, la huella, la fertilización, el margen, la cuenca y el pasaporte](assets/demo-video.jpg)](https://lotestigo.1mj0t4h.workers.dev/landing/demo-en-subs.mp4)
+[![30-second demo of LoTestigo: mark a field, see NASA data, footprint, fertilization, margin, watershed and passport](assets/demo-video.jpg)](https://lotestigo.1mj0t4h.workers.dev/landing/demo-en-subs.mp4)
 
-- **App:** https://lotestigo.1mj0t4h.workers.dev/ (el lote de ejemplo se ve sin cuenta en [/ejemplos](https://lotestigo.1mj0t4h.workers.dev/ejemplos))
-- **Video de la demo (28 s, subtítulos en inglés):** https://lotestigo.1mj0t4h.workers.dev/landing/demo-en-subs.mp4
+- **App:** https://lotestigo.1mj0t4h.workers.dev/ (the example field opens without an account at [/ejemplos](https://lotestigo.1mj0t4h.workers.dev/ejemplos))
+- **Demo video (28 s, English subtitles):** https://lotestigo.1mj0t4h.workers.dev/landing/demo-en-subs.mp4
+- **Submission text and checklist:** [docs/SUBMISSION.md](docs/SUBMISSION.md)
+- **How every number is calculated (Spanish):** [INFO.md](INFO.md)
 
-La interfaz de la app está en inglés.
+The app interface is in English. It is built for small and mid-size soybean growers and the cooperative advisors who assist them.
 
-## Desafíos
+## Challenges
 
-- **Desafío oficial:** visualización de datos de radar NISAR y detección de cambios en la superficie.
-- **Desafío local:** AgTech para la Zona Núcleo, junto a AFA (Agricultores Federados Argentinos).
+- **Official challenge:** visualizing NISAR radar data and detecting surface change.
+- **Local challenge:** AgTech for Argentina's core farming region (Zona Núcleo), with AFA (Agricultores Federados Argentinos).
 
-## Qué hace
+## What it does
 
-1. **Historial del lote:** uso del suelo y cultivos por campaña desde 2020.
-2. **Bitácora de eventos:** línea de tiempo con fecha, sensor, evidencia y nivel de confianza por evento.
-3. **Comparación radar contra óptico:** la evidencia de cada evento, lado a lado.
-4. **Huella de carbono estimada:** kg CO2e por tonelada, con cada dato etiquetado como verificado, declarado o estimado.
-5. **Simulador:** efecto de cambiar una práctica (por ejemplo, sumar cultivo de cobertura) sobre la huella y el puntaje.
-6. **Pasaporte del lote:** vista compartible por enlace público, imprimible.
+1. **Field history:** land use and crops per season since 2020.
+2. **Event logbook:** a timeline with date, sensor, evidence and confidence for each event.
+3. **Radar versus optical:** the evidence for each event, side by side or with a slider.
+4. **Estimated carbon footprint:** kg CO2e per tonne, with every input labelled as verified, declared or estimated.
+5. **Simulator:** the effect of changing a practice (adding a cover crop) on the practices score.
+6. **Fertilization:** management zones from NDVI and a variable-rate nitrogen worksheet.
+7. **Gross margin:** per hectare and per field.
+8. **Watershed and flow:** contributing watershed, rain history and a rainfall simulator, for the test field.
+9. **Territorial checks:** indicative overlap with public layers (urban proximity, native forest zoning).
+10. **Field passport:** a public, printable, read-only page shared by link.
 
-El productor no carga planillas: marca su lote en el mapa y confirma o corrige lo que se detectó.
+The grower does not fill in spreadsheets: they draw the field on the map and confirm or correct what was detected.
 
-### Cómo se usa
+### Data origin labels
 
-1. **Inicio:** la página de inicio presenta el proyecto e invita a crear una cuenta gratis (mail y contraseña) o a ingresar. Los lotes de cada productor son privados: solo los ve y los edita quien los marcó. Los lotes de ejemplo de la NASA se ven sin cuenta en `/ejemplos`.
-2. **Mi campo:** los lotes de la cuenta en una maqueta isométrica interactiva (motor propio en canvas, sin dependencias). Cada bloque ilustra el último evento registrado y se puede pintar con el NDVI actual de MODIS. También hay vista satelital. Sin lotes, ofrece usar la ubicación del dispositivo para encontrar el campo; si no se comparte, se busca en el mapa satelital.
-3. **Marcar un lote:** se traza el perímetro sobre la imagen satelital tocando las esquinas. En opciones avanzadas se pueden pintar hectáreas (grilla de 1 ha o 1/4 ha que se puede girar para alinearla con los alambrados) o ajustar los vértices. Sin conexión, el lote queda en el dispositivo y se sube solo cuando vuelve la red.
-4. **Ficha del lote:** la bitácora con su evidencia y, consultados en vivo para el polígono, el NDVI de MODIS, la lluvia y la humedad de NASA POWER, las pasadas de NISAR y HLS y la cobertura del suelo por año.
-5. **Huella, fertilización y rentabilidad:** la huella con el origen de cada dato, los ambientes del lote por NDVI con una planilla de dosis variable de nitrógeno, y el margen bruto con el área y el rinde del lote y el precio y los costos que declara el productor.
+Every value shown in the app carries one of three labels, in text and color:
 
-La app funciona sin conexión: un service worker guarda la interfaz y cada respuesta del backend y de la NASA queda guardada en el dispositivo.
+| Label | Meaning |
+| --- | --- |
+| VERIFICADO (verified) | Observed by a satellite. It does not mean validated in the field. |
+| DECLARADO (declared) | Entered, corrected or confirmed by the grower. |
+| ESTIMADO (estimated) | A regional, default, modelled or inferred value. |
 
-## Qué no es
+When something is missing the app says "Sin dato" (no data) and why. Nothing is filled in or interpolated.
 
-- No es una certificación y no reemplaza a VISEC, RTRS ni 2BSvs.
-- No es una calculadora de huella auditada: es una estimación con respaldo satelital.
-- La precisión de detección no está validada. Todo dato simulado se marca como tal en la base y en la interfaz.
+### Screens
 
-## Cómo funciona
+| Screen | Route | What it shows |
+| --- | --- | --- |
+| Landing | `/` | What the project is, with a walkthrough video. |
+| Examples | `/ejemplos` | The test field processed by the pipeline. No account needed, read-only. |
+| My farm | `/mapa` | The account's fields on an interactive isometric model or a satellite view. |
+| Draw a field | `/mapa/nuevo` | Trace the boundary on satellite imagery by tapping the corners. Works offline. |
+| Field popup | from the map | Seven tabs: Satellite, Logbook, Practices, Footprint, Fertilization, Profitability, Watershed and Flow. |
+| Passport | `/pasaporte/<token>` | Public read-only summary of a field. |
+| Help | `/ayuda` | Illustrated guide to each screen. |
 
-![Cómo se conecta LoTestigo con los datos de la NASA: un camino offline para el radar y otro en vivo desde el celular](assets/VALIDATION_TECH.png)
+## What it is not
+
+- It is not a certification and does not replace VISEC, RTRS or 2BSvs.
+- It is not an audited footprint calculator: it is an estimate backed by satellite observations.
+- Detection accuracy has not been validated. Any simulated value is flagged as such in the database and in the interface. Today no demo data is simulated.
+
+## How it works
 
 ```
-[Procesamiento satelital offline]  -->  JSON de eventos + imágenes PNG
+[Offline satellite processing]  -->  event JSON files + PNG evidence images
                                               |
-                                   comando import_events
+                                   import_events command
                                               v
 [Angular] <-- REST/JSON --> [Django + DRF] <--> [PostgreSQL]
 ```
 
-El backend no procesa imágenes satelitales. El análisis de radar y óptico se hace aparte (carpeta `pipeline/`) y su salida se importa con un comando de gestión.
+The backend never processes satellite imagery during a request. Radar and optical analysis runs separately (the `pipeline/` folder) and its output is loaded with a management command.
 
-El navegador consulta además servicios abiertos de la NASA que no piden login, para mostrar los datos de cualquier polígono: NASA POWER (clima), ORNL DAAC (NDVI y cobertura de MODIS), el catálogo CMR de Earthdata (pasadas de NISAR y HLS) y GIBS (imágenes por fecha). Esos datos se muestran con su fuente y no se guardan en la base.
+In addition, the browser queries open NASA services that need no login to show data for any polygon: NASA POWER (weather), ORNL DAAC (MODIS NDVI and land cover), the Earthdata CMR catalog (NISAR and HLS passes) and GIBS (imagery). That data is shown with its source and is cached on the device, not stored in the database.
 
-Cómo se usa cada pantalla, de dónde sale cada dato (NISAR, HLS, MODIS y NASA POWER) y cómo se calcula cada número (bitácora, huella, puntaje, fertilización y rentabilidad) está en [INFO.md](INFO.md).
+### Detection method (proof of concept, not validated)
+
+1. **Field backscatter:** mean gamma0 over the valid pixels of the polygon, in dB.
+2. **Anomaly:** field minus the median of the surrounding landscape on the same date. This separates what happened in the field from what happened to the whole area.
+3. **Excluded dates:** dates where the landscape as a whole departs from its median over time by more than 5 median absolute deviations. October 7, 2026 is excluded: every field rose 3 to 6 dB at once and NASA POWER reports 46 mm of rain.
+4. **Threshold:** a change in HH anomaly between consecutive passes is an event if it exceeds 3 standard deviations of the changes seen in reference fields and persists on the next pass. The threshold is currently 1.03 dB.
+5. **Event type:** HLS NDVI is used to interpret the change.
+
+Result so far: one event. In the test field (87 ha, Casilda, Santa Fe), HH dropped 1.78 dB against the landscape between September 1 and 13, 2026 and stayed down, while HV rose. It is logged as sowing on September 7, 2026, plus or minus 6 days. A prior tillage pass cannot be ruled out. Details in [pipeline/README.md](pipeline/README.md) (Spanish).
+
+## Data sources
+
+| Source | Use |
+| --- | --- |
+| NISAR (NASA/ISRO), L-band, L2 GCOV | Surface change detection and radar evidence images |
+| HLS v2.0 (NASA) | NDVI to interpret radar changes, optical evidence images |
+| MODIS MOD13Q1 and MCD12Q1 (NASA) | NDVI every 16 days and yearly land cover, queried live per polygon |
+| NASA POWER | Rainfall and soil wetness, queried live |
+| Earthdata CMR and GIBS (NASA) | Catalog of passes over the field; imagery tiles |
+| GPM IMERG, SMAP, MODIS MOD16 (NASA) | Rainfall events, soil moisture and evapotranspiration for the watershed module |
+| Copernicus DEM GLO-30 (ESA) | Terrain for the watershed module. Not NASA data |
+| Sentinel-2 L2A (ESA) | Backdrop used to draw the example fields. Not NASA data |
+| Esri World Imagery, OpenStreetMap | Basemaps and place search |
+
+The full list, with emission-factor and method references, is in [docs/SUBMISSION.md](docs/SUBMISSION.md).
+
+This project uses NASA open data. It is not affiliated with or endorsed by NASA.
 
 ## Stack
 
 - **Backend:** Python 3.13, Django 6.1, Django REST Framework
-- **Base de datos:** PostgreSQL 17 (Docker Compose)
-- **Frontend:** Angular 22, TypeScript
-- **Mapa:** Leaflet
+- **Database:** PostgreSQL 17 (Docker Compose)
+- **Frontend:** Angular 22, TypeScript, Leaflet
+- **Pipeline:** Python (asf_search, h5py, rasterio, pystac-client)
+- **Hosting:** Cloudflare Workers (frontend) and Railway (backend and database)
 
-Los polígonos se guardan como GeoJSON en un campo JSON, sin PostGIS.
+Field polygons are stored as GeoJSON in a JSON field, without PostGIS.
 
-## Cómo correrlo
+## Run it locally
 
-Requisitos: Python 3.13, Node 24 LTS (ver `frontend/.nvmrc`) y Docker.
+Requirements: Python 3.13, Node 24 LTS and Docker.
 
 ```bash
-# Variables de entorno (completar POSTGRES_PASSWORD)
+# Environment variables (set POSTGRES_PASSWORD)
 cp .env.example .env
 
-# Base de datos
+# Database
 docker compose up -d db
 
 # Backend
@@ -93,114 +138,49 @@ python manage.py migrate
 python manage.py import_events ../data/demo/*.json
 python manage.py runserver
 
-# Pruebas
+# Tests
 pytest
 
-# Frontend (en http://localhost:4200, con proxy de /api al backend)
+# Frontend (http://localhost:4200, proxies /api to the backend)
 cd frontend
 npm install
 npx ng serve
 ```
 
-Para comprobar que todo está conectado: `http://localhost:8000/api/health/` responde `{"status": "ok"}` y el encabezado del frontend dice "Conectado".
+`http://localhost:8000/api/health/` should answer `{"status": "ok"}`.
 
-Las credenciales (Earthdata, base de datos) van solo en un archivo `.env`, que no se sube al repositorio. Hay un `.env.example` de referencia.
+Credentials (Earthdata, database) live only in a `.env` file that is not committed. See `.env.example`.
 
-## Despliegue
-
-La demo está publicada en **https://lotestigo.1mj0t4h.workers.dev** y no aparece en buscadores. La página de inicio y los lotes de ejemplo se ven sin cuenta; para marcar lotes propios hay que crear una.
-
-Corre en Cloudflare Workers (`wrangler.jsonc` y `worker/index.js`):
-
-- El Worker publica el build de Angular. Las rutas de la app (`/mapa`, `/lotes/1`, `/pasaporte/<token>`) devuelven `index.html` y las resuelve el router de Angular.
-- `/api/` y `/media/` van al backend de Django, igual que el proxy de `ng serve`. Los archivos de `/media/` que genera el build los sirve el propio Worker: los íconos de Leaflet y las imágenes de `data/evidence/`, que el build copia a `/media/evidence/`.
-- Django y PostgreSQL corren en Railway (proyecto `lotestigo`, servicios `backend` y `Postgres`). El Worker le pasa los pedidos a la dirección pública del backend, `API_ORIGIN` en `wrangler.jsonc`. Si el backend no responde, `/api/` devuelve 502 y el encabezado muestra "Sin conexión con el servidor".
-
-El backend se construye con `backend/Dockerfile` (la variable `RAILWAY_DOCKERFILE_PATH` del servicio apunta a ese archivo). Cada vez que arranca aplica las migraciones e importa los lotes nuevos de `data/demo/`; los que ya están cargados se saltean, así no se pierden las correcciones ni los pasaportes. Para publicar cambios del backend, con acceso al proyecto de Railway:
-
-```bash
-npm run deploy:backend
-```
-
-Si cambia el JSON de un lote que ya está cargado, hay que reimportarlo a mano. `--replace` borra también sus correcciones y pasaportes:
-
-```bash
-npx --yes @railway/cli@5.71.0 ssh --service backend python manage.py import_events ../data/demo/<archivo>.json --replace
-```
-
-Variables del servicio `backend` en Railway: `POSTGRES_*` (tomadas del servicio `Postgres`), `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=0`, `DJANGO_ALLOWED_HOSTS` con el dominio de Railway, `PORT=8000` y `RAILWAY_DOCKERFILE_PATH=backend/Dockerfile`.
-
-Para publicar el frontend a mano, con Node 24 (ver `frontend/.nvmrc`) y una sesión de Wrangler en la cuenta de Cloudflare de la demo:
-
-```bash
-npm run deploy
-```
-
-Compila el frontend (`npm ci` y `ng build`) y lo sube con Wrangler.
-
-### Publicación automática
-
-Cada push a `main` corre `.github/workflows/deploy.yml`, que publica solo:
-
-1. **Backend:** si el push cambió algo en `backend/` o `data/`, lo sube a Railway con `railway up`. Al correr el workflow a mano (Actions → Deploy → Run workflow) se puede elegir publicarlo igual.
-2. **Frontend:** después del backend, compila Angular y lo publica en Cloudflare Workers. Si el backend falló, el frontend no se publica.
-
-Necesita dos secrets en el repositorio (Settings → Secrets and variables → Actions). Sin ellos, el workflow solo compila. El id de la cuenta de Cloudflare no es secreto y está en `wrangler.jsonc` (`account_id`):
-
-| Secret | Qué es | Dónde se crea |
-|---|---|---|
-| `CLOUDFLARE_API_TOKEN` | Token de API con la plantilla "Edit Cloudflare Workers" | Cloudflare → My Profile → API Tokens |
-| `RAILWAY_TOKEN` | Token del proyecto `lotestigo`, entorno `production` | Railway → proyecto → Settings → Tokens |
-
-Con la CLI de GitHub (cada comando pide el valor y no lo muestra):
-
-```bash
-gh secret set CLOUDFLARE_API_TOKEN -R Luciocos/NASA
-gh secret set RAILWAY_TOKEN -R Luciocos/NASA
-```
-
-Después de cargarlos, para publicar lo que ya está en `main` sin esperar al próximo push:
-
-```bash
-gh workflow run deploy.yml -R Luciocos/NASA
-```
-
-## Estructura
-
-Monorepo separado por funcionalidad:
+## Repository layout
 
 ```
-backend/     Django: core, accounts, lots, events, carbon, passports
-frontend/    Angular: features landing, auth, map, examples, lot, footprint, fertilization, profit, passport
-pipeline/    Notebooks y scripts de teledetección (offline)
-data/        Lotes de demostración e imágenes de evidencia
-docs/        Reparto del trabajo en el equipo
+backend/     Django apps: core, accounts, lots, events, carbon, passports, hydrology, territory, market
+frontend/    Angular features: landing, auth, map, examples, lot, footprint, fertilization, profit, water, passport, help
+pipeline/    Remote-sensing scripts (offline)
+data/        Demo field, evidence images, hydrology grids, public layers
+docs/        Team split and submission text
+worker/      Cloudflare Worker that serves the app and forwards /api to the backend
 ```
 
-Quién es dueño de cada parte está en [docs/EQUIPO.md](docs/EQUIPO.md). Las reglas de trabajo, el modelo de datos, la API y el contrato de importación están en [CLAUDE.md](CLAUDE.md).
+## Known limitations
 
-## Fuentes de datos
+- Detection is a proof of concept. The threshold and the reference fields are a proposal by the team and have not been validated in the field.
+- A single event has been detected. No script detects harvest, tillage, cover crops, flooding, burning or land-use change yet.
+- Nine of the ten NISAR scenes used are provisional products.
+- Growers' own fields do not receive detected events yet: the pipeline runs by hand for the example fields.
+- Emission factors are US averages and IPCC defaults. Soil carbon is not modelled, so cover crops do not lower the footprint.
+- Watershed and flow results are unvalidated simulations: there are no measured flows in the basin.
+- MODIS pixels are 5 to 21 ha; NASA POWER describes an area of about 50 km.
 
-| Fuente | Uso |
-|---|---|
-| NISAR (NASA/ISRO), banda L | Labranza, anegamiento, cambios de superficie |
-| HLS y Landsat (NASA/USGS) | Uso del suelo desde 2020, cobertura |
-| MODIS y VIIRS (NASA) | Focos de calor, quema de rastrojos |
-| MODIS (NASA), MOD13Q1 y MCD12Q1 | NDVI cada 16 días y cobertura del suelo anual, consultados en vivo por polígono |
-| SMAP y NASA POWER | Humedad de suelo y clima |
-| Sentinel-1 (ESA), banda C | Respaldo cuando no hay escenas NISAR; no es dato NASA |
+## Use of SI tools
 
-Este proyecto usa datos abiertos de la NASA. No está afiliado a la NASA ni cuenta con su aval.
+In line with the NASA Space Apps Challenge 2026 rules on Super Intelligence (SI) tools:
 
-## Uso de herramientas de SI
+- **Code and documentation:** parts of the source code, tests and documentation in this repository were written with the assistance of Claude Code (Anthropic), a large-language-model coding assistant, and reviewed by the team. The project instructions given to the assistant are in [CLAUDE.md](CLAUDE.md).
+- **Data:** no satellite data, detected events, evidence images, emission factors or metrics were generated by SI. They come from the sources listed above.
+- **Logo:** a flat geometric mark (three stacked layers) drawn by the script [assets/draw-logo.py](assets/draw-logo.py), written with SI assistance. It uses no NASA branding or design elements.
+- **Idea and method:** the project idea, the choice of data sources and the detection method were defined by the team.
 
-Según las reglas del NASA Space Apps Challenge 2026 sobre herramientas de Super Intelligence (SI):
-
-- **Código y documentación:** parte del código, de las pruebas y de la documentación de este repositorio se escribió con la asistencia de Claude Code (Anthropic), un asistente de programación basado en un modelo de lenguaje, y fue revisada por el equipo. Las instrucciones que se le dieron están en [CLAUDE.md](CLAUDE.md).
-- **Datos:** ningún dato satelital, evento, imagen de evidencia, factor de emisión ni métrica fue generado con SI. Salen de las fuentes citadas arriba.
-- **Logo:** es un dibujo geométrico plano (tres capas apiladas) que genera el script [assets/draw-logo.py](assets/draw-logo.py), escrito con asistencia de SI. No usa elementos de la marca de la NASA.
-- **Idea y método:** la idea del proyecto, la elección de las fuentes y el método de detección los definió el equipo.
-
-## Licencia
+## License
 
 [MIT](LICENSE)

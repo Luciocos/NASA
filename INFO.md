@@ -515,7 +515,7 @@ Es la séptima pestaña del popup: "De dónde viene el agua que llega al lote, c
 - **Necesitan red:** ingresar, crear la cuenta, "Tus datos", declarar el uso del suelo y la adhesión a BPA, Confirmar y Corregir, compartir el pasaporte, el Simulador, el simulador de Cuenca y Caudal, el precio de Rofex y el buscador.
 - **El chip de conexión** del encabezado dice "Conectando…", "Conectado", "Sin conexión con el servidor" o "Sin conexión a internet", y agrega "mostrando datos guardados del …" cuando lo que se ve es una copia.
 
-La demo está publicada en https://lotestigo.1mj0t4h.workers.dev: un Worker de Cloudflare sirve la app y reenvía la API al backend Django en Railway, con PostgreSQL. Ni la app ni los pasaportes aparecen en buscadores. El detalle está en el [README](README.md#despliegue).
+La demo está publicada en https://lotestigo.1mj0t4h.workers.dev: un Worker de Cloudflare sirve la app y reenvía la API al backend Django en Railway, con PostgreSQL. Ni la app ni los pasaportes aparecen en buscadores. El detalle está en el [README](README.es.md#despliegue).
 
 ## 7. Preguntas frecuentes del jurado
 

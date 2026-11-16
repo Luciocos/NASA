@@ -229,4 +229,4 @@ The existing walkthrough video on the landing page cannot be used as is: it woul
 
 **Language**
 
-- [ ] Linked materials are in English. The repository has `README.en.md`. The app interface is in English.
+- [ ] Linked materials are in English. The repository README is in English (`README.md`), with a Spanish version in `README.es.md`. The app interface is in English.
